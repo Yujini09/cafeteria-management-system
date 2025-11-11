@@ -2,38 +2,33 @@
     {{-- Main Container: Dark Green (bg-green-950) --}}
     <div class="min-h-screen flex items-center justify-center bg-green-950 relative overflow-hidden"> 
         
-        {{-- External Background Bubble Designs: Orange and NEW SHIFTED POSITIONS --}}
+        {{-- External Background Bubble Designs: Orange (Shifted) --}}
         <div class="absolute inset-0 opacity-30">
-            {{-- Large Bubble: Top-Right corner --}}
-            <div class="w-96 h-96 bg-orange-700 rounded-full absolute -top-40 -right-40 mix-blend-screen opacity-50"></div>
-            {{-- Mid Bubble: Center-Left edge --}}
-            <div class="w-64 h-64 bg-orange-700 rounded-full absolute top-1/2 -left-32 mix-blend-screen opacity-50 transform -translate-y-1/2"></div>
-            {{-- Large Bubble: Bottom-Left corner --}}
-            <div class="w-80 h-80 bg-orange-700 rounded-full absolute -bottom-60 -left-60 mix-blend-screen opacity-50"></div>
-            {{-- Small Bubble: Mid-Right side --}}
-            <div class="w-40 h-40 bg-orange-700 rounded-full absolute bottom-1/4 right-0 mix-blend-screen opacity-50"></div>
+            <div class="w-96 h-96 bg-orange-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="w-64 h-64 bg-orange-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
+            <div class="w-80 h-80 bg-orange-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="w-40 h-40 bg-orange-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
         </div>
 
-        {{-- Card Container: Max width remains, increased shadow --}}
+        {{-- Card Container --}}
         <div class="bg-white rounded-xl shadow-2xl flex overflow-hidden w-full max-w-5xl z-10"> 
             
             {{-- Left side (Logo Display) - White background with subtle left shift --}}
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative">
-                {{-- Logo with subtle left shift via negative margin --}}
                 <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
-                     class="max-h-64 object-contain w-auto -ml-6"> 
+                     class="max-h-64 object-contain w-auto -ml-8"> 
             </div>
 
-            {{-- Right side (Form) - Light Green (bg-green-100), SCROLL RE-ENABLED --}}
+            {{-- Right side (Form) - Light Green (bg-green-100), SCROLL ENABLED --}}
             <div class="w-full md:w-1/2 p-8 md:p-12 relative bg-green-100 h-[500px] overflow-y-auto"> 
                 
-                {{-- Internal bubbles: KEPT GREEN as requested --}}
+                {{-- Internal bubbles: Light Green (Restored original diagonal positions) --}}
                 <div class="absolute inset-0 opacity-50 overflow-hidden">
                     <div class="w-64 h-64 bg-green-200 rounded-full absolute -top-24 -right-24"></div>
                     <div class="w-48 h-48 bg-green-200 rounded-full absolute -bottom-16 -left-16"></div>
                 </div>
 
-                <div class="relative z-10"> {{-- Form content wrapped in z-10 --}}
+                <div class="relative z-10">
                     
                     <div class="text-left mb-8">
                         <h2 class="text-green-900 text-4xl font-extrabold mb-2">Create Account</h2> 
@@ -134,18 +129,19 @@
                             </div>
                         </div>
 
-                        <div class="flex justify-center text-sm mb-6">
-                            <a href="{{ route('login') }}" class="text-orange-600 hover:text-orange-700 hover:underline transition duration-200">
-                                {{ __('Have an account already?') }}
-                            </a>
-                        </div>
-
-                        <div>
+                        <div class="mb-6">
                             <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-200 text-white" id="registerBtn">
                                 {{ __('Register') }}
                             </x-primary-button>
                         </div>
                     </form>
+                    
+                    {{-- CORRECTED LOCATION: Already have account link moved outside of the form --}}
+                    <div class="flex justify-center text-sm mt-4"> 
+                        <a href="{{ route('login') }}" class="text-orange-600 hover:text-orange-700 hover:underline transition duration-200">
+                            {{ __('Have an account already?') }}
+                        </a>
+                    </div>
                 </div> {{-- End of z-10 wrapper --}}
             </div>
         </div>
@@ -176,14 +172,27 @@
 
     <script>
         // Toggle for password
-        document.getElementById('togglePassword').addEventListener('click', function () {
+        document.getElementById('togglePassword1').addEventListener('click', function () {
             const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
+            const eyeIcon = document.getElementById('eyeIcon1');
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
             } else {
                 passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+            }
+        });
+
+        // Toggle for confirm password
+        document.getElementById('togglePassword2').addEventListener('click', function () {
+            const confirmPasswordInput = document.getElementById('password_confirmation');
+            const eyeIcon = document.getElementById('eyeIcon2');
+            if (confirmPasswordInput.type === 'password') {
+                confirmPasswordInput.type = 'text';
+                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
+            } else {
+                confirmPasswordInput.type = 'password';
                 eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
             }
         });
@@ -204,15 +213,25 @@
                 method: 'POST',
                 body: formData,
                 headers: {
-                    // Note: In production, ensure the CSRF token fetching is robust.
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
                     'Accept': 'application/json'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if response is not JSON (e.g., HTML from a standard redirect/error)
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // If Laravel redirects/throws a non-JSON error, reload the page normally
+                    window.location.reload(); 
+                    return; // Exit
+                }
+                return response.json();
+            })
             .then(data => {
+                if (!data) return;
+                
                 if (data.success) {
-                    // Show verification modal
+                    // Success! Show verification modal
                     document.getElementById('verificationModal').classList.remove('hidden');
                 } else {
                     // Handle validation errors
