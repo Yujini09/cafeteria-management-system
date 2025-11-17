@@ -23,10 +23,22 @@
 /* Modern Card Styles */
 .modern-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
     overflow: hidden;
+}
+
+.modern-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
 }
 
 /* Button Styles */
@@ -369,34 +381,11 @@
         padding: 0.25rem 0.375rem;
     }
 }
-/* Menu Card Styling for Inventory Sections */
-.menu-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
 
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
 
-.menu-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e0;
-}
 </style>
 
-<div class="modern-card menu-card p-6 mx-auto max-w-full">
+<div class="modern-card p-6 mx-auto max-w-full">
     <!-- Header -->
     <div class="page-header">
         <div class="header-icon">
