@@ -130,63 +130,115 @@ body {
         </div>
     </section>
 
-    <section id="menu" class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-poppins text-center mb-16">
-            <h2 class="text-4xl font-bold text-ret-dark mb-4">Menus</h2>
-        </div>
+<section id="menu" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-poppins text-center mb-16">
+        <h2 class="text-4xl font-bold text-ret-dark mb-4">Menus</h2>
+    </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-            <div class="bg-ret-dark text-white overflow-hidden shadow-lg aspect-square">
-                <img src="{{ asset('images/breakfast.png') }}" alt="Vegetables & Salads" class="h-48 w-full object-cover" />
-                <div class="p-6">
-                    <h3 class="text-4xl font-bold mb-2">Vegetables & Salads</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+        
+        {{-- MENU ITEM 1: Vegetables & Salads --}}
+        <div class="bg-ret-dark text-white overflow-hidden shadow-lg aspect-square">
+            <div class="flex h-full w-full">
+                
+                {{-- TEXT CONTENT (LEFT) --}}
+                <div class="w-2/3 p-6 flex flex-col justify-center items-start text-left">
+                    <h3 class="text-3xl font-bold mb-2 leading-tight">Vegetable & Salads</h3>
                     <p class="text-base text-gray-300">Fresh vegetables and fruits.</p>
                 </div>
+                
+                {{-- IMAGE (RIGHT) --}}
+                <div class="w-1/3 h-full overflow-hidden">
+                    <img src="{{ asset('images/breakfast.png') }}" alt="Vegetables & Salads" class="h-full w-full object-cover transform scale-[1.3] origin-right" />
+                </div>
+                
             </div>
+        </div>
 
-            <div class="bg-ret-green-light text-white overflow-hidden shadow-lg aspect-square">
-                <img src="{{ asset('images/sandwich.png') }}" alt="Sandwiches & Snacks" class="h-48 w-full object-cover" />
-                <div class="p-6">
-                    <h3 class="text-4xl font-bold mb-2">Sandwiches & Snacks</h3>
+        {{-- MENU ITEM 2: Sandwiches & Snacks --}}
+        <div class="bg-ret-green-light text-white overflow-hidden shadow-lg aspect-square">
+            <div class="flex h-full w-full">
+                
+                {{-- TEXT CONTENT (LEFT) --}}
+                <div class="w-2/3 p-6 flex flex-col justify-center items-start text-left">
+                    <h3 class="text-3xl font-bold mb-2 leading-tight">Sandwiches & Snacks</h3>
                     <p class="text-base text-gray-300">Ideal for in-between meals.</p>
                 </div>
+                
+                {{-- IMAGE (RIGHT) --}}
+                <div class="w-1/3 h-full overflow-hidden">
+                    <img src="{{ asset('images/sandwich.png') }}" alt="Sandwiches & Snacks" class="h-full w-full object-cover" />
+                </div>
+                
             </div>
+        </div>
 
-            <div class="bg-cafeteria-orange text-white overflow-hidden shadow-lg aspect-square">
-                <img src="{{ asset('images/adobo.png') }}" alt="Rice Meals & Main Courses" class="h-48 w-full object-cover" />
-                <div class="p-6">
-                    <h3 class="text-4xl font-bold mb-2">Rice Meals & Main Courses</h3>
+        {{-- MENU ITEM 3: Rice Meals & Main Courses --}}
+        <div class="bg-cafeteria-orange text-white overflow-hidden shadow-lg aspect-square">
+            <div class="flex h-full w-full">
+                
+                {{-- TEXT CONTENT (LEFT) --}}
+                <div class="w-2/3 p-6 flex flex-col justify-center items-start text-left">
+                    <h3 class="text-3xl font-bold mb-2 leading-tight">Rice Meals & Main Courses</h3>
                     <p class="text-base text-gray-300">Served with rice, featuring Filipino specialty.</p>
                 </div>
+                
+                {{-- IMAGE (RIGHT) --}}
+                <div class="w-1/3 h-full overflow-hidden">
+                    <img src="{{ asset('images/adobo.png') }}" alt="Rice Meals & Main Courses" class="h-full w-full object-cover" />
+                </div>
+                
             </div>
+        </div>
 
-            <div class="bg-clsu-green text-white overflow-hidden shadow-lg aspect-square">
-                <img src="{{ asset('images/juice.png') }}" alt="Desserts & Beverages" class="h-48 w-full object-cover" />
-                <div class="p-6">
-                    <h3 class="text-4xl font-bold mb-2">Desserts & Beverages</h3>
+        {{-- MENU ITEM 4: Desserts & Beverages (Applied the new structure) --}}
+        <div class="bg-clsu-green text-white overflow-hidden shadow-lg aspect-square">
+            <div class="flex h-full w-full">
+                
+                {{-- TEXT CONTENT (LEFT) --}}
+                <div class="w-2/3 p-6 flex flex-col justify-center items-start text-left">
+                    <h3 class="text-3xl font-bold mb-2 leading-tight">Desserts & Beverages</h3>
                     <p class="text-base text-gray-300">Sweet treats and variety of drinks.</p>
                 </div>
+                
+                {{-- IMAGE (RIGHT) --}}
+                <div class="w-1/3 h-full overflow-hidden">
+                    <img src="{{ asset('images/juice.png') }}" alt="Desserts & Beverages" class="h-full w-full object-cover" />
+                </div>
+                
             </div>
+        </div>
 
-            <div class="bg-menu-orange text-white overflow-hidden shadow-lg aspect-square">
-                <img src="{{ asset('images/tinola.webp') }}" alt="Soups & Side Dishes" class="h-48 w-full object-cover" />
-                <div class="p-6">
-                    <h3 class="text-4xl font-bold mb-2">Soups & Side Dishes</h3>
+        {{-- MENU ITEM 5: Soups & Side Dishes (Applied the new structure) --}}
+        <div class="bg-menu-orange text-white overflow-hidden shadow-lg aspect-square">
+            <div class="flex h-full w-full">
+                
+                {{-- TEXT CONTENT (LEFT) --}}
+                <div class="w-2/3 p-6 flex flex-col justify-center items-start text-left">
+                    <h3 class="text-3xl font-bold mb-2 leading-tight">Soups & Side Dishes</h3>
                     <p class="text-base text-gray-300">Warm and flavorful broths.</p>
                 </div>
-            </div>
-
-            <a href="{{ route('menu') }}"
-               class="block w-full h-full transition duration-300 transform hover:scale-[1.03] hover:shadow-2xl rounded-lg">
-                <div class="bg-menu-dark text-white overflow-hidden shadow-lg flex flex-col items-center justify-center p-6 aspect-square">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-16 h-16 mb-4 text-white">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                    </svg>
-                    <h3 class="text-4xl font-bold mb-2">And Much More</h3>
+                
+                {{-- IMAGE (RIGHT) --}}
+                <div class="w-1/3 h-full overflow-hidden">
+                    <img src="{{ asset('images/tinola.webp') }}" alt="Soups & Side Dishes" class="h-full w-full object-cover" />
                 </div>
-            </a>
+                
+            </div>
         </div>
-    </section>
+
+        {{-- MENU ITEM 6: And Much More (Kept as a full block link) --}}
+        <a href="{{ route('menu') }}"
+            class="block w-full h-full transition duration-300 transform hover:scale-[1.03] hover:shadow-2xl rounded-lg">
+            <div class="bg-menu-dark text-white overflow-hidden shadow-lg flex flex-col items-center justify-center p-6 aspect-square">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-16 h-16 mb-4 text-white">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
+                </svg>
+                <h3 class="text-4xl font-bold mb-2">And Much More</h3>
+            </div>
+        </a>
+    </div>
+</section>
 
     <section class="py-30 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16 font-poppins">

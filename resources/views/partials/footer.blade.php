@@ -26,13 +26,13 @@
         <div>
             <h3 class="text-xl font-bold mb-4">Socials</h3>
             <div class="flex items-center space-x-2">
-                <img src="https://placehold.co/24x24/000000/FFFFFF?text=T" alt="Twitter" class="w-6 h-6 text-blue-400" />
+                <img src="https://placehold.co/24x24/000000/FFFFFF?text=F" alt="facebook" class="w-6 h-6 text-blue-400" />
                 <a href="#" class="text-gray-300 hover:text-white">CLSU RET Cafeteria</a>
             </div>
         </div>
     </div>
 
     <div class="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300 text-sm">
-        &copy;2025 All Rights Copyright CLSU RET Cafeteria. Design & Developed By BSIT.
+        &copy;2025 All Rights Copyright CLSU RET Cafeteria.
     </div>
 </footer>

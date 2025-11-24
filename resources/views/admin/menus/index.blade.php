@@ -375,76 +375,128 @@
           </div>
 
           {{-- Menu Items --}}
-          <div class="border border-gray-200 rounded-lg p-4 recipe-form">
-            <h3 class="font-semibold text-gray-900 mb-3 flex items-center" style="font-family: 'Poppins', sans-serif; font-size: 1rem;">
+          <div class="border border-gray-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center mb-4">
               <svg class="w-4 h-4 mr-2 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
               </svg>
-              Menu Items
-            </h3>
-            <div class="space-y-3">
+              <h3 class="font-semibold text-gray-900" style="font-family: 'Poppins', sans-serif; font-size: 1rem;">
+                Menu Items
+              </h3>
+            </div>
+
+            <div class="space-y-4">
               <template x-for="(item, index) in form.items" :key="index">
-                <div class="bg-gray-50 p-3 rounded-lg space-y-3 border border-gray-200">
-                  <div class="flex gap-2 items-end">
-                    <input type="text" :name="'items[' + index + '][name]'" x-model="item.name" placeholder="Food name" class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-                    <select :name="'items[' + index + '][type]'" x-model="item.type" class="border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-                      <option value="food">Food/Main Dish</option>
-                      <option value="drink">Drink</option>
-                      <option value="dessert">Dessert</option>
-                    </select>
-                    <button type="button" @click="form.items.splice(index, 1)" class="p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  {{-- Item Header --}}
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                        <input type="text" 
+                              :name="'items[' + index + '][name]'" 
+                              x-model="item.name" 
+                              placeholder="Enter food name" 
+                              class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                              required>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select :name="'items[' + index + '][type]'" 
+                                x-model="item.type" 
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white">
+                          <option value="food">Food</option>
+                          <option value="drink">Drink</option>
+                          <option value="dessert">Dessert</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button type="button" 
+                            @click="form.items.splice(index, 1)" 
+                            class="ml-3 p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                       </svg>
                     </button>
                   </div>
-                  {{-- Recipes for this item --}}
+
+                  {{-- Collapsible Recipes Section --}}
                   <div class="border-t border-gray-300 pt-3">
-                    <h4 class="font-medium text-gray-700 mb-2 flex items-center" style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-                      <svg class="w-3 h-3 mr-1 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    <button type="button"
+                            @click="item.showRecipes = !item.showRecipes"
+                            class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900">
+                      <span>Ingredients <span x-text="item.recipes.length ? '(' + item.recipes.length + ')' : ''"></span></span>
+                      <svg class="w-4 h-4 transition-transform duration-200" 
+                          :class="{ 'rotate-180': item.showRecipes }" 
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                       </svg>
-                      Recipes
-                    </h4>
-                    <div class="space-y-2">
-                      <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                        <div class="flex gap-2 items-end">
-                          <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" x-model="recipe.inventory_item_id" class="flex-1 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-                            <option value="">Select Ingredient</option>
-                            @foreach($inventoryItems as $inv)
-                              <option value="{{ $inv->id }}">{{ $inv->name }}</option>
-                            @endforeach
-                          </select>
-                          <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="w-20 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-                          <input type="text" :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" placeholder="Unit" class="w-16 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-                          <button type="button" @click="item.recipes.splice(rIndex, 1)" class="p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      </template>
-                      <button type="button" @click="item.recipes.push({inventory_item_id: '', quantity_needed: '', unit: ''})" class="text-[#057C3C] hover:text-[#00462E] font-medium flex items-center transition-colors duration-200"
-                              style="font-size: 0.75rem;">
+                    </button>
+
+                    <div x-show="item.showRecipes" x-collapse class="mt-3 space-y-3">
+                      <div class="space-y-2">
+                        <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
+                          <div class="flex gap-2 items-center">
+                            <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" 
+                                    x-model="recipe.inventory_item_id" 
+                                    class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                    required>
+                              <option value="">Select ingredient</option>
+                              @foreach($inventoryItems as $inv)
+                                <option value="{{ $inv->id }}">{{ $inv->name }}</option>
+                              @endforeach
+                            </select>
+                            <input type="number" 
+                                  :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" 
+                                  x-model="recipe.quantity_needed" 
+                                  placeholder="Qty" 
+                                  step="0.01" 
+                                  min="0.01" 
+                                  class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                  required>
+                            <input type="text" 
+                                  :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
+                                  x-model="recipe.unit" 
+                                  placeholder="Unit" 
+                                  class="w-16 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                  required>
+                            <button type="button" 
+                                    @click="item.recipes.splice(rIndex, 1)" 
+                                    class="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+
+                      <button type="button" 
+                              @click="item.recipes.push({inventory_item_id: '', quantity_needed: '', unit: ''})" 
+                              class="text-[#057C3C] hover:text-[#00462E] text-sm font-medium flex items-center">
                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
-                        Add Recipe
+                        Add Ingredient
                       </button>
                     </div>
                   </div>
                 </div>
               </template>
-              <button type="button" @click="form.items.push({name: '', type: 'food', recipes: []})" class="text-[#057C3C] hover:text-[#00462E] font-medium transition-colors duration-200 flex items-center"
-                      style="font-size: 0.875rem;">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            </div>
+
+            {{-- Add Item Button at Bottom --}}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <button type="button" 
+                      @click="form.items.push({name: '', type: 'food', recipes: [], showRecipes: false})" 
+                      class="w-full text-[#057C3C] hover:text-[#00462E] font-medium transition-colors duration-200 flex items-center justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C]">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                Add Item
+                Add New Item
               </button>
             </div>
           </div>
-
           <div class="bg-green-50 border border-green-200 rounded-lg p-3">
             <div class="text-green-800 flex items-center" style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
               <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

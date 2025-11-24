@@ -8,7 +8,7 @@ background-image: url('/images/banner1.jpg');
 background-size: cover;
 background-position: top;
 }
-}
+
 
 /* Custom styles provided by the user, applied using Tailwind classes defined in config */
         .date-selector-btn {
@@ -71,9 +71,36 @@ background-position: top;
         </div>
     </section>
 
+
     <!-- Reservation Form Section -->
-    <section class="bg-gray-50 py-16">
+    <section class="bg-gray-50 py-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-8">
+                <div class="flex items-center justify-center">
+                    <div class="flex items-center">
+                        <div class="flex items-center justify-center w-10 h-10 bg-clsu-green rounded-full">
+                            <span class="text-white font-bold">1</span>
+                        </div>
+                        <div class="ml-2 text-sm font-medium text-clsu-green">Reservation Details</div>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-300 mx-2"></div>
+                    <div class="flex items-center">
+                        <div class="flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full">
+                            <span class="text-white font-bold">2</span>
+                        </div>
+                        <div class="ml-2 text-sm font-medium text-gray-500">Menu Selection</div>
+                    </div>
+                    <div class="w-16 h-1 bg-gray-300 mx-2"></div>
+                    <div class="flex items-center">
+                        <div class="flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full">
+                            <span class="text-gray-500 font-bold">3</span>
+                        </div>
+                        <div class="ml-2 text-sm font-medium text-gray-500">Confirmation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
             <form id="reservation-form" action="/reservation_form_menu" method="GET" class="space-y-10">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
@@ -113,6 +140,10 @@ background-position: top;
                         <div>
                             <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                             <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
+                                pattern="[0-9]{10,15}"
+                                inputmode="numeric"
+                                onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
 
@@ -214,14 +245,14 @@ background-position: top;
                 </div>
 
                 <!-- Action Button -->
-                <div class="text-center pt-8">
+                <div class="text-center pt-4">
                     <a href="{{ route('reservation_form_menu') }}" 
                         id="menu-selection-btn"
-                        class="inline-block bg-clsu-green px-10 py-4 rounded-lg font-bold text-white text-lg transition duration-300 shadow-xl cursor-pointer">
+                        class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold">
                         Proceed to Menu Selection
                     </a>
                     <div id="validation-message" class="mt-4 text-sm font-semibold text-red-600 hidden">
-                        Please select at least one date and ensure the time slot is valid.
+                        Please fill up the form select at least one date and ensure the time slot is valid.
                     </div>
                 </div>
 
@@ -543,6 +574,7 @@ background-position: top;
 
         });
         
+
     </script>
 
 @endsection

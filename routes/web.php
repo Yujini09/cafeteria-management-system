@@ -116,13 +116,13 @@ Route::get('/contact', function () {
 })->name('contact');
 
 // Group routes that require the user to be logged in (authenticated)
-Route::middleware(['auth'])->group(function () {
+// Route::middleware(['auth'])->group(function () {
     // 1. Route for displaying the initial reservation form (GET)
     Route::get('/reservation_form', function () {
         // This renders the view that contains the missing route link
         return view('customer.reservation_form');
     })->name('reservation_form');
-
+    Route::post('/reservation/store-session-data', [ReservationController::class, 'storeSessionData'])->name('reservation.storeSessionData');
     // 2. Route for transitioning to the menu selection after basic reservation details are entered (GET/POST)
     // NOTE: This route is temporarily allowing GET for debugging, should ideally be POST.
     Route::match(['GET', 'POST'], '/reservation_form_menu', [ReservationController::class, 'create'])->name('reservation_form_menu');
@@ -131,10 +131,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservation/store', [\App\Http\Controllers\ReservationController::class, 'store'])->name('reservation.store');
 
     // 4. Route for viewing reservation details (Assuming this view is correct)
-    Route::get('/reservation/details', function () {
+    Route::get('/reservation_details', function () {
         return view('customer.reservation_details');
     })->name('reservation_details');
 
+    // Billing receipt route
+ Route::get('/billing_info', function () {
+    return view('customer.billing_info');
+})->name('billing_info');
+
     // 5. Route for cancelling a reservation
     Route::patch('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');
-});
+
+    
+// });
