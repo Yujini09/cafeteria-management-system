@@ -3,7 +3,7 @@
 @section('title', 'Menu Selection - CLSU RET Cafeteria')
 
 @section('styles')
-<style>
+
     .menu_selection-hero-bg {
         background-image: url('/images/banner1.jpg');
         background-size: cover;
@@ -39,6 +39,47 @@
         border-color: #1a5e3d;
     }
 
+    /* Day Navigation Styles */
+    .day-nav-container {
+        background: linear-gradient(135deg, #1a5e3d 0%, #2d7a52 100%);
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .day-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .day-tab {
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        min-width: 80px;
+        text-align: center;
+    }
+    .day-tab:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
+    }
+    .day-tab.active {
+        background: white;
+        color: #1a5e3d;
+        border-color: #1a5e3d;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .day-info {
+        color: white;
+        font-size: 0.9rem;
+        margin-top: 8px;
+        text-align: center;
+    }
+
     /* Style for the Menu Selection Tabs */
     .menu-tab {
         padding: 8px 12px;
@@ -61,6 +102,33 @@
     }
     .menu-tab:not(.active):hover {
         background-color: #f0f0f0;
+    }
+
+    /* Meal Type Buttons */
+    .meal-type-btn {
+        padding: 6px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: 500;
+        margin: 2px;
+        transition: all 0.2s;
+        border: 1px solid #d1d5db;
+        color: #4b5563;
+        font-size: 0.75rem;
+        background-color: #f9fafb;
+        text-align: center;
+        flex: 1;
+        min-width: 80px;
+    }
+    .meal-type-btn.active {
+        background-color: #1a5e3d;
+        color: white;
+        border-color: #1a5e3d;
+        box-shadow: 0 1px 2px rgba(26, 94, 61, 0.3);
+    }
+    .meal-type-btn:not(.active):hover {
+        background-color: #e5e7eb;
+        border-color: #9ca3af;
     }
 
     /* Enhanced styles */
@@ -94,6 +162,14 @@
     .menu-item-highlight {
         background: linear-gradient(90deg, #f0f9f0 0%, #ffffff 100%);
         border: 1px solid #1a5e3d;
+    }
+
+    /* Day content management */
+    .day-content {
+        display: none;
+    }
+    .day-content.active {
+        display: block;
     }
 
     /* Green menu list styles */
@@ -259,7 +335,28 @@
     .notification-icon {
         flex-shrink: 0;
     }
-</style>
+
+    /* Meal type sections */
+    .meal-type-section {
+        display: none;
+    }
+    .meal-type-section.active {
+        display: block;
+    }
+
+    /* Day summary badge */
+    .day-summary-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #1a5e3d;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
 @endsection
 
 @section('content')
@@ -312,6 +409,16 @@
                 <form action="{{ route('reservation.store') }}" method="POST" class="space-y-6" id="reservation-form">
                     @csrf
 
+                    {{-- Day Navigation --}}
+                    <div class="day-nav-container">
+                        <div class="day-tabs" id="day-tabs">
+                            <!-- Day tabs will be dynamically generated -->
+                        </div>
+                        <div class="day-info" id="day-info">
+                            <!-- Day info will be dynamically updated -->
+                        </div>
+                    </div>
+
                     {{-- Menu Selection Grid --}}
                     <div class="card p-6">
                         <div class="flex justify-between items-center mb-6">
@@ -329,115 +436,67 @@
                             // Get default prices for fallback
                             $defaultStandardPrice = 150;
                             $defaultSpecialPrice = 200;
+
+                            // Get date range from session or previous form
+                            $startDate = session('reservation_data.start_date') ?? now()->format('Y-m-d');
+                            $endDate = session('reservation_data.end_date') ?? now()->addDays(2)->format('Y-m-d');
+
+                            // Parse day_times JSON if available
+                            $dayTimes = [];
+                            if (session('reservation_data.day_times')) {
+                                $dayTimes = json_decode(session('reservation_data.day_times'), true);
+                            }
+
+                            // Calculate number of days
+                            $start = new DateTime($startDate);
+                            $end = new DateTime($endDate);
+                            $numberOfDays = $end->diff($start)->days + 1;
                         @endphp
+
+                        {{-- Hidden fields for date range --}}
+                        <input type="hidden" id="start-date" value="{{ $startDate }}">
+                        <input type="hidden" id="end-date" value="{{ $endDate }}">
+                        <input type="hidden" id="number-of-days" value="{{ $numberOfDays }}">
 
                         {{-- Hidden fields for all menu prices --}}
                         <div id="menu-prices-data" style="display: none;">
                             @foreach($meal_times as $meal_key => $meal_label)
                                 @php
-                                    $standardPrice = isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice;
-                                    $specialPrice = isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice;
+                                    // Ensure we have valid prices with fallbacks
+                                    $standardPrice = isset($menuPrices['standard'][$meal_key][0]) && is_numeric($menuPrices['standard'][$meal_key][0]->price) 
+                                        ? $menuPrices['standard'][$meal_key][0]->price 
+                                        : $defaultStandardPrice;
+                                        
+                                    $specialPrice = isset($menuPrices['special'][$meal_key][0]) && is_numeric($menuPrices['special'][$meal_key][0]->price)
+                                        ? $menuPrices['special'][$meal_key][0]->price
+                                        : $defaultSpecialPrice;
                                 @endphp
                                 <div data-meal-time="{{ $meal_key }}" 
-                                     data-standard-price="{{ $standardPrice }}" 
-                                     data-special-price="{{ $specialPrice }}">
+                                     data-standard-price="{{ number_format($standardPrice, 2, '.', '') }}" 
+                                     data-special-price="{{ number_format($specialPrice, 2, '.', '') }}">
                                 </div>
                             @endforeach
                         </div>
 
-                        {{-- Reservation Rows - Redesigned as cards --}}
-                        <div class="space-y-4">
-                            @foreach ($meal_times as $meal_key => $meal_label)
-                                @php
-                                    $standardPrice = isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice;
-                                    $specialPrice = isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice;
-                                @endphp
-                                <div class="meal-card bg-white p-4 rounded-lg border border-gray-200 relative" id="{{ $meal_key }}-card">
-                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                        {{-- Meal Name --}}
-                                        <div class="md:col-span-3">
-                                            <div class="flex items-center">
-                                                <div class="w-3 h-3 bg-clsu-green rounded-full mr-3"></div>
-                                                <label for="{{ $meal_key }}_qty" class="font-bold text-lg text-gray-800">{{ $meal_label }}</label>
-                                            </div>
-                                        </div>
-
-                                        {{-- Meal Category Dropdown --}}
-                                        <div class="md:col-span-3">
-                                            <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
-                                            <select id="{{ $meal_key }}_category" name="reservations[{{ $meal_key }}][category]" class="category-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-meal-time="{{ $meal_key }}">
-                                                @foreach ($categories as $cat_key => $cat_label)
-                                                    <option value="{{ $cat_key }}" 
-                                                            @if($cat_key === 'standard' && $meal_key === 'breakfast') selected @endif>
-                                                        {{ $cat_label }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-
-                                        {{-- Menu Choice Dropdown - Fixed --}}
-                                        <div class="md:col-span-4">
-                                            <label class="block text-xs font-medium text-gray-500 mb-1">Menu Choice</label>
-                                            <select id="{{ $meal_key }}_menu" name="reservations[{{ $meal_key }}][menu]" class="menu-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-meal-time="{{ $meal_key }}">
-                                                @if(isset($menus[$meal_key]) && count($menus[$meal_key]) > 0)
-                                                    {{-- Standard Menu Options --}}
-                                                    @if(isset($menus[$meal_key]['standard']))
-                                                        <optgroup label="Standard Menu" data-category="standard" data-price="{{ $standardPrice }}">
-                                                            @foreach ($menus[$meal_key]['standard'] as $menu)
-                                                                <option value="{{ $menu->id }}" 
-                                                                        data-price="{{ $standardPrice }}" 
-                                                                        data-category="standard"
-                                                                        data-menu-name="{{ $menu->name }}">
-                                                                    {{ $menu->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </optgroup>
-                                                    @endif
-                                                    
-                                                    {{-- Special Menu Options --}}
-                                                    @if(isset($menus[$meal_key]['special']))
-                                                        <optgroup label="Special Menu" data-category="special" data-price="{{ $specialPrice }}">
-                                                            @foreach ($menus[$meal_key]['special'] as $menu)
-                                                                <option value="{{ $menu->id }}" 
-                                                                        data-price="{{ $specialPrice }}" 
-                                                                        data-category="special"
-                                                                        data-menu-name="{{ $menu->name }}">
-                                                                    {{ $menu->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </optgroup>
-                                                    @endif
-                                                @else
-                                                    <option value="">No menus available for {{ $meal_label }}</option>
-                                                @endif
-                                            </select>
-                                        </div>
-
-                                        {{-- Quantity (Pax) Input with +/- Buttons --}}
-                                        <div class="md:col-span-2">
-                                            <label class="block text-xs font-medium text-gray-500 mb-1">Pax Quantity</label>
-                                            <div class="flex items-center">
-                                                <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-l-md flex items-center justify-center text-lg font-bold" data-action="decrement" data-target="#{{ $meal_key }}_qty">-</button>
-                                                <input type="number" id="{{ $meal_key }}_qty" name="reservations[{{ $meal_key }}][qty]" value="0" min="10" max="100" class="quantity-input w-12 h-8 text-center border-t border-b border-gray-300 p-0 text-sm focus:ring-0 focus:border-gray-300 bg-white" readonly>
-                                                <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-r-md flex items-center justify-center text-lg font-bold" data-action="increment" data-target="#{{ $meal_key }}_qty">+</button>
-                                            </div>
-                                            <div class="text-xs text-red-500 mt-1 min-h-4 quantity-error" style="display: none;">
-                                                Minimum 10 pax required
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                        {{-- Day Content Areas --}}
+                        <div id="day-content-container">
+                            <!-- Day content will be dynamically generated -->
                         </div>
 
                         {{-- Quick Actions --}}
                         <div class="mt-6 pt-4 border-t border-gray-200">
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" id="clear-all-meals" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
-                                    Clear All
+                                <button type="button" id="clear-current-day" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                    Clear Current Day
                                 </button>
-                                <button type="button" id="set-standard-quantity" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
-                                    Set 10 Pax for All
+                                <button type="button" id="clear-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                    Clear All Days
+                                </button>
+                                <button type="button" id="set-standard-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                    Set 10 Pax for All Days
+                                </button>
+                                <button type="button" id="copy-to-all-days" class="px-4 py-2 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                                    Copy to All Days
                                 </button>
                             </div>
                         </div>
@@ -541,32 +600,44 @@
                             <button type="button" class="menu-tab" data-menu-category="special">Special Menu</button>
                         </div>
 
+                        {{-- Meal Type Buttons --}}
+                        <div class="flex flex-wrap p-2 bg-white border-b" id="meal-type-buttons">
+                            <button type="button" class="meal-type-btn active" data-meal-type="all">All Meals</button>
+                            <button type="button" class="meal-type-btn" data-meal-type="breakfast">Breakfast</button>
+                            <button type="button" class="meal-type-btn" data-meal-type="am_snacks">AM Snacks</button>
+                            <button type="button" class="meal-type-btn" data-meal-type="lunch">Lunch</button>
+                            <button type="button" class="meal-type-btn" data-meal-type="pm_snacks">PM Snacks</button>
+                            <button type="button" class="meal-type-btn" data-meal-type="dinner">Dinner</button>
+                        </div>
+
                         {{-- Menu Details Containers - Fixed --}}
                         <div id="standard-menu-details" class="menu-content-area">
                             @if(isset($menus))
                                 @foreach($menus as $meal_time => $types)
                                     @if(isset($types['standard']))
-                                        @foreach($types['standard'] as $menu)
-                                            <div class="menu-list-item compact-menu-item rounded-lg shadow-sm" data-searchable="{{ strtolower($menu->name) }} {{ strtolower($meal_time) }} @if($menu->items) @foreach($menu->items as $item) {{ strtolower($item->name) }} @endforeach @endif">
-                                                <h4 class="text-lg font-bold text-green-800 mb-2 menu-item-name">{{ $menu->name }}</h4>
-                                                <div class="text-xs text-green-600 mb-2 font-medium capitalize bg-green-50 px-2 py-1 rounded inline-block meal-time">{{ $meal_time }}</div>
-                                                <ul class="text-sm space-y-1 mt-2 menu-items-list">
-                                                    @if($menu->items && count($menu->items) > 0)
-                                                        @foreach($menu->items as $item)
-                                                            <li class="flex items-center menu-item">
-                                                                <span class="text-green-500 mr-2">•</span>
-                                                                <span class="text-gray-700 item-name">{{ $item->name }}</span>
-                                                                @if($item->type)
-                                                                    <span class="text-xs text-gray-500 ml-2">({{ $item->type }})</span>
-                                                                @endif
-                                                            </li>
-                                                        @endforeach
-                                                    @else
-                                                        <li class="text-gray-500 text-sm">No items available</li>
-                                                    @endif
-                                                </ul>
-                                            </div>
-                                        @endforeach
+                                        <div class="meal-type-section {{ $loop->first ? 'active' : '' }}" data-meal-type="{{ $meal_time }}">
+                                            @foreach($types['standard'] as $menu)
+                                                <div class="menu-list-item compact-menu-item rounded-lg shadow-sm" data-searchable="{{ strtolower($menu->name) }} {{ strtolower($meal_time) }} @if($menu->items) @foreach($menu->items as $item) {{ strtolower($item->name) }} @endforeach @endif">
+                                                    <h4 class="text-lg font-bold text-green-800 mb-2 menu-item-name">{{ $menu->name }}</h4>
+                                                    <div class="text-xs text-green-600 mb-2 font-medium capitalize bg-green-50 px-2 py-1 rounded inline-block meal-time">{{ $meal_time }}</div>
+                                                    <ul class="text-sm space-y-1 mt-2 menu-items-list">
+                                                        @if($menu->items && count($menu->items) > 0)
+                                                            @foreach($menu->items as $item)
+                                                                <li class="flex items-center menu-item">
+                                                                    <span class="text-green-500 mr-2">•</span>
+                                                                    <span class="text-gray-700 item-name">{{ $item->name }}</span>
+                                                                    @if($item->type)
+                                                                        <span class="text-xs text-gray-500 ml-2">({{ $item->type }})</span>
+                                                                    @endif
+                                                                </li>
+                                                            @endforeach
+                                                        @else
+                                                            <li class="text-gray-500 text-sm">No items available</li>
+                                                        @endif
+                                                    </ul>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     @endif
                                 @endforeach
                             @else
@@ -583,28 +654,30 @@
                             @if(isset($menus))
                                 @foreach($menus as $meal_time => $types)
                                     @if(isset($types['special']))
-                                        @foreach($types['special'] as $menu)
-                                            <div class="menu-list-item compact-menu-item rounded-lg shadow-sm border-green-300" data-searchable="{{ strtolower($menu->name) }} {{ strtolower($meal_time) }} @if($menu->items) @foreach($menu->items as $item) {{ strtolower($item->name) }} @endforeach @endif">
-                                                <h4 class="text-lg font-bold text-green-800 mb-2 menu-item-name">{{ $menu->name }}</h4>
-                                                <div class="text-xs text-green-600 mb-2 font-medium capitalize bg-green-50 px-2 py-1 rounded inline-block meal-time">{{ $meal_time }}</div>
-                                                <div class="text-xs font-semibold text-green-700 mb-2 bg-yellow-100 px-2 py-1 rounded inline-block">Premium Selection</div>
-                                                <ul class="text-sm space-y-1 mt-2 menu-items-list">
-                                                    @if($menu->items && count($menu->items) > 0)
-                                                        @foreach($menu->items as $item)
-                                                            <li class="flex items-center menu-item">
-                                                                <span class="text-green-500 mr-2">•</span>
-                                                                <span class="text-gray-700 item-name">{{ $item->name }}</span>
-                                                                @if($item->type)
-                                                                    <span class="text-xs text-gray-500 ml-2">({{ $item->type }})</span>
-                                                                @endif
-                                                            </li>
-                                                        @endforeach
-                                                    @else
-                                                        <li class="text-gray-500 text-sm">No items available</li>
-                                                    @endif
-                                                </ul>
-                                            </div>
-                                        @endforeach
+                                        <div class="meal-type-section {{ $loop->first ? 'active' : '' }}" data-meal-type="{{ $meal_time }}">
+                                            @foreach($types['special'] as $menu)
+                                                <div class="menu-list-item compact-menu-item rounded-lg shadow-sm border-green-300" data-searchable="{{ strtolower($menu->name) }} {{ strtolower($meal_time) }} @if($menu->items) @foreach($menu->items as $item) {{ strtolower($item->name) }} @endforeach @endif">
+                                                    <h4 class="text-lg font-bold text-green-800 mb-2 menu-item-name">{{ $menu->name }}</h4>
+                                                    <div class="text-xs text-green-600 mb-2 font-medium capitalize bg-green-50 px-2 py-1 rounded inline-block meal-time">{{ $meal_time }}</div>
+                                                    <div class="text-xs font-semibold text-green-700 mb-2 bg-yellow-100 px-2 py-1 rounded inline-block">Premium Selection</div>
+                                                    <ul class="text-sm space-y-1 mt-2 menu-items-list">
+                                                        @if($menu->items && count($menu->items) > 0)
+                                                            @foreach($menu->items as $item)
+                                                                <li class="flex items-center menu-item">
+                                                                    <span class="text-green-500 mr-2">•</span>
+                                                                    <span class="text-gray-700 item-name">{{ $item->name }}</span>
+                                                                    @if($item->type)
+                                                                        <span class="text-xs text-gray-500 ml-2">({{ $item->type }})</span>
+                                                                    @endif
+                                                                </li>
+                                                            @endforeach
+                                                        @else
+                                                            <li class="text-gray-500 text-sm">No items available</li>
+                                                        @endif
+                                                    </ul>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     @endif
                                 @endforeach
                             @else
@@ -708,7 +781,7 @@
     </div>
 </div>
 
-<!-- Add this Success Modal after the Confirmation Modal -->
+<!-- Success Modal -->
 <div id="successModal" class="confirmation-modal">
     <div class="confirmation-modal-content">
         <div class="text-center mb-6">
@@ -746,6 +819,11 @@
 </div>
 
 <script>
+    // Global variables for day management
+    let currentDay = 1;
+    let totalDays = 1;
+    let dayData = {};
+
     // Make functions globally available first
     window.closeConfirmationModal = closeConfirmationModal;
     window.submitReservation = submitReservation;
@@ -789,51 +867,389 @@
         modal.style.display = 'none';
     }
 
-function redirectToReservationDetails() {
-    // Close success modal
-    closeSuccessModal();
-    
-    // Simply redirect to the reservation details page
-    window.location.href = '/reservation_details'; // Adjust this URL to match your route
-}
+    function redirectToReservationDetails() {
+        // Close success modal
+        closeSuccessModal();
+        
+        // Simply redirect to the reservation details page
+        window.location.href = '/reservation_details'; // Adjust this URL to match your route
+    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Get all menu prices from hidden data
+    // Notification system
+    function showNotification(message, type = 'success', duration = 5000) {
+        // Remove existing notifications
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icon = type === 'success' ? 
+            '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
+            '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+
+        notification.innerHTML = `
+            <div class="notification-content">
+                ${icon}
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Trigger animation
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+
+        // Auto remove after duration
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, duration);
+
+        return notification;
+    }
+
+    // Get all menu prices from hidden data - improved version
+    function initializeMenuPrices() {
         const menuPricesData = document.getElementById('menu-prices-data');
         const menuPrices = {};
         
         menuPricesData.querySelectorAll('div[data-meal-time]').forEach(priceElement => {
             const mealTime = priceElement.getAttribute('data-meal-time');
+            const standardPrice = parseFloat(priceElement.getAttribute('data-standard-price')) || 150;
+            const specialPrice = parseFloat(priceElement.getAttribute('data-special-price')) || 200;
+            
             menuPrices[mealTime] = {
-                standard: parseFloat(priceElement.getAttribute('data-standard-price')),
-                special: parseFloat(priceElement.getAttribute('data-special-price'))
+                standard: standardPrice,
+                special: specialPrice
             };
         });
+        
+        return menuPrices;
+    }
 
-        // --- 1. Quantity Buttons Logic with 10 pax minimum ---
-        document.querySelectorAll('.qty-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const action = e.currentTarget.dataset.action;
-                const targetId = e.currentTarget.dataset.target;
-                const input = document.querySelector(targetId);
-                let value = parseInt(input.value);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize day system
+        initializeDaySystem();
 
-                if (action === 'increment') {
-                    value = value < 100 ? value + 1 : 100; // Cap at 100
-                } else if (action === 'decrement') {
-                    value = value > 10 ? value - 1 : 10; // Don't go below 10
-                }
-                input.value = value;
+        // Get menu prices
+        const menuPrices = initializeMenuPrices();
+
+        // --- DAY SYSTEM FUNCTIONS ---
+        function initializeDaySystem() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            totalDays = parseInt(document.getElementById('number-of-days').value);
+            
+            // Generate day tabs
+            generateDayTabs(startDate, totalDays);
+            
+            // Generate day content areas
+            generateDayContentAreas(totalDays);
+            
+            // Initialize first day
+            switchToDay(1);
+        }
+
+        function generateDayTabs(startDate, totalDays) {
+            const dayTabsContainer = document.getElementById('day-tabs');
+            const dayInfo = document.getElementById('day-info');
+            const start = new Date(startDate);
+            
+            dayTabsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= totalDays; i++) {
+                const currentDate = new Date(start);
+                currentDate.setDate(start.getDate() + i - 1);
                 
-                // Update card styling based on quantity
-                updateCardStyling(input);
-                updateSummary();
-                validateQuantity(input);
+                const tab = document.createElement('button');
+                tab.type = 'button';
+                tab.className = `day-tab ${i === 1 ? 'active' : ''}`;
+                tab.textContent = `Day ${i}`;
+                tab.dataset.day = i;
+                tab.dataset.date = currentDate.toISOString().split('T')[0];
+                
+                // Add time information if available from dayTimes
+                const dateKey = currentDate.toISOString().split('T')[0];
+                @if(!empty($dayTimes) && is_array($dayTimes))
+                    @foreach($dayTimes as $date => $times)
+                        if (dateKey === '{{ $date }}') {
+                            tab.dataset.startTime = '{{ $times["start_time"] ?? "07:00" }}';
+                            tab.dataset.endTime = '{{ $times["end_time"] ?? "10:00" }}';
+                        }
+                    @endforeach
+                @endif
+                
+                tab.addEventListener('click', () => switchToDay(i));
+                dayTabsContainer.appendChild(tab);
+            }
+    
+            updateDayInfo(1);
+        }
+
+        function updateDayInfo(day) {
+        const dayInfo = document.getElementById('day-info');
+        const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+        
+        if (activeTab) {
+            const date = new Date(activeTab.dataset.date);
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
             });
-        });
+            
+            let timeInfo = '';
+            if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
+                timeInfo = ` | Time: ${activeTab.dataset.startTime} to ${activeTab.dataset.endTime}`;
+            }
+            
+            dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
+        }
+    }
+
+
+        function generateDayContentAreas(totalDays) {
+            const container = document.getElementById('day-content-container');
+            container.innerHTML = '';
+            
+            @php
+                $meal_times = ['breakfast' => 'Breakfast', 'am_snacks' => 'A.M. Snacks', 'lunch' => 'Lunch', 'pm_snacks' => 'P.M. Snacks', 'dinner' => 'Dinner'];
+                $categories = ['standard' => 'Standard Menu', 'special' => 'Special Menu'];
+            @endphp
+            
+            for (let day = 1; day <= totalDays; day++) {
+                const dayContent = document.createElement('div');
+                dayContent.className = `day-content ${day === 1 ? 'active' : ''}`;
+                dayContent.id = `day-${day}-content`;
+                dayContent.dataset.day = day;
+                
+                let html = `<div class="space-y-4">`;
+                
+                @foreach ($meal_times as $meal_key => $meal_label)
+                    @php
+                        $standardPrice = isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice;
+                        $specialPrice = isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice;
+                    @endphp
+                    
+                    html += `
+                    <div class="meal-card bg-white p-4 rounded-lg border border-gray-200 relative" id="day-${day}-{{ $meal_key }}-card">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                            <div class="md:col-span-3">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-clsu-green rounded-full mr-3"></div>
+                                    <label class="font-bold text-lg text-gray-800">{{ $meal_label }}</label>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+                                <select name="reservations[${day}][{{ $meal_key }}][category]" class="category-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
+                                    @foreach ($categories as $cat_key => $cat_label)
+                                        <option value="{{ $cat_key }}" 
+                                                @if($cat_key === 'standard' && $meal_key === 'breakfast') selected @endif>
+                                            {{ $cat_label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Menu Choice</label>
+                                <select name="reservations[${day}][{{ $meal_key }}][menu]" class="menu-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
+                                    <!-- Menu options will be dynamically populated based on category selection -->
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Pax Quantity</label>
+                                <div class="flex items-center">
+                                    <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-l-md flex items-center justify-center text-lg font-bold" data-action="decrement" data-day="${day}" data-meal-time="{{ $meal_key }}">-</button>
+                                    <input type="number" name="reservations[${day}][{{ $meal_key }}][qty]" value="0" min="10" max="100" class="quantity-input w-12 h-8 text-center border-t border-b border-gray-300 p-0 text-sm focus:ring-0 focus:border-gray-300 bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}" readonly>
+                                    <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-r-md flex items-center justify-center text-lg font-bold" data-action="increment" data-day="${day}" data-meal-time="{{ $meal_key }}">+</button>
+                                </div>
+                                <div class="text-xs text-red-500 mt-1 min-h-4 quantity-error" style="display: none;">
+                                    Minimum 10 pax required
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                @endforeach
+                
+                html += `</div>`;
+                dayContent.innerHTML = html;
+                container.appendChild(dayContent);
+            }
+            
+            // Initialize event listeners for dynamically created elements
+            initializeEventListeners();
+            
+            // Initialize menu options for all selects
+            initializeMenuOptions();
+        }
+
+        function initializeMenuOptions() {
+            // Initialize menu options for all category selects
+            document.querySelectorAll('.category-select').forEach(select => {
+                updateMenuOptions(select);
+            });
+        }
+
+        function updateMenuOptions(categorySelect) {
+            const day = categorySelect.dataset.day;
+            const mealTime = categorySelect.dataset.mealTime;
+            const selectedCategory = categorySelect.value;
+            const menuSelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].menu-select`);
+            
+            // Clear existing options
+            menuSelect.innerHTML = '';
+            
+            // Get the appropriate menu data based on category and meal time
+            const menuData = getMenuData(mealTime, selectedCategory);
+            
+            if (menuData && menuData.length > 0) {
+                // Add options from the selected category
+                menuData.forEach(menu => {
+                    const option = document.createElement('option');
+                    option.value = menu.id;
+                    option.textContent = menu.name;
+                    option.setAttribute('data-price', menu.price);
+                    option.setAttribute('data-category', selectedCategory);
+                    option.setAttribute('data-menu-name', menu.name);
+                    menuSelect.appendChild(option);
+                });
+            } else {
+                // No menus available
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = `No ${selectedCategory} menus available`;
+                menuSelect.appendChild(option);
+            }
+            
+            // Trigger summary update
+            updateSummary();
+        }
+
+        function getMenuData(mealTime, category) {
+            // This function should return the appropriate menu data
+            // You'll need to adjust this based on your actual data structure
+            @php
+                $menuData = [];
+                foreach ($meal_times as $meal_key => $meal_label) {
+                    if (isset($menus[$meal_key])) {
+                        foreach ($categories as $cat_key => $cat_label) {
+                            if (isset($menus[$meal_key][$cat_key])) {
+                                foreach ($menus[$meal_key][$cat_key] as $menu) {
+                                    $price = $cat_key === 'standard' ? 
+                                        (isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice) :
+                                        (isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice);
+                                    
+                                    $menuData[$meal_key][$cat_key][] = [
+                                        'id' => $menu->id,
+                                        'name' => $menu->name,
+                                        'price' => $price
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            @endphp
+
+            // Return the appropriate menu data based on mealTime and category
+            const menuData = @json($menuData);
+            return menuData[mealTime] && menuData[mealTime][category] ? menuData[mealTime][category] : [];
+        }
+
+        function switchToDay(day) {
+            // Update active tab
+            document.querySelectorAll('.day-tab').forEach(tab => {
+                tab.classList.toggle('active', parseInt(tab.dataset.day) === day);
+            });
+            
+            // Update content visibility
+            document.querySelectorAll('.day-content').forEach(content => {
+                content.classList.toggle('active', parseInt(content.dataset.day) === day);
+            });
+            
+            // Update current day
+            currentDay = day;
+            
+            // Update day info
+            updateDayInfo(day);
+            
+            // Update summary for current day
+            updateSummary();
+        }
+
+        function updateDayInfo(day) {
+            const dayInfo = document.getElementById('day-info');
+            const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+            
+            if (activeTab) {
+                const date = new Date(activeTab.dataset.date);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                dayInfo.textContent = `Currently viewing: ${formattedDate}`;
+            }
+        }
+
+        function initializeEventListeners() {
+            // Quantity buttons
+            document.querySelectorAll('.qty-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const action = e.currentTarget.dataset.action;
+                    const day = e.currentTarget.dataset.day;
+                    const mealTime = e.currentTarget.dataset.mealTime;
+                    
+                    const input = document.querySelector(`input[data-day="${day}"][data-meal-time="${mealTime}"]`);
+                    let value = parseInt(input.value);
+
+                    if (action === 'increment') {
+                        value = value < 100 ? value + 1 : 100;
+                    } else if (action === 'decrement') {
+                        value = value > 10 ? value - 1 : 10;
+                    }
+                    input.value = value;
+                    
+                    updateCardStyling(day, mealTime);
+                    updateSummary();
+                    validateQuantity(input);
+                });
+            });
+
+            // Category change handlers - UPDATED
+            document.querySelectorAll('.category-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    updateMenuOptions(this);
+                });
+            });
+
+            // Menu selection change handlers
+            document.querySelectorAll('.menu-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    updateSummary();
+                });
+            });
+        }
 
         // Update card styling based on quantity
-        function updateCardStyling(input) {
+        function updateCardStyling(day, mealTime) {
+            const input = document.querySelector(`input[data-day="${day}"][data-meal-time="${mealTime}"]`);
             const card = input.closest('.meal-card');
             if (parseInt(input.value) > 0) {
                 card.classList.add('has-quantity');
@@ -858,7 +1274,99 @@ function redirectToReservationDetails() {
             }
         }
 
-        // Update summary information with correct pricing
+        // --- QUICK ACTION BUTTONS ---
+        document.getElementById('clear-current-day').addEventListener('click', () => {
+            document.querySelectorAll(`.day-content.active .quantity-input`).forEach(input => {
+                input.value = 0;
+                const day = input.dataset.day;
+                const mealTime = input.dataset.mealTime;
+                updateCardStyling(day, mealTime);
+                validateQuantity(input);
+            });
+            updateSummary();
+            showNotification('Current day cleared successfully!', 'success');
+        });
+
+        document.getElementById('clear-all-days').addEventListener('click', () => {
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.value = 0;
+                const day = input.dataset.day;
+                const mealTime = input.dataset.mealTime;
+                updateCardStyling(day, mealTime);
+                validateQuantity(input);
+            });
+            updateSummary();
+            showNotification('All days cleared successfully!', 'success');
+        });
+
+        document.getElementById('set-standard-all-days').addEventListener('click', () => {
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.value = 10;
+                const day = input.dataset.day;
+                const mealTime = input.dataset.mealTime;
+                updateCardStyling(day, mealTime);
+                validateQuantity(input);
+            });
+            updateSummary();
+            showNotification('10 pax set for all meals across all days!', 'success');
+        });
+
+        document.getElementById('copy-to-all-days').addEventListener('click', () => {
+            const currentDayData = getCurrentDayData();
+            
+            // Apply to all other days
+            for (let day = 1; day <= totalDays; day++) {
+                if (day !== currentDay) {
+                    applyDayData(day, currentDayData);
+                }
+            }
+            
+            updateSummary();
+            showNotification('Current day selections copied to all other days!', 'success');
+        });
+
+        function getCurrentDayData() {
+            const data = {};
+            document.querySelectorAll(`.day-content.active .meal-card`).forEach(card => {
+                const mealTime = card.id.replace(`day-${currentDay}-`, '').replace('-card', '');
+                const categorySelect = card.querySelector('.category-select');
+                const menuSelect = card.querySelector('.menu-select');
+                const quantityInput = card.querySelector('.quantity-input');
+                
+                data[mealTime] = {
+                    category: categorySelect.value,
+                    menu: menuSelect.value,
+                    quantity: quantityInput.value
+                };
+            });
+            return data;
+        }
+
+        function applyDayData(targetDay, data) {
+            Object.keys(data).forEach(mealTime => {
+                const categorySelect = document.querySelector(`select[data-day="${targetDay}"][data-meal-time="${mealTime}"]`);
+                const menuSelect = document.querySelector(`select[data-day="${targetDay}"][data-meal-time="${mealTime}"].menu-select`);
+                const quantityInput = document.querySelector(`input[data-day="${targetDay}"][data-meal-time="${mealTime}"]`);
+                
+                if (categorySelect && menuSelect && quantityInput) {
+                    categorySelect.value = data[mealTime].category;
+                    // Update menu options first
+                    updateMenuOptions(categorySelect);
+                    
+                    // Then set the menu value after a short delay to ensure options are populated
+                    setTimeout(() => {
+                        menuSelect.value = data[mealTime].menu;
+                        quantityInput.value = data[mealTime].quantity;
+                        
+                        updateCardStyling(targetDay, mealTime);
+                        validateQuantity(quantityInput);
+                        updateSummary();
+                    }, 100);
+                }
+            });
+        }
+
+        // Update summary information with correct pricing for all days - FIXED VERSION
         function updateSummary() {
             let totalPax = 0;
             let selectedMeals = 0;
@@ -870,58 +1378,76 @@ function redirectToReservationDetails() {
                     totalPax += value;
                     selectedMeals++;
                     
-                    // Get the meal time from the input ID
-                    const mealTime = input.id.replace('_qty', '');
-                    const menuSelect = document.getElementById(`${mealTime}_menu`);
-                    const selectedOption = menuSelect.options[menuSelect.selectedIndex];
-                    const price = parseFloat(selectedOption.getAttribute('data-price'));
+                    const day = input.dataset.day;
+                    const mealTime = input.dataset.mealTime;
+                    const menuSelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].menu-select`);
                     
-                    estimatedTotal += value * price;
+                    if (menuSelect && menuSelect.options[menuSelect.selectedIndex]) {
+                        const selectedOption = menuSelect.options[menuSelect.selectedIndex];
+                        const priceText = selectedOption.getAttribute('data-price');
+                        
+                        // Safely parse the price with fallback
+                        let price = 0;
+                        if (priceText) {
+                            price = parseFloat(priceText);
+                        } else {
+                            // Fallback prices based on category
+                            const categorySelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].category-select`);
+                            const category = categorySelect ? categorySelect.value : 'standard';
+                            price = category === 'special' ? 200 : 150; // Default prices
+                        }
+                        
+                        // Ensure price is a valid number
+                        if (!isNaN(price) && isFinite(price)) {
+                            estimatedTotal += value * price;
+                        } else {
+                            console.warn('Invalid price found:', priceText);
+                            estimatedTotal += value * 150; // Fallback to standard price
+                        }
+                    }
                 }
             });
             
             document.getElementById('total-pax-count').textContent = totalPax;
-            document.getElementById('estimated-total').textContent = `₱${estimatedTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            // Format the total amount safely
+            let formattedTotal = '₱0.00';
+            if (!isNaN(estimatedTotal) && isFinite(estimatedTotal)) {
+                formattedTotal = `₱${estimatedTotal.toLocaleString('en-PH', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                })}`;
+            }
+            
+            document.getElementById('estimated-total').textContent = formattedTotal;
         }
 
-        // --- 2. Category Change Handler - Filter menus by category ---
-        document.querySelectorAll('.category-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const mealTime = this.dataset.mealTime;
-                const selectedCategory = this.value;
-                const menuSelect = document.getElementById(`${mealTime}_menu`);
+        // --- MEAL TYPE BUTTONS FUNCTIONALITY ---
+        document.querySelectorAll('.meal-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active meal type button
+                document.querySelectorAll('.meal-type-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
                 
-                // Show/hide options based on category
-                const options = menuSelect.querySelectorAll('option');
-                options.forEach(option => {
-                    if (option.parentElement.tagName === 'OPTGROUP') {
-                        const optgroup = option.parentElement;
-                        if (optgroup.dataset.category === selectedCategory) {
-                            option.style.display = 'block';
-                        } else {
-                            option.style.display = 'none';
-                        }
+                const selectedMealType = this.dataset.mealType;
+                const activeTab = document.querySelector('.menu-tab.active').dataset.menuCategory;
+                const activeContainer = document.getElementById(`${activeTab}-menu-details`);
+                
+                // Show/hide meal type sections
+                activeContainer.querySelectorAll('.meal-type-section').forEach(section => {
+                    if (selectedMealType === 'all' || section.dataset.mealType === selectedMealType) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
                     }
                 });
                 
-                // Select first available option in the category
-                const availableOptions = menuSelect.querySelectorAll(`option[data-category="${selectedCategory}"]`);
-                if (availableOptions.length > 0) {
-                    menuSelect.value = availableOptions[0].value;
-                }
-                
-                updateSummary();
+                // Trigger search to apply current filter
+                performSearch();
             });
         });
 
-        // --- 3. Menu Selection Change Handler - Update pricing ---
-        document.querySelectorAll('.menu-select').forEach(select => {
-            select.addEventListener('change', function() {
-                updateSummary();
-            });
-        });
-
-        // --- 4. Menu Tabs Logic (Show/Hide Details) ---
+        // --- MENU TABS LOGIC ---
         const standardDetails = document.getElementById('standard-menu-details');
         const specialDetails = document.getElementById('special-menu-details');
         const menuTabs = document.querySelectorAll('.menu-tab');
@@ -948,26 +1474,7 @@ function redirectToReservationDetails() {
             });
         });
 
-        // --- 5. Quick Action Buttons ---
-        document.getElementById('clear-all-meals').addEventListener('click', () => {
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.value = 0;
-                updateCardStyling(input);
-                validateQuantity(input);
-            });
-            updateSummary();
-        });
-
-        document.getElementById('set-standard-quantity').addEventListener('click', () => {
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.value = 10;
-                updateCardStyling(input);
-                validateQuantity(input);
-            });
-            updateSummary();
-        });
-
-        // --- 6. Search Functionality ---
+        // --- SEARCH FUNCTIONALITY ---
         const searchInput = document.getElementById('menu-search');
         
         searchInput.addEventListener('input', performSearch);
@@ -980,39 +1487,49 @@ function redirectToReservationDetails() {
             
             let hasVisibleItems = false;
             
-            // Search through all menu items in the active tab
-            activeContainer.querySelectorAll('.menu-list-item').forEach(item => {
-                const searchableText = item.dataset.searchable.toLowerCase();
-                const menuName = item.querySelector('.menu-item-name');
-                const menuItems = item.querySelectorAll('.item-name');
-                const mealTime = item.querySelector('.meal-time');
-                
-                // Remove previous highlights
-                if (menuName) {
-                    menuName.innerHTML = menuName.textContent;
+            // Get active meal type filter
+            const activeMealType = document.querySelector('.meal-type-btn.active').dataset.mealType;
+            
+            // Search through all menu items in the active tab and meal type
+            activeContainer.querySelectorAll('.meal-type-section').forEach(section => {
+                // Skip sections that are not active based on meal type filter
+                if (activeMealType !== 'all' && section.dataset.mealType !== activeMealType) {
+                    return;
                 }
-                menuItems.forEach(menuItem => {
-                    menuItem.innerHTML = menuItem.textContent;
-                });
                 
-                // Check if item matches search
-                if (searchTerm === '' || searchableText.includes(searchTerm)) {
-                    item.style.display = 'block';
-                    hasVisibleItems = true;
+                section.querySelectorAll('.menu-list-item').forEach(item => {
+                    const searchableText = item.dataset.searchable.toLowerCase();
+                    const menuName = item.querySelector('.menu-item-name');
+                    const menuItems = item.querySelectorAll('.item-name');
+                    const mealTime = item.querySelector('.meal-time');
                     
-                    // Highlight matching text
-                    if (searchTerm !== '') {
-                        highlightText(menuName, searchTerm);
-                        menuItems.forEach(menuItem => {
-                            highlightText(menuItem, searchTerm);
-                        });
-                        if (mealTime) {
-                            highlightText(mealTime, searchTerm);
-                        }
+                    // Remove previous highlights
+                    if (menuName) {
+                        menuName.innerHTML = menuName.textContent;
                     }
-                } else {
-                    item.style.display = 'none';
-                }
+                    menuItems.forEach(menuItem => {
+                        menuItem.innerHTML = menuItem.textContent;
+                    });
+                    
+                    // Check if item matches search
+                    if (searchTerm === '' || searchableText.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        hasVisibleItems = true;
+                        
+                        // Highlight matching text
+                        if (searchTerm !== '') {
+                            highlightText(menuName, searchTerm);
+                            menuItems.forEach(menuItem => {
+                                highlightText(menuItem, searchTerm);
+                            });
+                            if (mealTime) {
+                                highlightText(mealTime, searchTerm);
+                            }
+                        }
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
             });
             
             // Show/hide no results message
@@ -1032,7 +1549,7 @@ function redirectToReservationDetails() {
             element.innerHTML = highlightedText;
         }
 
-        // --- 7. Form Validation ---
+        // --- FORM VALIDATION ---
         function validateForm() {
             let hasErrors = false;
             let hasSelectedMeals = false;
@@ -1047,19 +1564,19 @@ function redirectToReservationDetails() {
             });
             
             if (!hasSelectedMeals) {
-                alert('Please select at least one meal with minimum 10 pax.');
+                showNotification('Please select at least one meal with minimum 10 pax.', 'error', 5000);
                 return false;
             }
             
             if (hasErrors) {
-                alert('Please ensure all selected meals have at least 10 pax.');
+                showNotification('Please ensure all selected meals have at least 10 pax.', 'error', 5000);
                 return false;
             }
             
             return true;
         }
 
-        // --- 8. Confirmation Modal Logic ---
+        // --- CONFIRMATION MODAL LOGIC ---
         document.getElementById('confirm-button').addEventListener('click', function() {
             if (validateForm()) {
                 showConfirmationModal();
@@ -1074,38 +1591,70 @@ function redirectToReservationDetails() {
             // Clear previous summary
             summaryContainer.innerHTML = '';
             
-            // Build reservation summary
-            document.querySelectorAll('.meal-card').forEach(card => {
-                const mealTime = card.id.replace('-card', '');
-                const quantityInput = document.getElementById(`${mealTime}_qty`);
-                const quantity = parseInt(quantityInput.value);
+            // Build reservation summary for all days
+            for (let day = 1; day <= totalDays; day++) {
+                let dayHasMeals = false;
+                let dayContent = '';
+                let dayTotal = 0;
                 
-                if (quantity > 0) {
-                    const menuSelect = document.getElementById(`${mealTime}_menu`);
-                    const selectedOption = menuSelect.options[menuSelect.selectedIndex];
-                    const menuName = selectedOption.getAttribute('data-menu-name');
-                    const category = selectedOption.getAttribute('data-category');
-                    const price = parseFloat(selectedOption.getAttribute('data-price'));
-                    const mealTotal = quantity * price;
-                    totalAmount += mealTotal;
+                document.querySelectorAll(`.day-content[data-day="${day}"] .meal-card`).forEach(card => {
+                    const mealTime = card.id.replace(`day-${day}-`, '').replace('-card', '');
+                    const quantityInput = card.querySelector('.quantity-input');
+                    const quantity = parseInt(quantityInput.value);
                     
-                    const summaryItem = document.createElement('div');
-                    summaryItem.className = 'summary-item';
-                    summaryItem.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900 capitalize">${mealTime.replace('_', ' ')}</div>
-                                <div class="text-sm text-gray-600">${menuName} (${category})</div>
+                    if (quantity > 0) {
+                        dayHasMeals = true;
+                        const menuSelect = card.querySelector('.menu-select');
+                        const selectedOption = menuSelect.options[menuSelect.selectedIndex];
+                        const menuName = selectedOption.textContent;
+                        const categorySelect = card.querySelector('.category-select');
+                        const category = categorySelect ? categorySelect.value : 'standard';
+                        const priceText = selectedOption.getAttribute('data-price');
+                        const price = parseFloat(priceText) || (category === 'special' ? 200 : 150);
+                        const mealTotal = quantity * price;
+                        dayTotal += mealTotal;
+                        
+                        dayContent += `
+                            <div class="summary-item">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-gray-900 capitalize">${mealTime.replace('_', ' ')}</div>
+                                        <div class="text-sm text-gray-600">${menuName} (${category})</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-medium text-gray-900">${quantity} pax × ₱${price.toFixed(2)}</div>
+                                        <div class="font-bold text-clsu-green">₱${mealTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <div class="font-medium text-gray-900">${quantity} pax × ₱${price.toFixed(2)}</div>
-                                <div class="font-bold text-clsu-green">₱${mealTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        `;
+                    }
+                });
+                
+                if (dayHasMeals) {
+                    const dayTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+                    const dayDate = new Date(dayTab.dataset.date).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                    
+                    const daySection = document.createElement('div');
+                    daySection.className = 'mb-4';
+                    daySection.innerHTML = `
+                        <div class="font-bold text-lg text-clsu-green mb-2 border-b pb-2">Day ${day} (${dayDate})</div>
+                        ${dayContent}
+                        <div class="summary-item font-semibold border-t">
+                            <div class="flex justify-between">
+                                <span>Day ${day} Subtotal:</span>
+                                <span class="text-clsu-green">₱${dayTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     `;
-                    summaryContainer.appendChild(summaryItem);
+                    summaryContainer.appendChild(daySection);
+                    
+                    totalAmount += dayTotal;
                 }
-            });
+            }
             
             // Update total amount in modal
             document.getElementById('modal-total-amount').textContent = `₱${totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -1114,50 +1663,7 @@ function redirectToReservationDetails() {
             modal.style.display = 'flex';
         }
 
-        // --- 9. Notification System ---
-        function showNotification(message, type = 'success', duration = 5000) {
-            // Remove existing notifications
-            const existingNotification = document.querySelector('.notification');
-            if (existingNotification) {
-                existingNotification.remove();
-            }
-
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            
-            const icon = type === 'success' ? 
-                '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
-                '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-
-            notification.innerHTML = `
-                <div class="notification-content">
-                    ${icon}
-                    <span>${message}</span>
-                </div>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Trigger animation
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-
-            // Auto remove after duration
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
-                    }
-                }, 300);
-            }, duration);
-
-            return notification;
-        }
-
-        // --- 11. Back Button Functionality ---
+        // --- BACK BUTTON FUNCTIONALITY ---
         document.getElementById('back-button').addEventListener('click', function() {
             window.history.back();
         });

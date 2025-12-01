@@ -20,7 +20,7 @@
             {{-- Left side (Logo Display) - White background with subtle left shift --}}
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 
                 <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
-                     class="max-h-64 object-contain w-auto -ml-6"> 
+                    class="max-h-64 object-contain w-auto -ml-6"> 
             </div>
 
             {{-- Right side (Login Form) - Light Green (bg-green-100) --}}

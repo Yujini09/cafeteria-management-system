@@ -247,63 +247,100 @@ class ReservationController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        // Capture date range and time selection from GET parameters
+        $reservationData = [
+            'start_date' => $request->query('start_date'),
+            'end_date' => $request->query('end_date'),
+            'day_times' => $request->query('day_times'),
+            // Capture personal info if needed
+            'name' => $request->query('name'),
+            'department' => $request->query('department'),
+            'address' => $request->query('address'),
+            'email' => $request->query('email'),
+            'phone' => $request->query('phone'),
+            'activity' => $request->query('activity'),
+            'venue' => $request->query('venue'),
+            'project_name' => $request->query('project_name'),
+            'account_code' => $request->query('account_code'),
+        ];
+        
+        // Store in session for use in the form
+        session(['reservation_data' => $reservationData]);
+        
         // Fetch all menus grouped by meal_time and type, eager load 'items' relationship
         $menus = \App\Models\Menu::with('items')->get()->groupBy(['meal_time', 'type']);
-
-        // Pass the menus to the view
-        return view('customer.reservation_form_menu', compact('menus'));
+        
+        // Pass the menus and reservation data to the view
+        return view('customer.reservation_form_menu', compact('menus', 'reservationData'));
     }
+
 
     public function store(Request $request)
     {
-        // Validate the incoming request data
+        // Get reservation data from session
+        $reservationData = session('reservation_data', []);
+        
+        // Validate the incoming request data from the menu selection form
         $validated = $request->validate([
-            'reservation_date' => 'required|date|after_or_equal:today',
-            'reservation_time' => 'required|date_format:H:i',
             'notes' => 'nullable|string|max:1000',
             'reservations' => 'required|array',
-            'reservations.*.category' => 'required|string',
-            'reservations.*.menu' => 'required|string',
-            'reservations.*.qty' => 'required|integer|min:0',
+            'reservations.*.*.category' => 'required|string',
+            'reservations.*.*.menu' => 'required|string',
+            'reservations.*.*.qty' => 'required|integer|min:0',
         ]);
 
         // Calculate total number of persons from menu selections
         $totalPersons = 0;
-        foreach ($validated['reservations'] as $meal => $data) {
-            $totalPersons += $data['qty'];
+        foreach ($validated['reservations'] as $day => $meals) {
+            foreach ($meals as $meal => $data) {
+                $totalPersons += $data['qty'];
+            }
         }
 
-        // Create the reservation
+        // Create the reservation with data from both forms
         $reservation = Reservation::create([
             'user_id' => Auth::id(),
-            'event_name' => 'Catering Reservation', // Default event name, could be made dynamic
-            'event_date' => $validated['reservation_date'],
-            'event_time' => $validated['reservation_time'],
+            'event_name' => $reservationData['activity'] ?? 'Catering Reservation',
+            'event_date' => $reservationData['start_date'] ?? now()->format('Y-m-d'),
+            'end_date' => $reservationData['end_date'] ?? null,
+            'event_time' => $reservationData['day_times'] ?? '07:00-10:00',
             'number_of_persons' => $totalPersons,
             'special_requests' => $validated['notes'],
             'status' => 'pending',
+            // Add additional fields
+            'contact_person' => $reservationData['name'] ?? null,
+            'department' => $reservationData['department'] ?? null,
+            'address' => $reservationData['address'] ?? null,
+            'email' => $reservationData['email'] ?? null,
+            'contact_number' => $reservationData['phone'] ?? null,
+            'venue' => $reservationData['venue'] ?? null,
+            'project_name' => $reservationData['project_name'] ?? null,
+            'account_code' => $reservationData['account_code'] ?? null,
         ]);
 
         // Save reservation items (menu selections)
-        foreach ($validated['reservations'] as $meal => $data) {
-            if ($data['qty'] > 0) {
-                // Find menu by name and meal_time
-                $menu = \App\Models\Menu::where('name', $data['menu'])
-                    ->where('meal_time', $meal)
-                    ->first();
+        foreach ($validated['reservations'] as $day => $meals) {
+            foreach ($meals as $meal => $data) {
+                if ($data['qty'] > 0) {
+                    // Find menu by name and meal_time
+                    $menu = \App\Models\Menu::where('name', $data['menu'])
+                        ->where('meal_time', $meal)
+                        ->first();
 
-                if (!$menu) {
-                    // If menu not found, skip or handle error
-                    continue;
+                    if (!$menu) {
+                        continue;
+                    }
+
+                    \App\Models\ReservationItem::create([
+                        'reservation_id' => $reservation->id,
+                        'menu_id' => $menu->id,
+                        'quantity' => $data['qty'],
+                        'day_number' => $day, // Store which day this meal is for
+                        'meal_time' => $meal,
+                    ]);
                 }
-
-                \App\Models\ReservationItem::create([
-                    'reservation_id' => $reservation->id,
-                    'menu_id' => $menu->id,
-                    'quantity' => $data['qty'],
-                ]);
             }
         }
 
@@ -322,9 +359,12 @@ class ReservationController extends Controller
             'generated_by' => Auth::user()->name,
         ]);
 
+        // Clear reservation data from session
+        session()->forget('reservation_data');
+
         return redirect()->route('reservation_details')->with('success', 'Reservation placed successfully!');
     }
-
+    
     public function cancel(Request $request, Reservation $reservation)
     {
         // Ensure only the owner can cancel their reservation
@@ -358,5 +398,4 @@ class ReservationController extends Controller
 
         return redirect()->back()->with('success', 'Reservation cancelled successfully.');
     }
-    
 }
