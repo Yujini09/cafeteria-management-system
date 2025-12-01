@@ -131,13 +131,17 @@ Route::get('/contact', function () {
     Route::post('/reservation/store', [\App\Http\Controllers\ReservationController::class, 'store'])->name('reservation.store');
 
     // 4. Route for viewing reservation details (Assuming this view is correct)
-    Route::get('/reservation/details', function () {
+    Route::get('/reservation_details', function () {
         return view('customer.reservation_details');
     })->name('reservation_details');
 
+     Route::get('/billing_info', function () {
+        return view('customer.billing_info');
+    })->name('billing_info');
+
     // 5. Route for cancelling a reservation
     Route::patch('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');
-// });
 
     Route::get('/reservation_form_menu', [ReservationController::class, 'create'])->name('reservation.create');
     Route::post('/reservations', [ReservationController::class, 'store'])->name('reservation.store');
+//  });
