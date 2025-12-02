@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+[x-cloak] {
+    display: none !important;
+}
+
+/* Add thin borders to all form fields for better visibility */
+input, select, textarea {
+    border: 1px solid #d1d5db;
+}
+
+/* Remove borders from buttons in the sidebar */
+aside button {
+    border: none;
+}
