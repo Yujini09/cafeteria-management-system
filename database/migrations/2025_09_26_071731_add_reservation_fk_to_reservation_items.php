@@ -64,8 +64,19 @@ return new class extends Migration
 
     public function down(): void
     {
-        // If the table was created by this migration originally, it's safe to drop it.
-        // If you're worried, you can instead drop columns conditionally.
+        // Before dropping the `reservations` table, remove any foreign key
+        // constraints from `reservation_items` that reference it to avoid
+        // integrity constraint violations during rollback.
+        if (Schema::hasTable('reservation_items') && Schema::hasColumn('reservation_items', 'reservation_id')) {
+            Schema::table('reservation_items', function (Blueprint $t) {
+                try {
+                    $t->dropForeign(['reservation_id']);
+                } catch (\Throwable $e) {
+                    // If the foreign key doesn't exist or cannot be dropped, ignore.
+                }
+            });
+        }
+
         if (Schema::hasTable('reservations')) {
             Schema::drop('reservations');
         }

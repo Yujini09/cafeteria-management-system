@@ -26,7 +26,7 @@ class ReportsService
                     'event_name' => $reservation->event_name,
                     'event_date' => $reservation->event_date->format('Y-m-d'),
                     'customer_name' => $reservation->user->name,
-                    'department' => $reservation->user->department,
+                    'department' => $reservation->department ?? $reservation->user->department,
                     'number_of_persons' => $reservation->number_of_persons,
                     'status' => ucfirst($reservation->status),
                     'created_at' => $reservation->created_at->format('Y-m-d H:i'),

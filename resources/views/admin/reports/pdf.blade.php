@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ ucfirst($reportType) }} Report - {{ $startDate->format('M d, Y') }} to {{ $endDate->format('M d, Y') }}</title>
     <style>
+        @page {
+            margin-top: 4mm;
+            margin-bottom: 8mm;
+            margin-left: 8mm;
+            margin-right: 8mm;
+        }
+
         :root {
             --primary: #00462E;
             --primary-light: #057C3C;
@@ -26,7 +33,7 @@
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 12px;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             color: var(--neutral-800);
             background: white;
         }
@@ -91,7 +98,7 @@
         }
 
         th, td {
-            border: 1px solid var(--neutral-300);
+            border: 0.5px solid var(--neutral-300);
             padding: 6px 8px;
             text-align: left;
             vertical-align: top;
@@ -120,7 +127,7 @@
         }
 
         .total-row td {
-            border-top: 2px solid var(--primary);
+            border-top: 1px solid var(--primary);
         }
 
         .footer {
@@ -245,7 +252,7 @@
                         <th style="width: 20%;">Event Name</th>
                         <th style="width: 12%;">Event Date</th>
                         <th style="width: 15%;">Customer</th>
-                        <th style="width: 10%;">Department</th>
+                        <th style="width: 10%;">Department/Office</th>
                         <th style="width: 8%;">Persons</th>
                         <th style="width: 8%;">Status</th>
                         <th style="width: 12%;">Created</th>
