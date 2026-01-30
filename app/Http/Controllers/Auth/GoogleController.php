@@ -45,17 +45,23 @@ class GoogleController extends Controller
     public function handleGoogleCallback()
     {
         try {
+            \Log::info('Google OAuth callback initiated');
+            
             $googleUser = Socialite::driver('google')->user();
+            \Log::info('Google user retrieved', ['email' => $googleUser->getEmail()]);
 
             // Check if user exists with this email
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if ($user) {
                 // User exists, log them in
+                \Log::info('Existing user logging in via Google', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
                 return redirect()->intended(route('customer.homepage'));
             } else {
                 // User doesn't exist, create new user
+                \Log::info('Creating new user from Google OAuth', ['email' => $googleUser->getEmail()]);
+                
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
@@ -73,11 +79,16 @@ class GoogleController extends Controller
                     'provider' => 'google',
                 ]);
 
+                \Log::info('New user created via Google OAuth', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
                 return redirect()->intended(route('customer.homepage'));
             }
         } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors(['google' => 'Unable to login with Google. Please try again.']);
+            \Log::error('Google OAuth Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('login')->withErrors(['google' => 'Unable to login with Google. Please try again. Error: ' . $e->getMessage()]);
         }
     }
 }
