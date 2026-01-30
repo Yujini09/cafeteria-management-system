@@ -26,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'contact_no',
         'department',
         'role',   // ✅ your manual role column
+        'google_id',
     ];
 
 
