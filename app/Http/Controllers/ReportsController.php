@@ -269,6 +269,7 @@ class ReportsController extends Controller
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
         $viewData = compact('startDate', 'endDate');
+        $viewData['generatedBy'] = Auth::user()->name;
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.pdf';
 
         switch ($reportType) {

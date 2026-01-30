@@ -1,6 +1,5 @@
 @extends('layouts.sidebar')
 
-@section('page-title', isset($reportType) ? ucfirst($reportType) . ' Report Results' : 'Report Results')
 
 @section('content')
 <style>
