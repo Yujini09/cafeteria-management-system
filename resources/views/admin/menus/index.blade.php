@@ -559,15 +559,19 @@
                                 required
                                 style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                         </div>
-                        <div class="w-20">
+                        <div class="w-24">
                           <label class="block text-xs font-medium text-gray-700 mb-1">Unit</label>
-                          <input type="text" 
-                                :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
-                                x-model="recipe.unit" 
-                                placeholder="g/ml" 
-                                class="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
-                                required
-                                style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                          <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
+                                  x-model="recipe.unit" 
+                                  class="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                  required
+                                  style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                            <option value="">Select unit</option>
+                            <option value="Pieces">Pieces</option>
+                            <option value="Kgs">Kgs</option>
+                            <option value="Liters">Liters</option>
+                            <option value="Packs">Packs</option>
+                          </select>
                         </div>
                         <button type="button" 
                                 @click="item.recipes.splice(rIndex, 1)" 

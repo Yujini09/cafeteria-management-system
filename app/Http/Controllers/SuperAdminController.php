@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\AuditTrail;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -116,25 +117,11 @@ class SuperAdminController extends Controller
 
     public function recentNotifications()
     {
+        $notificationService = new NotificationService();
         $user = Auth::user();
 
-        if ($user->role === 'superadmin') {
-            // Superadmin sees all notifications
-            $notifications = Notification::with('user')
-                ->latest()
-                ->take(20)
-                ->get();
-        } elseif ($user->role === 'admin') {
-            // Admin sees only customer actions (where the actor is not admin/superadmin)
-            $notifications = Notification::whereNotIn('user_id', [1,7])
-                ->with('user')
-                ->latest()
-                ->take(20)
-                ->get();
-        } else {
-            // For other roles, return empty
-            $notifications = collect();
-        }
+        // Get unique notifications for the user
+        $notifications = $notificationService->getNotificationsForUser($user, 20);
 
         return response()->json($notifications);
     }

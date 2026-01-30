@@ -505,8 +505,8 @@
         </div>
     </div>
 
-    <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" x-cloak style="display: none;">
-        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative">
+    <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
+        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10">
             <button @click="showCreateModal = false"
                     class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
                 &times;
@@ -568,8 +568,8 @@
         </div>
     </div>
 
-    <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" x-cloak style="display: none;">
-        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative">
+    <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
+        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10">
             <button @click="showEditModal = false; editingItem = null"
                     class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
                 &times;
@@ -631,8 +631,8 @@
         </div>
     </div>
     
-    <div x-show="showDeleteModal" @click="showDeleteModal = false; deletingItem = null" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" x-cloak style="display: none;">
-        <div @click.stop class="modern-modal w-full max-w-sm p-8 relative text-center">
+    <div x-show="showDeleteModal" @click="showDeleteModal = false; deletingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
+        <div @click.stop class="modern-modal w-full max-w-sm p-8 relative z-10 text-center">
             <button @click="showDeleteModal = false; deletingItem = null"
                     class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
                 &times;

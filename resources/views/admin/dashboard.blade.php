@@ -455,7 +455,7 @@
                 <div class="flex items-center space-x-4">
                     <div class="text-3xl animate-float">{{ $icon }}</div>
                     <div>
-                        <h1 class="greeting-title mb-1">{{ $greeting }}, {{ Auth::user()->name }}</h1>
+                        <h1 class="greeting-title mb-1">{{ $greeting }}, {{ explode(' ', Auth::user()->name)[0] }}</h1>
                         <p class="greeting-message text-green-100 opacity-90">{{ $message }}</p>
                     </div>
                 </div>

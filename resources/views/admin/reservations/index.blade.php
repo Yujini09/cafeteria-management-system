@@ -585,9 +585,9 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-        <div @click="approveConfirmationOpen=false" class="relative inset-0 "></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div @click="approveConfirmationOpen=false" class="absolute inset-0"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -603,9 +603,9 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition class="fixed inset-0 z-50 flex bg-black/40 items-center justify-center">
-        <div @click="declineConfirmationOpen=false" class="relative inset-0 "></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div @click="declineConfirmationOpen=false" class="absolute inset-0"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>

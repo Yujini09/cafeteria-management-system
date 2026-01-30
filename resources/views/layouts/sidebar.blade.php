@@ -515,7 +515,7 @@
 
 <!-- Logout Confirmation Modal -->
 <div x-show="confirmLogout"
-     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+     class="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
      x-cloak>
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-black transform transition-all duration-300 scale-95"
          x-transition:enter="scale-100"
@@ -603,9 +603,18 @@ function loadNotifications() {
             if (!data || data.length === 0) {
                 list.innerHTML = '<li class="px-4 py-3 hover:bg-gray-50 text-gray-600">No new notifications</li>';
             } else {
-                list.innerHTML = data.map(notification => {
+                // Deduplicate notifications by ID to prevent any duplicates in display
+                const uniqueNotifications = data.reduce((seen, notification) => {
+                    const exists = seen.find(n => n.id === notification.id);
+                    if (!exists) {
+                        seen.push(notification);
+                    }
+                    return seen;
+                }, []);
+
+                list.innerHTML = uniqueNotifications.map(notification => {
                     const metadata = notification.metadata || {};
-                    const actionUser = metadata.updated_by || metadata.generated_by || metadata.created_by || metadata.deleted_by || metadata.added_by || metadata.removed_by || (notification.user ? notification.user.name : 'Unknown User');
+                    const actionUser = metadata.updated_by || metadata.generated_by || metadata.created_by || metadata.deleted_by || metadata.added_by || metadata.removed_by || (notification.user ? notification.user.name : 'System');
                     return `
                             <li class="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0">
                                 <div class="flex items-start space-x-3">

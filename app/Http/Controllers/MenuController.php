@@ -8,6 +8,7 @@ use App\Models\MenuPrice;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -415,18 +416,7 @@ class MenuController extends Controller
     /** Create notification for admins/superadmin only */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
-        // Get all admin and superadmin users
-        $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
-        
-        // Create a notification for each admin/superadmin
-        foreach ($admins as $admin) {
-            Notification::create([
-                'user_id' => $admin->id,
-                'action' => $action,
-                'module' => $module,
-                'description' => $description,
-                'metadata' => $metadata,
-            ]);
-        }
+        $notificationService = new NotificationService();
+        $notificationService->createAdminNotification($action, $module, $description, $metadata);
     }
 }

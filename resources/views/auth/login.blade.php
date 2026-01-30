@@ -37,7 +37,7 @@
                 <div class="relative z-10"> 
                     
                     <div class="text-left mb-10">
-                        <h2 class="text-green-900 text-4xl font-extrabold mb-2">Welcome Back!</h2> 
+                        <h2 class="text-green-900 text-4xl font-extrabold mb-2">Welcome!</h2> 
                         <p class="text-green-700 text-lg">Sign in to your account</p> 
                     </div>
 
