@@ -151,26 +151,48 @@
         </div>
     </div>
 
-    <div id="verificationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
+    {{-- Modal: Verification Success --}}
+    <div id="verificationModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 mb-4">
                     <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Account Created Successfully!</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500">
-                        Please check your email for verification. You must verify your email address before you can log in.
-                    </p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="proceedToVerification" class="px-4 py-2 bg-orange-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">
-                        Proceed to Email Verification
-                    </button>
-                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Account Created Successfully!</h3>
+                <p class="text-sm text-gray-500 mb-6">
+                    Please check your email for verification. You must verify your email address before you can log in.
+                </p>
+            </div>
 
+            <div class="flex justify-center">
+                <button id="proceedToVerification" class="px-6 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    Proceed to Email Verification
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal: Error Alert --}}
+    <div id="errorModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2" id="errorModalTitle">Error</h3>
+                <div id="errorModalContent" class="text-sm text-gray-500 mb-6">
+                    <!-- Error messages will be inserted here -->
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="document.getElementById('errorModal').classList.add('hidden')" class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    Dismiss
+                </button>
             </div>
         </div>
     </div>
@@ -241,19 +263,25 @@
                 } else {
                     // Handle validation errors
                     if (data.errors) {
-                        let errorMessage = 'Please fix the following errors:\n';
+                        let errorHtml = '<ul class="text-left space-y-2">';
                         for (let field in data.errors) {
-                            errorMessage += `- ${data.errors[field][0]}\n`;
+                            errorHtml += `<li class="flex items-start"><span class="text-red-500 mr-2">•</span><span>${data.errors[field][0]}</span></li>`;
                         }
-                        alert(errorMessage);
+                        errorHtml += '</ul>';
+                        document.getElementById('errorModalTitle').textContent = 'Registration Error';
+                        document.getElementById('errorModalContent').innerHTML = errorHtml;
                     } else {
-                        alert(data.message || 'Registration failed. Please try again.');
+                        document.getElementById('errorModalTitle').textContent = 'Registration Failed';
+                        document.getElementById('errorModalContent').innerHTML = `<p>${data.message || 'Registration failed. Please try again.'}</p>`;
                     }
+                    document.getElementById('errorModal').classList.remove('hidden');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                document.getElementById('errorModalTitle').textContent = 'Error';
+                document.getElementById('errorModalContent').innerHTML = '<p>An error occurred. Please try again.</p>';
+                document.getElementById('errorModal').classList.remove('hidden');
             })
             .finally(() => {
                 // Re-enable button

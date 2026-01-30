@@ -308,16 +308,16 @@
     @endforelse
   </div>
 
-  {{-- CREATE MENU MODAL --}}
+  {{-- CREATE MENU MODAL - 3 STEPS --}}
   <div x-cloak x-show="isCreateOpen" x-transition
        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
     <div @click="close()" class="absolute inset-0"></div>
 
-    <div class="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden"
+    <div class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden flex flex-col"
          x-transition:enter="scale-100"
          x-transition:enter-start="scale-95">
          
-      <div class="modal-header p-6">
+      <div class="modal-header p-6 flex-shrink-0">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
             <div class="w-10 h-10 bg-gradient-to-r from-[#00462E] to-[#057C3C] rounded-lg flex items-center justify-center mr-3">
@@ -336,192 +336,311 @@
             </svg>
           </button>
         </div>
+
+        {{-- Step Indicator --}}
+        <div class="flex items-center justify-between mt-6 px-2">
+          <template x-for="(step, index) in [
+            { num: 1, label: 'Menu Info' },
+            { num: 2, label: 'Menu Items' },
+            { num: 3, label: 'Recipes' }
+          ]" :key="index">
+            <div class="flex flex-col items-center flex-1">
+              <div :class="[
+                'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300',
+                currentStep >= step.num 
+                  ? 'bg-gradient-to-r from-[#00462E] to-[#057C3C] text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              ]" x-text="step.num"></div>
+              <span class="text-xs mt-2 font-medium" :class="currentStep >= step.num ? 'text-[#057C3C]' : 'text-gray-500'" x-text="step.label"></span>
+            </div>
+            <template x-if="index < 2">
+              <div :class="[
+                'h-1 flex-1 mx-2 rounded transition-all duration-300',
+                currentStep > step.num ? 'bg-[#057C3C]' : 'bg-gray-200'
+              ]"></div>
+            </template>
+          </template>
+        </div>
       </div>
 
-      <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-        <form x-ref="createForm" method="POST" action="{{ route('admin.menus.store') }}" class="space-y-4">
+      <div class="p-6 overflow-y-auto flex-1 min-h-0">
+        <form x-ref="createForm" method="POST" action="{{ route('admin.menus.store') }}" class="space-y-6">
           @csrf
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Menu Type</label>
-              <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.type" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-                <option value="standard">Standard Menu</option>
-                <option value="special">Special Menu</option>
-              </select>
+          {{-- STEP 1: Menu Info --}}
+          <div x-show="currentStep === 1" x-transition class="space-y-4">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4" style="font-family: 'Poppins', sans-serif;">Step 1: Menu Information</h3>
+              <p class="text-gray-600 text-sm mb-4" style="font-family: 'Poppins', sans-serif;">Enter the basic details for your menu</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Menu Type <span class="text-red-500">*</span></label>
+                <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.type" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                  <option value="">Select menu type</option>
+                  <option value="standard">Standard Menu</option>
+                  <option value="special">Special Menu</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Meal Time <span class="text-red-500">*</span></label>
+                <select name="meal_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.meal" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                  <option value="">Select meal time</option>
+                  <option value="breakfast">Breakfast</option>
+                  <option value="am_snacks">AM Snacks</option>
+                  <option value="lunch">Lunch</option>
+                  <option value="pm_snacks">PM Snacks</option>
+                  <option value="dinner">Dinner</option>
+                </select>
+              </div>
             </div>
 
             <div>
-              <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Meal Time</label>
-              <select name="meal_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.meal" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-                <option value="breakfast">Breakfast</option>
-                <option value="am_snacks">AM Snacks</option>
-                <option value="lunch">Lunch</option>
-                <option value="pm_snacks">PM Snacks</option>
-                <option value="dinner">Dinner</option>
-              </select>
+              <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Display Name (Optional)</label>
+              <input name="name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" placeholder="e.g., Breakfast Menu" x-model="form.name" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Description (Optional)</label>
+              <textarea name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" rows="3"
+                        placeholder="Short description of the menu..." style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;"></textarea>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div class="text-green-800 flex items-center" style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
+                <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+                Fixed price per head:
+                <span class="font-semibold ml-1" x-text="priceText"></span>
+                <span class="text-green-600 ml-1">(auto-applied on save)</span>
+              </div>
             </div>
           </div>
 
-          <div>
-            <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Display Name (Optional)</label>
-            <input name="name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" placeholder="e.g., Breakfast Menu" x-model="form.name" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+          {{-- STEP 2: Menu Items (Names Only) --}}
+          <div x-show="currentStep === 2" x-transition class="space-y-4">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2" style="font-family: 'Poppins', sans-serif;">Step 2: Menu Items</h3>
+              <p class="text-gray-600 text-sm" style="font-family: 'Poppins', sans-serif;">Add the names of items for your menu (enter names only, recipes will be added in the next step)</p>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg p-4 bg-white">
+              <div class="space-y-3">
+                <template x-for="(item, index) in form.items" :key="index">
+                  <div class="flex items-end gap-3">
+                    <div class="flex-1">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Item Name</label>
+                      <input type="text" 
+                            :name="'items[' + index + '][name]'" 
+                            x-model="item.name" 
+                            placeholder="Enter food name" 
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                            required
+                            style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                    </div>
+                    <div class="w-32">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                      <select :name="'items[' + index + '][type]'" 
+                              x-model="item.type" 
+                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white"
+                              style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                        <option value="food">Food</option>
+                        <option value="drink">Drink</option>
+                        <option value="dessert">Dessert</option>
+                      </select>
+                    </div>
+                    <button type="button" 
+                            @click="form.items.splice(index, 1)" 
+                            class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </template>
+
+                {{-- Empty State --}}
+                <template x-if="form.items.length === 0">
+                  <div class="text-center py-8 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <p style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">No items yet. Click the button below to add items.</p>
+                  </div>
+                </template>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <button type="button" 
+                        @click="form.items.push({name: '', type: 'food', recipes: [], showRecipes: false})" 
+                        class="w-full text-[#057C3C] hover:text-[#00462E] font-medium transition-colors duration-200 flex items-center justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C]"
+                        style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  Add New Item
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div class="text-blue-800 flex items-start" style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
+                <svg class="w-4 h-4 mr-2 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>You'll add recipes and ingredients for each item in the next step. Make sure you add at least one item to proceed.</span>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Description (Optional)</label>
-            <textarea name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" rows="2"
-                      placeholder="Short description of the menu..." style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;"></textarea>
-          </div>
-
-          {{-- Menu Items --}}
-          <div class="border border-gray-200 rounded-lg p-4 bg-white">
-            <div class="flex items-center mb-4">
-              <svg class="w-4 h-4 mr-2 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-              </svg>
-              <h3 class="font-semibold text-gray-900" style="font-family: 'Poppins', sans-serif; font-size: 1rem;">
-                Menu Items
-              </h3>
+          {{-- STEP 3: Recipes for Items --}}
+          <div x-show="currentStep === 3" x-transition class="space-y-4">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2" style="font-family: 'Poppins', sans-serif;">Step 3: Add Recipes</h3>
+              <p class="text-gray-600 text-sm" style="font-family: 'Poppins', sans-serif;">Add ingredients and recipes for each menu item (all items are required)</p>
             </div>
 
             <div class="space-y-4">
               <template x-for="(item, index) in form.items" :key="index">
                 <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  {{-- Item Header --}}
-                  <div class="flex items-start justify-between mb-3">
-                    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                        <input type="text" 
-                              :name="'items[' + index + '][name]'" 
-                              x-model="item.name" 
-                              placeholder="Enter food name" 
-                              class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
-                              required>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                        <select :name="'items[' + index + '][type]'" 
-                                x-model="item.type" 
-                                class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white">
-                          <option value="food">Food</option>
-                          <option value="drink">Drink</option>
-                          <option value="dessert">Dessert</option>
-                        </select>
-                      </div>
+                  {{-- Item Name Header --}}
+                  <div class="flex items-center mb-4 pb-4 border-b border-gray-300">
+                    <div class="w-8 h-8 bg-gradient-to-r from-[#00462E] to-[#057C3C] rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                      <span x-text="index + 1"></span>
                     </div>
-                    <button type="button" 
-                            @click="form.items.splice(index, 1)" 
-                            class="ml-3 p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
+                    <div>
+                      <h4 class="font-semibold text-gray-900" style="font-family: 'Poppins', sans-serif; font-size: 1rem;" x-text="item.name || 'Unnamed Item'"></h4>
+                      <p class="text-gray-600 text-xs" style="font-family: 'Poppins', sans-serif;">Type: <span x-text="item.type.charAt(0).toUpperCase() + item.type.slice(1)"></span></p>
+                    </div>
                   </div>
 
-                  {{-- Collapsible Recipes Section --}}
-                  <div class="border-t border-gray-300 pt-3">
-                    <button type="button"
-                            @click="item.showRecipes = !item.showRecipes"
-                            class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900">
-                      <span>Ingredients <span x-text="item.recipes.length ? '(' + item.recipes.length + ')' : ''"></span></span>
-                      <svg class="w-4 h-4 transition-transform duration-200" 
-                          :class="{ 'rotate-180': item.showRecipes }" 
-                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  {{-- Recipes Section --}}
+                  <div class="space-y-3">
+                    <h5 class="font-medium text-gray-700 flex items-center" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                      <svg class="w-4 h-4 mr-2 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                       </svg>
-                    </button>
+                      Ingredients
+                    </h5>
 
-                    <div x-show="item.showRecipes" x-collapse class="mt-3 space-y-3">
-                      <div class="space-y-2">
-                        <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                          <div class="flex gap-2 items-center">
-                            <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" 
-                                    x-model="recipe.inventory_item_id" 
-                                    class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
-                                    required>
-                              <option value="">Select ingredient</option>
-                              @foreach($inventoryItems as $inv)
-                                <option value="{{ $inv->id }}">{{ $inv->name }}</option>
-                              @endforeach
-                            </select>
-                            <input type="number" 
-                                  :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" 
-                                  x-model="recipe.quantity_needed" 
-                                  placeholder="Qty" 
-                                  step="0.01" 
-                                  min="0.01" 
-                                  class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
-                                  required>
-                            <input type="text" 
-                                  :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
-                                  x-model="recipe.unit" 
-                                  placeholder="Unit" 
-                                  class="w-16 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
-                                  required>
-                            <button type="button" 
-                                    @click="item.recipes.splice(rIndex, 1)" 
-                                    class="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
-                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                              </svg>
-                            </button>
-                          </div>
-                        </template>
+                    <template x-if="item.recipes.length === 0">
+                      <div class="text-center py-4 bg-white rounded-lg border border-dashed border-gray-300">
+                        <p class="text-gray-500 text-sm" style="font-family: 'Poppins', sans-serif;">No ingredients added yet</p>
                       </div>
+                    </template>
 
-                      <button type="button" 
-                              @click="item.recipes.push({inventory_item_id: '', quantity_needed: '', unit: ''})" 
-                              class="text-[#057C3C] hover:text-[#00462E] text-sm font-medium flex items-center">
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Add Ingredient
-                      </button>
-                    </div>
+                    <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
+                      <div class="flex gap-2 items-end bg-white p-3 rounded-lg">
+                        <div class="flex-1">
+                          <label class="block text-xs font-medium text-gray-700 mb-1">Ingredient</label>
+                          <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" 
+                                  x-model="recipe.inventory_item_id" 
+                                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                  required
+                                  style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                            <option value="">Select ingredient</option>
+                            @foreach($inventoryItems as $inv)
+                              <option value="{{ $inv->id }}">{{ $inv->name }}</option>
+                            @endforeach
+                          </select>
+                        </div>
+                        <div class="w-24">
+                          <label class="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
+                          <input type="number" 
+                                :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" 
+                                x-model="recipe.quantity_needed" 
+                                placeholder="Qty" 
+                                step="0.01" 
+                                min="0.01" 
+                                class="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                required
+                                style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                        </div>
+                        <div class="w-20">
+                          <label class="block text-xs font-medium text-gray-700 mb-1">Unit</label>
+                          <input type="text" 
+                                :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
+                                x-model="recipe.unit" 
+                                placeholder="g/ml" 
+                                class="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                required
+                                style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                        </div>
+                        <button type="button" 
+                                @click="item.recipes.splice(rIndex, 1)" 
+                                class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </template>
+
+                    <button type="button" 
+                            @click="item.recipes.push({inventory_item_id: '', quantity_needed: '', unit: ''})" 
+                            class="text-[#057C3C] hover:text-[#00462E] text-sm font-medium flex items-center transition-colors duration-200 w-full justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C] mt-2"
+                            style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                      </svg>
+                      Add Ingredient
+                    </button>
                   </div>
                 </div>
               </template>
             </div>
 
-            {{-- Add Item Button at Bottom --}}
-            <div class="mt-4 pt-4 border-t border-gray-200">
-              <button type="button" 
-                      @click="form.items.push({name: '', type: 'food', recipes: [], showRecipes: false})" 
-                      class="w-full text-[#057C3C] hover:text-[#00462E] font-medium transition-colors duration-200 flex items-center justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C]">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div class="text-green-800 flex items-start" style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
+                <svg class="w-4 h-4 mr-2 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Add New Item
-              </button>
+                <span>Make sure to add at least one ingredient for each menu item before submitting.</span>
+              </div>
             </div>
-          </div>
-          <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div class="text-green-800 flex items-center" style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-              <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-              </svg>
-              Fixed price per head:
-              <span class="font-semibold ml-1" x-text="priceText"></span>
-              <span class="text-green-600 ml-1">(auto-applied on save)</span>
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 pt-4">
-            <button type="button" @click="close()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm"
-                    style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-              Cancel
-            </button>
-            <button type="submit" class="px-6 py-2 bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
-                    style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              Create Menu
-            </button>
           </div>
         </form>
+      </div>
+
+      {{-- Footer with Navigation Buttons --}}
+      <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center gap-3 flex-shrink-0">
+        <button type="button" 
+                @click="previousStep()" 
+                x-show="currentStep > 1"
+                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm flex items-center"
+                style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Previous
+        </button>
+
+        <div class="ml-auto flex gap-3">
+          <button type="button" @click="close()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm"
+                  style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+            Cancel
+          </button>
+
+          <button type="button" 
+                  @click="currentStep === 3 ? submitForm() : nextStep()" 
+                  :disabled="!canProceed()"
+                  :class="[
+                    'px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105',
+                    canProceed()
+                      ? 'bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ]"
+                  style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentStep === 3" d="M5 13l4 4L19 7"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentStep < 3" d="M9 5l7 7-7 7"></path>
+            </svg>
+            <span x-text="currentStep === 3 ? 'Create Menu' : 'Next'"></span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -761,6 +880,7 @@
       isCreateOpen: false,
       isEditOpen: false,
       isDeleteOpen: false,
+      currentStep: 1,
 
       deleteId: null,
       deleteName: '',
@@ -792,9 +912,46 @@
         if (type) this.form.type = type;
         if (meal) this.form.meal = meal;
         this.form.items = [];
+        this.currentStep = 1;
         this.isCreateOpen = true;
       },
-      close(){ this.isCreateOpen = false; },
+      close(){ 
+        this.isCreateOpen = false; 
+        this.currentStep = 1;
+      },
+
+      nextStep() {
+        if (this.canProceed()) {
+          this.currentStep++;
+        }
+      },
+
+      previousStep() {
+        if (this.currentStep > 1) {
+          this.currentStep--;
+        }
+      },
+
+      canProceed() {
+        if (this.currentStep === 1) {
+          // Step 1: Menu type and meal are required
+          return this.form.type && this.form.meal;
+        } else if (this.currentStep === 2) {
+          // Step 2: At least one item with a name
+          return this.form.items.length > 0 && this.form.items.every(item => item.name && item.name.trim());
+        } else if (this.currentStep === 3) {
+          // Step 3: All items must have at least one recipe
+          return this.form.items.length > 0 && 
+                 this.form.items.every(item => item.recipes && item.recipes.length > 0);
+        }
+        return false;
+      },
+
+      submitForm() {
+        if (this.canProceed()) {
+          this.$refs.createForm.submit();
+        }
+      },
 
       openEdit(id, name, description, type, meal, items = []) {
         this.editForm.id = id;
