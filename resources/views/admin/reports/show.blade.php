@@ -1,6 +1,5 @@
 @extends('layouts.sidebar')
 
-@section('page-title', isset($reportType) ? ucfirst($reportType) . ' Report Results' : 'Report Results')
 
 @section('content')
 <style>
@@ -457,7 +456,7 @@
                                 <th>Event Name</th>
                                 <th>Event Date</th>
                                 <th>Customer</th>
-                                <th>Department</th>
+                                <th>Department/Office</th>
                                 <th>Persons</th>
                                 <th>Status</th>
                                 <th>Created</th>

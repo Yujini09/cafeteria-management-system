@@ -24,7 +24,13 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('l
 require __DIR__ . '/auth.php';
 
 // Google OAuth Routes
-Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, 'redirectToGoogle'])->name('auth.google');
+// Note: Only the redirect needs 'guest' middleware. Callback must NOT be in guest middleware
+// because Socialite needs session access to validate the state parameter
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, 'redirectToGoogle'])->name('auth.google');
+});
+
+// Callback route WITHOUT guest middleware - allows Socialite to access session for state validation
 Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
 

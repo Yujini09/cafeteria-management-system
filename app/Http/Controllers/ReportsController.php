@@ -80,7 +80,8 @@ class ReportsController extends Controller
                 'event_name' => $reservation->event_name ?? 'N/A',
                 'event_date' => $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A',
                 'customer_name' => $reservation->user ? $reservation->user->name : 'N/A',
-                'department' => $reservation->user ? $reservation->user->department : 'N/A',
+                // Prefer reservation's own department field when available
+                'department' => $reservation->department ?? ($reservation->user ? $reservation->user->department : 'N/A'),
                 'number_of_persons' => $reservation->number_of_persons ?? 0,
                 'status' => ucfirst($reservation->status ?? 'pending'),
                 'created_at' => $reservation->created_at ? $reservation->created_at->format('Y-m-d H:i') : 'N/A',
@@ -268,6 +269,7 @@ class ReportsController extends Controller
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
         $viewData = compact('startDate', 'endDate');
+        $viewData['generatedBy'] = Auth::user()->name;
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.pdf';
 
         switch ($reportType) {
@@ -284,7 +286,8 @@ class ReportsController extends Controller
                         'event_name' => $reservation->event_name ?? 'N/A',
                         'event_date' => $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A',
                         'customer_name' => $reservation->user ? $reservation->user->name : 'N/A',
-                        'department' => $reservation->user ? $reservation->user->department : 'N/A',
+                        // Prefer reservation's own department field when available
+                        'department' => $reservation->department ?? ($reservation->user ? $reservation->user->department : 'N/A'),
                         'number_of_persons' => $reservation->number_of_persons ?? 0,
                         'status' => ucfirst($reservation->status ?? 'pending'),
                         'created_at' => $reservation->created_at ? $reservation->created_at->format('Y-m-d H:i') : 'N/A',
@@ -453,7 +456,8 @@ class ReportsController extends Controller
             'description' => 'exported a report PDF',
         ]);
 
-        $pdf = Pdf::loadView('admin.reports.pdf', $viewData);
+        $pdf = Pdf::loadView('admin.reports.pdf', $viewData)
+            ->setPaper('a4', 'landscape');
 
         return $pdf->download($filename);
     }
