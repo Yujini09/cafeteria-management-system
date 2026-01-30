@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('day_times')->nullable(); // ADDED: for storing multi-day time data
             $table->integer('number_of_persons');
             $table->text('special_requests')->nullable();
-            $table->enum('status', ['pending', 'approved', 'declined'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'declined', 'cancelled'])->default('pending');
             $table->text('decline_reason')->nullable();
 
             // ADDED: Contact information fields

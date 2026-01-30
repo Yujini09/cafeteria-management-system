@@ -36,7 +36,7 @@ class ReservationReportExport implements FromCollection, WithHeadings, WithMappi
             'Event Name',
             'Event Date',
             'Customer Name',
-            'Department',
+            'Department/Office',
             'Number of Persons',
             'Status',
             'Created At',
@@ -50,7 +50,8 @@ class ReservationReportExport implements FromCollection, WithHeadings, WithMappi
             $reservation->event_name ?? 'N/A',
             $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A',
             $reservation->user ? $reservation->user->name : 'N/A',
-            $reservation->user ? $reservation->user->department : 'N/A',
+            // Prefer reservation's stored department (reservation may have its own department field)
+            $reservation->department ?? ($reservation->user ? $reservation->user->department : 'N/A'),
             $reservation->number_of_persons ?? 0,
             ucfirst($reservation->status ?? 'pending'),
             $reservation->created_at ? $reservation->created_at->format('Y-m-d H:i') : 'N/A',

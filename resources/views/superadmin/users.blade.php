@@ -405,8 +405,26 @@
             <div class="space-y-4">
                 <input type="text" name="name" placeholder="Full Name" class="modal-input" required>
                 <input type="email" name="email" placeholder="Email Address" class="modal-input" required>
-                <input type="password" name="password" placeholder="Password" class="modal-input" required>
-                <input type="password" name="password_confirmation" placeholder="Confirm Password" class="modal-input" required>
+                
+                <!-- Password Field with Eye Button -->
+                <div class="relative">
+                    <input type="password" id="adminPassword" name="password" placeholder="Password" class="modal-input pr-10" required>
+                    <button type="button" id="toggleAdminPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                        <svg id="eyeIconAdminPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Confirm Password Field with Eye Button -->
+                <div class="relative">
+                    <input type="password" id="adminPasswordConfirmation" name="password_confirmation" placeholder="Confirm Password" class="modal-input pr-10" required>
+                    <button type="button" id="toggleAdminPasswordConfirmation" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800">
+                        <svg id="eyeIconAdminPasswordConfirmation" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div class="flex justify-end space-x-3 mt-6">
@@ -691,5 +709,33 @@ function getSortIcon(column) {
     if (currentSortBy !== column) return '';
     return currentSortDirection === 'asc' ? '▲' : '▼';
 }
+
+// Toggle Password Visibility for Admin Password
+document.getElementById('toggleAdminPassword').addEventListener('click', function (e) {
+    e.preventDefault();
+    const passwordInput = document.getElementById('adminPassword');
+    const eyeIcon = document.getElementById('eyeIconAdminPassword');
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+    }
+});
+
+// Toggle Password Visibility for Admin Confirm Password
+document.getElementById('toggleAdminPasswordConfirmation').addEventListener('click', function (e) {
+    e.preventDefault();
+    const passwordInput = document.getElementById('adminPasswordConfirmation');
+    const eyeIcon = document.getElementById('eyeIconAdminPasswordConfirmation');
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+    }
+});
 </script>
 @endsection
