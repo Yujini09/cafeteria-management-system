@@ -233,6 +233,8 @@
     align-items: center;
     gap: 1rem;
     margin-bottom: 2rem; /* Same margin */
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .header-content {
@@ -281,6 +283,47 @@
     color: var(--neutral-700);
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
+}
+
+.filter-label-inline {
+    margin-bottom: 0;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .filter-row {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.select-with-arrows {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.select-with-arrows .filter-select {
+    appearance: none;
+    padding-right: 2.75rem;
+}
+
+.select-arrows {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    color: var(--neutral-500);
+}
+
+.select-arrows svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Customer Info - Same font sizes as manage users */
@@ -430,7 +473,10 @@
 
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-<div class="modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);" x-data="reservationList()">
+<div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
+     x-data="reservationList()"
+     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen)"
+     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false">
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
@@ -444,24 +490,47 @@
                 <p class="header-subtitle">Manage and review all reservation requests</p>
             </div>
         </div>
+        <div class="relative w-full sm:w-64 md:w-72 ml-auto">
+            <input type="search"
+                   id="searchInput"
+                   placeholder="Search reservations..."
+                   class="admin-search-input w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent"
+                   oninput="filterTable(this.value)"
+                   aria-label="Search reservations">
+            <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" style="display: none;">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 
     <!-- Filter Section -->
     <div class="filter-section">
-        <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div class="flex-1">
-                <label for="status" class="filter-label">Filter by Status</label>
+        <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col gap-4">
+            <div class="filter-row w-full">
+                <label for="status" class="filter-label filter-label-inline">Filter by Status</label>
                 @php
                     $pending  = data_get($counts, 'pending', 0);
                     $approved = data_get($counts, 'approved', 0);
                     $declined = data_get($counts, 'declined', 0);
                 @endphp
-                <select name="status" id="status" onchange="this.form.submit()" class="filter-select w-full sm:w-64">
-                    <option value="" {{ $status === null ? 'selected' : '' }}>All Reservations</option>
-                    <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending ({{ $pending }})</option>
-                    <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved ({{ $approved }})</option>
-                    <option value="declined" {{ $status === 'declined' ? 'selected' : '' }}>Declined ({{ $declined }})</option>
-                </select>
+                <div class="select-with-arrows w-full sm:w-64">
+                    <select name="status" id="status" onchange="this.form.submit()" class="filter-select w-full" data-admin-select="true">
+                        <option value="" {{ $status === null ? 'selected' : '' }}>All Reservations</option>
+                        <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending ({{ $pending }})</option>
+                        <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved ({{ $approved }})</option>
+                        <option value="declined" {{ $status === 'declined' ? 'selected' : '' }}>Declined ({{ $declined }})</option>
+                    </select>
+                    <span class="select-arrows" aria-hidden="true">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
+                        </svg>
+                    </span>
+                </div>
             </div>
         </form>
     </div>
@@ -585,9 +654,11 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div @click="approveConfirmationOpen=false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -603,9 +674,11 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div @click="declineConfirmationOpen=false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>

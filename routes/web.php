@@ -72,6 +72,8 @@ Route::middleware(['auth'])
     ->name('admin.')
     ->group(function () {
         Route::get('/recent-notifications', [SuperAdminController::class, 'recentNotifications'])->name('recent-notifications');
+        Route::post('/notifications/mark-all-read', [SuperAdminController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
+        Route::patch('/notifications/{notification}/read', [SuperAdminController::class, 'setNotificationRead'])->name('notifications.set-read');
     });
 
 // ---------- Admin only routes ----------

@@ -446,12 +446,12 @@
     }
 @endphp
 
-<div class="w-full min-h-screen overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);">
+<div class="admin-page-shell w-full min-h-screen overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
     
     <!-- Modern Greeting Section with Updated Date Design -->
     <div class="greeting-section text-white p-6 animate-fade-in">
         <div class="greeting-content">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="text-3xl animate-float">{{ $icon }}</div>
                     <div>
@@ -459,7 +459,7 @@
                         <p class="greeting-message text-green-100 opacity-90">{{ $message }}</p>
                     </div>
                 </div>
-                <div class="text-right">
+                <div class="text-left sm:text-right">
                     <div class="date-badge">
                         <div class="date-day">{{ now()->format('l') }}</div>
                         <div class="date-full">{{ now()->format('M j, Y') }}</div>

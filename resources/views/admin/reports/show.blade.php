@@ -320,7 +320,7 @@
 }
 </style>
 
-<div class="modern-card manu-card p-6 mx-auto max-w-full" style="max-width: calc(100vw - 12rem);">
+<div class="modern-card manu-card admin-page-shell p-6 mx-auto max-w-full">
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">

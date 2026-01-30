@@ -295,34 +295,40 @@
 
     /* Connected design - seamless transition from sidebar */
     .main-content-wrapper {
-        margin-left: 16rem; /* 64 * 4 = 256px equivalent to w-64 */
-        transition: margin-left 0.3s ease;
+        width: 100%;
+        margin-left: 0;
+        transition: margin-left 0.3s ease, width 0.3s ease;
     }
 
-    @media (max-width: 768px) {
+    @media (min-width: 768px) {
         .main-content-wrapper {
-            margin-left: 0;
+            margin-left: 16rem; /* 64 * 4 = 256px equivalent to w-64 */
+            width: calc(100% - 16rem);
         }
     }
     </style>
 </head>
 
 <body class="font-poppins antialiased text-sm"
-      x-data="{ openSidebar: false, confirmLogout: false }">
+      x-data="{ openSidebar: false, confirmLogout: false }"
+      :class="{ 'overflow-hidden': openSidebar || confirmLogout }"
+      @keydown.escape.window="openSidebar = false; confirmLogout = false">
 
 <div class="min-h-screen flex">
 
     <!-- Mobile Overlay -->
-    <div class="mobile-overlay md:hidden" 
+    <div class="mobile-overlay md:hidden"
          :class="{ 'active': openSidebar }"
          @click="openSidebar = false"
          x-show="openSidebar"
+         x-transition.opacity
          x-cloak>
     </div>
 
     <!-- Modern Gradient Sidebar -->
     <aside class="sidebar-gradient text-white w-64 fixed inset-y-0 left-0 z-50 transform md:translate-x-0 transition-all duration-300  backdrop-blur-md animate-slide-in-left"
-           :class="openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+           :class="openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+           x-cloak>
 
         <div class="sidebar-content">
             <!-- Top Section: Logo & Navigation -->
@@ -449,11 +455,9 @@
     <!-- Main Content Area with Connected Header -->
     <div class="flex-1 flex flex-col main-content-wrapper">
         <!-- Connected Header -->
-        <header class="header-connected header-glass px-6 py-3 fixed top-0 right-0 z-30 transition-all duration-300"
-                :class="openSidebar ? 'md:left-64' : 'md:left-0'"
-                style="left: 0; right: 0;">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
+        <header class="header-connected header-glass px-4 sm:px-6 py-3 fixed top-0 left-0 right-0 md:left-64 z-30 transition-all duration-300">
+            <div class="flex items-center justify-between gap-3 sm:gap-4">
+                <div class="flex items-center gap-4">
                     <button @click="openSidebar = !openSidebar"
                             class="md:hidden p-2 rounded-lg header-button header-transition">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -465,40 +469,58 @@
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-4">
-                    <!-- Search Bar -->
-                    <div class="relative">
-                        <input type="text" 
-                               id="searchInput" 
-                               placeholder="Search tables, data, or content..."
-                               class="header-search rounded-lg px-5 py-3 pl-10 pr-10 w-80 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-200 header-transition"
-                               oninput="filterTable(this.value)">
-                        <svg class="w-5 h-5 absolute left-3 top-2.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <button id="clearSearch" class="absolute right-3 top-2.5 text-white/70 hover:text-white transition-colors duration-200" style="display: none;">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-
+                <div class="flex items-center justify-end gap-3 sm:gap-4">
                     <!-- Notifications -->
-                    <div class="relative" x-data="{ openNotif: false }">
-                        <button @click="openNotif = !openNotif"
+                    <div class="relative" x-data="notificationsPanel()" x-init="init()">
+                        <button @click="open = !open"
+                                :aria-expanded="open.toString()"
                                 class="header-button p-2 rounded-full header-transition relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM15 7v5H9v6H5V7h10z"></path>
+                            <!-- Bell icon -->
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
                             </svg>
-                            <div class="notification-badge"></div>
+                            <!-- Unread badge -->
+                            <span x-show="unreadCount > 0"
+                                  x-text="unreadCount > 99 ? '99+' : unreadCount"
+                                  class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[0.65rem] font-semibold flex items-center justify-center shadow"
+                                  x-cloak></span>
                         </button>
-                        <div x-show="openNotif"
-                             @click.away="openNotif = false"
-                             class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 header-transition"
+                        <div x-show="open"
+                             @click.outside="open = false"
+                             x-transition.opacity.scale.90
+                             class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white border border-gray-200 rounded-lg shadow-xl z-50 header-transition"
                              x-cloak>
-                            <div class="p-4 border-b border-gray-200 font-semibold text-gray-800">Notifications</div>
-                            <ul class="max-h-60 overflow-y-auto" id="notifications-list">
-                                <li class="px-4 py-3 hover:bg-gray-50 text-gray-600">Loading notifications...</li>
+                            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                                <span class="font-semibold text-gray-800">Notifications</span>
+                                <button type="button" class="text-xs text-gray-500 hover:text-gray-700" @click="markAllRead" x-show="unreadCount > 0">
+                                    Mark all read
+                                </button>
+                            </div>
+                            <ul class="max-h-72 overflow-y-auto">
+                                <template x-if="loading">
+                                    <li class="px-4 py-3 text-gray-600">Loading notifications...</li>
+                                </template>
+                                <template x-if="!loading && items.length === 0">
+                                    <li class="px-4 py-3 text-gray-600">No new notifications</li>
+                                </template>
+                                <template x-for="item in items" :key="item.id">
+                                    <li class="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-start gap-3">
+                                            <span class="mt-2 w-2 h-2 rounded-full"
+                                                  :class="item.read ? 'bg-gray-300' : 'bg-blue-500'"></span>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900" x-text="item.actor"></p>
+                                                <p class="text-sm text-gray-600" x-text="item.description"></p>
+                                                <p class="text-xs text-gray-400 mt-1" x-text="item.time"></p>
+                                                <button type="button"
+                                                        class="mt-2 text-xs text-blue-600 hover:text-blue-800"
+                                                        @click="toggleRead(item.id)">
+                                                    <span x-text="item.read ? 'Mark as unread' : 'Mark as read'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
                             </ul>
                         </div>
                     </div>
@@ -507,15 +529,29 @@
         </header>
 
         <!-- Main Content -->
-        <main class="p-6 overflow-y-auto flex-1 mt-16 bg-gray-100">
+        <main class="admin-shell p-4 sm:p-6 overflow-y-auto flex-1 mt-24 sm:mt-16 bg-gray-100">
             @yield('content')
         </main>
     </div>
 </div>
 
+{{-- Unified admin toasts: success/error/warning. ESC to clear. --}}
+<x-admin.ui.toast-container />
+
+@if(session('success'))
+<script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'success', message: @json(session('success')) } })); });</script>
+@endif
+@if(session('error'))
+<script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'error', message: @json(session('error')) } })); });</script>
+@endif
+@if(session('warning'))
+<script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'warning', message: @json(session('warning')) } })); });</script>
+@endif
+
 <!-- Logout Confirmation Modal -->
 <div x-show="confirmLogout"
      class="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+     x-transition.opacity
      x-cloak>
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-black transform transition-all duration-300 scale-95"
          x-transition:enter="scale-100"
@@ -550,19 +586,23 @@
 
 <script>
 function filterTable(query) {
-    let rows = document.querySelectorAll("table tbody tr");
-    query = query.toLowerCase();
+    const normalizedQuery = query.toLowerCase().trim();
+    const rows = document.querySelectorAll("table tbody tr");
     rows.forEach(row => {
-        let text = row.innerText.toLowerCase();
-        row.style.display = text.includes(query) ? "" : "none";
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(normalizedQuery) ? "" : "none";
+    });
+
+    const cards = document.querySelectorAll('[data-search-card="true"]');
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(normalizedQuery) ? "" : "none";
     });
 
     // Show/hide clear button based on input value
     const clearButton = document.getElementById('clearSearch');
-    if (query.length > 0) {
-        clearButton.style.display = 'block';
-    } else {
-        clearButton.style.display = 'none';
+    if (clearButton) {
+        clearButton.style.display = normalizedQuery.length > 0 ? 'block' : 'none';
     }
 }
 
@@ -571,6 +611,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const clearButton = document.getElementById('clearSearch');
 
+    if (!searchInput || !clearButton) {
+        return;
+    }
+
     clearButton.addEventListener('click', function() {
         searchInput.value = '';
         filterTable('');
@@ -578,69 +622,201 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Load notifications when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadNotifications();
-});
-
-function loadNotifications() {
-    fetch('{{ url("/admin/recent-notifications") }}', {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json',
+function notificationsPanel() {
+    return {
+        open: false,
+        items: [],
+        loading: true,
+        unreadCount: 0,
+        init() {
+            this.fetchNotifications();
+            setInterval(() => this.fetchNotifications(), 30000);
         },
-        credentials: 'same-origin'
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            const list = document.getElementById('notifications-list');
-            if (!data || data.length === 0) {
-                list.innerHTML = '<li class="px-4 py-3 hover:bg-gray-50 text-gray-600">No new notifications</li>';
-            } else {
-                // Deduplicate notifications by ID to prevent any duplicates in display
-                const uniqueNotifications = data.reduce((seen, notification) => {
-                    const exists = seen.find(n => n.id === notification.id);
-                    if (!exists) {
-                        seen.push(notification);
+        updateUnread() {
+            this.unreadCount = this.items.filter(item => !item.read).length;
+        },
+        markAllRead() {
+            fetch('{{ url("/admin/notifications/mark-all-read") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    return seen;
-                }, []);
+                    this.items = this.items.map(item => ({ ...item, read: true }));
+                    this.updateUnread();
+                })
+                .catch(error => {
+                    console.error('Error marking all notifications read:', error);
+                });
+        },
+        toggleRead(id) {
+            const target = this.items.find(item => item.id === id);
+            if (!target) return;
 
-                list.innerHTML = uniqueNotifications.map(notification => {
-                    const metadata = notification.metadata || {};
-                    const actionUser = metadata.updated_by || metadata.generated_by || metadata.created_by || metadata.deleted_by || metadata.added_by || metadata.removed_by || (notification.user ? notification.user.name : 'System');
-                    return `
-                            <li class="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0">
-                                <div class="flex items-start space-x-3">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-gray-900">${actionUser}</p>
-                                        <p class="text-sm text-gray-600">${notification.description || 'Unknown Action'}</p>
-                                        <p class="text-xs text-gray-400">${notification.created_at ? new Date(notification.created_at).toLocaleString() : 'Unknown Time'}</p>
-                                    </div>
-                                </div>
-                            </li>
-                    `;
-                }).join('');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading notifications:', error);
-            const list = document.getElementById('notifications-list');
-            list.innerHTML = '<li class="px-4 py-3 hover:bg-gray-50 text-gray-600">Error loading notifications</li>';
-        });
+            const nextRead = !target.read;
+
+            fetch(`{{ url("/admin/notifications") }}/${id}/read`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ read: nextRead })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    this.items = this.items.map(item => item.id === id ? { ...item, read: nextRead } : item);
+                    this.updateUnread();
+                })
+                .catch(error => {
+                    console.error('Error toggling notification read:', error);
+                });
+        },
+        fetchNotifications() {
+            this.loading = true;
+            fetch('{{ url("/admin/recent-notifications") }}', {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const uniqueNotifications = (data || []).reduce((seen, notification) => {
+                        const exists = seen.find(n => n.id === notification.id);
+                        if (!exists) {
+                            seen.push(notification);
+                        }
+                        return seen;
+                    }, []);
+
+                    this.items = uniqueNotifications.map(notification => {
+                        const metadata = notification.metadata || {};
+                        const actor = metadata.updated_by || metadata.generated_by || metadata.created_by || metadata.deleted_by || metadata.added_by || metadata.removed_by || (notification.user ? notification.user.name : 'System');
+                        return {
+                            id: notification.id,
+                            actor: actor || 'System',
+                            description: notification.description || 'Unknown Action',
+                            time: notification.created_at ? new Date(notification.created_at).toLocaleString() : 'Unknown Time',
+                            read: Boolean(notification.read),
+                        };
+                    });
+                    this.updateUnread();
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    this.items = [];
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+        }
+    };
 }
 
-// Refresh notifications every 30 seconds
-setInterval(loadNotifications, 30000);
+function enhanceAdminSelect(select) {
+    if (!select || select.dataset.enhanced === 'true') return;
+
+    const searchable = select.dataset.searchable === 'true';
+    const searchPlaceholder = select.dataset.searchPlaceholder || 'Search options...';
+    select.classList.add('admin-select');
+    select.dataset.enhanced = 'true';
+
+    if (searchable) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'admin-select-wrapper';
+        wrapper.dataset.searchable = 'true';
+        const searchInput = document.createElement('input');
+        searchInput.type = 'search';
+        searchInput.className = 'admin-select-search';
+        searchInput.placeholder = searchPlaceholder;
+        searchInput.setAttribute('aria-controls', select.id || '');
+        searchInput.setAttribute('aria-label', select.getAttribute('aria-label') || searchPlaceholder);
+
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowDown') {
+                select.focus();
+            }
+        });
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            let matchCount = 0;
+            const optionGroups = Array.from(select.querySelectorAll('optgroup'));
+            const options = Array.from(select.options);
+
+            options.forEach((option) => {
+                if (option.value === '') {
+                    option.hidden = false;
+                    return;
+                }
+                const isMatch = option.text.toLowerCase().includes(query);
+                option.hidden = query.length > 0 && !isMatch;
+                if (!option.hidden) matchCount += 1;
+            });
+
+            optionGroups.forEach((group) => {
+                const groupOptions = Array.from(group.querySelectorAll('option'));
+                const hasVisible = groupOptions.some((opt) => !opt.hidden);
+                group.hidden = !hasVisible;
+            });
+
+            if (query.length > 0 && matchCount === 0) {
+                select.classList.add('admin-select-no-match');
+            } else {
+                select.classList.remove('admin-select-no-match');
+            }
+        });
+
+        wrapper.appendChild(searchInput);
+
+        if (select.parentNode) {
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+        }
+    }
+}
+
+function enhanceAdminSelects(root = document) {
+    const selects = root.querySelectorAll('select[data-admin-select="true"]');
+    selects.forEach((select) => enhanceAdminSelect(select));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    enhanceAdminSelects(document);
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType !== Node.ELEMENT_NODE) return;
+                if (node.matches && node.matches('select[data-admin-select="true"]')) {
+                    enhanceAdminSelect(node);
+                } else {
+                    enhanceAdminSelects(node);
+                }
+            });
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+});
 
 // Close sidebar when clicking outside on mobile
 document.addEventListener('DOMContentLoaded', function() {

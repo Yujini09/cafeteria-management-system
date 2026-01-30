@@ -249,6 +249,8 @@
     display: flex;
     gap: 0.75rem;
     margin-left: auto;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 /* Filter Section - Copied from Reservations */
@@ -265,6 +267,47 @@
     color: var(--neutral-700);
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
+}
+
+.filter-label-inline {
+    margin-bottom: 0;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .filter-row {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.select-with-arrows {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+}
+
+.select-with-arrows .filter-select {
+    appearance: none;
+    padding-right: 2.75rem;
+}
+
+.select-arrows {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    color: var(--neutral-500);
+}
+
+.select-arrows svg {
+    width: 16px;
+    height: 16px;
 }
 
 .filter-select {
@@ -387,8 +430,10 @@
     deletingItem: null, /* ADDED STATE */
     updateRoute: '{{ route('admin.inventory.update', ':id') }}',
     deleteRoute: '{{ route('admin.inventory.destroy', ':id') }}' /* ADDED ROUTE */
-}">
-    <div class="modern-card menu-card p-6 mx-auto max-w-full" style="max-width: calc(100vw - 12rem);">
+}"
+    x-effect="document.body.classList.toggle('overflow-hidden', showCreateModal || showEditModal || showDeleteModal)"
+    @keydown.escape.window="showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null">
+    <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
         <div class="page-header">
             <div class="header-content">
                 <div class="header-icon">
@@ -399,24 +444,49 @@
                     <p class="header-subtitle">Manage and track your inventory items and quantities</p>
                 </div>
             </div>
-            <div class="header-actions">
-                <button @click="showCreateModal = true" class="btn-primary">
-                    <i class="fas fa-plus mr-2"></i>
-                    Add Item
-                </button>
+            <div class="header-actions w-full md:w-auto">
+                <div class="relative w-full sm:w-64 md:w-72">
+                    <input type="search"
+                           id="searchInput"
+                           placeholder="Search inventory items..."
+                           class="admin-search-input w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent"
+                           oninput="filterTable(this.value)"
+                           aria-label="Search inventory items">
+                    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" style="display: none;">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-3 w-full sm:w-auto justify-end">
+                    <button @click="showCreateModal = true" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Item
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="filter-section">
-            <form method="GET" action="{{ route('admin.inventory.index') }}" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div class="flex-1">
-                    <label for="category" class="filter-label">Filter by Category</label>
-                    <select name="category" id="category" onchange="this.form.submit()" class="filter-select w-full sm:w-64">
-                        <option value="">All Categories</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                        @endforeach
-                    </select>
+            <form method="GET" action="{{ route('admin.inventory.index') }}" class="flex flex-col gap-4">
+                <div class="filter-row w-full">
+                    <label for="category" class="filter-label filter-label-inline">Filter by Category</label>
+                    <div class="select-with-arrows w-full sm:w-64">
+                        <select name="category" id="category" onchange="this.form.submit()" class="filter-select w-full" data-admin-select="true">
+                            <option value="">All Categories</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                            @endforeach
+                        </select>
+                        <span class="select-arrows" aria-hidden="true">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </div>
                 @if($sort)
                     <input type="hidden" name="sort" value="{{ $sort }}">
@@ -505,8 +575,8 @@
         </div>
     </div>
 
-    <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
-        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10">
+    <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
+        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10" x-transition.scale.90>
             <button @click="showCreateModal = false"
                     class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
                 &times;
@@ -524,8 +594,8 @@
 
                 <div>
                     <label for="create_category" class="form-label">Category</label>
-                    <select name="category" id="create_category" required class="modal-input">
-                        <option value="">-- Select Category --</option>
+                    <select name="category" id="create_category" required class="modal-input" data-admin-select="true">
+                        <option value="">Select a category</option>
                         <option value="Perishable">Perishable</option>
                         <option value="Condiments">Condiments</option>
                         <option value="Frozen">Frozen</option>
@@ -541,12 +611,18 @@
 
                 <div>
                     <label for="create_unit" class="form-label">Unit</label>
-                    <select name="unit" id="create_unit" required class="modal-input">
-                        <option value="">-- Select Unit --</option>
-                        <option value="Pieces">Pieces</option>
-                        <option value="Kgs">Kgs</option>
-                        <option value="Liters">Liters</option>
-                        <option value="Packs">Packs</option>
+                    <select name="unit" id="create_unit" required class="modal-input" data-admin-select="true">
+                        <option value="">Select a unit</option>
+                        <optgroup label="Count">
+                            <option value="Pieces">Pieces</option>
+                            <option value="Packs">Packs</option>
+                        </optgroup>
+                        <optgroup label="Weight">
+                            <option value="Kgs">Kgs</option>
+                        </optgroup>
+                        <optgroup label="Volume">
+                            <option value="Liters">Liters</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -568,8 +644,8 @@
         </div>
     </div>
 
-    <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
-        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10">
+    <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
+        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10" x-transition.scale.90>
             <button @click="showEditModal = false; editingItem = null"
                     class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
                 &times;
@@ -587,8 +663,8 @@
 
                 <div>
                     <label for="edit_category" class="form-label">Category</label>
-                    <select name="category" id="edit_category" required x-bind:value="editingItem ? editingItem.category : ''" class="modal-input">
-                        <option value="">-- Select Category --</option>
+                    <select name="category" id="edit_category" required x-bind:value="editingItem ? editingItem.category : ''" class="modal-input" data-admin-select="true">
+                        <option value="">Select a category</option>
                         <option value="Perishable">Perishable</option>
                         <option value="Condiments">Condiments</option>
                         <option value="Frozen">Frozen</option>
@@ -604,12 +680,18 @@
 
                 <div>
                     <label for="edit_unit" class="form-label">Unit</label>
-                    <select name="unit" id="edit_unit" required x-bind:value="editingItem ? editingItem.unit : ''" class="modal-input">
-                        <option value="">-- Select Unit --</option>
-                        <option value="Pieces">Pieces</option>
-                        <option value="Kgs">Kgs</option>
-                        <option value="Liters">Liters</option>
-                        <option value="Packs">Packs</option>
+                    <select name="unit" id="edit_unit" required x-bind:value="editingItem ? editingItem.unit : ''" class="modal-input" data-admin-select="true">
+                        <option value="">Select a unit</option>
+                        <optgroup label="Count">
+                            <option value="Pieces">Pieces</option>
+                            <option value="Packs">Packs</option>
+                        </optgroup>
+                        <optgroup label="Weight">
+                            <option value="Kgs">Kgs</option>
+                        </optgroup>
+                        <optgroup label="Volume">
+                            <option value="Liters">Liters</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -631,8 +713,8 @@
         </div>
     </div>
     
-    <div x-show="showDeleteModal" @click="showDeleteModal = false; deletingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
-        <div @click.stop class="modern-modal w-full max-w-sm p-8 relative z-10 text-center">
+    <div x-show="showDeleteModal" @click="showDeleteModal = false; deletingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
+        <div @click.stop class="modern-modal w-full max-w-sm p-8 relative z-10 text-center" x-transition.scale.90>
             <button @click="showDeleteModal = false; deletingItem = null"
                     class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
                 &times;

@@ -2,569 +2,192 @@
 @section('page-title', 'Manage Users')
 
 @section('content')
-<style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
+{{-- Design system: admin tokens from tailwind (admin-primary, rounded-admin, etc.). No inline overrides. --}}
+<div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 max-w-full overflow-hidden">
+    {{-- Success/error shown as toasts from layout; no duplicated inline messages. --}}
 
-/* Modern Card Styles */
-.modern-card {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Modern Table Styles */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: sticky;
-    top: 0;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* Custom Scrollbar */
-.modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-track {
-    background: var(--neutral-100);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
-
-/* Button Styles */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 70, 46, 0.2);
-}
-
-.btn-secondary {
-    background: var(--neutral-100);
-    color: var(--neutral-700);
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-secondary:hover {
-    background: var(--neutral-200);
-}
-
-/* Action Buttons */
-.action-btn {
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    text-decoration: none;
-    border: 1px solid transparent;
-}
-
-.action-btn-edit {
-    background: rgba(59, 130, 246, 0.1);
-    color: #2563eb;
-    border-color: rgba(59, 130, 246, 0.2);
-}
-
-.action-btn-edit:hover {
-    background: rgba(59, 130, 246, 0.2);
-    transform: translateY(-1px);
-}
-
-.action-btn-audit {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-    border-color: rgba(245, 158, 11, 0.2);
-}
-
-.action-btn-audit:hover {
-    background: rgba(245, 158, 11, 0.2);
-    transform: translateY(-1px);
-}
-
-.action-btn-delete {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
-
-.action-btn-delete:hover {
-    background: rgba(239, 68, 68, 0.2);
-    transform: translateY(-1px);
-}
-
-/* Role Badge */
-.role-badge {
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.role-admin {
-    background: rgba(0, 70, 46, 0.1);
-    color: var(--primary);
-}
-
-.role-user {
-    background: rgba(107, 114, 128, 0.1);
-    color: var(--neutral-600);
-}
-
-/* Empty State */
-.empty-state {
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
-}
-
-.empty-state-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Modal Styles */
-.modern-modal {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--neutral-200);
-}
-
-.modal-input {
-    width: 100%;
-    padding: 0.875rem;
-    border: 1px solid var(--neutral-300);
-    border-radius: 8px;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-}
-
-.modal-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
-}
-
-/* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-icon i {
-    color: white;
-    font-size: 1.25rem;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
-.header-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-left: auto;
-}
-
-.modern-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-</style>
-
-<div class="modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);">
-    <!-- Success/Error Messages -->
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">
-            {{ session('success') }}
+    <div class="flex flex-wrap items-center gap-4 mb-8">
+        <div class="w-12 h-12 rounded-admin-lg bg-gradient-to-br from-admin-primary to-admin-primary-light flex items-center justify-center shrink-0">
+            <x-admin.ui.icon name="fa-users" style="fas" class="!text-white w-6 h-6" />
         </div>
-    @endif
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    <!-- Header -->
-    <div class="page-header">
-        <div class="header-icon">
-            <i class="far fa-user"></i>
-        </div>
-        <h1 class="header-title">User Management</h1>
-        <div class="header-actions">
-            <button onclick="openRecentActivitiesModal()" class="btn-secondary">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        <h1 class="text-2xl font-bold text-admin-neutral-900">User Management</h1>
+        <div class="flex flex-col gap-3 ml-auto w-full sm:w-auto sm:items-end">
+            <div class="relative w-full sm:w-64 md:w-72">
+                <input type="search"
+                       id="searchInput"
+                       placeholder="Search users..."
+                       class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                       oninput="filterTable(this.value)"
+                       aria-label="Search users">
+                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
-                Recent Activities
-            </button>
-            <button onclick="document.getElementById('addAdminModal').classList.remove('hidden')" class="btn-primary">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Add Admin
-            </button>
+                <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex flex-wrap gap-3 w-full sm:w-auto sm:justify-end">
+                <x-admin.ui.button.secondary type="button" onclick="openRecentActivitiesModal()">
+                    <x-admin.ui.icon name="fa-file-alt" size="sm" />
+                    Recent Activities
+                </x-admin.ui.button.secondary>
+                <x-admin.ui.button.primary type="button" @click="$dispatch('open-admin-modal', 'addAdmin')">
+                    <x-admin.ui.icon name="fa-plus" size="sm" />
+                    Add Admin
+                </x-admin.ui.button.primary>
+            </div>
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="overflow-auto max-h-96 modern-scrollbar">
-        <table class="modern-table">
+    <div class="overflow-auto max-h-96 rounded-admin border border-admin-neutral-200">
+        <table class="w-full border-collapse text-sm">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Actions</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Name</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Email</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Role</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Actions</th>
                 </tr>
             </thead>
             <tbody>
             @forelse($users as $user)
-                <tr>
-                    <td class="font-semibold text-gray-900">{{ $user->name }}</td>
-                    <td class="text-gray-600">{{ $user->email }}</td>
-                    <td>
-                        <span class="role-badge {{ $user->role === 'admin' ? 'role-admin' : 'role-user' }}">
+                <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                    <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100">{{ $user->name }}</td>
+                    <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100">{{ $user->email }}</td>
+                    <td class="py-4 px-4 border-b border-admin-neutral-100">
+                        <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->role === 'admin' ? 'bg-admin-primary-light text-admin-primary' : 'bg-admin-neutral-100 text-admin-neutral-600' }}">
                             {{ ucfirst($user->role) }}
                         </span>
                     </td>
-                    <td>
+                    <td class="py-4 px-4 border-b border-admin-neutral-100">
                         <div class="flex flex-wrap gap-2">
                             @if($user->role === 'admin')
-                                <button
-                                    onclick="openEditModal({{ $user->id }}, '{{ e($user->name) }}', '{{ e($user->email) }}')"
-                                    class="action-btn action-btn-edit">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                    Edit
-                                </button>
-                                <a href="{{ route('superadmin.users.audit', $user) }}"
-                                   class="action-btn action-btn-audit">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    Audit
+                                <x-admin.ui.button.secondary type="button" class="!py-2 !px-3 text-xs" onclick="openEditModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}', '{{ addslashes(e($user->email)) }}')">
+                                    <x-admin.ui.icon name="fa-pen" size="sm" /> Edit
+                                </x-admin.ui.button.secondary>
+                                <a href="{{ route('superadmin.users.audit', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
+                                    <x-admin.ui.icon name="fa-file-alt" size="sm" /> Audit
                                 </a>
                             @else
-                                <a href="{{ route('superadmin.users.audit', $user) }}"
-                                   class="action-btn action-btn-audit">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    Audit
+                                <a href="{{ route('superadmin.users.audit', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
+                                    <x-admin.ui.icon name="fa-file-alt" size="sm" /> Audit
                                 </a>
                             @endif
-
                             <form method="POST" action="{{ route('superadmin.users.destroy', $user) }}" class="inline" id="deleteForm{{ $user->id }}">
                                 @csrf @method('DELETE')
-                                <button type="button"
-                                        onclick="openDeleteModal({{ $user->id }}, '{{ e($user->name) }}')"
-                                        class="action-btn action-btn-delete">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                    Delete
-                                </button>
+                                <x-admin.ui.button.danger type="button" class="!py-2 !px-3 text-xs" onclick="openDeleteModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}')">
+                                    <x-admin.ui.icon name="fa-trash-alt" size="sm" /> Delete
+                                </x-admin.ui.button.danger>
                             </form>
                         </div>
                     </td>
                 </tr>
-                @empty
-                    <tr>
-                        <td colspan="4">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                    </svg>
-                                </div>
-                                <p class="text-lg font-semibold text-gray-900 mb-2">No users found</p>
-                                <p class="text-sm text-gray-500">Start by adding your first user to the system</p>
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
+            @empty
+                <tr>
+                    <td colspan="4" class="py-12 px-4 text-center">
+                        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-admin-neutral-100 flex items-center justify-center">
+                            <x-admin.ui.icon name="fa-exclamation-triangle" class="text-admin-neutral-400 w-8 h-8" />
+                        </div>
+                        <p class="font-semibold text-admin-neutral-900 mb-1">No users found</p>
+                        <p class="text-sm text-admin-neutral-500">Start by adding your first user to the system</p>
+                    </td>
+                </tr>
+            @endforelse
             </tbody>
         </table>
     </div>
 </div>
 
-{{-- Modal: Add Admin --}}
-<div id="addAdminModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="modern-modal p-6 w-full max-w-md">
-        <h2 class="text-xl font-bold mb-4 text-gray-900">Add New Admin</h2>
+{{-- Unified admin modals: overlay blur, ESC/click-outside, body scroll lock. --}}
+<x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
+    <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm">
+        @csrf
+        <div class="space-y-4">
+            <x-admin.forms.input name="name" label="Full Name" required />
+            <x-admin.forms.input name="email" label="Email Address" type="email" required />
+            <x-admin.forms.password name="password" label="Password" :showRequirements="true" required />
+            <x-admin.forms.password name="password_confirmation" label="Confirm Password" required />
+        </div>
+    </form>
+    <x-slot:footer>
+        <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" @click="$dispatch('close-admin-modal', 'addAdmin'); $dispatch('open-admin-modal', 'createAdminConfirm')">Create Admin</x-admin.ui.button.primary>
+    </x-slot:footer>
+</x-admin.ui.modal>
 
-        <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm">
-            @csrf
-            <div class="space-y-4">
-                <input type="text" name="name" placeholder="Full Name" class="modal-input" required>
-                <input type="email" name="email" placeholder="Email Address" class="modal-input" required>
-                
-                <!-- Password Field with Eye Button -->
-                <div class="relative">
-                    <input type="password" id="adminPassword" name="password" placeholder="Password" class="modal-input pr-10" required>
-                    <button type="button" id="toggleAdminPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800">
-                        <svg id="eyeIconAdminPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Confirm Password Field with Eye Button -->
-                <div class="relative">
-                    <input type="password" id="adminPasswordConfirmation" name="password_confirmation" placeholder="Confirm Password" class="modal-input pr-10" required>
-                    <button type="button" id="toggleAdminPasswordConfirmation" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800">
-                        <svg id="eyeIconAdminPasswordConfirmation" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+<x-admin.ui.modal name="editUser" title="Edit Admin" variant="confirmation" maxWidth="md">
+    <form id="editUserForm" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="space-y-4">
+            <x-admin.forms.input name="name" id="editName" label="Full Name" required />
+            <x-admin.forms.input name="email" id="editEmail" label="Email Address" type="email" required />
+        </div>
+    </form>
+    <x-slot:footer>
+        <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" @click="$dispatch('close-admin-modal', 'editUser'); $dispatch('open-admin-modal', 'updateAdminConfirm')">Update Admin</x-admin.ui.button.primary>
+    </x-slot:footer>
+</x-admin.ui.modal>
 
-            <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" onclick="document.getElementById('addAdminModal').classList.add('hidden')"
-                        class="btn-secondary">Cancel</button>
-                <button type="button" onclick="openCreateAdminModal()" class="btn-primary">Create Admin</button>
-            </div>
-        </form>
+<x-admin.ui.modal name="deleteConfirm" title="Delete User" variant="error" maxWidth="md">
+    <p class="text-admin-neutral-600 text-sm">
+        Are you sure you want to delete <span id="deleteUserName" class="font-semibold text-admin-neutral-900"></span>?
+        This action cannot be undone.
+    </p>
+    <x-slot:footer>
+        <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.danger type="button" onclick="confirmDelete()">Delete</x-admin.ui.button.danger>
+    </x-slot:footer>
+</x-admin.ui.modal>
+
+<x-admin.ui.modal name="createAdminConfirm" title="Create New Admin" variant="confirmation" maxWidth="md">
+    <p class="text-admin-neutral-600 text-sm">Are you sure you want to create this admin user? They will have administrative privileges.</p>
+    <x-slot:footer>
+        <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'createAdminConfirm'); $dispatch('open-admin-modal', 'addAdmin')">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" onclick="document.getElementById('addAdminForm').submit()">Create Admin</x-admin.ui.button.primary>
+    </x-slot:footer>
+</x-admin.ui.modal>
+
+<x-admin.ui.modal name="updateAdminConfirm" title="Update Admin" variant="confirmation" maxWidth="md">
+    <p class="text-admin-neutral-600 text-sm">Are you sure you want to save the changes to this admin user?</p>
+    <x-slot:footer>
+        <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" onclick="document.getElementById('editUserForm').submit()">Update Admin</x-admin.ui.button.primary>
+    </x-slot:footer>
+</x-admin.ui.modal>
+
+<x-admin.ui.modal name="recentActivities" title="Recent Activities" variant="info" maxWidth="6xl">
+    <div id="activitiesTableContainer" class="overflow-auto max-h-[60vh] rounded-admin border border-admin-neutral-200">
+        <table class="w-full border-collapse text-sm">
+            <thead>
+                <tr>
+                    <th class="bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase">User</th>
+                    <th class="bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase cursor-pointer hover:bg-admin-neutral-100" onclick="sortBy('action')">Action</th>
+                    <th class="bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase cursor-pointer hover:bg-admin-neutral-100" onclick="sortBy('module')">Module</th>
+                    <th class="bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase cursor-pointer hover:bg-admin-neutral-100" onclick="sortBy('description')">Description</th>
+                    <th class="bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase cursor-pointer hover:bg-admin-neutral-100" onclick="sortBy('created_at')">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="5" class="py-8 text-center text-admin-neutral-500">Loading activities...</td></tr>
+            </tbody>
+        </table>
     </div>
-</div>
-
-{{-- Modal: Edit Admin --}}
-<div id="editUserModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="modern-modal p-6 w-full max-w-md">
-        <h2 class="text-xl font-bold mb-4 text-gray-900">Edit Admin</h2>
-
-        <form id="editUserForm" method="POST">
-            @csrf @method('PUT')
-            <div class="space-y-4">
-                <input type="text" name="name" id="editName" class="modal-input" required>
-                <input type="email" name="email" id="editEmail" class="modal-input" required>
-            </div>
-
-            <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" onclick="document.getElementById('editUserModal').classList.add('hidden')"
-                        class="btn-secondary">Cancel</button>
-                <button type="button" onclick="openUpdateAdminModal()" class="btn-primary">Update Admin</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- Modal: Delete Confirmation --}}
-<div id="deleteConfirmationModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="modern-modal p-6 w-full max-w-md">
-        <div class="text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Delete User</h3>
-            <p class="text-sm text-gray-500 mb-4">
-                Are you sure you want to delete <span id="deleteUserName" class="font-semibold text-gray-900"></span>?
-                This action cannot be undone.
-            </p>
-        </div>
-
-        <div class="flex justify-end space-x-3">
-            <button type="button" onclick="closeDeleteModal()" class="btn-secondary">Cancel</button>
-            <button type="button" onclick="confirmDelete()" class="btn-primary bg-red-600 hover:bg-red-700">Delete</button>
-        </div>
-    </div>
-</div>
-
-{{-- Modal: Create Admin Confirmation --}}
-<div id="createAdminConfirmationModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="modern-modal p-6 w-full max-w-md">
-        <div class="text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Create New Admin</h3>
-            <p class="text-sm text-gray-500 mb-4">
-                Are you sure you want to create this admin user? They will have administrative privileges.
-            </p>
-        </div>
-
-        <div class="flex justify-end space-x-3">
-            <button type="button" onclick="closeCreateAdminModal()" class="btn-secondary">Cancel</button>
-            <button type="button" onclick="confirmCreateAdmin()" class="btn-primary">Create Admin</button>
-        </div>
-    </div>
-</div>
-
-{{-- Modal: Update Admin Confirmation --}}
-<div id="updateAdminConfirmationModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="modern-modal p-6 w-full max-w-md">
-        <div class="text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Update Admin</h3>
-            <p class="text-sm text-gray-500 mb-4">
-                Are you sure you want to save the changes to this admin user?
-            </p>
-        </div>
-
-        <div class="flex justify-end space-x-3">
-            <button type="button" onclick="closeUpdateAdminModal()" class="btn-secondary">Cancel</button>
-            <button type="button" onclick="confirmUpdateAdmin()" class="btn-primary">Update Admin</button>
-        </div>
-    </div>
-</div>
-
-{{-- Modal: Recent Activities --}}
-<div id="recentActivitiesModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="modern-modal p-6 w-full max-w-6xl max-h-[80vh] overflow-hidden">
-        <h2 class="text-xl font-bold mb-4 text-gray-900">Recent Activities</h2>
-
-        <div id="activitiesTableContainer" class="overflow-auto max-h-96 modern-scrollbar">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th class="cursor-pointer hover:bg-gray-100" onclick="sortBy('action')">Action</th>
-                        <th class="cursor-pointer hover:bg-gray-100" onclick="sortBy('module')">Module</th>
-                        <th class="cursor-pointer hover:bg-gray-100" onclick="sortBy('description')">Description</th>
-                        <th class="cursor-pointer hover:bg-gray-100" onclick="sortBy('created_at')">Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="5">
-                            <div class="empty-state py-8">
-                                <p class="text-gray-500">Loading activities...</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flex justify-end space-x-3 mt-6">
-            <button type="button" onclick="document.getElementById('recentActivitiesModal').classList.add('hidden')"
-                    class="btn-secondary">Close</button>
-        </div>
-    </div>
-</div>
+    <x-slot:footer>
+        <x-admin.ui.button.secondary type="button" @click="show = false">Close</x-admin.ui.button.secondary>
+    </x-slot:footer>
+</x-admin.ui.modal>
 
 <script>
+// Open modals via dispatch so unified admin modal component handles overlay, ESC, scroll lock.
 function openEditModal(id, name, email) {
-    document.getElementById('editUserModal').classList.remove('hidden');
     document.getElementById('editName').value = name;
     document.getElementById('editEmail').value = email;
     document.getElementById('editUserForm').action = `{{ url('superadmin/users') }}/${id}`;
+    window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
 }
 
 let deleteUserId = null;
@@ -572,12 +195,7 @@ let deleteUserId = null;
 function openDeleteModal(userId, userName) {
     deleteUserId = userId;
     document.getElementById('deleteUserName').textContent = userName;
-    document.getElementById('deleteConfirmationModal').classList.remove('hidden');
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteConfirmationModal').classList.add('hidden');
-    deleteUserId = null;
+    window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'deleteConfirm' }));
 }
 
 function confirmDelete() {
@@ -586,55 +204,41 @@ function confirmDelete() {
     }
 }
 
-function openCreateAdminModal() {
-    document.getElementById('createAdminConfirmationModal').classList.remove('hidden');
-}
-
-function closeCreateAdminModal() {
-    document.getElementById('createAdminConfirmationModal').classList.add('hidden');
-}
-
-function confirmCreateAdmin() {
-    document.getElementById('addAdminForm').submit();
-}
-
-function openUpdateAdminModal() {
-    document.getElementById('updateAdminConfirmationModal').classList.remove('hidden');
-}
-
-function closeUpdateAdminModal() {
-    document.getElementById('updateAdminConfirmationModal').classList.add('hidden');
-}
-
-function confirmUpdateAdmin() {
-    document.getElementById('editUserForm').submit();
-}
-
 let allAudits = [];
 let currentSortBy = 'created_at';
 let currentSortDirection = 'desc';
 
 async function openRecentActivitiesModal() {
-    document.getElementById('recentActivitiesModal').classList.remove('hidden');
+    window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'recentActivities' }));
     await loadActivities();
 }
 
 async function loadActivities() {
     const container = document.getElementById('activitiesTableContainer');
-    container.innerHTML = '<div class="empty-state py-8"><p class="text-gray-500">Loading activities...</p></div>';
+    const tbody = container.querySelector('tbody');
+
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-admin-neutral-500">Loading activities...</td></tr>';
+    }
 
     try {
         const response = await fetch('{{ url("superadmin/recent-audits") }}');
-        allAudits = await response.json();
+        if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        allAudits = Array.isArray(data) ? data : [];
 
-        if (allAudits.length === 0) {
-            container.innerHTML = '<div class="empty-state py-8"><p class="text-gray-500">No recent activities found.</p></div>';
+        if (allAudits.length === 0 && tbody) {
+            tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-admin-neutral-500">No recent activities found.</td></tr>';
             return;
         }
 
         renderTable();
     } catch (error) {
-        container.innerHTML = '<div class="empty-state py-8"><p class="text-red-500">Error loading activities.</p></div>';
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">Error loading activities.</td></tr>';
+        }
         console.error('Error fetching audits:', error);
     }
 }
@@ -645,11 +249,11 @@ function renderTable() {
         let aVal, bVal;
 
         if (currentSortBy === 'created_at') {
-            aVal = new Date(a.created_at);
-            bVal = new Date(b.created_at);
+            aVal = new Date(a.created_at || 0);
+            bVal = new Date(b.created_at || 0);
         } else {
-            aVal = a[currentSortBy].toLowerCase();
-            bVal = b[currentSortBy].toLowerCase();
+            aVal = (a[currentSortBy] ?? '').toString().toLowerCase();
+            bVal = (b[currentSortBy] ?? '').toString().toLowerCase();
         }
 
         if (currentSortDirection === 'asc') {
@@ -709,33 +313,5 @@ function getSortIcon(column) {
     if (currentSortBy !== column) return '';
     return currentSortDirection === 'asc' ? '▲' : '▼';
 }
-
-// Toggle Password Visibility for Admin Password
-document.getElementById('toggleAdminPassword').addEventListener('click', function (e) {
-    e.preventDefault();
-    const passwordInput = document.getElementById('adminPassword');
-    const eyeIcon = document.getElementById('eyeIconAdminPassword');
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
-    } else {
-        passwordInput.type = 'password';
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-    }
-});
-
-// Toggle Password Visibility for Admin Confirm Password
-document.getElementById('toggleAdminPasswordConfirmation').addEventListener('click', function (e) {
-    e.preventDefault();
-    const passwordInput = document.getElementById('adminPasswordConfirmation');
-    const eyeIcon = document.getElementById('eyeIconAdminPasswordConfirmation');
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
-    } else {
-        passwordInput.type = 'password';
-        eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-    }
-});
 </script>
 @endsection

@@ -109,17 +109,18 @@
     position: relative;
 }
 
-.price-input {
+.price-input-container .price-input {
     width: 100%;
-    padding: 0.75rem 0.75rem 0.75rem 2rem;
+    padding: 0.75rem 0.75rem 0.75rem 3rem !important;
     border: 1px solid var(--neutral-300);
     border-radius: 8px;
     font-size: 0.875rem;
     transition: all 0.2s ease;
     background: white;
+    box-sizing: border-box;
 }
 
-.price-input:focus {
+.price-input-container .price-input:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
@@ -127,11 +128,13 @@
 
 .currency-symbol {
     position: absolute;
-    left: 0.75rem;
+    left: 0.9rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--neutral-600);
     font-weight: 600;
+    font-size: 0.875rem;
+    pointer-events: none;
 }
 
 /* Header Styles */
@@ -228,7 +231,7 @@
 }
 </style>
 
-<div class="modern-card menu-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);">
+<div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
     <!-- Header -->
     <div class="page-header">
         <div class="header-icon">
@@ -241,8 +244,8 @@
     <form method="POST" action="{{ route('admin.menus.prices.update') }}" class="space-y-6">
         @csrf
 
-        <div>
-            <table class="modern-table">
+        <div class="overflow-x-auto">
+            <table class="modern-table min-w-[520px]">
                 <thead>
                     <tr>
                         <th>Meal Time</th>
@@ -292,7 +295,7 @@
             </table>
         </div>
 
-        <div class="flex justify-end gap-3 pt-6 border-t border-gray-100">
+        <div class="flex flex-col gap-3 pt-6 border-t border-gray-100 sm:flex-row sm:justify-end">
             <a href="{{ route('admin.menus.index') }}" class="btn-secondary">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

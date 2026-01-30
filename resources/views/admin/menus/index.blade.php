@@ -39,6 +39,30 @@
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         border-color: #cbd5e0;
     }
+
+    .select-with-arrows {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        width: auto;
+    }
+
+    .select-with-arrows select {
+        appearance: none;
+        padding-right: 2.75rem;
+    }
+
+    .select-arrows {
+        position: absolute;
+        right: 0.75rem;
+        pointer-events: none;
+        color: #6b7280;
+    }
+
+    .select-arrows svg {
+        width: 16px;
+        height: 16px;
+    }
     
     .type-tab {
         transition: all 0.3s ease;
@@ -102,6 +126,8 @@
         defaultMeal: @json($meal === "all" ? "breakfast" : $meal),
         prices: @json($menuPrices)
      })'
+     x-effect="document.body.classList.toggle('overflow-hidden', isCreateOpen || isEditOpen || isDeleteOpen)"
+     @keydown.escape.window="isCreateOpen = false; isEditOpen = false; closeDelete()"
      class="space-y-6">
 
 {{-- Header --}}
@@ -119,15 +145,35 @@
       </div>
     </div>
 
-    <button type="button"
-            @click="openCreate()"
-            class="bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
-            style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-      </svg>
-      Add Menu
-    </button>
+    <div class="flex flex-col gap-3 ml-auto w-full sm:w-auto sm:items-end">
+      <div class="relative w-full sm:w-64 md:w-72">
+        <input type="search"
+               id="searchInput"
+               placeholder="Search menus..."
+               class="admin-search-input w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent"
+               oninput="filterTable(this.value)"
+               aria-label="Search menus">
+        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" style="display: none;">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="flex flex-wrap gap-3 w-full sm:w-auto sm:justify-end">
+        <button type="button"
+                @click="openCreate()"
+                class="bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
+                style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add Menu
+        </button>
+      </div>
+    </div>
   </div>
 
   {{-- Type Tabs --}}
@@ -144,23 +190,31 @@
   {{-- Meal Filter and Fixed Price Row --}}
   <div class="mt-4 flex items-center justify-between gap-4 flex-wrap">
     {{-- Meal Filter --}}
-    <form method="GET" action="{{ route('admin.menus.index') }}" class="flex items-center gap-3 flex-wrap">
+    <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col sm:flex-row sm:items-center gap-3">
       <input type="hidden" name="type" value="{{ $type }}">
-      <label class="font-medium text-gray-700" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Filter by Meal:</label>
-      <select name="meal"
-              class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-300 bg-white shadow-sm"
-              style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;"
-              onchange="this.form.submit()">
-        <option value="all" {{ $meal === 'all' ? 'selected' : '' }}>
-          All Menus {{ !empty($totalCount) ? "($totalCount)" : '' }}
-        </option>
-        @foreach($meals as $key => $label)
-          @php $count = data_get($counts ?? [], $key, 0); @endphp
-          <option value="{{ $key }}" {{ $meal === $key ? 'selected' : '' }}>
-            {{ $label }} {{ $count ? "($count)" : '' }}
+      <label class="font-medium text-gray-700 whitespace-nowrap" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Filter by Meal:</label>
+      <div class="select-with-arrows w-full sm:w-64">
+        <select name="meal"
+                data-admin-select="true"
+                class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-300 bg-white shadow-sm w-full"
+                style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;"
+                onchange="this.form.submit()">
+          <option value="all" {{ $meal === 'all' ? 'selected' : '' }}>
+            All Menus {{ !empty($totalCount) ? "($totalCount)" : '' }}
           </option>
-        @endforeach
-      </select>
+          @foreach($meals as $key => $label)
+            @php $count = data_get($counts ?? [], $key, 0); @endphp
+            <option value="{{ $key }}" {{ $meal === $key ? 'selected' : '' }}>
+              {{ $label }} {{ $count ? "($count)" : '' }}
+            </option>
+          @endforeach
+        </select>
+        <span class="select-arrows" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
+          </svg>
+        </span>
+      </div>
     </form>
 
     {{-- Fixed price pill (hide on "All") --}}
@@ -188,7 +242,6 @@
       </div>
     @endif
   </div>
-</div>
 
   {{-- Menus grid - 3 columns --}}
   @php
@@ -200,9 +253,10 @@
                   : data_get($menusByDay ?? [], $meal, collect()));
   @endphp
 
-  <div class="grid gap-4 grid-cols-1 lg:grid-cols-3">
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
     @forelse($list as $menu)
       <div id="menu-card-{{ $menu->id }}"
+           data-search-card="true"
            class="menu-card rounded-xl p-4 h-full flex flex-col">
         <div class="flex items-start justify-between mb-3">
           <div class="flex-1">
@@ -309,13 +363,16 @@
   </div>
 
   {{-- CREATE MENU MODAL - 3 STEPS --}}
-  <div x-cloak x-show="isCreateOpen" x-transition
-       class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-    <div @click="close()" class="absolute inset-0"></div>
+  <template x-teleport="body">
+    <div x-cloak x-show="isCreateOpen" x-transition x-transition.opacity
+         @keydown.escape.window="close()"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div @click="close()" class="absolute inset-0"></div>
 
-    <div class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden flex flex-col"
-         x-transition:enter="scale-100"
-         x-transition:enter-start="scale-95">
+      <div @click.stop
+           class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden flex flex-col"
+           x-transition:enter="scale-100"
+           x-transition:enter-start="scale-95">
          
       <div class="modal-header p-6 flex-shrink-0">
         <div class="flex items-center justify-between">
@@ -377,7 +434,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Menu Type <span class="text-red-500">*</span></label>
-                <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.type" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.type" required data-admin-select="true" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                   <option value="">Select menu type</option>
                   <option value="standard">Standard Menu</option>
                   <option value="special">Special Menu</option>
@@ -386,7 +443,7 @@
 
               <div>
                 <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Meal Time <span class="text-red-500">*</span></label>
-                <select name="meal_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.meal" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                <select name="meal_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" x-model="form.meal" required data-admin-select="true" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                   <option value="">Select meal time</option>
                   <option value="breakfast">Breakfast</option>
                   <option value="am_snacks">AM Snacks</option>
@@ -430,7 +487,7 @@
             <div class="border border-gray-200 rounded-lg p-4 bg-white">
               <div class="space-y-3">
                 <template x-for="(item, index) in form.items" :key="index">
-                  <div class="flex items-end gap-3">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <div class="flex-1">
                       <label class="block text-xs font-medium text-gray-700 mb-1">Item Name</label>
                       <input type="text" 
@@ -441,11 +498,12 @@
                             required
                             style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                     </div>
-                    <div class="w-32">
+                    <div class="w-full sm:w-32">
                       <label class="block text-xs font-medium text-gray-700 mb-1">Type</label>
                       <select :name="'items[' + index + '][type]'" 
                               x-model="item.type" 
                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white"
+                              data-admin-select="true"
                               style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                         <option value="food">Food</option>
                         <option value="drink">Drink</option>
@@ -454,7 +512,7 @@
                     </div>
                     <button type="button" 
                             @click="form.items.splice(index, 1)" 
-                            class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                            class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                       </svg>
@@ -533,12 +591,15 @@
                     </template>
 
                     <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                      <div class="flex gap-2 items-end bg-white p-3 rounded-lg">
+                      <div class="flex flex-col gap-3 sm:flex-row sm:items-end bg-white p-3 rounded-lg">
                         <div class="flex-1">
                           <label class="block text-xs font-medium text-gray-700 mb-1">Ingredient</label>
                           <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" 
                                   x-model="recipe.inventory_item_id" 
-                                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                  class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white"
+                                  data-admin-select="true"
+                                  data-searchable="true"
+                                  data-search-placeholder="Search ingredients..."
                                   required
                                   style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                             <option value="">Select ingredient</option>
@@ -547,7 +608,7 @@
                             @endforeach
                           </select>
                         </div>
-                        <div class="w-24">
+                        <div class="w-full sm:w-24">
                           <label class="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
                           <input type="number" 
                                 :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" 
@@ -559,23 +620,30 @@
                                 required
                                 style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                         </div>
-                        <div class="w-24">
+                        <div class="w-full sm:w-24">
                           <label class="block text-xs font-medium text-gray-700 mb-1">Unit</label>
                           <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
                                   x-model="recipe.unit" 
-                                  class="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white" 
+                                  class="w-full border border-gray-300 rounded px-2 py-2 text-sm focus:ring-2 focus:ring-[#057C3C] focus:border-transparent bg-white"
+                                  data-admin-select="true"
                                   required
                                   style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                             <option value="">Select unit</option>
-                            <option value="Pieces">Pieces</option>
-                            <option value="Kgs">Kgs</option>
-                            <option value="Liters">Liters</option>
-                            <option value="Packs">Packs</option>
+                            <optgroup label="Count">
+                              <option value="Pieces">Pieces</option>
+                              <option value="Packs">Packs</option>
+                            </optgroup>
+                            <optgroup label="Weight">
+                              <option value="Kgs">Kgs</option>
+                            </optgroup>
+                            <optgroup label="Volume">
+                              <option value="Liters">Liters</option>
+                            </optgroup>
                           </select>
                         </div>
                         <button type="button" 
                                 @click="item.recipes.splice(rIndex, 1)" 
-                                class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+                                class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                           </svg>
@@ -646,17 +714,21 @@
           </button>
         </div>
       </div>
+      </div>
     </div>
-  </div>
+  </template>
 
   {{-- EDIT MENU MODAL --}}
-  <div x-cloak x-show="isEditOpen" x-transition
-       class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-    <div @click="closeEdit()" class="absolute inset-0"></div>
+  <template x-teleport="body">
+    <div x-cloak x-show="isEditOpen" x-transition x-transition.opacity
+         @keydown.escape.window="closeEdit()"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div @click="closeEdit()" class="absolute inset-0"></div>
 
-    <div class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden"
-         x-transition:enter="scale-100"
-         x-transition:enter-start="scale-95">
+      <div @click.stop
+           class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden"
+           x-transition:enter="scale-100"
+           x-transition:enter-start="scale-95">
          
       <div class="modal-header p-6">
         <div class="flex items-center justify-between">
@@ -686,7 +758,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Menu Type</label>
-              <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" x-model="editForm.type" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+              <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" x-model="editForm.type" required data-admin-select="true" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                 <option value="standard">Standard Menu</option>
                 <option value="special">Special Menu</option>
               </select>
@@ -694,7 +766,7 @@
 
             <div>
               <label class="block font-medium text-gray-700 mb-1" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">Meal Time</label>
-              <select name="meal_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" x-model="editForm.meal" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+              <select name="meal_time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" x-model="editForm.meal" required data-admin-select="true" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                 <option value="breakfast">Breakfast</option>
                 <option value="am_snacks">AM Snacks</option>
                 <option value="lunch">Lunch</option>
@@ -726,14 +798,14 @@
             <div class="space-y-3">
               <template x-for="(item, index) in editForm.items" :key="index">
                 <div class="bg-gray-50 p-3 rounded-lg space-y-3 border border-gray-200">
-                  <div class="flex gap-2 items-end">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
                     <input type="text" :name="'items[' + index + '][name]'" x-model="item.name" placeholder="Food name" class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
-                    <select :name="'items[' + index + '][type]'" x-model="item.type" class="border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
+                    <select :name="'items[' + index + '][type]'" x-model="item.type" class="border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" data-admin-select="true" style="font-family: 'Poppins', sans-serif; font-size: 0.875rem;">
                       <option value="food">Food/Main Dish</option>
                       <option value="drink">Drink</option>
                       <option value="dessert">Dessert</option>
                     </select>
-                    <button type="button" @click="editForm.items.splice(index, 1)" class="p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
+                    <button type="button" @click="editForm.items.splice(index, 1)" class="self-end sm:self-auto p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                       </svg>
@@ -749,16 +821,16 @@
                     </h4>
                     <div class="space-y-2">
                       <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                        <div class="flex gap-2 items-end">
-                          <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" x-model="recipe.inventory_item_id" class="flex-1 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                          <select :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" x-model="recipe.inventory_item_id" class="flex-1 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" data-admin-select="true" data-searchable="true" data-search-placeholder="Search ingredients..." required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
                             <option value="">Select Ingredient</option>
                             @foreach($inventoryItems as $inv)
                               <option value="{{ $inv->id }}">{{ $inv->name }}</option>
                             @endforeach
                           </select>
-                          <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="w-20 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-                          <input type="text" :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" placeholder="Unit" class="w-16 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
-                          <button type="button" @click="item.recipes.splice(rIndex, 1)" class="p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
+                          <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="w-full sm:w-20 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
+                          <input type="text" :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" placeholder="Unit" class="w-full sm:w-16 border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white" required style="font-family: 'Poppins', sans-serif; font-size: 0.75rem;">
+                          <button type="button" @click="item.recipes.splice(rIndex, 1)" class="self-end sm:self-auto p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -812,13 +884,15 @@
           </div>
         </form>
       </div>
+      </div>
     </div>
-  </div>
+  </template>
 
   {{-- DELETE MENU MODAL (teleported) --}}
   <template x-teleport="body">
     <div x-cloak x-show="isDeleteOpen"
          @keydown.escape.window="closeDelete()"
+         x-transition.opacity
          class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
       <div class="absolute inset-0" @click="closeDelete()"></div>
 

@@ -260,12 +260,15 @@
 </style>
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-<div class="modern-card p-6 mx-auto max-w-full" x-data="reservationShow({
+<div class="modern-card p-6 mx-auto max-w-full"
+     x-data="reservationShow({
         accepted:@js(session('accepted',false)),
         declined:@js(session('declined',false)),
         inventoryWarning:@js(session('inventory_warning',false)),
         insufficientItems:@js(session('insufficient_items',[]))
-     })">
+})"
+     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen || acceptedOpen || inventoryWarningOpen || declineOpen)"
+     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false">
     
     <!-- Header -->
     <div class="page-header">
@@ -716,9 +719,11 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
         <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -734,9 +739,11 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
         <div @click="declineConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
@@ -753,9 +760,11 @@
     
 
     {{-- Accepted popup --}}
-    <div x-cloak x-show="acceptedOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
-        <div @click="acceptedOpen = false" class="absolute inset-0 bg-black/40"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+    <div x-cloak x-show="acceptedOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="acceptedOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -767,9 +776,11 @@
         </div>
     </div>
     {{-- Inventory Warning modal --}}
-    <div x-cloak x-show="inventoryWarningOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
-        <div @click="inventoryWarningOpen = false" class="absolute inset-0 bg-black/40"></div>
-        <div class="modern-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10">
+    <div x-cloak x-show="inventoryWarningOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="inventoryWarningOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 z-20" @click="inventoryWarningOpen = false">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -839,9 +850,11 @@
     </div>
 
     {{-- Decline Form Modal --}}
-    <div x-cloak x-show="declineOpen" x-transition class="fixed inset-0  flex items-center justify-center p-4">
-        <div @click="declineOpen = false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-lg relative z-10">
+    <div x-cloak x-show="declineOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="declineOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200" @click="declineOpen = false">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

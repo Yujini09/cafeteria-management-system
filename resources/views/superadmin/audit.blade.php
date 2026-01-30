@@ -291,7 +291,7 @@
 }
 </style>
 
-<div class="modern-card menu-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);">
+<div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
     <!-- Header Section -->
     <div class="page-header">
         <div class="header-content">

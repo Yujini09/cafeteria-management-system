@@ -125,4 +125,32 @@ class SuperAdminController extends Controller
 
         return response()->json($notifications);
     }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
+            abort(403);
+        }
+
+        Notification::query()->update(['read' => true]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function setNotificationRead(Request $request, Notification $notification)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'read' => ['required', 'boolean'],
+        ]);
+
+        $notification->update(['read' => $data['read']]);
+
+        return response()->json(['success' => true, 'read' => $notification->read]);
+    }
 }
