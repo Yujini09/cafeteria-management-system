@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fugaz+One&family=Damion&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
     <script src="//unpkg.com/alpinejs" defer></script>
     
     <style>
@@ -824,6 +823,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // This is handled by Alpine.js now, but keeping for reference
 });
 </script>
-@livewireScripts
 </body>
 </html>

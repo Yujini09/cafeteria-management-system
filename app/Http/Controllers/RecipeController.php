@@ -31,10 +31,13 @@ class RecipeController extends Controller
         ]);
 
         $inventoryItem = InventoryItem::find($data['inventory_item_id']);
+        if (!$inventoryItem) {
+            return back()->with('error', 'Inventory item not found.');
+        }
 
         $menuItem->recipes()->updateOrCreate(
             ['inventory_item_id' => $data['inventory_item_id']],
-            ['quantity_needed'   => $data['quantity_needed'], 'unit' => $inventoryItem->unit]
+            ['quantity_needed'   => $data['quantity_needed'], 'unit' => $inventoryItem->unit ?? null]
         );
 
         AuditTrail::create([
@@ -45,12 +48,12 @@ class RecipeController extends Controller
         ]);
 
         // Create notification for admins/superadmin about recipe ingredient addition/update
-        $this->createAdminNotification('recipe_ingredient_added_updated', 'recipes', 'A recipe ingredient has been added/updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('recipe_ingredient_added_updated', 'recipes', 'A recipe ingredient has been added/updated by ' . (Auth::user()?->name ?? 'System'), [
             'menu_item_name' => $menuItem->name,
             'inventory_item_name' => $inventoryItem->name,
             'quantity_needed' => $data['quantity_needed'],
             'unit' => $inventoryItem->unit,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'System',
         ]);
 
         return back()->with('success','Ingredient added/updated.');
@@ -73,10 +76,10 @@ class RecipeController extends Controller
         ]);
 
         // Create notification for admins/superadmin about recipe ingredient removal
-        $this->createAdminNotification('recipe_ingredient_removed', 'recipes', 'A recipe ingredient has been removed by ' . Auth::user()->name, [
+        $this->createAdminNotification('recipe_ingredient_removed', 'recipes', 'A recipe ingredient has been removed by ' . Auth::user()?->name ?? 'System', [
             'menu_item_name' => $menuItemName,
             'inventory_item_name' => $ingredientName,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'System',
         ]);
 
         return back()->with('success','Ingredient removed.');

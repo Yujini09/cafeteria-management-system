@@ -3,7 +3,6 @@
 @section('title', 'Billing Receipt - CLSU RET Cafeteria')
 
 @section('styles')
-<style>
     .receipt-hero-bg {
         background-image: url('/images/banner1.jpg');
         background-size: cover;
@@ -218,7 +217,6 @@
         margin-bottom: 5px;
         text-transform: capitalize;
     }
-</style>
 @endsection
 
 @section('content')

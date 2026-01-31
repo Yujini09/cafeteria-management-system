@@ -45,7 +45,7 @@ class ReservationStatusChanged extends Notification
             $mail->line('Reason for decline: '.$this->reason);
         }
 
-        $mail->action('View Details', url(route('admin.reservations.show', $r)))
+        $mail->action('View Details', url(route('reservation.view', $r)))
              ->line('Thank you!');
 
         return $mail;

@@ -73,17 +73,14 @@ body {
                             Go to Menus
                         </a>
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit"
-                                    class="inline-flex items-center gap-2 border border-gray-300 hover:bg-white/60 text-gray-800 px-6 py-3 rounded-lg font-semibold">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1"/>
-                                </svg>
-                                Logout
-                            </button>
-                        </form>
+                        <button type="button" @click="confirmLogout = true"
+                                class="inline-flex items-center gap-2 border border-gray-300 hover:bg-white/60 text-gray-800 px-6 py-3 rounded-lg font-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1"/>
+                            </svg>
+                            Logout
+                        </button>
                     @else
                         <a href="{{ route('login') }}"
                            class="inline-flex items-center gap-2 bg-clsu-green hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold">

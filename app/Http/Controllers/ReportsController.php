@@ -50,7 +50,7 @@ class ReportsController extends Controller
             'report_type' => $reportType,
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),
-            'generated_by' => Auth::user()->name,
+            'generated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         switch ($reportType) {
@@ -270,7 +270,7 @@ class ReportsController extends Controller
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
         $viewData = compact('startDate', 'endDate');
-        $viewData['generatedBy'] = Auth::user()->name;
+        $viewData['generatedBy'] = Auth::user()?->name ?? 'Unknown';
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.pdf';
 
         switch ($reportType) {

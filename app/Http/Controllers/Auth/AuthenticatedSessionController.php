@@ -65,6 +65,6 @@ class AuthenticatedSessionController extends Controller
     Session::invalidate();
     Session::regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

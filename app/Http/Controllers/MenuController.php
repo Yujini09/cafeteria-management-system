@@ -214,12 +214,12 @@ class MenuController extends Controller
 
 
         // Create notification for admins/superadmin about menu creation
-        $this->createAdminNotification('menu_created', 'menus', 'A new menu has been created by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_created', 'menus', 'A new menu has been created by ' . Auth::user()?->name ?? 'Unknown', [
             'menu_id' => $menu->id,
             'menu_name' => $menu->name ?? 'Unnamed',
             'type' => $menu->type,
             'meal_time' => $menu->meal_time,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()->route('admin.menus.index', ['type' => $payload['type'] ?? 'standard', 'meal' => $payload['meal_time'] ?? 'breakfast'])
@@ -298,12 +298,12 @@ class MenuController extends Controller
         }
 
         // Create notification for admins/superadmin about menu update
-        $this->createAdminNotification('menu_updated', 'menus', 'A menu has been updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_updated', 'menus', 'A menu has been updated by ' . Auth::user()?->name ?? 'Unknown', [
             'menu_id' => $menu->id,
             'menu_name' => $menu->name ?? 'Unnamed',
             'type' => $menu->type,
             'meal_time' => $menu->meal_time,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return back()->with('success', 'Menu updated.');
@@ -322,9 +322,9 @@ class MenuController extends Controller
         ]);
 
         // Create notification for admins/superadmin about menu deletion
-        $this->createAdminNotification('menu_deleted', 'menus', 'A menu has been deleted by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_deleted', 'menus', 'A menu has been deleted by ' . Auth::user()?->name ?? 'Unknown', [
             'menu_name' => $menuName,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()->route('admin.menus.index')->with('success', 'Menu deleted.');
@@ -394,9 +394,9 @@ class MenuController extends Controller
         ]);
 
         // Create notification for admins/superadmin about price changes
-        $this->createAdminNotification('menu_prices_modified', 'menus', 'Menu prices have been updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_prices_modified', 'menus', 'Menu prices have been updated by ' . Auth::user()?->name ?? 'Unknown', [
             'updated_prices' => $updatedPrices,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return back()->with('success', 'Menu prices updated successfully.');

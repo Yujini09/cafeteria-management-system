@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Notification as NotificationFacade;
 use App\Notifications\ReservationStatusChanged;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AuditTrail;
-use App\Models\Notification as NotificationModel;
+use App\Services\NotificationService;
 
 class ReservationController extends Controller
 {
@@ -142,7 +142,7 @@ class ReservationController extends Controller
         $this->createAdminNotification('reservation_approved', 'reservations', "Reservation #{$reservation->id} has been approved", [
             'reservation_id' => $reservation->id,
             'customer_name' => optional($reservation->user)->name ?? 'Unknown',
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()
@@ -213,7 +213,7 @@ class ReservationController extends Controller
             'reservation_id' => $reservation->id,
             'customer_name' => optional($reservation->user)->name ?? 'Unknown',
             'reason' => $data['reason'],
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()
@@ -227,9 +227,10 @@ class ReservationController extends Controller
     {
         $notification = new ReservationStatusChanged($reservation, $status, $reason);
 
-        // Email target
-        if ($reservation->relationLoaded('user') ? $reservation->user : $reservation->user()->exists()) {
-            optional($reservation->user)->notify($notification);
+        // Email target: use loaded user or resolve relation, then fallback to reservation email
+        $user = $reservation->user;
+        if ($user) {
+            $user->notify($notification);
         } elseif (!empty($reservation->email)) {
             NotificationFacade::route('mail', $reservation->email)->notify($notification);
         }
@@ -250,13 +251,7 @@ class ReservationController extends Controller
     /** Create notification for admins/superadmin */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
-        NotificationModel::create([
-            'user_id' => Auth::id(),
-            'action' => $action,
-            'module' => $module,
-            'description' => $description,
-            'metadata' => $metadata,
-        ]);
+        (new NotificationService())->createAdminNotification($action, $module, $description, $metadata);
     }
 
     public function create(Request $request)
@@ -419,7 +414,7 @@ class ReservationController extends Controller
             'reservation_id' => $reservation->id,
             'customer_name' => optional($reservation->user)->name ?? 'Unknown',
             'total_persons' => $totalPersons,
-            'generated_by' => Auth::user()->name,
+            'generated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         // Clear reservation data from session
@@ -497,7 +492,7 @@ class ReservationController extends Controller
             'reservation_id' => $reservation->id,
             'customer_name' => optional($reservation->user)->name ?? 'Unknown',
             'total_persons' => $reservation->number_of_persons,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()->back()->with('success', 'Reservation cancelled successfully.');

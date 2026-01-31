@@ -32,13 +32,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Fugaz+One&family=Damion&display=swap" rel="stylesheet" />
 
     <style>
+        [x-cloak] { display: none !important; }
         @yield('styles')
     </style>
 
     @vite(['resources/css/app.css','resources/js/app.js'])
-    @livewireStyles
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="font-poppins antialiased bg-gray-200">
+<body class="font-poppins antialiased bg-gray-200" x-data="{ confirmLogout: false }" :class="{ 'overflow-hidden': confirmLogout }" @keydown.escape.window="confirmLogout = false">
     <div class="min-h-screen">
         
         @include('partials.header')
@@ -50,9 +51,44 @@
         @include('partials.footer')
 
     </div>
+
+    {{-- Logout Confirmation Modal (same as admin) --}}
+    <div x-show="confirmLogout"
+         class="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-[100]"
+         x-transition.opacity
+         x-cloak>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-black transform transition-all duration-300"
+             x-transition:enter="scale-100"
+             x-transition:enter-start="scale-95">
+            <div class="flex items-center mb-6">
+                <div class="flex-shrink-0">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-xl font-bold text-gray-900">Confirm Logout</h2>
+                </div>
+            </div>
+            <p class="mb-8 text-gray-600">Are you sure you want to log out?</p>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" @click="confirmLogout = false"
+                        class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+                    Cancel
+                </button>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit"
+                            class="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium shadow-lg">
+                        Yes, Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
     
     @yield('scripts')
-    @livewireScripts
     
     <script>
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -85,7 +121,7 @@
                     },
                     body: JSON.stringify({})
                 }).finally(() => {
-                    window.location.href = "{{ url('/') }}";
+                    window.location.href = "{{ route('login') }}";
                 });
             }
 

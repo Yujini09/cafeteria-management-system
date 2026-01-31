@@ -60,12 +60,12 @@ class InventoryItemController extends Controller
         ]);
 
         // Create notification for admins/superadmin about inventory item addition
-        $this->createAdminNotification('inventory_item_added', 'inventory', 'A new inventory item has been added by ' . Auth::user()->name, [
+        $this->createAdminNotification('inventory_item_added', 'inventory', 'A new inventory item has been added by ' . Auth::user()?->name ?? 'Unknown', [
             'item_name' => $item->name,
             'category' => $item->category,
             'quantity' => $item->qty,
             'unit' => $item->unit,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()->route('admin.inventory.index')->with('success', 'Item added successfully.');
@@ -97,13 +97,13 @@ class InventoryItemController extends Controller
         ]);
 
         // Create notification for admins/superadmin about inventory item update
-        $this->createAdminNotification('inventory_item_updated', 'inventory', 'An inventory item has been updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('inventory_item_updated', 'inventory', 'An inventory item has been updated by ' . Auth::user()?->name ?? 'Unknown', [
             'item_name' => $inventory->name,
             'category' => $inventory->category,
             'old_quantity' => $oldQty,
             'new_quantity' => $inventory->qty,
             'unit' => $inventory->unit,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()->route('admin.inventory.index')->with('success', 'Item updated successfully.');
@@ -122,9 +122,9 @@ class InventoryItemController extends Controller
         ]);
 
         // Create notification for admins/superadmin about inventory item deletion
-        $this->createAdminNotification('inventory_item_deleted', 'inventory', 'An inventory item has been deleted by ' . Auth::user()->name, [
+        $this->createAdminNotification('inventory_item_deleted', 'inventory', 'An inventory item has been deleted by ' . Auth::user()?->name ?? 'Unknown', [
             'item_name' => $itemName,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return back()->with('success', 'Item deleted.');
