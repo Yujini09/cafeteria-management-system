@@ -96,37 +96,23 @@
                         </div>
 
                         <div class="mb-6">
-                            <x-input-label for="password" :value="__('Password')" class="text-green-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="password" name="password" type="password"
-                                    class="block mt-1 w-full pl-10 pr-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900" required />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                <button type="button" id="togglePassword1" class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-orange-500">
-                                    <svg id="eyeIcon1" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                            {!! app('livewire')->mount('password-with-rules', [
+                                'name' => 'password',
+                                'label' => __('Password'),
+                                'showRequirements' => true,
+                                'required' => true,
+                                'variant' => 'auth',
+                            ]) !!}
                         </div>
 
                         <div class="mb-6">
-                            <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="text-green-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="password_confirmation" name="password_confirmation" type="password"
-                                    class="block mt-1 w-full pl-10 pr-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900" required />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                <button type="button" id="togglePassword2" class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-orange-500">
-                                    <svg id="eyeIcon2" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                            {!! app('livewire')->mount('password-with-rules', [
+                                'name' => 'password_confirmation',
+                                'label' => __('Confirm Password'),
+                                'showRequirements' => false,
+                                'required' => true,
+                                'variant' => 'auth',
+                            ]) !!}
                         </div>
 
                         <div class="mb-6">
@@ -198,32 +184,6 @@
     </div>
 
     <script>
-        // Toggle for password
-        document.getElementById('togglePassword1').addEventListener('click', function () {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon1');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-            }
-        });
-
-        // Toggle for confirm password
-        document.getElementById('togglePassword2').addEventListener('click', function () {
-            const confirmPasswordInput = document.getElementById('password_confirmation');
-            const eyeIcon = document.getElementById('eyeIcon2');
-            if (confirmPasswordInput.type === 'password') {
-                confirmPasswordInput.type = 'text';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
-            } else {
-                confirmPasswordInput.type = 'password';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-            }
-        });
-
         // Handle form submission with modal
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission

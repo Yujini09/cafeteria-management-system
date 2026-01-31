@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rules;
 
 class SuperAdminController extends Controller
 {
@@ -28,7 +29,7 @@ class SuperAdminController extends Controller
         $data = $request->validate([
             'name'     => ['required','string','max:255'],
             'email'    => ['required','email','unique:users,email'],
-            'password' => ['required','string','min:6','confirmed'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([

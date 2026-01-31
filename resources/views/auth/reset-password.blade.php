@@ -33,29 +33,24 @@
 
                     <!-- Password -->
                     <div class="group">
-                        <x-input-label for="password" :value="__('Password')" class="text-gray-700 font-medium mb-2" />
-                        <div class="relative transform transition-all duration-300 group-hover:scale-[1.02]">
-                            <x-text-input id="password" class="block mt-1 w-full pl-10 h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500 focus:border-transparent" type="password" name="password" required autocomplete="new-password" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                        {!! app('livewire')->mount('password-with-rules', [
+                            'name' => 'password',
+                            'label' => __('Password'),
+                            'showRequirements' => true,
+                            'required' => true,
+                            'variant' => 'auth',
+                        ]) !!}
                     </div>
 
                     <!-- Confirm Password -->
                     <div class="group">
-                        <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="text-gray-700 font-medium mb-2" />
-
-                        <div class="relative transform transition-all duration-300 group-hover:scale-[1.02]">
-                            <x-text-input id="password_confirmation" class="block mt-1 w-full pl-10 h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    type="password"
-                                    name="password_confirmation" required autocomplete="new-password" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                        {!! app('livewire')->mount('password-with-rules', [
+                            'name' => 'password_confirmation',
+                            'label' => __('Confirm Password'),
+                            'showRequirements' => false,
+                            'required' => true,
+                            'variant' => 'auth',
+                        ]) !!}
                     </div>
 
                     <div class="flex items-center justify-end mt-6 transform transition-transform duration-300 hover:scale-105">

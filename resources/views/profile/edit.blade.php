@@ -102,7 +102,7 @@
             @method('put')
 
             <x-admin.forms.password name="current_password" label="Current Password" required />
-            <x-admin.forms.password name="password" label="New Password" required />
+            <x-admin.forms.password name="password" label="New Password" :showRequirements="true" required />
             <x-admin.forms.password name="password_confirmation" label="Confirm New Password" required />
 
             <div class="flex justify-end gap-3">
@@ -124,6 +124,13 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'profile-success' }));
+    });
+</script>
+@endif
+@if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
     });
 </script>
 @endif
