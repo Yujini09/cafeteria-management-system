@@ -95,7 +95,7 @@
         </form>
     </x-admin.ui.modal>
 
-    {{-- Change Password Modal --}}
+    {{-- Change Password Modal: same x-admin.forms.password as rest of system --}}
     <x-admin.ui.modal name="change-password" title="Change Password" variant="info" maxWidth="md">
         <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
             @csrf
@@ -130,7 +130,9 @@
 @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
+        setTimeout(function () {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
+        }, 150);
     });
 </script>
 @endif
