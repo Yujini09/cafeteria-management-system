@@ -133,7 +133,7 @@ class SuperAdminController extends Controller
             abort(403);
         }
 
-        Notification::query()->update(['read' => true]);
+        Notification::where('user_id', $user->id)->update(['read' => true]);
 
         return response()->json(['success' => true]);
     }

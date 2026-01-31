@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -35,7 +36,13 @@ class NotificationService
     {
         // Store the actor's user_id so foreign key constraints remain valid.
         // This still creates only one notification record per action (no per-admin loop).
-        $actorId = Auth::id() ?? null;
+        $actorId = Auth::id();
+        if (!$actorId) {
+            $actorId = User::whereIn('role', ['superadmin', 'admin'])->value('id');
+        }
+        if (!$actorId) {
+            return new Notification();
+        }
 
         return Notification::create([
             'user_id' => $actorId,

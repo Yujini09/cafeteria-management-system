@@ -36,6 +36,7 @@
     </style>
 
     @vite(['resources/css/app.css','resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="font-poppins antialiased bg-gray-200">
     <div class="min-h-screen">
@@ -51,6 +52,7 @@
     </div>
     
     @yield('scripts')
+    @livewireScripts
     
     <script>
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {

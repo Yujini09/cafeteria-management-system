@@ -157,7 +157,7 @@ class MenuController extends Controller
         if ($hasDesc) $rules['description']= 'nullable|string';
         $rules['items'] = 'required|array|min:1';
         $rules['items.*.name'] = 'required|string|max:255';
-        $rules['items.*.type'] = 'required|in:food,drink,dessert';
+        $rules['items.*.type'] = 'required|in:food,drink,dessert,other';
         $rules['items.*.recipes'] = 'array';
         $rules['items.*.recipes.*.inventory_item_id'] = 'required|exists:inventory_items,id';
         $rules['items.*.recipes.*.quantity_needed'] = 'required|numeric|min:0.01';
@@ -241,7 +241,7 @@ class MenuController extends Controller
         if ($hasDesc) $rules['description']= 'nullable|string';
         $rules['items'] = 'array';
         $rules['items.*.name'] = 'required|string|max:255';
-        $rules['items.*.type'] = 'required|in:food,drink,dessert';
+        $rules['items.*.type'] = 'required|in:food,drink,dessert,other';
         $rules['items.*.recipes'] = 'array';
         $rules['items.*.recipes.*.inventory_item_id'] = 'required|exists:inventory_items,id';
         $rules['items.*.recipes.*.quantity_needed'] = 'required|numeric|min:0.01';

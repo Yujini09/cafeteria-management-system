@@ -51,7 +51,7 @@ class ReservationController extends Controller
         $reservation->load(['items.menu.items.recipes.inventoryItem']);
         
         $insufficientItems = [];
-        $guests = $reservation->guests ?? $reservation->attendees ?? $reservation->number_of_persons ?? 1;
+        $guests = $reservation->guest_count;
 
         foreach ($reservation->items as $resItem) {
             $menu = $resItem->menu;
@@ -92,6 +92,12 @@ class ReservationController extends Controller
         // Check if this is a forced approval (override)
         $forceApprove = $request->input('force_approve', false);
 
+        if (!$forceApprove && $reservation->status !== 'pending') {
+            return redirect()
+                ->route('admin.reservations.show', $reservation)
+                ->with('error', 'Only pending reservations can be approved.');
+        }
+
         // If not forced, check inventory availability
         if (!$forceApprove) {
             $reservation->load(['items.menu.items.recipes.inventoryItem']);
@@ -110,7 +116,7 @@ class ReservationController extends Controller
             $reservation->save();
 
             // Deduct inventory based on recipes (guard every relation)
-            $guests = $reservation->guests ?? $reservation->attendees ?? $reservation->number_of_persons ?? 1;
+            $guests = $reservation->guest_count;
 
             foreach ($reservation->items as $resItem) {
                 $menu = $resItem->menu;
@@ -151,7 +157,7 @@ class ReservationController extends Controller
     protected function getInsufficientItems(Reservation $reservation)
     {
         $insufficientItems = [];
-        $guests = $reservation->guests ?? $reservation->attendees ?? $reservation->number_of_persons ?? 1;
+        $guests = $reservation->guest_count;
 
         foreach ($reservation->items as $resItem) {
             $menu = $resItem->menu;
@@ -310,7 +316,7 @@ class ReservationController extends Controller
             'notes' => 'nullable|string|max:1000',
             'reservations' => 'required|array',
             'reservations.*.*.category' => 'required|string',
-            'reservations.*.*.menu' => 'required|integer',
+            'reservations.*.*.menu' => 'required|integer|exists:menus,id',
             'reservations.*.*.qty' => 'required|integer|min:0',
         ]);
 
@@ -346,56 +352,60 @@ class ReservationController extends Controller
             }
         }
 
-        // Create the reservation with proper time format
-        $reservation = Reservation::create([
-            'user_id' => Auth::id(),
-            'event_name' => $reservationData['activity'] ?? 'Catering Reservation',
-            'event_date' => $reservationData['start_date'] ?? now()->format('Y-m-d'),
-            'end_date' => $reservationData['end_date'] ?? null,
-            'event_time' => $eventTime, // Store formatted time
-            'day_times' => $dayTimes, // Store the complete JSON for multi-day times
-            'number_of_persons' => $totalPersons,
-            'special_requests' => $validated['notes'] ?? null,
-            'status' => 'pending',
-            // Add additional fields
-            'contact_person' => $reservationData['name'] ?? null,
-            'department' => $reservationData['department'] ?? null,
-            'address' => $reservationData['address'] ?? null,
-            'email' => $reservationData['email'] ?? null,
-            'contact_number' => $reservationData['phone'] ?? null,
-            'venue' => $reservationData['venue'] ?? null,
-            'project_name' => $reservationData['project_name'] ?? null,
-            'account_code' => $reservationData['account_code'] ?? null,
-        ]);
+        $reservation = DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $totalPersons, $validated) {
+            // Create the reservation with proper time format
+            $reservation = Reservation::create([
+                'user_id' => Auth::id(),
+                'event_name' => $reservationData['activity'] ?? 'Catering Reservation',
+                'event_date' => $reservationData['start_date'] ?? now()->format('Y-m-d'),
+                'end_date' => $reservationData['end_date'] ?? null,
+                'event_time' => $eventTime, // Store formatted time
+                'day_times' => $dayTimes, // Store the complete JSON for multi-day times
+                'number_of_persons' => $totalPersons,
+                'special_requests' => $validated['notes'] ?? null,
+                'status' => 'pending',
+                // Add additional fields
+                'contact_person' => $reservationData['name'] ?? null,
+                'department' => $reservationData['department'] ?? null,
+                'address' => $reservationData['address'] ?? null,
+                'email' => $reservationData['email'] ?? null,
+                'contact_number' => $reservationData['phone'] ?? null,
+                'venue' => $reservationData['venue'] ?? null,
+                'project_name' => $reservationData['project_name'] ?? null,
+                'account_code' => $reservationData['account_code'] ?? null,
+            ]);
 
-        // Save reservation items (menu selections)
-        foreach ($validated['reservations'] as $day => $meals) {
-            foreach ($meals as $meal => $data) {
-                if ($data['qty'] > 0) {
-                    // Find menu by ID (not by name)
-                    $menu = \App\Models\Menu::find($data['menu']);
-                    
+            // Save reservation items (menu selections)
+            foreach ($validated['reservations'] as $day => $meals) {
+                foreach ($meals as $meal => $data) {
+                    if ($data['qty'] > 0) {
+                        // Find menu by ID (not by name)
+                        $menu = \App\Models\Menu::find($data['menu']);
+                        
 
-                    if (!$menu) {
-                        continue;
+                        if (!$menu) {
+                            continue;
+                        }
+
+
+                        // Extract day number from key (e.g., "day_1" -> 1)
+                        $dayNumber = (int) str_replace('day_', '', $day);
+
+                        \App\Models\ReservationItem::create([
+                            'reservation_id' => $reservation->id,
+                            'menu_id' => $menu->id,
+                            'quantity' => $data['qty'],
+                            'day_number' => $dayNumber, // Fixed: Use extracted day number
+                            'meal_time' => $meal,
+                        ]);
+
+
                     }
-
-
-                    // Extract day number from key (e.g., "day_1" -> 1)
-                    $dayNumber = (int) str_replace('day_', '', $day);
-
-                    \App\Models\ReservationItem::create([
-                        'reservation_id' => $reservation->id,
-                        'menu_id' => $menu->id,
-                        'quantity' => $data['qty'],
-                        'day_number' => $dayNumber, // Fixed: Use extracted day number
-                        'meal_time' => $meal,
-                    ]);
-
-
                 }
             }
-        }
+
+            return $reservation;
+        });
 
         AuditTrail::create([
             'user_id'     => Auth::id(),
