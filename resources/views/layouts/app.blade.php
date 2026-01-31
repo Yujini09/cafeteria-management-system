@@ -37,6 +37,7 @@
     </style>
 
     @vite(['resources/css/app.css','resources/js/app.js'])
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-poppins antialiased bg-gray-200" x-data="{ confirmLogout: false }" :class="{ 'overflow-hidden': confirmLogout }" @keydown.escape.window="confirmLogout = false">
     <div class="min-h-screen">
@@ -88,9 +89,7 @@
     </div>
     
     @yield('scripts')
-
-    {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts() !!}
-
+    
     <script>
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {

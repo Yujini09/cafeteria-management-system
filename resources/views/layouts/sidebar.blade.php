@@ -11,8 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fugaz+One&family=Damion&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles() !!}
-
+    <script src="//unpkg.com/alpinejs" defer></script>
+    
     <style>
     @keyframes slide-in-left {
         0% { transform: translateX(-100%); opacity: 0; }
@@ -87,7 +87,7 @@
     
     .active-menu-item:hover i {
         color: #FB3E05 !important; /* Orange for active icons on hover */
-    }
+    }  
     
     .hover-glow:hover {
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
@@ -308,15 +308,12 @@
     }
     </style>
 </head>
+
 <body class="font-poppins antialiased text-sm"
       x-data="{ openSidebar: false, confirmLogout: false }"
       :class="{ 'overflow-hidden': openSidebar || confirmLogout }"
       @keydown.escape.window="openSidebar = false; confirmLogout = false">
-<script>
-window.APP_URLS = window.APP_URLS || {};
-window.APP_URLS.menusBase = "{{ url('/admin/menus') }}";
-window.APP_URLS.reservationsShowTemplate = "{{ route('admin.reservations.show', ['reservation' => '__ID__']) }}";
-</script>
+
 <div class="min-h-screen flex">
 
     <!-- Mobile Overlay -->
@@ -328,8 +325,7 @@ window.APP_URLS.reservationsShowTemplate = "{{ route('admin.reservations.show', 
          x-cloak>
     </div>
 
-    <!-- Modern Gradient Sidebar (persisted so it does not reload on tab switch) -->
-    @persist('sidebar')
+    <!-- Modern Gradient Sidebar -->
     <aside class="sidebar-gradient text-white w-64 fixed inset-y-0 left-0 z-50 transform md:translate-x-0 transition-all duration-300  backdrop-blur-md animate-slide-in-left"
            :class="openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
            x-cloak>
@@ -352,12 +348,12 @@ window.APP_URLS.reservationsShowTemplate = "{{ route('admin.reservations.show', 
 
 
                     @if(Auth::user()->role === 'superadmin')
-                        <a href="{{ route('superadmin.users') }}" wire:navigate
+                        <a href="{{ route('superadmin.users') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('superadmin.users') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-user {{ request()->routeIs('superadmin.users') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="far fa-user {{ request()->routeIs('superadmin.users') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                            </span>                  
                             Manage Users
                         </a>
                     @endif
@@ -365,65 +361,65 @@ window.APP_URLS.reservationsShowTemplate = "{{ route('admin.reservations.show', 
                     @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
                         <!-- Dashboard Section -->
                         
-                        <a href="{{ route('admin.dashboard') }}" wire:navigate
+                        <a href="{{ route('admin.dashboard') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.dashboard') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-chart-line {{ request()->routeIs('admin.dashboard') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="fas fa-chart-line {{ request()->routeIs('admin.dashboard') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Dashboard
                         </a>
 
-                        <a href="{{ route('admin.reservations') }}" wire:navigate
+                        <a href="{{ route('admin.reservations') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reservations') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-calendar-check {{ request()->routeIs('admin.reservations') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="far fa-calendar-check {{ request()->routeIs('admin.reservations') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Reservations
                         </a>
 
-                        <a href="{{ route('admin.reports.index') }}" wire:navigate
+                        <a href="{{ route('admin.reports.index') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reports.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-chart-pie {{ request()->routeIs('admin.reports.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="fas fa-chart-pie {{ request()->routeIs('admin.reports.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Reports
                         </a>
 
-                        <a href="{{ route('admin.inventory.index') }}" wire:navigate
+                        <a href="{{ route('admin.inventory.index') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.inventory.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-boxes-stacked {{ request()->routeIs('admin.inventory.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="fas fa-boxes-stacked {{ request()->routeIs('admin.inventory.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Inventory
                         </a>
 
-                        <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}" wire:navigate
+                        <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-utensils {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="fas fa-utensils {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Manage Menus
                         </a>
 
-                        <a href="{{ route('admin.menus.prices') }}" wire:navigate
+                        <a href="{{ route('admin.menus.prices') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.menus.prices') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-peso-sign {{ request()->routeIs('admin.menus.prices') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="fas fa-peso-sign {{ request()->routeIs('admin.menus.prices') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Manage Prices
                         </a>
 
-                        <a href="{{ route('admin.calendar') }}" wire:navigate
+                        <a href="{{ route('admin.calendar') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.calendar') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-calendar-days {{ request()->routeIs('admin.calendar') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="far fa-calendar-days {{ request()->routeIs('admin.calendar') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                             </span>
                             Calendar
                         </a>
@@ -434,11 +430,11 @@ window.APP_URLS.reservationsShowTemplate = "{{ route('admin.reservations.show', 
                         Settings
                     </div>
 
-                    <a href="{{ route('profile.edit') }}" wire:navigate
+                    <a href="{{ route('profile.edit') }}"
                        class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('profile.edit') ? 'active-menu-item' : '' }}"
-                       @click="openSidebar = false">
-                        <span class="flex items-center justify-center w-5 h-5 mr-3">
-                            <i class="fas fa-gear {{ request()->routeIs('profile.edit') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                       @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                        <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                            <i class="fas fa-gear {{ request()->routeIs('profile.edit') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
                         </span>
                         Account Settings
                     </a>
@@ -448,14 +444,13 @@ window.APP_URLS.reservationsShowTemplate = "{{ route('admin.reservations.show', 
             <!-- Bottom Section: Logout Button -->
             <div class="logout-section">
                 <button @click="confirmLogout = true"
-                        class="w-full flex items-center justify-center gap-2 bg-white/20 text-white hover:bg-red-500/90 hover-glow transition-all duration-300 rounded-full px-4 py-2.5 font-semibold shadow-md">
-                    <i class="fas fa-right-from-bracket"></i>
+                        class="w-full flex items-center justify-center gap-2 bg-white/20 text-white hover:bg-red-500/90 hover-glow transition-all duration-300 rounded-full px-4 py-2.5 font-semibold shadow-md"> <!-- Original padding -->
+                    <i class="fas fa-right-from-bracket"></i> <!-- Original icon size -->
                     Logout
                 </button>
             </div>
         </div>
     </aside>
-    @endpersist
 
     <!-- Main Content Area with Connected Header -->
     <div class="flex-1 flex flex-col main-content-wrapper">
@@ -827,24 +822,6 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', function() {
     // This is handled by Alpine.js now, but keeping for reference
 });
-</script>
-{!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts() !!}
-<script data-navigate-once>
-function syncSidebarActive() {
-    var currentNorm = (window.location.pathname || '/').replace(/\/$/, '') || '/';
-    document.querySelectorAll('aside a.menu-item[href]').forEach(function (link) {
-        var href = link.getAttribute('href');
-        if (!href) return;
-        var linkPath = (href.split('?')[0]).replace(/\/$/, '') || '/';
-        var isActive = currentNorm === linkPath || (linkPath.length > 1 && currentNorm.indexOf(linkPath + '/') === 0);
-        if (linkPath === '/admin/menus' && currentNorm.indexOf('/admin/menus/prices') === 0) isActive = false;
-        link.classList.toggle('active-menu-item', isActive);
-        var icon = link.querySelector('i');
-        if (icon) { icon.classList.toggle('text-[#FB3E05]', isActive); icon.classList.toggle('text-white', !isActive); }
-    });
-}
-document.addEventListener('DOMContentLoaded', syncSidebarActive);
-document.addEventListener('livewire:navigated', syncSidebarActive);
 </script>
 </body>
 </html>

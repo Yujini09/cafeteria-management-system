@@ -471,6 +471,8 @@
 [x-cloak] { display: none !important; }
 </style>
 
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 <div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
      x-data="reservationList()"
      x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen)"
@@ -698,5 +700,45 @@
         </div>
     @endif
 </div>
-{{-- Alpine.data('reservationList') is registered in resources/js/alpine-data.js so it works after wire:navigate --}}
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('reservationList', () => ({
+            approveConfirmationOpen: false,
+            declineConfirmationOpen: false,
+            selectedReservationId: null,
+            actionType: null, // 'approve' or 'decline'
+            
+            openApproveConfirmation(reservationId) {
+                this.selectedReservationId = reservationId;
+                this.actionType = 'approve';
+                this.approveConfirmationOpen = true;
+            },
+            
+            openDeclineConfirmation(reservationId) {
+                this.selectedReservationId = reservationId;
+                this.actionType = 'decline';
+                this.declineConfirmationOpen = true;
+            },
+            
+            redirectToShowPage() {
+                if (this.selectedReservationId) {
+                    // Close both modals
+                    this.approveConfirmationOpen = false;
+                    this.declineConfirmationOpen = false;
+                    
+                    // Redirect to the reservation show page
+                    const url = "{{ route('admin.reservations.show', ':id') }}".replace(':id', this.selectedReservationId);
+                    
+                    // Add hash for decline action if needed
+                    if (this.actionType === 'decline') {
+                        window.location.href = url + '#decline';
+                    } else {
+                        window.location.href = url;
+                    }
+                }
+            }
+        }));
+    });
+</script>
 @endsection

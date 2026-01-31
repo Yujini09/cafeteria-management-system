@@ -878,5 +878,68 @@
         </div>
     </div>
 </div>
-{{-- Alpine.data('reservationShow') is registered in resources/js/alpine-data.js so it works after wire:navigate --}}
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('reservationShow', (opts) => ({
+            acceptedOpen: false,
+            declineOpen: false,
+            declineConfirmationOpen: false,
+            approveConfirmationOpen: false,
+            inventoryWarningOpen: false,
+            insufficientItems: [],
+            
+            openApproveConfirmation() {
+                this.approveConfirmationOpen = true;
+            },
+            
+            openDeclineConfirmation() {
+                this.declineConfirmationOpen = true;
+            },
+            
+            openDeclineForm() { 
+                console.log('Opening decline form');
+                this.declineConfirmationOpen = false;
+                // Small delay to ensure modal closes before opening new one
+                setTimeout(() => {
+                    this.declineOpen = true;
+                }, 150);
+            },
+            
+            handleApprove() {
+                this.approveConfirmationOpen = false;
+                
+                if (opts.inventoryWarning && opts.insufficientItems && opts.insufficientItems.length > 0) {
+                    this.insufficientItems = opts.insufficientItems;
+                    this.inventoryWarningOpen = true;
+                    return;
+                }
+                
+                document.getElementById('approveForm').submit();
+            },
+            
+            proceedWithApproval() {
+                document.getElementById('forceApproveInput').value = '1';
+                document.getElementById('approveForm').submit();
+            },
+            
+             init(){
+                console.log('Initializing with options:', opts);
+                
+                if (opts.accepted) {
+                    setTimeout(() => {
+                        this.acceptedOpen = true;
+                    }, 300);
+                }
+                
+                if (opts.inventoryWarning && opts.insufficientItems && opts.insufficientItems.length > 0) {
+                    this.insufficientItems = opts.insufficientItems;
+                    setTimeout(() => {
+                        this.inventoryWarningOpen = true;
+                    }, 300);
+                }
+            }
+        }));
+    });
+</script>
 @endsection
