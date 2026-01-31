@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fugaz+One&family=Damion&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="//unpkg.com/alpinejs" defer></script>
     
     <style>
     @keyframes slide-in-left {
@@ -823,5 +822,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // This is handled by Alpine.js now, but keeping for reference
 });
 </script>
+
+{{-- Auto-logout when user is idle for 5 minutes (300000 ms) --}}
+@auth
+<script>
+    (function(){
+        const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+        let idleTimer = null;
+
+        function doLogout() {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            fetch("{{ route('logout') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            }).finally(() => {
+                window.location.href = "{{ route('login') }}";
+            });
+        }
+
+        function resetTimer() {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(doLogout, IDLE_TIMEOUT);
+        }
+
+        ['mousemove','mousedown','keydown','scroll','touchstart'].forEach(evt => {
+            document.addEventListener(evt, resetTimer, true);
+        });
+
+        // Start timer
+        resetTimer();
+    })();
+</script>
+@endauth
 </body>
 </html>

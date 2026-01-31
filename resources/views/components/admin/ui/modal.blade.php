@@ -34,6 +34,7 @@ $iconColor = match($variant) {
     default => 'text-admin-primary',
 };
 @endphp
+<template x-teleport="body">
 <div
     x-data="{ show: false }"
     x-init="
@@ -105,3 +106,4 @@ $iconColor = match($variant) {
         @endif
     </div>
 </div>
+</template>

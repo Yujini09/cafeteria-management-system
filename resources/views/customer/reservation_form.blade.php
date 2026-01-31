@@ -153,7 +153,8 @@ background-position: top;
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
                             <input type="text" id="name" name="name" placeholder="Enter your name" required
                                 value="{{ old('name', Auth::user()->name ?? '') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
+                                autocomplete="name">
                         </div>
 
                         <!-- Department/Office -->
@@ -161,7 +162,8 @@ background-position: top;
                             <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department/Office</label>
                             <input type="text" id="department" name="department" placeholder="Enter your department/office" required
                                 value="{{ old('department', Auth::user()->department ?? '')  }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
+                                autocomplete="organization">
                         </div>
                         
                         <!-- Address -->
@@ -169,7 +171,8 @@ background-position: top;
                             <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
                             <input type="text" id="address" name="address" placeholder="Enter your address" required
                                 value="{{ old('address', Auth::user()->address ?? '')  }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
+                                autocomplete="street-address">
                         </div>
 
                         <!-- Email -->
@@ -177,7 +180,8 @@ background-position: top;
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email (CLSU Email only)</label>
                             <input type="email" id="email" name="email" placeholder="Enter your CLSU email (@clsu2.edu.ph)" required
                                 value="{{ old('email', Auth::user()->email ?? '') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
+                                autocomplete="email">
                             <div id="email-error" class="text-sm text-red-500 mt-1 hidden">
                                 Please use a valid CLSU email address (must end with @clsu2.edu.ph)
                             </div>
@@ -193,7 +197,8 @@ background-position: top;
                                 onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 value="{{ old('phone')  }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
+                                autocomplete="tel">
                         </div>
 
                         <!-- Activity -->

@@ -9,6 +9,7 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,7 +41,7 @@ class InventoryItemController extends Controller
         return view('admin.inventory.index');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'name'  => 'required|string|max:255',
@@ -68,7 +69,15 @@ class InventoryItemController extends Controller
             'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return redirect()->route('admin.inventory.index')->with('success', 'Item added successfully.');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item added successfully',
+                'item' => $item
+            ]);
+        }
+
+        return redirect()->route('admin.inventory.index');
     }
 
     public function edit(InventoryItem $inventory): View
@@ -76,7 +85,7 @@ class InventoryItemController extends Controller
         return view('admin.inventory.index', compact('inventory'));
     }
 
-    public function update(Request $request, InventoryItem $inventory): RedirectResponse
+    public function update(Request $request, InventoryItem $inventory): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'name'  => 'required|string|max:255',
@@ -106,11 +115,43 @@ class InventoryItemController extends Controller
             'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return redirect()->route('admin.inventory.index')->with('success', 'Item updated successfully.');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item updated successfully',
+                'item' => $inventory
+            ]);
+        }
+
+        return redirect()->route('admin.inventory.index');
     }
 
-    public function destroy(InventoryItem $inventory): RedirectResponse
+    public function destroy($id)
     {
+        // Find the item. If model uses SoftDeletes, include trashed records.
+        $uses = class_uses(InventoryItem::class) ?: [];
+        if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, $uses)) {
+            $inventory = InventoryItem::withTrashed()->find($id);
+        } else {
+            $inventory = InventoryItem::find($id);
+        }
+
+        if (!$inventory) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Item not found'], 404);
+            }
+            abort(404);
+        }
+
+        // Server-side role guard (extra safety beyond route middleware)
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            abort(403);
+        }
+
         $itemName = $inventory->name;
         $inventory->delete();
 
@@ -126,6 +167,13 @@ class InventoryItemController extends Controller
             'item_name' => $itemName,
             'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item deleted successfully',
+            ]);
+        }
 
         return back()->with('success', 'Item deleted.');
     }

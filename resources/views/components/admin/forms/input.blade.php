@@ -7,6 +7,7 @@
     'required' => false,
     'value' => null,
     'id' => null,
+    'autocomplete' => null,
 ])
 
 @php
@@ -16,6 +17,14 @@ $inputClass = 'w-full rounded-admin border px-admin-input py-2.5 text-sm
     ' . ($hasError
         ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
         : 'border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20');
+
+// Auto-generate sensible autocomplete if not provided
+$autoComplete = $autocomplete ?? match($type) {
+    'email' => 'email',
+    'tel', 'phone' => 'tel',
+    'url' => 'url',
+    default => null,
+};
 @endphp
 <div class="space-y-1">
     @if($label)
@@ -30,6 +39,7 @@ $inputClass = 'w-full rounded-admin border px-admin-input py-2.5 text-sm
         id="{{ $id ?? $name }}"
         value="{{ old($name, $value) }}"
         {{ $required ? 'required' : '' }}
+        {{ $autoComplete ? "autocomplete=\"$autoComplete\"" : '' }}
         {{ $attributes->merge(['class' => $inputClass]) }}
     >
     @if($helper && !$hasError)

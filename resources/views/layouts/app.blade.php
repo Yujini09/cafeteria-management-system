@@ -6,29 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Smart Cafeteria'))</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'clsu-green': '#00462E',
-                        'ret-green-light': '#057C3C',
-                        'cafeteria-orange': '#FB3E05',
-                        'ret-dark': '#1F2937',
-                        'menu-orange': '#EA580C',
-                        'menu-dark': '#131820',
-                    },
-                    fontFamily: {
-                        fugaz: ['"Fugaz One"', 'sans-serif'],
-                        damion: ['"Damion"', 'cursive'],
-                        poppins: ['"Poppins"', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Fugaz+One&family=Damion&display=swap" rel="stylesheet" />
 
     <style>
@@ -37,7 +14,6 @@
     </style>
 
     @vite(['resources/css/app.css','resources/js/app.js'])
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-poppins antialiased bg-gray-200" x-data="{ confirmLogout: false }" :class="{ 'overflow-hidden': confirmLogout }" @keydown.escape.window="confirmLogout = false">
     <div class="min-h-screen">

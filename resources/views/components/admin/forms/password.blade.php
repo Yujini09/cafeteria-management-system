@@ -37,6 +37,7 @@
                 name="{{ $name }}"
                 id="{{ $name }}"
                 {{ $required ? 'required' : '' }}
+                autocomplete="{{ $name === 'password' ? 'new-password' : 'current-password' }}"
                 {{ $attributes->merge(['class' => $inputClass]) }}
             >
             <button

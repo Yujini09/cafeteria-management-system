@@ -40,7 +40,7 @@
                         <x-input-label for="email" :value="__('Email')" class="text-green-700 font-medium mb-2" />
                         <div class="relative">
                             {{-- Input style adjusted for green/orange theme --}}
-                            <x-text-input id="email" class="block mt-1 w-full pl-10 h-12 border-green-400 transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent" type="email" name="email" :value="old('email')" required autofocus />
+                            <x-text-input id="email" class="block mt-1 w-full pl-10 h-12 border-green-400 transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent" type="email" name="email" :value="old('email')" required autofocus autocomplete="email" />
                             {{-- Icon color adjusted to dark green --}}
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>

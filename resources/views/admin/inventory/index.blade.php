@@ -425,14 +425,19 @@
 <div x-data="{ 
     showCreateModal: false, 
     showEditModal: false, 
-    showDeleteModal: false, /* ADDED STATE */
+    showDeleteModal: false, 
     editingItem: null, 
-    deletingItem: null, /* ADDED STATE */
+    deletingItem: null, 
     updateRoute: '{{ route('admin.inventory.update', ':id') }}',
-    deleteRoute: '{{ route('admin.inventory.destroy', ':id') }}' /* ADDED ROUTE */
+    deleteRoute: '{{ route('admin.inventory.destroy', ':id') }}'
 }"
+    x-init="window.addEventListener('close-inventory-modals', function() { showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null; })"
     x-effect="document.body.classList.toggle('overflow-hidden', showCreateModal || showEditModal || showDeleteModal)"
     @keydown.escape.window="showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null">
+    
+    {{-- Success toasts: reusable Blade component --}}
+    <x-toast />
+
     <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
         <div class="page-header">
             <div class="header-content">
@@ -584,12 +589,12 @@
 
             <h2 class="text-xl font-bold mb-4 text-gray-900">Add Inventory Item</h2>
 
-            <form action="{{ route('admin.inventory.store') }}" method="POST" class="space-y-4">
+            <form id="createInventoryForm" action="{{ route('admin.inventory.store') }}" method="POST" class="space-y-4">
                 @csrf
 
                 <div>
                     <label for="create_name" class="form-label">Item Name</label>
-                    <input type="text" name="name" id="create_name" required class="modal-input">
+                    <input type="text" name="name" id="create_name" required class="modal-input" autocomplete="off">
                 </div>
 
                 <div>
@@ -653,12 +658,12 @@
 
             <h2 class="text-xl font-bold mb-4 text-gray-900">Edit Inventory Item</h2>
 
-            <form x-bind:action="editingItem ? updateRoute.replace(':id', editingItem.id) : ''" method="POST" class="space-y-4">
+            <form id="editInventoryForm" x-bind:action="editingItem ? updateRoute.replace(':id', editingItem.id) : ''" method="POST" class="space-y-4">
                 @csrf @method('PUT')
 
                 <div>
                     <label for="edit_name" class="form-label">Item Name</label>
-                    <input type="text" name="name" id="edit_name" required x-bind:value="editingItem ? editingItem.name : ''" class="modal-input">
+                    <input type="text" name="name" id="edit_name" required x-bind:value="editingItem ? editingItem.name : ''" class="modal-input" autocomplete="off">
                 </div>
 
                 <div>
@@ -732,7 +737,7 @@
                 This action cannot be undone.
             </p>
 
-            <form x-bind:action="deletingItem ? deleteRoute.replace(':id', deletingItem.id) : '#'" method="POST">
+                <form id="deleteInventoryForm" x-bind:action="deletingItem ? deleteRoute.replace(':id', deletingItem.id) : '#'" x-bind:data-id="deletingItem ? deletingItem.id : ''" method="POST">
                 @csrf @method('DELETE')
                 
                 <div class="flex justify-center space-x-3">
@@ -748,4 +753,145 @@
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rootCloseEvent = new Event('close-inventory-modals');
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        el.className = 'toast-item ' + (type === 'success' ? 'toast-success' : 'toast-error');
+        el.textContent = message;
+        el.style.opacity = '0';
+        if (container) {
+            container.appendChild(el);
+            requestAnimationFrame(function(){ el.style.opacity = '1'; });
+            setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 250); }, 1600);
+        } else {
+            // fallback to previous behavior
+            el.style.position = 'fixed';
+            el.style.right = '20px';
+            el.style.bottom = '20px';
+            el.style.padding = '12px 16px';
+            el.style.borderRadius = '10px';
+            el.style.zIndex = '9999';
+            el.style.color = '#fff';
+            el.style.fontWeight = '600';
+            el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)';
+            el.style.transition = 'opacity 0.25s ease';
+            el.style.background = (type === 'success') ? 'linear-gradient(90deg,#057C3C,#00462E)' : 'rgba(220,53,69,0.95)';
+            document.body.appendChild(el);
+            requestAnimationFrame(function(){ el.style.opacity = '1'; });
+            setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 250); }, 1600);
+        }
+    }
+
+    async function submitForm(form) {
+        const formData = new FormData(form);
+        const token = getCsrfToken();
+        try {
+            const res = await fetch(form.action, {
+                method: form.method || 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            if (!res.ok) {
+                let err = null;
+                try { err = await res.json(); } catch (e) { /* not JSON */ }
+                console.error('Request failed', err || res.statusText);
+                if (res.status === 404) {
+                    showToast('Item not found or already deleted', 'error');
+                } else {
+                    showToast((err && err.message) ? err.message : 'Request failed', 'error');
+                }
+                return null;
+            }
+
+            let data = null;
+            try { data = await res.json(); } catch (e) { /* no JSON, ignore */ }
+            return data;
+
+        } catch (e) {
+            console.error('Network error', e);
+            showToast(e.message || 'Network error', 'error');
+            return null;
+        }
+    }
+
+    // Create
+    const createForm = document.getElementById('createInventoryForm');
+    if (createForm) {
+        createForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await submitForm(createForm);
+            if (result !== null) {
+                createForm.reset();
+                window.dispatchEvent(rootCloseEvent);
+                showToast('Item added successfully');
+                setTimeout(function(){ location.reload(); }, 900);
+            }
+        });
+    }
+
+    // Edit
+    const editForm = document.getElementById('editInventoryForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await submitForm(editForm);
+            if (result !== null) {
+                window.dispatchEvent(rootCloseEvent);
+                showToast('Item updated successfully');
+                setTimeout(function(){ location.reload(); }, 700);
+            }
+        });
+    }
+
+    // Delete (in-place)
+    const deleteForm = document.getElementById('deleteInventoryForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await submitForm(deleteForm);
+            if (result !== null) {
+                const deletedId = deleteForm.dataset.id || (function(){
+                    const m = (deleteForm.action||'').match(/\/admin\/inventory\/(\d+)/);
+                    return m ? m[1] : null;
+                })();
+                if (deletedId) {
+                    // Find row that contains a button with matching data-item id
+                    const rows = document.querySelectorAll('tbody tr');
+                    for (const row of rows) {
+                        const btn = row.querySelector('button[data-item]');
+                        if (!btn) continue;
+                        try {
+                            const data = JSON.parse(btn.getAttribute('data-item'));
+                            if (String(data.id) === String(deletedId)) {
+                                row.remove();
+                                break;
+                            }
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+                }
+
+                window.dispatchEvent(rootCloseEvent);
+                showToast('Item deleted successfully');
+            }
+        });
+    }
+});
+</script>
+
 @endsection

@@ -61,26 +61,3 @@
     @endif
     {{-- No Laravel validation message text here; errors are shown only via red ✖ on failed rules --}}
 </div>
-
-@once
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('passwordWithRules', (ruleLabels, ruleKeys) => ({
-        ruleLabels: ruleLabels || {},
-        ruleKeys: ruleKeys || ['min', 'number', 'special', 'uppercase'],
-        password: '',
-        show: false,
-        passed(key) {
-            const p = String(this.password || '');
-            switch (key) {
-                case 'min': return p.length >= 8;
-                case 'number': return /[0-9]/.test(p);
-                case 'special': return /[^A-Za-z0-9]/.test(p);
-                case 'uppercase': return /[A-Z]/.test(p);
-                default: return false;
-            }
-        }
-    }));
-});
-</script>
-@endonce
