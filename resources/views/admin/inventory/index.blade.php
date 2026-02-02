@@ -3,23 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: white;
@@ -27,102 +10,6 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     border: 1px solid var(--neutral-100);
     overflow: hidden;
-}
-
-/* Modern Table Styles */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: sticky;
-    top: 0;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* Custom Scrollbar */
-.modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-track {
-    background: var(--neutral-100);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
-
-/* Button Styles */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 70, 46, 0.2);
-}
-
-.btn-secondary {
-    background: var(--neutral-100);
-    color: var(--neutral-700);
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-secondary:hover {
-    background: var(--neutral-200);
 }
 
 /* Action Buttons */
@@ -189,66 +76,8 @@
     border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
-/* Empty State */
-.empty-state {
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
-}
-
-.empty-state-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 /* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-    margin: 0;
-}
-
-.header-subtitle {
-    color: var(--neutral-500);
-    font-size: 0.875rem;
-    margin: 0.25rem 0 0 0;
-}
-
 .header-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-left: auto;
     flex-direction: column;
     align-items: flex-end;
 }
@@ -395,31 +224,6 @@
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
 }
 
-/* Menu Card Styling for Inventory Sections */
-.menu-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-.menu-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e0;
-}
 </style>
 
 <div x-data="{ 
@@ -435,9 +239,6 @@
     x-effect="document.body.classList.toggle('overflow-hidden', showCreateModal || showEditModal || showDeleteModal)"
     @keydown.escape.window="showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null">
     
-    {{-- Success toasts: reusable Blade component --}}
-    <x-toast />
-
     <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
         <div class="page-header">
             <div class="header-content">
@@ -762,33 +563,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        const el = document.createElement('div');
-        el.className = 'toast-item ' + (type === 'success' ? 'toast-success' : 'toast-error');
-        el.textContent = message;
-        el.style.opacity = '0';
-        if (container) {
-            container.appendChild(el);
-            requestAnimationFrame(function(){ el.style.opacity = '1'; });
-            setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 250); }, 1600);
-        } else {
-            // fallback to previous behavior
-            el.style.position = 'fixed';
-            el.style.right = '20px';
-            el.style.bottom = '20px';
-            el.style.padding = '12px 16px';
-            el.style.borderRadius = '10px';
-            el.style.zIndex = '9999';
-            el.style.color = '#fff';
-            el.style.fontWeight = '600';
-            el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)';
-            el.style.transition = 'opacity 0.25s ease';
-            el.style.background = (type === 'success') ? 'linear-gradient(90deg,#057C3C,#00462E)' : 'rgba(220,53,69,0.95)';
-            document.body.appendChild(el);
-            requestAnimationFrame(function(){ el.style.opacity = '1'; });
-            setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.remove(); }, 250); }, 1600);
+    function emitAdminToast(message, type = 'success') {
+        if (window.showAdminToast && typeof window.showAdminToast === 'function') {
+            window.showAdminToast(message, type);
+            return;
         }
+        // Fallback: dispatch event that the layout's toast container listens for
+        window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: type, message: message } }));
     }
 
     async function submitForm(form) {
@@ -810,9 +591,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 try { err = await res.json(); } catch (e) { /* not JSON */ }
                 console.error('Request failed', err || res.statusText);
                 if (res.status === 404) {
-                    showToast('Item not found or already deleted', 'error');
+                    emitAdminToast('Item not found or already deleted', 'error');
                 } else {
-                    showToast((err && err.message) ? err.message : 'Request failed', 'error');
+                    emitAdminToast((err && err.message) ? err.message : 'Request failed', 'error');
                 }
                 return null;
             }
@@ -823,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (e) {
             console.error('Network error', e);
-            showToast(e.message || 'Network error', 'error');
+            emitAdminToast(e.message || 'Network error', 'error');
             return null;
         }
     }
@@ -837,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result !== null) {
                 createForm.reset();
                 window.dispatchEvent(rootCloseEvent);
-                showToast('Item added successfully');
+                emitAdminToast('Item added successfully', 'success');
                 setTimeout(function(){ location.reload(); }, 900);
             }
         });
@@ -851,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await submitForm(editForm);
             if (result !== null) {
                 window.dispatchEvent(rootCloseEvent);
-                showToast('Item updated successfully');
+                emitAdminToast('Item updated successfully', 'success');
                 setTimeout(function(){ location.reload(); }, 700);
             }
         });
@@ -887,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 window.dispatchEvent(rootCloseEvent);
-                showToast('Item deleted successfully');
+                emitAdminToast('Item deleted successfully', 'success');
             }
         });
     }

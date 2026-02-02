@@ -3,23 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: white;
@@ -27,81 +10,6 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     border: 1px solid var(--neutral-100);
     overflow: hidden;
-}
-
-/* Modern Table Styles */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* Button Styles */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 70, 46, 0.2);
-}
-
-.btn-secondary {
-    background: var(--neutral-100);
-    color: var(--neutral-700);
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-secondary:hover {
-    background: var(--neutral-200);
 }
 
 /* Input Styles */
@@ -137,36 +45,6 @@
     pointer-events: none;
 }
 
-/* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-icon i {
-    color: white;
-    font-size: 1.25rem;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
 /* Meal Time Badge */
 .meal-time-badge {
     padding: 0.5rem 0.75rem;
@@ -178,7 +56,7 @@
     text-transform: capitalize;
 }
 
-/* Highlight Animation
+/* Highlight Animation */
 @keyframes highlightRow {
     0% {
         background-color: #c9fec7;
@@ -202,33 +80,8 @@
     border-color: #0bf51f !important;
     box-shadow: 0 0 0 3px rgba(11, 245, 50, 0.3) !important;
     transition: all 0.3s ease;
-} */
-
-/* Menu Card Styling for Inventory Sections */
-.menu-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-.menu-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e0;
-}
 </style>
 
 <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">

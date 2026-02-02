@@ -8,6 +8,10 @@
     x-data="{
         toasts: [],
         addToast(payload) {
+            if (payload && payload.type === 'clear') {
+                this.toasts = [];
+                return;
+            }
             const id = Date.now();
             this.toasts.push({ id, type: payload.type || 'success', message: payload.message });
             setTimeout(() => this.remove(id), payload.duration ?? 5000);

@@ -17,19 +17,19 @@
     </div>
 
     {{-- Success modals: use unified admin modal styles for consistency --}}
-    <x-admin.ui.modal name="password-success" title="Success!" variant="confirmation" maxWidth="sm">
+    <x-success-modal name="password-success" title="Success!" maxWidth="sm">
         <p class="text-sm text-admin-neutral-600">Password successfully changed.</p>
         <x-slot:footer>
             <x-admin.ui.button.primary type="button" @click="show = false">Close</x-admin.ui.button.primary>
         </x-slot:footer>
-    </x-admin.ui.modal>
+    </x-success-modal>
 
-    <x-admin.ui.modal name="profile-success" title="Success!" variant="confirmation" maxWidth="sm">
+    <x-success-modal name="profile-success" title="Success!" maxWidth="sm">
         <p class="text-sm text-admin-neutral-600">Profile information successfully updated.</p>
         <x-slot:footer>
             <x-admin.ui.button.primary type="button" @click="show = false">Close</x-admin.ui.button.primary>
         </x-slot:footer>
-    </x-admin.ui.modal>
+    </x-success-modal>
 
     {{-- Options list --}}
     <div class="space-y-4">

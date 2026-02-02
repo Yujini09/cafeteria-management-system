@@ -52,9 +52,17 @@
                         <p class="text-green-700 text-lg">Log in to your account</p> 
                     </div>
 
-                    @if (! $showForgotModal)
+                    @php
+                        $passwordResetStatus = __('passwords.reset');
+                    @endphp
+
+                    @if(session('status') && session('status') !== $passwordResetStatus)
                         <x-auth-session-status class="mb-6" :status="session('status')" />
                     @endif
+
+                    <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm">
+                        <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
+                    </x-success-modal>
 
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
@@ -138,6 +146,17 @@
                     </form>
                 </div> 
 
+                @if(session('status') === $passwordResetStatus)
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'password-reset-success' }));
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'password-reset-success' }));
+                        }, 2500);
+                    });
+                </script>
+                @endif
+
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
                         const togglePassword = document.getElementById('togglePassword');
@@ -180,64 +199,6 @@
                         });
                     });
                 </script>
-            </div>
-        </div>
-    </div>
-
-    <div id="forgotPasswordModal"
-        class="{{ $showForgotModal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center px-4"
-        aria-hidden="{{ $showForgotModal ? 'false' : 'true' }}">
-        <div id="forgotPasswordBackdrop" class="absolute inset-0 bg-black/50"></div>
-        <div class="relative w-full max-w-md bg-green-100 rounded-2xl shadow-2xl overflow-hidden">
-            <div class="p-6 md:p-8">
-                <div class="flex items-start justify-between gap-4 mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-green-900">Reset Password</h3>
-                            <p class="text-sm text-green-700">We will email you a reset link.</p>
-                        </div>
-                    </div>
-                    <button type="button" id="closeForgotPassword" class="text-green-700 hover:text-orange-600 transition" aria-label="Close">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="mb-4 text-sm text-orange-700 bg-orange-50 p-3 rounded-lg border-l-4 border-orange-500">
-                    {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-                </div>
-
-                <x-auth-session-status class="mb-4 bg-orange-100 text-orange-800 p-3 rounded-lg border border-orange-300" :status="session('status')" />
-
-                <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
-                    @csrf
-
-                    <div>
-                        <x-input-label for="forgot_email" :value="__('Email')" class="text-green-700 font-medium mb-2" />
-                        <div class="relative">
-                            <x-text-input id="forgot_email" class="block mt-1 w-full pl-10 h-12 border-green-400 transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                type="email"
-                                name="email"
-                                :value="old('email')"
-                                required
-                                autocomplete="email" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
-                            </svg>
-                        </div>
-                        <x-input-error :messages="$errors->passwordReset->get('email')" class="mt-2 text-red-600" />
-                    </div>
-
-                    <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-[1.02]">
-                        {{ __('Email Password Reset Link') }}
-                    </x-primary-button>
-                </form>
             </div>
         </div>
     </div>

@@ -30,8 +30,6 @@
         </div>
     </div>
 </div>
-    
-  </div>
 
   {{-- Add Ingredient Form --}}
   <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 mb-8">

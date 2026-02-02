@@ -3,23 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -41,39 +24,11 @@
     background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
 }
 
-/* Modern Table Styles - Exact same as manage users */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem; /* Same font size */
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem; /* Same padding */
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem; /* Same font size */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: sticky;
-    top: 0;
-}
-
 /* Right-aligned columns */
 .modern-table th:nth-child(3),
 .modern-table th:nth-child(4),
 .modern-table th:nth-child(5) {
     text-align: right;
-}
-
-.modern-table td {
-    padding: 1rem; /* Same padding */
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
 }
 
 /* Right-aligned columns */
@@ -83,65 +38,15 @@
     text-align: right;
 }
 
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* Custom Scrollbar */
-.modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-track {
-    background: var(--neutral-100);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
-
 /* Status Badges - Same size as role badges in manage users */
 .status-badge {
-    padding: 0.375rem 0.75rem; /* Same as role-badge */
     border-radius: 20px; /* Same as role-badge */
-    font-size: 0.75rem; /* Same as role-badge */
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px; /* Same as role-badge */
-    display: inline-flex;
-    align-items: center;
     gap: 0.375rem;
     border: 1px solid transparent;
 }
 
-.status-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-    border-color: rgba(245, 158, 11, 0.2);
-}
-
-.status-approved {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border-color: rgba(34, 197, 94, 0.2);
-}
-
-.status-declined {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
 
 /* Action Buttons - Same as manage users */
 .action-btn {
@@ -209,64 +114,9 @@
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
 }
 
-/* Empty State - Same as manage users */
-.empty-state {
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
-}
-
-.empty-state-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 /* Header Styles */
 .page-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem; /* Same margin */
-    justify-content: space-between;
     flex-wrap: wrap;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-text {
-    flex: 1;
-}
-
-.header-title {
-    font-size: 1.75rem; /* Same font size */
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-    color: var(--neutral-500);
-    font-size: 0.875rem;
 }
 
 /* Filter Section */

@@ -4,23 +4,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -32,47 +15,6 @@
     position: relative;
 }
 
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-/* Status Badges */
-.status-badge {
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    border: 1px solid transparent;
-}
-
-.status-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-    border-color: rgba(245, 158, 11, 0.2);
-}
-
-.status-approved {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border-color: rgba(34, 197, 94, 0.2);
-}
-
-.status-declined {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
 
 /* Action Buttons */
 .action-btn {
@@ -145,105 +87,12 @@
     height: 20px;
 }
 
-/* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-text {
-    flex: 1;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-    color: var(--neutral-500);
-    font-size: 0.875rem;
-}
-
-/* Info Cards */
-.info-card {
-    background: var(--neutral-50);
-    border-radius: 12px;
-    border: 1px solid var(--neutral-200);
-    padding: 1.5rem;
-}
-
-.info-card-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.info-card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--neutral-900);
-}
-
 /* Modal Styles */
 .modern-modal {
     background: white;
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--neutral-200);
-}
-
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
 }
 
 /* Back Button Container */

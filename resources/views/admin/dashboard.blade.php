@@ -3,24 +3,6 @@
 
 @section('content')
 <style>
-/* 1. Modern Color Palette */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --accent-light: #FF8E53;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* 2. Glassmorphism Effects */
 .glass-card {
     background: rgba(255, 255, 255, 0.75);
@@ -50,32 +32,6 @@
 .modern-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* Menu Card Styling for Inventory Sections */
-.menu-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-.menu-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e0;
 }
 
 /* 4. Metric Cards with Gradient Backgrounds */
@@ -128,25 +84,6 @@
     background: currentColor;
 }
 
-.status-critical {
-    background: rgba(220, 38, 38, 0.1);
-    color: #DC2626;
-}
-
-.status-warning {
-    background: rgba(217, 119, 6, 0.1);
-    color: #D97706;
-}
-
-.status-low {
-    background: rgba(234, 88, 12, 0.1);
-    color: #EA580C;
-}
-
-.status-good {
-    background: rgba(5, 124, 60, 0.1);
-    color: #057C3C;
-}
 
 /* 6. Typography - Modern Scale */
 .metric-value {
@@ -154,13 +91,6 @@
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.5px;
-}
-
-.section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--neutral-900);
-    letter-spacing: -0.2px;
 }
 
 /* 7. Animation Keyframes */
@@ -235,76 +165,15 @@
     transform: translateX(4px);
 }
 
-/* 10. Table Styles - Modern */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    position: sticky;
-    top: 0;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: background-color 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* 11. Custom Scrollbar - Modern */
-.modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-track {
-    background: var(--neutral-100);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
-
 /* 12. Empty State Styles */
 .empty-state {
     padding: 2rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
 }
 
 .empty-state-icon {
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* 13. Greeting Section - Modern with Updated Date Design */

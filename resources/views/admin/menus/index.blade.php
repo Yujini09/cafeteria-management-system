@@ -14,30 +14,6 @@
 <style>
     [x-cloak] { display: none !important; }
     
-    .menu-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .menu-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-    }
-    
-    .menu-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border-color: #cbd5e0;
-    }
-
     .select-with-arrows {
         position: relative;
         display: inline-flex;
@@ -388,9 +364,9 @@
   </div>
 
   {{-- Success Modal --}}
-  <x-admin.ui.modal name="menu-create-success" title="Success!" variant="confirmation" maxWidth="sm">
+  <x-success-modal name="menu-create-success" title="Success!" maxWidth="sm">
     <p class="text-sm text-admin-neutral-600">Menu created successfully!</p>
-  </x-admin.ui.modal>
+  </x-success-modal>
 
   {{-- CREATE MENU MODAL - 3 STEPS --}}
   <template x-teleport="body">

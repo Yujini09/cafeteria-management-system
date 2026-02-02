@@ -3,23 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: white;
@@ -41,61 +24,6 @@
     background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
 }
 
-/* Button Styles */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 70, 46, 0.2);
-}
-
-/* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-icon svg {
-    color: white;
-    font-size: 1.25rem;
-    width: 1.25rem;
-    height: 1.25rem;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
-.header-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-left: auto;
-}
 
 /* Calendar Grid Styles */
 .calendar-grid {
@@ -287,21 +215,10 @@
 }
 
 /* Empty State */
-.empty-state {
-    padding: 2rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
-}
-
 .empty-state-icon {
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .empty-state-icon svg {

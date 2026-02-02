@@ -584,6 +584,11 @@
 </div>
 
 <script>
+// Global helper to emit admin toasts from pages or inline scripts
+window.showAdminToast = function(message, type = 'success') {
+    window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: type, message: message } }));
+};
+
 function filterTable(query) {
     const normalizedQuery = query.toLowerCase().trim();
     const rows = document.querySelectorAll("table tbody tr");
