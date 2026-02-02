@@ -4,23 +4,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -32,47 +15,6 @@
     position: relative;
 }
 
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-/* Status Badges */
-.status-badge {
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    border: 1px solid transparent;
-}
-
-.status-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-    border-color: rgba(245, 158, 11, 0.2);
-}
-
-.status-approved {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border-color: rgba(34, 197, 94, 0.2);
-}
-
-.status-declined {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
 
 /* Action Buttons */
 .action-btn {
@@ -145,105 +87,12 @@
     height: 20px;
 }
 
-/* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-text {
-    flex: 1;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-    color: var(--neutral-500);
-    font-size: 0.875rem;
-}
-
-/* Info Cards */
-.info-card {
-    background: var(--neutral-50);
-    border-radius: 12px;
-    border: 1px solid var(--neutral-200);
-    padding: 1.5rem;
-}
-
-.info-card-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.info-card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--neutral-900);
-}
-
 /* Modal Styles */
 .modern-modal {
     background: white;
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--neutral-200);
-}
-
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
 }
 
 /* Back Button Container */
@@ -258,14 +107,16 @@
 
 [x-cloak] { display: none !important; }
 </style>
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-<div class="modern-card p-6 mx-auto max-w-full" x-data="reservationShow({
+<div class="modern-card p-6 mx-auto max-w-full"
+     x-data="reservationShow({
         accepted:@js(session('accepted',false)),
         declined:@js(session('declined',false)),
         inventoryWarning:@js(session('inventory_warning',false)),
         insufficientItems:@js(session('insufficient_items',[]))
-     })">
+})"
+     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen || acceptedOpen || inventoryWarningOpen || declineOpen)"
+     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false">
     
     <!-- Header -->
     <div class="page-header">
@@ -716,9 +567,11 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition class="fixed inset-0 flex items-center justify-center">
-        <div @click="approveConfirmationOpen=false" class="relative inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -734,9 +587,11 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
-        <div @click="declineConfirmationOpen = false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="declineConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
@@ -753,9 +608,11 @@
     
 
     {{-- Accepted popup --}}
-    <div x-cloak x-show="acceptedOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
-        <div @click="acceptedOpen = false" class="absolute inset-0 bg-black/40"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
+    <div x-cloak x-show="acceptedOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="acceptedOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -767,9 +624,11 @@
         </div>
     </div>
     {{-- Inventory Warning modal --}}
-    <div x-cloak x-show="inventoryWarningOpen" x-transition class="fixed inset-0 flex items-center justify-center p-4">
-        <div @click="inventoryWarningOpen = false" class="absolute inset-0 bg-black/40"></div>
-        <div class="modern-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10">
+    <div x-cloak x-show="inventoryWarningOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="inventoryWarningOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 z-20" @click="inventoryWarningOpen = false">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -839,9 +698,11 @@
     </div>
 
     {{-- Decline Form Modal --}}
-    <div x-cloak x-show="declineOpen" x-transition class="fixed inset-0  flex items-center justify-center p-4">
-        <div @click="declineOpen = false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-lg relative z-10">
+    <div x-cloak x-show="declineOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+        <div @click="declineOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200" @click="declineOpen = false">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -867,67 +728,4 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('reservationShow', (opts) => ({
-            acceptedOpen: false,
-            declineOpen: false,
-            declineConfirmationOpen: false,
-            approveConfirmationOpen: false,
-            inventoryWarningOpen: false,
-            insufficientItems: [],
-            
-            openApproveConfirmation() {
-                this.approveConfirmationOpen = true;
-            },
-            
-            openDeclineConfirmation() {
-                this.declineConfirmationOpen = true;
-            },
-            
-            openDeclineForm() { 
-                console.log('Opening decline form');
-                this.declineConfirmationOpen = false;
-                // Small delay to ensure modal closes before opening new one
-                setTimeout(() => {
-                    this.declineOpen = true;
-                }, 150);
-            },
-            
-            handleApprove() {
-                this.approveConfirmationOpen = false;
-                
-                if (opts.inventoryWarning && opts.insufficientItems && opts.insufficientItems.length > 0) {
-                    this.insufficientItems = opts.insufficientItems;
-                    this.inventoryWarningOpen = true;
-                    return;
-                }
-                
-                document.getElementById('approveForm').submit();
-            },
-            
-            proceedWithApproval() {
-                document.getElementById('forceApproveInput').value = '1';
-                document.getElementById('approveForm').submit();
-            },
-            
-             init(){
-                console.log('Initializing with options:', opts);
-                
-                if (opts.accepted) {
-                    setTimeout(() => {
-                        this.acceptedOpen = true;
-                    }, 300);
-                }
-                
-                if (opts.inventoryWarning && opts.insufficientItems && opts.insufficientItems.length > 0) {
-                    this.insufficientItems = opts.insufficientItems;
-                    setTimeout(() => {
-                        this.inventoryWarningOpen = true;
-                    }, 300);
-                }
-            }
-        }));
-    });
-</script>
 @endsection

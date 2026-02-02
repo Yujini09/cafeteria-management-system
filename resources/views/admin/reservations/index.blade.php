@@ -3,23 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -41,39 +24,11 @@
     background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
 }
 
-/* Modern Table Styles - Exact same as manage users */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem; /* Same font size */
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem; /* Same padding */
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem; /* Same font size */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: sticky;
-    top: 0;
-}
-
 /* Right-aligned columns */
 .modern-table th:nth-child(3),
 .modern-table th:nth-child(4),
 .modern-table th:nth-child(5) {
     text-align: right;
-}
-
-.modern-table td {
-    padding: 1rem; /* Same padding */
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
 }
 
 /* Right-aligned columns */
@@ -83,65 +38,15 @@
     text-align: right;
 }
 
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* Custom Scrollbar */
-.modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-track {
-    background: var(--neutral-100);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
-
-.modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
-
 /* Status Badges - Same size as role badges in manage users */
 .status-badge {
-    padding: 0.375rem 0.75rem; /* Same as role-badge */
     border-radius: 20px; /* Same as role-badge */
-    font-size: 0.75rem; /* Same as role-badge */
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px; /* Same as role-badge */
-    display: inline-flex;
-    align-items: center;
     gap: 0.375rem;
     border: 1px solid transparent;
 }
 
-.status-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-    border-color: rgba(245, 158, 11, 0.2);
-}
-
-.status-approved {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border-color: rgba(34, 197, 94, 0.2);
-}
-
-.status-declined {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
 
 /* Action Buttons - Same as manage users */
 .action-btn {
@@ -209,62 +114,9 @@
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
 }
 
-/* Empty State - Same as manage users */
-.empty-state {
-    padding: 3rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
-}
-
-.empty-state-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 /* Header Styles */
 .page-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem; /* Same margin */
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-text {
-    flex: 1;
-}
-
-.header-title {
-    font-size: 1.75rem; /* Same font size */
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-    color: var(--neutral-500);
-    font-size: 0.875rem;
+    flex-wrap: wrap;
 }
 
 /* Filter Section */
@@ -281,6 +133,47 @@
     color: var(--neutral-700);
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
+}
+
+.filter-label-inline {
+    margin-bottom: 0;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .filter-row {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.select-with-arrows {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.select-with-arrows .filter-select {
+    appearance: none;
+    padding-right: 2.75rem;
+}
+
+.select-arrows {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    color: var(--neutral-500);
+}
+
+.select-arrows svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Customer Info - Same font sizes as manage users */
@@ -428,9 +321,10 @@
 [x-cloak] { display: none !important; }
 </style>
 
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-<div class="modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);" x-data="reservationList()">
+<div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
+     x-data="reservationList()"
+     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen)"
+     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false">
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
@@ -444,24 +338,47 @@
                 <p class="header-subtitle">Manage and review all reservation requests</p>
             </div>
         </div>
+        <div class="relative w-full sm:w-64 md:w-72 ml-auto">
+            <input type="search"
+                   id="searchInput"
+                   placeholder="Search reservations..."
+                   class="admin-search-input w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent"
+                   oninput="filterTable(this.value)"
+                   aria-label="Search reservations">
+            <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" style="display: none;">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 
     <!-- Filter Section -->
     <div class="filter-section">
-        <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div class="flex-1">
-                <label for="status" class="filter-label">Filter by Status</label>
+        <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col gap-4">
+            <div class="filter-row w-full">
+                <label for="status" class="filter-label filter-label-inline">Filter by Status</label>
                 @php
                     $pending  = data_get($counts, 'pending', 0);
                     $approved = data_get($counts, 'approved', 0);
                     $declined = data_get($counts, 'declined', 0);
                 @endphp
-                <select name="status" id="status" onchange="this.form.submit()" class="filter-select w-full sm:w-64">
-                    <option value="" {{ $status === null ? 'selected' : '' }}>All Reservations</option>
-                    <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending ({{ $pending }})</option>
-                    <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved ({{ $approved }})</option>
-                    <option value="declined" {{ $status === 'declined' ? 'selected' : '' }}>Declined ({{ $declined }})</option>
-                </select>
+                <div class="select-with-arrows w-full sm:w-64">
+                    <select name="status" id="status" onchange="this.form.submit()" class="filter-select w-full" data-admin-select="true">
+                        <option value="" {{ $status === null ? 'selected' : '' }}>All Reservations</option>
+                        <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending ({{ $pending }})</option>
+                        <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved ({{ $approved }})</option>
+                        <option value="declined" {{ $status === 'declined' ? 'selected' : '' }}>Declined ({{ $declined }})</option>
+                    </select>
+                    <span class="select-arrows" aria-hidden="true">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
+                        </svg>
+                    </span>
+                </div>
             </div>
         </form>
     </div>
@@ -585,9 +502,11 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-        <div @click="approveConfirmationOpen=false" class="relative inset-0 "></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div @click="approveConfirmationOpen=false" class="absolute inset-0"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -603,9 +522,11 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition class="fixed inset-0 z-50 flex bg-black/40 items-center justify-center">
-        <div @click="declineConfirmationOpen=false" class="relative inset-0 "></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div @click="declineConfirmationOpen=false" class="absolute inset-0"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+             x-transition.scale.90
+             @click.stop>
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
@@ -628,44 +549,4 @@
     @endif
 </div>
 
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('reservationList', () => ({
-            approveConfirmationOpen: false,
-            declineConfirmationOpen: false,
-            selectedReservationId: null,
-            actionType: null, // 'approve' or 'decline'
-            
-            openApproveConfirmation(reservationId) {
-                this.selectedReservationId = reservationId;
-                this.actionType = 'approve';
-                this.approveConfirmationOpen = true;
-            },
-            
-            openDeclineConfirmation(reservationId) {
-                this.selectedReservationId = reservationId;
-                this.actionType = 'decline';
-                this.declineConfirmationOpen = true;
-            },
-            
-            redirectToShowPage() {
-                if (this.selectedReservationId) {
-                    // Close both modals
-                    this.approveConfirmationOpen = false;
-                    this.declineConfirmationOpen = false;
-                    
-                    // Redirect to the reservation show page
-                    const url = "{{ route('admin.reservations.show', ':id') }}".replace(':id', this.selectedReservationId);
-                    
-                    // Add hash for decline action if needed
-                    if (this.actionType === 'decline') {
-                        window.location.href = url + '#decline';
-                    } else {
-                        window.location.href = url;
-                    }
-                }
-            }
-        }));
-    });
-</script>
 @endsection

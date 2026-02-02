@@ -84,12 +84,9 @@
                 </div>
 
                 @if(Auth::user()->role == 'customer')
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
-                        @csrf
-                        <button type="submit" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
-                            LOGOUT
-                        </button>
-                    </form>
+                    <button type="button" @click="confirmLogout = true" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
+                        LOGOUT
+                    </button>
                 @endif
             @endauth
         </div>

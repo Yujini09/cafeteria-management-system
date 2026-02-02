@@ -54,6 +54,12 @@ class Reservation extends Model
     {
         return $this->hasMany(ReservationItem::class);
     }
+
+    public function getGuestCountAttribute(): int
+    {
+        $count = $this->guests ?? $this->attendees ?? $this->number_of_persons;
+        return (int) ($count ?? 1);
+    }
     
     public function scopeStatus($q, $status)
     {

@@ -3,23 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Design Variables */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
 /* Modern Card Styles */
 .modern-card {
     background: white;
@@ -29,97 +12,23 @@
     overflow: hidden;
 }
 
-/* Modern Table Styles */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
-
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: all 0.2s ease;
-}
-
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
-
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
-
-/* Button Styles */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 70, 46, 0.2);
-}
-
-.btn-secondary {
-    background: var(--neutral-100);
-    color: var(--neutral-700);
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-secondary:hover {
-    background: var(--neutral-200);
-}
-
 /* Input Styles */
 .price-input-container {
     position: relative;
 }
 
-.price-input {
+.price-input-container .price-input {
     width: 100%;
-    padding: 0.75rem 0.75rem 0.75rem 2rem;
+    padding: 0.75rem 0.75rem 0.75rem 3rem !important;
     border: 1px solid var(--neutral-300);
     border-radius: 8px;
     font-size: 0.875rem;
     transition: all 0.2s ease;
     background: white;
+    box-sizing: border-box;
 }
 
-.price-input:focus {
+.price-input-container .price-input:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
@@ -127,41 +36,13 @@
 
 .currency-symbol {
     position: absolute;
-    left: 0.75rem;
+    left: 0.9rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--neutral-600);
     font-weight: 600;
-}
-
-/* Header Styles */
-.page-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.header-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-icon i {
-    color: white;
-    font-size: 1.25rem;
-}
-
-.header-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--neutral-900);
-    letter-spacing: -0.5px;
+    font-size: 0.875rem;
+    pointer-events: none;
 }
 
 /* Meal Time Badge */
@@ -175,7 +56,7 @@
     text-transform: capitalize;
 }
 
-/* Highlight Animation
+/* Highlight Animation */
 @keyframes highlightRow {
     0% {
         background-color: #c9fec7;
@@ -199,36 +80,15 @@
     border-color: #0bf51f !important;
     box-shadow: 0 0 0 3px rgba(11, 245, 50, 0.3) !important;
     transition: all 0.3s ease;
-} */
-
-/* Menu Card Styling for Inventory Sections */
-.menu-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
-}
-
-.menu-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e0;
-}
 </style>
 
-<div class="modern-card menu-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);">
+<div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
+    <x-success-modal name="menu-prices-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+        <p class="text-sm text-admin-neutral-600">Menu prices updated successfully.</p>
+    </x-success-modal>
+
     <!-- Header -->
     <div class="page-header">
         <div class="header-icon">
@@ -241,8 +101,8 @@
     <form method="POST" action="{{ route('admin.menus.prices.update') }}" class="space-y-6">
         @csrf
 
-        <div>
-            <table class="modern-table">
+        <div class="overflow-x-auto">
+            <table class="modern-table min-w-[520px]">
                 <thead>
                     <tr>
                         <th>Meal Time</th>
@@ -292,7 +152,7 @@
             </table>
         </div>
 
-        <div class="flex justify-end gap-3 pt-6 border-t border-gray-100">
+        <div class="flex flex-col gap-3 pt-6 border-t border-gray-100 sm:flex-row sm:justify-end">
             <a href="{{ route('admin.menus.index') }}" class="btn-secondary">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -308,6 +168,16 @@
         </div>
     </form>
 </div>
+
+@if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu prices updated'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-prices-success' }));
+    });
+});
+</script>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

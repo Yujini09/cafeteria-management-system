@@ -17,6 +17,14 @@
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative">
                 <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
                      class="max-h-64 object-contain w-auto -ml-8"> 
+
+                <a href="{{ route('marketing.home') }}"
+                    class="absolute bottom-8 left-8 right-8 inline-flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800 transition hover:border-orange-400 hover:text-orange-600">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Landing Page
+                </a>
             </div>
 
             {{-- Right side (Form) - Light Green (bg-green-100), SCROLL ENABLED --}}
@@ -96,37 +104,33 @@
                         </div>
 
                         <div class="mb-6">
-                            <x-input-label for="password" :value="__('Password')" class="text-green-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="password" name="password" type="password"
-                                    class="block mt-1 w-full pl-10 pr-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900" required />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                <button type="button" id="togglePassword1" class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-orange-500">
-                                    <svg id="eyeIcon1" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                            {!! app('livewire')->mount('password-with-rules', [
+                                'name' => 'password',
+                                'label' => __('Password'),
+                                'showRequirements' => true,
+                                'required' => true,
+                                'variant' => 'auth',
+                            ]) !!}
                         </div>
 
                         <div class="mb-6">
-                            <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="text-green-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="password_confirmation" name="password_confirmation" type="password"
-                                    class="block mt-1 w-full pl-10 pr-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900" required />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                <button type="button" id="togglePassword2" class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-orange-500">
-                                    <svg id="eyeIcon2" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                            {!! app('livewire')->mount('password-with-rules', [
+                                'name' => 'password_confirmation',
+                                'label' => __('Confirm Password'),
+                                'showRequirements' => false,
+                                'required' => true,
+                                'variant' => 'auth',
+                            ]) !!}
+                            @php
+                                $confirmPasswordErrors = $errors->get('password_confirmation');
+                                $confirmedError = collect($errors->get('password'))
+                                    ->first(fn ($message) => \Illuminate\Support\Str::contains(strtolower($message), 'confirmation'));
+                            @endphp
+                            @if (!empty($confirmPasswordErrors))
+                                <x-input-error :messages="$confirmPasswordErrors" class="mt-2" />
+                            @elseif (!empty($confirmedError))
+                                <x-input-error :messages="[$confirmedError]" class="mt-2" />
+                            @endif
                         </div>
 
                         <div class="mb-6">
@@ -151,57 +155,53 @@
         </div>
     </div>
 
-    <div id="verificationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
+    {{-- Modal: Verification Success --}}
+    <div id="verificationModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 mb-4">
                     <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Account Created Successfully!</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500">
-                        Please check your email for verification. You must verify your email address before you can log in.
-                    </p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="proceedToVerification" class="px-4 py-2 bg-orange-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">
-                        Proceed to Email Verification
-                    </button>
-                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Account Created Successfully!</h3>
+                <p class="text-sm text-gray-500 mb-6">
+                    Please check your email for verification. You must verify your email address before you can log in.
+                </p>
+            </div>
 
+            <div class="flex justify-center">
+                <button id="proceedToVerification" class="px-6 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                    Proceed to Email Verification
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal: Error Alert --}}
+    <div id="errorModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2" id="errorModalTitle">Error</h3>
+                <div id="errorModalContent" class="text-sm text-gray-500 mb-6">
+                    <!-- Error messages will be inserted here -->
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="document.getElementById('errorModal').classList.add('hidden')" class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    Dismiss
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // Toggle for password
-        document.getElementById('togglePassword1').addEventListener('click', function () {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon1');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-            }
-        });
-
-        // Toggle for confirm password
-        document.getElementById('togglePassword2').addEventListener('click', function () {
-            const confirmPasswordInput = document.getElementById('password_confirmation');
-            const eyeIcon = document.getElementById('eyeIcon2');
-            if (confirmPasswordInput.type === 'password') {
-                confirmPasswordInput.type = 'text';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>';
-            } else {
-                confirmPasswordInput.type = 'password';
-                eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
-            }
-        });
-
         // Handle form submission with modal
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
@@ -241,19 +241,25 @@
                 } else {
                     // Handle validation errors
                     if (data.errors) {
-                        let errorMessage = 'Please fix the following errors:\n';
+                        let errorHtml = '<ul class="text-left space-y-2">';
                         for (let field in data.errors) {
-                            errorMessage += `- ${data.errors[field][0]}\n`;
+                            errorHtml += `<li class="flex items-start"><span class="text-red-500 mr-2">•</span><span>${data.errors[field][0]}</span></li>`;
                         }
-                        alert(errorMessage);
+                        errorHtml += '</ul>';
+                        document.getElementById('errorModalTitle').textContent = 'Registration Error';
+                        document.getElementById('errorModalContent').innerHTML = errorHtml;
                     } else {
-                        alert(data.message || 'Registration failed. Please try again.');
+                        document.getElementById('errorModalTitle').textContent = 'Registration Failed';
+                        document.getElementById('errorModalContent').innerHTML = `<p>${data.message || 'Registration failed. Please try again.'}</p>`;
                     }
+                    document.getElementById('errorModal').classList.remove('hidden');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                document.getElementById('errorModalTitle').textContent = 'Error';
+                document.getElementById('errorModalContent').innerHTML = '<p>An error occurred. Please try again.</p>';
+                document.getElementById('errorModal').classList.remove('hidden');
             })
             .finally(() => {
                 // Re-enable button

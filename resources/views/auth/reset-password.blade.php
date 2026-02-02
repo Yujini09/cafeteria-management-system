@@ -1,70 +1,107 @@
 <!-- reset-password.blade.php -->
 <x-guest-layout>
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4">
-        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl">
-            <div class="p-8">
-                <div class="text-center mb-2">
-                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800">Reset Password</h2>
-                    <p class="text-gray-600 mt-2">Create your new password</p>
+    @php
+        $passwordResetStatus = __('passwords.reset');
+    @endphp
+    <div class="min-h-screen flex items-center justify-center bg-green-950 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-30">
+            <div class="w-96 h-96 bg-orange-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="w-64 h-64 bg-orange-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
+            <div class="w-80 h-80 bg-orange-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="w-40 h-40 bg-orange-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-2xl z-10">
+            <div class="w-full p-8 md:p-12 relative bg-green-100">
+                <div class="absolute inset-0 opacity-50 overflow-hidden">
+                    <div class="w-64 h-64 bg-green-200 rounded-full absolute -top-24 -right-24"></div>
+                    <div class="w-48 h-48 bg-green-200 rounded-full absolute -bottom-16 -left-16"></div>
                 </div>
 
-                <form method="POST" action="{{ route('password.store') }}" class="space-y-6">
-                    @csrf
-
-                    <!-- Password Reset Token -->
-                    <input type="hidden" name="token" value="{{ $request->route('token') }}">
-
-                    <!-- Email Address -->
-                    <div class="group">
-                        <x-input-label for="email" :value="__('Email')" class="text-gray-700 font-medium mb-2" />
-                        <div class="relative transform transition-all duration-300 group-hover:scale-[1.02]">
-                            <x-text-input id="email" class="block mt-1 w-full pl-10 h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500 focus:border-transparent" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
-                            </svg>
-                        </div>
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                <div class="relative z-10">
+                    <div class="text-left mb-10">
+                        <h2 class="text-green-900 text-4xl font-extrabold mb-2">Reset Password</h2>
+                        <p class="text-green-700 text-lg">Create your new password</p>
                     </div>
 
-                    <!-- Password -->
-                    <div class="group">
-                        <x-input-label for="password" :value="__('Password')" class="text-gray-700 font-medium mb-2" />
-                        <div class="relative transform transition-all duration-300 group-hover:scale-[1.02]">
-                            <x-text-input id="password" class="block mt-1 w-full pl-10 h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500 focus:border-transparent" type="password" name="password" required autocomplete="new-password" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                    </div>
+                    <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm">
+                        <p class="text-sm text-green-700">Password reset successfully. Redirecting to login...</p>
+                    </x-success-modal>
 
-                    <!-- Confirm Password -->
-                    <div class="group">
-                        <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="text-gray-700 font-medium mb-2" />
+                    @if(session('status') !== $passwordResetStatus)
+                        <form method="POST" action="{{ route('password.store') }}" class="space-y-6">
+                            @csrf
 
-                        <div class="relative transform transition-all duration-300 group-hover:scale-[1.02]">
-                            <x-text-input id="password_confirmation" class="block mt-1 w-full pl-10 h-12 transition-all duration-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    type="password"
-                                    name="password_confirmation" required autocomplete="new-password" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors duration-300 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-                    </div>
+                            <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-                    <div class="flex items-center justify-end mt-6 transform transition-transform duration-300 hover:scale-105">
-                        <x-primary-button class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
-                            {{ __('Reset Password') }}
-                        </x-primary-button>
-                    </div>
-                </form>
+                            <div class="mb-6">
+                                <x-input-label for="email" :value="__('Email')" class="text-green-700 font-medium mb-2" />
+                                <div class="relative">
+                                    <x-text-input id="email"
+                                        class="block mt-1 w-full pl-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900 bg-green-50 text-green-700 cursor-not-allowed"
+                                        type="email"
+                                        name="email"
+                                        :value="old('email', $request->email)"
+                                        required
+                                        autofocus
+                                        autocomplete="username"
+                                        readonly />
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                                    </svg>
+                                </div>
+                                <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-600" />
+                            </div>
+
+                            <div class="mb-6">
+                                {!! app('livewire')->mount('password-with-rules', [
+                                    'name' => 'password',
+                                    'label' => __('Password'),
+                                    'showRequirements' => true,
+                                    'required' => true,
+                                    'variant' => 'auth',
+                                ]) !!}
+                            </div>
+
+                            <div class="mb-6">
+                                {!! app('livewire')->mount('password-with-rules', [
+                                    'name' => 'password_confirmation',
+                                    'label' => __('Confirm Password'),
+                                    'showRequirements' => false,
+                                    'required' => true,
+                                    'variant' => 'auth',
+                                ]) !!}
+                                @php
+                                    $confirmPasswordErrors = $errors->get('password_confirmation');
+                                    $confirmedError = collect($errors->get('password'))
+                                        ->first(fn ($message) => \Illuminate\Support\Str::contains(strtolower($message), 'confirmation'));
+                                @endphp
+                                @if (!empty($confirmPasswordErrors))
+                                    <x-input-error :messages="$confirmPasswordErrors" class="mt-2" />
+                                @elseif (!empty($confirmedError))
+                                    <x-input-error :messages="[$confirmedError]" class="mt-2" />
+                                @endif
+                            </div>
+
+                            <div>
+                                <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-200 text-white">
+                                    {{ __('Reset Password') }}
+                                </x-primary-button>
+                            </div>
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
+
+    @if(session('status') === $passwordResetStatus)
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'password-reset-success' }));
+            }, 50);
+        });
+    </script>
+    @endif
 </x-guest-layout>

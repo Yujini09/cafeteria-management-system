@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\MenuPrice;
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SalesReportExport;
@@ -49,7 +50,7 @@ class ReportsController extends Controller
             'report_type' => $reportType,
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),
-            'generated_by' => Auth::user()->name,
+            'generated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         switch ($reportType) {
@@ -269,7 +270,7 @@ class ReportsController extends Controller
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
         $viewData = compact('startDate', 'endDate');
-        $viewData['generatedBy'] = Auth::user()->name;
+        $viewData['generatedBy'] = Auth::user()?->name ?? 'Unknown';
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.pdf';
 
         switch ($reportType) {
@@ -501,18 +502,7 @@ class ReportsController extends Controller
     /** Create notification for admins/superadmin */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
-        // Get all admin and superadmin users
-        $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
-        
-        // Create a notification for each admin/superadmin
-        foreach ($admins as $admin) {
-            Notification::create([
-                'user_id' => $admin->id,
-                'action' => $action,
-                'module' => $module,
-                'description' => $description,
-                'metadata' => $metadata,
-            ]);
-        }
+        $notificationService = new NotificationService();
+        $notificationService->createAdminNotification($action, $module, $description, $metadata);
     }
 }
