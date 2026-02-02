@@ -61,6 +61,56 @@ body {
     right: 20%;
 }
 
+.slide {
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.slide.active {
+    opacity: 1;
+    z-index: 10;
+}
+
+/* Progress Bar Animation */
+.progress-bar {
+    width: 33.333%;
+    transition: width 4s linear;
+}
+
+.slideshow-active .progress-bar {
+    animation: progress 12s linear infinite;
+}
+
+@keyframes progress {
+    0%, 33.333% {
+        width: 33.333%;
+    }
+    33.334%, 66.666% {
+        width: 66.666%;
+    }
+    66.667%, 100% {
+        width: 100%;
+    }
+}
+
+/* Hover Effects */
+.group:hover .slide.active img {
+    transform: scale(1.05);
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+    .relative .text-white h3 {
+        font-size: 1.75rem;
+        line-height: 1.2;
+    }
+    .relative .text-white p {
+        font-size: 0.875rem;
+    }
+}
+
+
 @endsection
 
 @section('content')
@@ -237,43 +287,135 @@ body {
     </div>
 </section>
 
-    <section class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16 font-poppins">
-            <h2 class="text-4xl font-bold text-ret-dark mb-4">Best Seller</h2>
-            <p class="text-xl text-gray-600">Most-Ordered Meals</p>
+<section class="py-16 bg-gradient-to-b from-gray-50 to-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-poppins text-center mb-16">
+        <h2 class="text-4xl font-bold text-ret-dark mb-4">Our Services</h2>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8 font-poppins">
-            <div class="bg-ret-dark text-white rounded-lg p-8 shadow-lg">
-                <h3 class="text-4xl font-bold mb-2">Standard Menu</h3>
-                <p class="text-base text-gray-300 mb-4">Breakfast</p>
-                <h4 class="text-3xl font-bold text-cafeteria-orange mb-6">Menu 1</h4>
-                <ul class="space-y-2 text-gray-300 list-disc list-inside marker:text-cafeteria-orange">
-                    <li>Longanisa with Slice Tomato</li>
-                    <li>Fried Egg Sunny Side Up</li>
-                    <li>Rice</li>
-                    <li>Tea/Coffee</li>
-                    <li>Bottled Water</li>
-                </ul>
+        <!-- Slideshow Container - Reduced height -->
+        <div class="relative overflow-hidden rounded-2xl shadow-xl h-[400px] md:h-[450px] group">
+            <!-- Slides -->
+            <div class="absolute inset-0 slide active">
+                <div class="relative w-full h-full">
+                    <img src="{{ asset('images/buffet.png') }}" alt="Buffet Spread" 
+                         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
+                </div>
+                <!-- Caption Overlay -->
+                <div class="absolute inset-0 flex items-center">
+                    <div class="max-w-2xl pl-8 md:pl-16 text-white">
+                        <div class="inline-block bg-clsu-green/90 backdrop-blur-sm px-4 py-1.5 md:px-6 md:py-2 rounded-full mb-4">
+                            <span class="text-xs md:text-sm font-semibold tracking-widest">PREMIUM DINING</span>
+                        </div>
+                        <h3 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+                            Elegant Buffet<br>Experience
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-200 mb-6 font-light max-w-lg">
+                            Indulge in our exquisite buffet spread featuring freshly prepared dishes and culinary artistry.
+                        </p>
+                        <a href="{{ route('menu') }}" class="inline-flex items-center gap-2 bg-white text-ret-dark px-6 py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 hover:gap-3 group">
+                            <span class="text-sm md:text-base">Explore Menu</span>
+                            <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-ret-dark text-white rounded-lg p-8 shadow-lg">
-                <h3 class="text-4xl font-bold mb-2">Special Menu</h3>
-                <p class="text-base text-gray-300 mb-4">Lunch</p>
-                <h4 class="text-3xl font-bold text-cafeteria-orange mb-6">Menu 3</h4>
-                <ul class="space-y-2 text-gray-300 list-disc list-inside marker:text-cafeteria-orange">
-                    <li>Sinigang na Hipon</li>
-                    <li>Fried Chicken</li>
-                    <li>Gising-gising</li>
-                    <li>Sliced Fruits</li>
-                    <li>Rice</li>
-                    <li>Bottled Water</li>
-                </ul>
+            <div class="absolute inset-0 slide">
+                <div class="relative w-full h-full">
+                    <img src="{{ asset('images/catering.png') }}" alt="Catering Service" 
+                         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-r from-ret-dark/60 via-ret-dark/30 to-transparent"></div>
+                </div>
+                <!-- Caption Overlay -->
+                <div class="absolute inset-0 flex items-center">
+                    <div class="max-w-2xl pl-8 md:pl-16 text-white">
+                        <div class="inline-block bg-cafeteria-orange/90 backdrop-blur-sm px-4 py-1.5 md:px-6 md:py-2 rounded-full mb-4">
+                            <span class="text-xs md:text-sm font-semibold tracking-widest">EVENT CATERING</span>
+                        </div>
+                        <h3 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+                            Professional<br>Catering Services
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-200 mb-6 font-light max-w-lg">
+                            From corporate events to private celebrations, our expert catering team delivers exceptional experiences.
+                        </p>
+                        <a href="{{ route('reservation_form') }}" class="inline-flex items-center gap-2 bg-white text-ret-dark px-6 py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 hover:gap-3 group">
+                            <span class="text-sm md:text-base">Book Service</span>
+                            <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute inset-0 slide">
+                <div class="relative w-full h-full">
+                    <img src="{{ asset('images/service.jpg') }}" alt="Our Services" 
+                         class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-r from-clsu-green/60 via-clsu-green/30 to-transparent"></div>
+                </div>
+                <!-- Caption Overlay -->
+                <div class="absolute inset-0 flex items-center">
+                    <div class="max-w-2xl pl-8 md:pl-16 text-white">
+                        <div class="inline-block bg-ret-green-light/90 backdrop-blur-sm px-4 py-1.5 md:px-6 md:py-2 rounded-full mb-4">
+                            <span class="text-xs md:text-sm font-semibold tracking-widest">COMPREHENSIVE</span>
+                        </div>
+                        <h3 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+                            Complete Dining<br>Solutions
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-200 mb-6 font-light max-w-lg">
+                            Your one-stop solution for all dining needs, combining quality and exceptional service since 1995.
+                        </p>
+                        <a href="{{ route('about') }}" class="inline-flex items-center gap-2 bg-white text-ret-dark px-6 py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 hover:gap-3 group">
+                            <span class="text-sm md:text-base">Learn More</span>
+                            <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Arrows -->
+            <button class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 z-20 prev-btn hover:scale-110">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-sm text-white p-3 rounded-full hover:bg-white/20 transition-all duration-300 opacity-0 group-hover:opacity-100 z-20 next-btn hover:scale-110">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+
+            <!-- Progress Bar -->
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full overflow-hidden z-20">
+                <div class="h-full bg-white progress-bar"></div>
+            </div>
+
+            <!-- Slide Indicators -->
+            <div class="absolute bottom-6 right-6 flex items-center space-x-3 z-20">
+                <div class="text-white font-medium text-xs md:text-sm">
+                    <span class="current-slide">01</span>
+                    <span class="mx-1">/</span>
+                    <span class="total-slides">03</span>
+                </div>
+                <div class="flex space-x-1.5">
+                    <button class="indicator w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white/50 hover:bg-white transition-all duration-300 active"></button>
+                    <button class="indicator w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white/50 hover:bg-white transition-all duration-300"></button>
+                    <button class="indicator w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white/50 hover:bg-white transition-all duration-300"></button>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <section id="reservation" class="bg-white py-20">
+    <section id="reservation" class="bg-white">
         <div class="py-20 bg-gray-900 relative overflow-hidden text-center text-white">
             <div class="absolute inset-0 opacity-30 reservation-bg"></div>
 
@@ -305,7 +447,7 @@ body {
         </div>
     </section>
 
-    <section id="contact" class="py-5 bg-white">
+    {{-- <section id="contact" class="py-5 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center font-poppins">
             <h2 class="text-4xl font-bold text-ret-dark mb-4">Customer Support</h2>
             <p class="text-xl text-gray-600 mb-12">Have a question? We're here to help!</p>
@@ -326,6 +468,119 @@ body {
                 </div>
             </div>
         </div>
-    </section>
+    </section> --}}
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.slide');
+    const indicators = document.querySelectorAll('.indicator');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+    const progressBar = document.querySelector('.progress-bar');
+    const currentSlideSpan = document.querySelector('.current-slide');
+    const slideshowContainer = document.querySelector('.relative');
+    let currentSlide = 0;
+    let slideInterval;
+    let isHovering = false;
+
+    // Initialize
+    slides[0].classList.add('active');
+    indicators[0].classList.add('active');
+    slideshowContainer.classList.add('slideshow-active');
+
+    // Function to show slide
+    function showSlide(index) {
+        currentSlide = index;
+        
+        slides.forEach(slide => slide.classList.remove('active'));
+        slides[index].classList.add('active');
+        
+        indicators.forEach(indicator => indicator.classList.remove('active'));
+        indicators[index].classList.add('active');
+        
+        progressBar.style.width = `${(index + 1) * 33.333}%`;
+        currentSlideSpan.textContent = String(index + 1).padStart(2, '0');
+        
+        slideshowContainer.classList.remove('slideshow-active');
+        void slideshowContainer.offsetWidth;
+        slideshowContainer.classList.add('slideshow-active');
+    }
+
+    // Next slide
+    function nextSlide() {
+        let nextIndex = (currentSlide + 1) % slides.length;
+        showSlide(nextIndex);
+    }
+
+    // Previous slide
+    function prevSlide() {
+        let prevIndex = (currentSlide - 1 + slides.length) % slides.length;
+        showSlide(prevIndex);
+    }
+
+    // Start auto-play
+    function startSlideshow() {
+        clearInterval(slideInterval);
+        slideInterval = setInterval(nextSlide, 4000);
+    }
+
+    // Event Listeners
+    prevBtn.addEventListener('click', () => {
+        if (!isHovering) {
+            clearInterval(slideInterval);
+            prevSlide();
+            startSlideshow();
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (!isHovering) {
+            clearInterval(slideInterval);
+            nextSlide();
+            startSlideshow();
+        }
+    });
+
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            if (!isHovering) {
+                clearInterval(slideInterval);
+                showSlide(index);
+                startSlideshow();
+            }
+        });
+    });
+
+    // Pause on hover
+    slideshowContainer.addEventListener('mouseenter', () => {
+        isHovering = true;
+        clearInterval(slideInterval);
+        slideshowContainer.classList.remove('slideshow-active');
+    });
+
+    slideshowContainer.addEventListener('mouseleave', () => {
+        isHovering = false;
+        slideshowContainer.classList.add('slideshow-active');
+        startSlideshow();
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!isHovering) {
+            if (e.key === 'ArrowLeft') {
+                clearInterval(slideInterval);
+                prevSlide();
+                startSlideshow();
+            } else if (e.key === 'ArrowRight') {
+                clearInterval(slideInterval);
+                nextSlide();
+                startSlideshow();
+            }
+        }
+    });
+
+    // Start the slideshow
+    startSlideshow();
+});
+</script>
 @endsection
