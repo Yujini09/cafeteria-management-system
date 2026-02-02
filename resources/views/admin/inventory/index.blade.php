@@ -238,6 +238,16 @@
     x-init="window.addEventListener('close-inventory-modals', function() { showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null; })"
     x-effect="document.body.classList.toggle('overflow-hidden', showCreateModal || showEditModal || showDeleteModal)"
     @keydown.escape.window="showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null">
+
+    <x-success-modal name="inventory-create-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+        <p class="text-sm text-admin-neutral-600">Inventory item added successfully.</p>
+    </x-success-modal>
+    <x-success-modal name="inventory-update-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+        <p class="text-sm text-admin-neutral-600">Inventory item updated successfully.</p>
+    </x-success-modal>
+    <x-success-modal name="inventory-delete-success" title="Deleted" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+        <p class="text-sm text-admin-neutral-600">Inventory item deleted successfully.</p>
+    </x-success-modal>
     
     <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
         <div class="page-header">
@@ -519,36 +529,70 @@
         </div>
     </div>
     
-    <div x-show="showDeleteModal" @click="showDeleteModal = false; deletingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
-        <div @click.stop class="modern-modal w-full max-w-sm p-8 relative z-10 text-center" x-transition.scale.90>
-            <button @click="showDeleteModal = false; deletingItem = null"
-                    class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
-                &times;
-            </button>
+    <div x-show="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+        <div
+            x-show="showDeleteModal"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute inset-0 bg-red-950/40 backdrop-blur-sm"
+            @click="showDeleteModal = false; deletingItem = null"
+            aria-hidden="true"
+        ></div>
 
-            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
-            </div>
-            
-            <h2 class="text-xl font-bold mb-2 text-gray-900">Confirm Deletion</h2>
-            
-            <p class="text-gray-600 mb-6 text-sm">
-                Are you sure you want to delete 
-                <strong class="text-gray-900" x-text="deletingItem ? deletingItem.name : 'this item'"></strong>? 
-                This action cannot be undone.
-            </p>
-
-                <form id="deleteInventoryForm" x-bind:action="deletingItem ? deleteRoute.replace(':id', deletingItem.id) : '#'" x-bind:data-id="deletingItem ? deletingItem.id : ''" method="POST">
-                @csrf @method('DELETE')
-                
-                <div class="flex justify-center space-x-3">
-                    <button type="button" @click="showDeleteModal = false; deletingItem = null" class="btn-secondary">
-                        Cancel
-                    </button>
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
-                        <i class="fas fa-trash mr-2"></i> Delete
-                    </button>
+        <div
+            x-show="showDeleteModal"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="relative w-full max-w-sm overflow-hidden rounded-2xl border border-red-200 bg-white shadow-2xl"
+            @click.stop
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-inventory-title"
+            aria-describedby="delete-inventory-desc"
+        >
+            <div class="flex items-start justify-between gap-4 border-b border-red-100 bg-red-50 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
+                        <i class="fas fa-exclamation-triangle text-lg"></i>
+                    </span>
+                    <div>
+                        <h2 id="delete-inventory-title" class="text-lg font-semibold text-red-900">Confirm Deletion</h2>
+                        <p class="text-xs text-red-700">This action cannot be undone.</p>
+                    </div>
                 </div>
+                <button @click="showDeleteModal = false; deletingItem = null"
+                        class="rounded-full p-1 text-red-600 hover:text-red-700" aria-label="Close">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="delete-inventory-desc" class="px-6 py-5 text-sm text-red-700">
+                Are you sure you want to delete
+                <span class="font-semibold text-red-900" x-text="deletingItem ? deletingItem.name : 'this item'"></span>?
+                This item will be removed from inventory.
+            </div>
+
+            <form id="deleteInventoryForm" x-bind:action="deletingItem ? deleteRoute.replace(':id', deletingItem.id) : '#'" x-bind:data-id="deletingItem ? deletingItem.id : ''" method="POST"
+                  class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
+                @csrf @method('DELETE')
+
+                <button type="button" @click="showDeleteModal = false; deletingItem = null"
+                        class="px-4 py-2 bg-white text-red-700 rounded-lg border border-red-200 hover:bg-red-50 transition-colors duration-200 font-medium text-sm">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 text-sm">
+                    Delete
+                </button>
             </form>
         </div>
     </div>
@@ -618,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result !== null) {
                 createForm.reset();
                 window.dispatchEvent(rootCloseEvent);
-                emitAdminToast('Item added successfully', 'success');
+                window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-create-success' }));
                 setTimeout(function(){ location.reload(); }, 900);
             }
         });
@@ -632,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await submitForm(editForm);
             if (result !== null) {
                 window.dispatchEvent(rootCloseEvent);
-                emitAdminToast('Item updated successfully', 'success');
+                window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-update-success' }));
                 setTimeout(function(){ location.reload(); }, 700);
             }
         });
@@ -668,7 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 window.dispatchEvent(rootCloseEvent);
-                emitAdminToast('Item deleted successfully', 'success');
+                window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-delete-success' }));
             }
         });
     }

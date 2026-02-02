@@ -22,7 +22,8 @@ class PasswordWithRules extends Component
 
     public function updatedPassword(): void
     {
-        // Trigger re-render so rules list updates; no need to persist.
+        // Invalidate cached computed property so rules re-evaluate as you type.
+        unset($this->rulesResult);
     }
 
     /**

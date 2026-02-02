@@ -98,30 +98,6 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 
-    // Password with rules validation
-    Alpine.data('passwordWithRules', (ruleLabels, ruleKeys) => ({
-        password: '',
-        show: false,
-        rules: {},
-        ruleLabels: ruleLabels,
-        ruleKeys: ruleKeys,
-        init() {
-            ruleKeys.forEach(key => {
-                this.rules[key] = false;
-            });
-            this.$watch('password', () => this.validateRules());
-        },
-        validateRules() {
-            this.rules.min = this.password.length >= 8;
-            this.rules.number = /[0-9]/.test(this.password);
-            this.rules.special = /[^A-Za-z0-9]/.test(this.password);
-            this.rules.uppercase = /[A-Z]/.test(this.password);
-        },
-        passed(key) {
-            return this.rules[key] === true;
-        }
-    }));
-
     // Reservation list page
     Alpine.data('reservationList', () => ({
         // Implementation from blade file
@@ -304,6 +280,7 @@ document.addEventListener('alpine:init', () => {
           const card = document.getElementById('menu-card-' + this.deleteId);
           if (card) card.remove();
           this.closeDelete();
+          window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-delete-success', bubbles: true, composed: true }));
         } catch (e) {
           console.error('Delete error', e);
           this.closeDelete();
@@ -325,4 +302,3 @@ document.addEventListener('alpine:init', () => {
 });
 
 Alpine.start();
-

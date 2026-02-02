@@ -1,6 +1,8 @@
 <x-guest-layout>
     @php
         $showForgotModal = session('forgot') || $errors->passwordReset->any();
+        $passwordResetStatus = __('passwords.reset');
+        $passwordLinkStatus = __('passwords.sent');
     @endphp
     {{-- Main Container: Dark Green (bg-green-950) --}}
     <div class="min-h-screen flex items-center justify-center bg-green-950 relative overflow-hidden"> 
@@ -30,7 +32,7 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    Back to Landing Page
+                    Continue to site
                 </a>
             </div>
 
@@ -52,11 +54,7 @@
                         <p class="text-green-700 text-lg">Log in to your account</p> 
                     </div>
 
-                    @php
-                        $passwordResetStatus = __('passwords.reset');
-                    @endphp
-
-                    @if(session('status') && session('status') !== $passwordResetStatus)
+                    @if(session('status') && session('status') !== $passwordResetStatus && session('status') !== $passwordLinkStatus)
                         <x-auth-session-status class="mb-6" :status="session('status')" />
                     @endif
 
@@ -133,18 +131,85 @@
                         {{-- Google OAuth Button --}}
                         <x-google-oauth-button />
 
-                        {{-- Continue to site (landing page) --}}
-                        <div class="mt-6 pt-6 border-t border-green-300/60">
-                            <a href="{{ url('/') }}" class="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg border-2 border-green-500 text-green-700 font-medium hover:bg-green-50 hover:border-green-600 transition-all duration-200">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                </svg>
-                                {{ __('Continue to site') }}
-                            </a>
-                            <p class="text-center text-sm text-green-600/80 mt-2">Browse the cafeteria without signing in</p>
-                        </div>
                     </form>
                 </div> 
+
+                <div id="forgotPasswordModal"
+                    class="{{ $showForgotModal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-hidden="{{ $showForgotModal ? 'false' : 'true' }}"
+                    aria-labelledby="forgotPasswordTitle">
+                    <div id="forgotPasswordBackdrop" class="absolute inset-0 bg-green-950/60 backdrop-blur-sm"></div>
+                    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-green-200 bg-white shadow-2xl">
+                        <div class="flex items-start justify-between gap-4 border-b border-green-100 bg-green-50 px-6 py-4">
+                            <div>
+                                <h2 id="forgotPasswordTitle" class="text-lg font-semibold text-green-900">Reset Password</h2>
+                                <p class="text-xs text-green-700 mt-1">We will email you a reset link.</p>
+                            </div>
+                            <button id="closeForgotPassword" type="button" class="rounded-full p-1 text-green-700 hover:text-orange-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="px-6 py-5">
+                            <div class="mb-4 text-sm text-orange-700 bg-orange-50 p-3 rounded-lg border-l-4 border-orange-500">
+                                {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+                            </div>
+
+                            @if(session('status') === $passwordLinkStatus)
+                                <div class="mb-4 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                                    {{ session('status') }}
+                                </div>
+                            @endif
+
+                            @php
+                                $emailError = $errors->passwordReset->first('email');
+                                $isThrottled = false;
+                                foreach (['passwords.throttled', 'throttled', 'too many', 'wait before retrying', 'please wait'] as $needle) {
+                                    if ($emailError && stripos($emailError, $needle) !== false) {
+                                        $isThrottled = true;
+                                        break;
+                                    }
+                                }
+                            @endphp
+
+                            @if($emailError && $isThrottled)
+                                <div class="mb-4 text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">
+                                    Too many reset requests. Please wait a few minutes and try again.
+                                </div>
+                            @endif
+
+                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
+                                @csrf
+
+                                <div class="relative">
+                                    <x-input-label for="forgot_email" :value="__('Email')" class="text-green-700 font-medium mb-2" />
+                                    <div class="relative">
+                                        <x-text-input id="forgot_email"
+                                            class="block mt-1 w-full pl-10 h-12 border-green-400 transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                            type="email"
+                                            name="email"
+                                            :value="old('email')"
+                                            required
+                                            autocomplete="email" />
+                                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                                        </svg>
+                                    </div>
+                                    <x-input-error :messages="$errors->passwordReset->get('email')" class="mt-2 text-red-600" />
+                                </div>
+
+                                <div class="flex items-center justify-end">
+                                    <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-300">
+                                        {{ __('Email Password Reset Link') }}
+                                    </x-primary-button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
                 @if(session('status') === $passwordResetStatus)
                 <script>
@@ -183,7 +248,15 @@
                             if (!forgotModal) return;
                             forgotModal.classList.toggle('hidden', !isOpen);
                             forgotModal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+                            if (isOpen) {
+                                document.getElementById('forgot_email')?.focus();
+                            }
                         };
+
+                        const shouldOpenForgotModal = @json($showForgotModal);
+                        if (shouldOpenForgotModal) {
+                            setForgotModalOpen(true);
+                        }
 
                         openForgotPassword?.addEventListener('click', (event) => {
                             event.preventDefault();

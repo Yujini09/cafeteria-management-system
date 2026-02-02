@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\Rules;
 use App\Models\AuditTrail;
+use App\Support\PasswordRules;
 use App\Http\Controllers\Controller;
 
 class PasswordController extends Controller
@@ -22,15 +22,8 @@ class PasswordController extends Controller
                     $fail('The current password is incorrect.');
                 }
             }],
-            'password' => ['required', Rules\Password::defaults()],
-            'password_confirmation' => ['required'],
+            'password' => PasswordRules::validationRules(true),
         ]);
-
-        $validator->after(function ($validator) use ($request) {
-            if ($request->filled('password') && $request->password !== $request->password_confirmation) {
-                $validator->errors()->add('password_confirmation', 'The password field confirmation does not match.');
-            }
-        });
 
         $data = $validator->validate();
 

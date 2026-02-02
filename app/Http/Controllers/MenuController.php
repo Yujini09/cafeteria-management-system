@@ -296,7 +296,7 @@ class MenuController extends Controller
         }
 
         return redirect()->route('admin.menus.index', ['type' => $payload['type'] ?? 'standard', 'meal' => $payload['meal_time'] ?? 'breakfast'])
-            ->with('success', 'Menu created. Add at least 5 foods to complete the bundle.');
+            ->with('menu_success', 'Menu created. Add at least 5 foods to complete the bundle.');
     }
 
     public function update(Request $request, Menu $menu): RedirectResponse
@@ -384,7 +384,7 @@ class MenuController extends Controller
             'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return back()->with('success', 'Menu updated.');
+        return back()->with('menu_success', 'Menu updated.');
     }
 
     public function destroy(Menu $menu): RedirectResponse
@@ -477,7 +477,7 @@ class MenuController extends Controller
             'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return back()->with('success', 'Menu prices updated successfully.');
+        return back()->with('menu_success', 'Menu prices updated successfully.');
     }
 
     public function customerIndex(): View

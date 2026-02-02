@@ -364,8 +364,14 @@
   </div>
 
   {{-- Success Modal --}}
-  <x-success-modal name="menu-create-success" title="Success!" maxWidth="sm">
+  <x-success-modal name="menu-create-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
     <p class="text-sm text-admin-neutral-600">Menu created successfully!</p>
+  </x-success-modal>
+  <x-success-modal name="menu-update-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+    <p class="text-sm text-admin-neutral-600">Menu updated successfully!</p>
+  </x-success-modal>
+  <x-success-modal name="menu-delete-success" title="Deleted" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+    <p class="text-sm text-admin-neutral-600">Menu deleted successfully.</p>
   </x-success-modal>
 
   {{-- CREATE MENU MODAL - 3 STEPS --}}
@@ -925,49 +931,72 @@
 
   {{-- DELETE MENU MODAL --}}
   <template x-teleport="body">
-    <div x-cloak x-show="isDeleteOpen" @keydown.escape.window="closeDelete()" x-transition.opacity
-         class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-      <div class="absolute inset-0" @click="closeDelete()"></div>
+    <div x-cloak x-show="isDeleteOpen" @keydown.escape.window="closeDelete()"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div
+        x-show="isDeleteOpen"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="absolute inset-0 bg-red-950/40 backdrop-blur-sm"
+        @click="closeDelete()"
+        aria-hidden="true"
+      ></div>
 
-      <div x-transition class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 transform transition-all duration-300 scale-95"
-           role="dialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-desc"
-           x-transition:enter="scale-100" x-transition:enter-start="scale-95">
-
-        <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded hover:bg-gray-100"
-                @click="closeDelete()" aria-label="Close">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-
-        <div class="flex items-center mb-4">
-          <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center mr-3">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-            </svg>
+      <div
+        x-show="isDeleteOpen"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="relative w-full max-w-md overflow-hidden rounded-2xl border border-red-200 bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-title"
+        aria-describedby="delete-desc"
+        @click.stop
+      >
+        <div class="flex items-start justify-between gap-4 border-b border-red-100 bg-red-50 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </span>
+            <div>
+              <h2 id="delete-title" class="text-lg font-semibold text-red-900">Delete Menu</h2>
+              <p class="text-xs text-red-700">This action cannot be undone.</p>
+            </div>
           </div>
-          <h2 id="delete-title" class="font-bold text-gray-900 text-lg">Delete Menu</h2>
+          <button class="rounded-full p-1 text-red-600 hover:text-red-700"
+                  @click="closeDelete()" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
 
-        <p id="delete-desc" class="text-gray-600 mb-4 leading-relaxed text-sm">
-          Are you sure you want to delete <span class="font-semibold text-gray-900" x-text="deleteName || 'this menu'"></span>?
-          This action cannot be undone and will permanently remove the menu from the system.
-        </p>
+        <div id="delete-desc" class="px-6 py-5 text-sm text-red-700">
+          Are you sure you want to delete <span class="font-semibold text-red-900" x-text="deleteName || 'this menu'"></span>?
+          This action will permanently remove the menu from the system.
+        </div>
 
-        <form @submit.prevent="confirmDelete" class="flex justify-end gap-3">
+        <form @submit.prevent="confirmDelete" class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
           @csrf
           @method('DELETE')
 
           <button type="button" @click="closeDelete()"
-                  class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm text-sm">
+                  class="px-4 py-2 bg-white text-red-700 rounded-lg border border-red-200 hover:bg-red-50 transition-colors duration-200 font-medium text-sm">
             Cancel
           </button>
 
           <button type="submit"
-                  class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
+                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm text-sm">
             Delete Menu
           </button>
         </form>
@@ -976,5 +1005,24 @@
   </template>
 
 </div>
+
+@if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu created'))
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-create-success' }));
+    });
+  });
+</script>
+@endif
+@if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu updated'))
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-update-success' }));
+    });
+  });
+</script>
+@endif
 
 @endsection

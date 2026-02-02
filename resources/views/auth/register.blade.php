@@ -121,6 +121,16 @@
                                 'required' => true,
                                 'variant' => 'auth',
                             ]) !!}
+                            @php
+                                $confirmPasswordErrors = $errors->get('password_confirmation');
+                                $confirmedError = collect($errors->get('password'))
+                                    ->first(fn ($message) => \Illuminate\Support\Str::contains(strtolower($message), 'confirmation'));
+                            @endphp
+                            @if (!empty($confirmPasswordErrors))
+                                <x-input-error :messages="$confirmPasswordErrors" class="mt-2" />
+                            @elseif (!empty($confirmedError))
+                                <x-input-error :messages="[$confirmedError]" class="mt-2" />
+                            @endif
                         </div>
 
                         <div class="mb-6">

@@ -11,7 +11,7 @@ final class PasswordRules
     public const MIN_LENGTH = 8;
 
     /**
-     * Rule keys and labels for UI (✔ / ✖).
+     * Rule keys and labels for UI (check/cross).
      *
      * @return array<string, string>
      */
@@ -54,14 +54,20 @@ final class PasswordRules
      *
      * @return array<int, mixed>
      */
-    public static function validationRules(): array
+    public static function validationRules(bool $confirmed = false): array
     {
-        return [
+        $rules = [
             'required',
             'string',
             'min:' . self::MIN_LENGTH,
             'regex:/[0-9]/',
             'regex:/[^A-Za-z0-9]/',
         ];
+
+        if ($confirmed) {
+            $rules[] = 'confirmed';
+        }
+
+        return $rules;
     }
 }

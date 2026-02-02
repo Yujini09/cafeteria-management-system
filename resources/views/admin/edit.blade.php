@@ -17,18 +17,12 @@
     </div>
 
     {{-- Success modals: use unified admin modal styles for consistency --}}
-    <x-success-modal name="password-success" title="Success!" maxWidth="sm">
+    <x-success-modal name="password-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">Password successfully changed.</p>
-        <x-slot:footer>
-            <x-admin.ui.button.primary type="button" @click="show = false">Close</x-admin.ui.button.primary>
-        </x-slot:footer>
     </x-success-modal>
 
     <x-success-modal name="profile-success" title="Success!" maxWidth="sm">
         <p class="text-sm text-admin-neutral-600">Profile information successfully updated.</p>
-        <x-slot:footer>
-            <x-admin.ui.button.primary type="button" @click="show = false">Close</x-admin.ui.button.primary>
-        </x-slot:footer>
     </x-success-modal>
 
     {{-- Options list --}}
@@ -116,21 +110,27 @@
 @if(session('status') == 'password-updated')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'password-success' }));
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'password-success' }));
+        });
     });
 </script>
 @endif
 @if(session('status') == 'profile-updated')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'profile-success' }));
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'profile-success' }));
+        });
     });
 </script>
 @endif
 @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
+        });
     });
 </script>
 @endif

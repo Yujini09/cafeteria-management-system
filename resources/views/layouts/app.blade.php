@@ -14,6 +14,7 @@
     </style>
 
     @vite(['resources/css/app.css','resources/js/app.js'])
+    {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles() !!}
 </head>
 <body class="font-poppins antialiased bg-gray-200" x-data="{ confirmLogout: false }" :class="{ 'overflow-hidden': confirmLogout }" @keydown.escape.window="confirmLogout = false">
     <div class="min-h-screen">
@@ -65,6 +66,7 @@
     </div>
     
     @yield('scripts')
+    {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts() !!}
     
     <script>
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {

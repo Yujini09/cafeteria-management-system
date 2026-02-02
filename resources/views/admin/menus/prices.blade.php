@@ -85,6 +85,10 @@
 </style>
 
 <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
+    <x-success-modal name="menu-prices-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+        <p class="text-sm text-admin-neutral-600">Menu prices updated successfully.</p>
+    </x-success-modal>
+
     <!-- Header -->
     <div class="page-header">
         <div class="header-icon">
@@ -164,6 +168,16 @@
         </div>
     </form>
 </div>
+
+@if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu prices updated'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-prices-success' }));
+    });
+});
+</script>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

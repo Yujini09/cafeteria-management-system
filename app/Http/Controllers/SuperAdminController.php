@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\AuditTrail;
 use App\Models\Notification;
 use App\Services\NotificationService;
+use App\Support\PasswordRules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\Rules;
 
 class SuperAdminController extends Controller
 {
@@ -29,7 +29,7 @@ class SuperAdminController extends Controller
         $data = $request->validate([
             'name'     => ['required','string','max:255'],
             'email'    => ['required','email','unique:users,email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => PasswordRules::validationRules(true),
         ]);
 
         $user = User::create([

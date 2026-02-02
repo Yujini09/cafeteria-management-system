@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fugaz+One&family=Damion&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles() !!}
     
     <style>
     @keyframes slide-in-left {
@@ -582,6 +583,8 @@
         </div>
     </div>
 </div>
+
+{!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts() !!}
 
 <script>
 // Global helper to emit admin toasts from pages or inline scripts
