@@ -17,6 +17,14 @@
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative">
                 <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
                      class="max-h-64 object-contain w-auto -ml-8"> 
+
+                <a href="{{ route('marketing.home') }}"
+                    class="absolute bottom-8 left-8 right-8 inline-flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800 transition hover:border-orange-400 hover:text-orange-600">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Landing Page
+                </a>
             </div>
 
             {{-- Right side (Form) - Light Green (bg-green-100), SCROLL ENABLED --}}

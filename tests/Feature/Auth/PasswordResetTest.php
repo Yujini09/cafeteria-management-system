@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Notification;
 test('reset password link screen can be rendered', function () {
     $response = $this->get('/forgot-password');
 
-    $response->assertStatus(200);
+    $response->assertRedirect(route('login', ['forgot' => 1]));
 });
 
 test('reset password link can be requested', function () {
