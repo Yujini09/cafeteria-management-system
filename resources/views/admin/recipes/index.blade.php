@@ -2,7 +2,7 @@
 @section('page-title','Recipe: '.$menuItem->name)
 
 @section('content')
-<div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0" style="max-width: calc(100vw - 12rem);">
+<div class="admin-page-shell bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
   {{-- Header --}}
 <div class="flex items-center justify-between mb-8">
     <div class="flex items-center gap-4">
@@ -30,8 +30,6 @@
         </div>
     </div>
 </div>
-    
-  </div>
 
   {{-- Add Ingredient Form --}}
   <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 mb-8">
@@ -45,8 +43,8 @@
       @csrf
       <div class="md:col-span-5">
         <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Ingredient</label>
-        <select name="inventory_item_id" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" required style="font-family: 'Poppins', sans-serif;">
-          <option value="">-- Select Ingredient --</option>
+        <select name="inventory_item_id" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" data-admin-select="true" data-searchable="true" data-search-placeholder="Search ingredients..." required style="font-family: 'Poppins', sans-serif;">
+          <option value="">Select an ingredient</option>
           @foreach($inventory as $inv)
             <option value="{{ $inv->id }}">{{ $inv->name }} ({{ $inv->qty }} {{ $inv->unit }} left)</option>
           @endforeach

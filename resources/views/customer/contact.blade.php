@@ -65,13 +65,13 @@
                         <!-- Name field (Full width) -->
                         <div class="space-y-2 w-full">
                             <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" id="name" name="name" placeholder="Enter your name" class="contact-input" required>
+                            <input type="text" id="name" name="name" placeholder="Enter your name" class="contact-input" autocomplete="name" required>
                         </div>
                         
                         <!-- Email field (Full width) -->
                         <div class="space-y-2 w-full">
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" id="email" name="email" placeholder="Enter your email" class="contact-input" required>
+                            <input type="email" id="email" name="email" placeholder="Enter your email" class="contact-input" autocomplete="email" required>
                         </div>
                     </div>
                     
@@ -84,6 +84,7 @@
                             rows="12"
                             placeholder="Description"
                             class="contact-input max-h-[30rem] -mx-1 !w-full"
+                            autocomplete="off"
                             required></textarea>
                     </div>
 

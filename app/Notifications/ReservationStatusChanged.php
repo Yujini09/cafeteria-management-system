@@ -37,16 +37,15 @@ class ReservationStatusChanged extends Notification
             ->greeting('Hello '.(optional($r->user)->name ?? 'there').',')
             ->line("Your reservation #{$r->id} has been ".strtoupper($this->status).'.')
             ->line('Summary:')
-            ->line('• Date(s): '.($r->start_date && $r->end_date ? "{$r->start_date} to {$r->end_date}" : ($r->event_date ?? '—')))
-            ->line('• Days: '.($r->days ?? '—'))
-            ->line('• Attendees: '.($r->guests ?? $r->attendees ?? '—'))
-            ->line('• Location: '.($r->location ?? '—'));
+            ->line('• Date(s): '.($r->event_date && $r->end_date ? "{$r->event_date} to {$r->end_date}" : ($r->event_date ?? '—')))
+            ->line('• Attendees: '.($r->number_of_persons ?? '—'))
+            ->line('• Venue: '.($r->venue ?? $r->address ?? '—'));
 
         if ($this->status === 'declined' && $this->reason) {
             $mail->line('Reason for decline: '.$this->reason);
         }
 
-        $mail->action('View Details', url(route('admin.reservations.show', $r)))
+        $mail->action('View Details', url(route('reservation.view', $r)))
              ->line('Thank you!');
 
         return $mail;
@@ -56,7 +55,7 @@ class ReservationStatusChanged extends Notification
     {
         $r = $this->reservation;
         $txt = "Reservation #{$r->id} ".strtoupper($this->status).". ".
-               "Attendees: ".($r->guests ?? $r->attendees ?? 'n/a').". ".
+               "Attendees: ".($r->number_of_persons ?? 'n/a').". ".
                ($this->status==='declined' && $this->reason ? "Reason: {$this->reason}" : 'See email for details.');
 
         return (new VonageMessage)->content($txt);

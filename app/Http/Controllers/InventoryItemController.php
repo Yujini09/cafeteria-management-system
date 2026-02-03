@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,7 +41,7 @@ class InventoryItemController extends Controller
         return view('admin.inventory.index');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'name'  => 'required|string|max:255',
@@ -59,15 +61,23 @@ class InventoryItemController extends Controller
         ]);
 
         // Create notification for admins/superadmin about inventory item addition
-        $this->createAdminNotification('inventory_item_added', 'inventory', 'A new inventory item has been added by ' . Auth::user()->name, [
+        $this->createAdminNotification('inventory_item_added', 'inventory', 'A new inventory item has been added by ' . Auth::user()?->name ?? 'Unknown', [
             'item_name' => $item->name,
             'category' => $item->category,
             'quantity' => $item->qty,
             'unit' => $item->unit,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return redirect()->route('admin.inventory.index')->with('success', 'Item added successfully.');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item added successfully',
+                'item' => $item
+            ]);
+        }
+
+        return redirect()->route('admin.inventory.index');
     }
 
     public function edit(InventoryItem $inventory): View
@@ -75,7 +85,7 @@ class InventoryItemController extends Controller
         return view('admin.inventory.index', compact('inventory'));
     }
 
-    public function update(Request $request, InventoryItem $inventory): RedirectResponse
+    public function update(Request $request, InventoryItem $inventory): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'name'  => 'required|string|max:255',
@@ -96,20 +106,52 @@ class InventoryItemController extends Controller
         ]);
 
         // Create notification for admins/superadmin about inventory item update
-        $this->createAdminNotification('inventory_item_updated', 'inventory', 'An inventory item has been updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('inventory_item_updated', 'inventory', 'An inventory item has been updated by ' . Auth::user()?->name ?? 'Unknown', [
             'item_name' => $inventory->name,
             'category' => $inventory->category,
             'old_quantity' => $oldQty,
             'new_quantity' => $inventory->qty,
             'unit' => $inventory->unit,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return redirect()->route('admin.inventory.index')->with('success', 'Item updated successfully.');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item updated successfully',
+                'item' => $inventory
+            ]);
+        }
+
+        return redirect()->route('admin.inventory.index');
     }
 
-    public function destroy(InventoryItem $inventory): RedirectResponse
+    public function destroy($id)
     {
+        // Find the item. If model uses SoftDeletes, include trashed records.
+        $uses = class_uses(InventoryItem::class) ?: [];
+        if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, $uses)) {
+            $inventory = InventoryItem::withTrashed()->find($id);
+        } else {
+            $inventory = InventoryItem::find($id);
+        }
+
+        if (!$inventory) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Item not found'], 404);
+            }
+            abort(404);
+        }
+
+        // Server-side role guard (extra safety beyond route middleware)
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            abort(403);
+        }
+
         $itemName = $inventory->name;
         $inventory->delete();
 
@@ -121,10 +163,17 @@ class InventoryItemController extends Controller
         ]);
 
         // Create notification for admins/superadmin about inventory item deletion
-        $this->createAdminNotification('inventory_item_deleted', 'inventory', 'An inventory item has been deleted by ' . Auth::user()->name, [
+        $this->createAdminNotification('inventory_item_deleted', 'inventory', 'An inventory item has been deleted by ' . Auth::user()?->name ?? 'Unknown', [
             'item_name' => $itemName,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item deleted successfully',
+            ]);
+        }
 
         return back()->with('success', 'Item deleted.');
     }
@@ -132,18 +181,7 @@ class InventoryItemController extends Controller
     /** Create notification for admins/superadmin */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
-        // Get all admin and superadmin users
-        $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
-        
-        // Create a notification for each admin/superadmin
-        foreach ($admins as $admin) {
-            Notification::create([
-                'user_id' => $admin->id,
-                'action' => $action,
-                'module' => $module,
-                'description' => $description,
-                'metadata' => $metadata,
-            ]);
-        }
+        $notificationService = new NotificationService();
+        $notificationService->createAdminNotification($action, $module, $description, $metadata);
     }
 }

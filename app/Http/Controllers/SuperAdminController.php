@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\AuditTrail;
 use App\Models\Notification;
+use App\Services\NotificationService;
+use App\Support\PasswordRules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +29,7 @@ class SuperAdminController extends Controller
         $data = $request->validate([
             'name'     => ['required','string','max:255'],
             'email'    => ['required','email','unique:users,email'],
-            'password' => ['required','string','min:6','confirmed'],
+            'password' => PasswordRules::validationRules(true),
         ]);
 
         $user = User::create([
@@ -116,26 +118,40 @@ class SuperAdminController extends Controller
 
     public function recentNotifications()
     {
+        $notificationService = new NotificationService();
         $user = Auth::user();
 
-        if ($user->role === 'superadmin') {
-            // Superadmin sees all notifications
-            $notifications = Notification::with('user')
-                ->latest()
-                ->take(20)
-                ->get();
-        } elseif ($user->role === 'admin') {
-            // Admin sees only customer actions (where the actor is not admin/superadmin)
-            $notifications = Notification::whereNotIn('user_id', [1,7])
-                ->with('user')
-                ->latest()
-                ->take(20)
-                ->get();
-        } else {
-            // For other roles, return empty
-            $notifications = collect();
-        }
+        // Get unique notifications for the user
+        $notifications = $notificationService->getNotificationsForUser($user, 20);
 
         return response()->json($notifications);
+    }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
+            abort(403);
+        }
+
+        Notification::where('user_id', $user->id)->update(['read' => true]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function setNotificationRead(Request $request, Notification $notification)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'])) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'read' => ['required', 'boolean'],
+        ]);
+
+        $notification->update(['read' => $data['read']]);
+
+        return response()->json(['success' => true, 'read' => $notification->read]);
     }
 }

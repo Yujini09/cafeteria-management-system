@@ -72,6 +72,8 @@ Route::middleware(['auth'])
     ->name('admin.')
     ->group(function () {
         Route::get('/recent-notifications', [SuperAdminController::class, 'recentNotifications'])->name('recent-notifications');
+        Route::post('/notifications/mark-all-read', [SuperAdminController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
+        Route::patch('/notifications/{notification}/read', [SuperAdminController::class, 'setNotificationRead'])->name('notifications.set-read');
     });
 
 // ---------- Admin only routes ----------
@@ -168,32 +170,3 @@ Route::middleware(['auth'])->group(function () {
     // 7. Route for cancelling a reservation
     Route::patch('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');
 }); // THIS LINE CLOSES THE auth() GROUP
-
-// In routes/web.php (temporary) - OUTSIDE the auth group since it's for debugging
-Route::get('/debug-reservation/{id}', function($id) {
-    $reservation = \App\Models\Reservation::with(['items.menu'])->find($id);
-    
-    if (!$reservation) {
-        return "Reservation not found";
-    }
-    
-    echo "<h1>Reservation #{$reservation->id}</h1>";
-    echo "<h2>Items:</h2>";
-    
-    if ($reservation->items->count() > 0) {
-        foreach ($reservation->items as $item) {
-            echo "Item ID: {$item->id}<br>";
-            echo "Menu ID: {$item->menu_id}<br>";
-            echo "Menu Name: " . ($item->menu ? $item->menu->name : 'NOT FOUND') . "<br>";
-            echo "Quantity: {$item->quantity}<br>";
-            echo "Meal Time: {$item->meal_time}<br>";
-            echo "Day Number: {$item->day_number}<br>";
-            echo "<hr>";
-        }
-    } else {
-        echo "No items found";
-    }
-    
-    echo "<h2>Raw Data:</h2>";
-    dd($reservation->toArray());
-});

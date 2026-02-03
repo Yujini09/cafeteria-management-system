@@ -8,10 +8,12 @@ use App\Models\MenuPrice;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
 use Illuminate\Support\Facades\Auth;
 
@@ -141,88 +143,160 @@ class MenuController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * Generate the next default menu name
+     * Finds all menus with "Menu #X" format and returns "Menu #(highest+1)"
+     * 
+     * @return string The next auto-generated menu name
+     */
+    private function getNextDefaultMenuName(): string
     {
-        $hasType   = Schema::hasColumn('menus', 'type');
-        $hasMeal   = Schema::hasColumn('menus', 'meal_time');
-        $hasName   = Schema::hasColumn('menus', 'name');
-        $hasDesc   = Schema::hasColumn('menus', 'description');
-        $hasPrice  = Schema::hasColumn('menus', 'price');
+        // Get all menus with names matching "Menu #" pattern
+        $menus = Menu::query()
+            ->where('name', 'like', 'Menu #%')
+            ->pluck('name')
+            ->all();
 
-        $rules = [];
-        if ($hasType) $rules['type'] = 'required|in:standard,special';
-        if ($hasMeal) $rules['meal_time'] = 'required|in:breakfast,am_snacks,lunch,pm_snacks,dinner';
-        if ($hasName) $rules['name']      = 'nullable|string|max:255';
-        if ($hasDesc) $rules['description']= 'nullable|string';
-        $rules['items'] = 'required|array|min:1';
-        $rules['items.*.name'] = 'required|string|max:255';
-        $rules['items.*.type'] = 'required|in:food,drink,dessert';
-        $rules['items.*.recipes'] = 'array';
-        $rules['items.*.recipes.*.inventory_item_id'] = 'required|exists:inventory_items,id';
-        $rules['items.*.recipes.*.quantity_needed'] = 'required|numeric|min:0.01';
-        $rules['items.*.recipes.*.unit'] = 'required|string|max:50';
-
-        $data = $request->validate($rules);
-
-        if ($hasPrice && $hasType && $hasMeal) {
-            $type = $data['type'] ?? 'standard';
-            $meal = $data['meal_time'] ?? 'breakfast';
-            $priceMap = self::getPriceMap();
-            $data['price'] = $priceMap[$type][$meal] ?? 0;
+        if (empty($menus)) {
+            return 'Menu #1';
         }
 
-        $payload = [];
-        foreach (['type','meal_time','name','description','price'] as $f) {
-            if (isset($data[$f])) $payload[$f] = $data[$f];
-        }
-
-        $menu = Menu::create($payload);
-
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Created Menu',
-            'module'      => 'menus',
-            'description' => 'created a menu',
-        ]);
-
-        if ($request->has('items') && is_array($request->items)) {
-            foreach ($request->items as $itemData) {
-                $menuItem = $menu->items()->create([
-                    'name' => $itemData['name'],
-                    'type' => $itemData['type'],
-                ]);
-                // Create recipes for this menu item
-                if (isset($itemData['recipes']) && is_array($itemData['recipes'])) {
-                    foreach ($itemData['recipes'] as $recipeData) {
-                        $menuItem->recipes()->create($recipeData);
-                    }
-                }
-
-                // Auto-detect and copy recipes from existing menu items with the same name
-                if (!$menuItem->recipes()->exists()) {
-                    $existingItem = MenuItem::where('name', $itemData['name'])
-                        ->where('menu_id', '!=', $menu->id)
-                        ->with('recipes')
-                        ->first();
-                    if ($existingItem && $existingItem->recipes->isNotEmpty()) {
-                        $menuItem->copyRecipesFrom($existingItem);
-                    }
-                }
+        // Extract numbers from menu names
+        $numbers = [];
+        foreach ($menus as $name) {
+            // Extract number from "Menu #X" format
+            if (preg_match('/^Menu #(\d+)$/', $name, $matches)) {
+                $numbers[] = (int) $matches[1];
             }
         }
 
+        if (empty($numbers)) {
+            return 'Menu #1';
+        }
+
+        // Find the highest number and return next
+        $highestNumber = max($numbers);
+        return 'Menu #' . ($highestNumber + 1);
+    }
+
+    public function store(Request $request): RedirectResponse|JsonResponse
+    {
+        try {
+            $hasType   = Schema::hasColumn('menus', 'type');
+            $hasMeal   = Schema::hasColumn('menus', 'meal_time');
+            $hasName   = Schema::hasColumn('menus', 'name');
+            $hasDesc   = Schema::hasColumn('menus', 'description');
+            $hasPrice  = Schema::hasColumn('menus', 'price');
+
+            $rules = [];
+            if ($hasType) $rules['type'] = 'required|in:standard,special';
+            if ($hasMeal) $rules['meal_time'] = 'required|in:breakfast,am_snacks,lunch,pm_snacks,dinner';
+            if ($hasName) $rules['name']      = 'nullable|string|max:255';
+            if ($hasDesc) $rules['description']= 'nullable|string';
+            $rules['items'] = 'required|array|min:1';
+            $rules['items.*.name'] = 'required|string|max:255';
+            $rules['items.*.type'] = 'required|in:food,drink,dessert,other';
+            $rules['items.*.recipes'] = 'array';
+            $rules['items.*.recipes.*.inventory_item_id'] = 'required|exists:inventory_items,id';
+            $rules['items.*.recipes.*.quantity_needed'] = 'required|numeric|min:0.01';
+            $rules['items.*.recipes.*.unit'] = 'required|string|max:50';
+
+            $data = $request->validate($rules);
+
+            if ($hasPrice && $hasType && $hasMeal) {
+                $type = $data['type'] ?? 'standard';
+                $meal = $data['meal_time'] ?? 'breakfast';
+                $priceMap = self::getPriceMap();
+                $data['price'] = $priceMap[$type][$meal] ?? 0;
+            }
+
+            $payload = [];
+            foreach (['type','meal_time','name','description','price'] as $f) {
+                if (isset($data[$f])) $payload[$f] = $data[$f];
+            }
+
+            // Auto-generate menu name if not provided
+            if (empty($payload['name'])) {
+                $payload['name'] = $this->getNextDefaultMenuName();
+            }
+
+            $menu = Menu::create($payload);
+
+            AuditTrail::create([
+                'user_id'     => Auth::id(),
+                'action'      => 'Created Menu',
+                'module'      => 'menus',
+                'description' => 'created a menu',
+            ]);
+
+            $items = $data['items'] ?? [];
+            if (!empty($items) && is_array($items)) {
+                foreach ($items as $itemData) {
+                    $menuItem = $menu->items()->create([
+                        'name' => $itemData['name'],
+                        'type' => $itemData['type'],
+                    ]);
+                    // Create recipes for this menu item
+                    if (isset($itemData['recipes']) && is_array($itemData['recipes'])) {
+                        foreach ($itemData['recipes'] as $recipeData) {
+                            $menuItem->recipes()->create($recipeData);
+                        }
+                    }
+
+                    // Auto-detect and copy recipes from existing menu items with the same name
+                    if (!$menuItem->recipes()->exists()) {
+                        $existingItem = MenuItem::where('name', $itemData['name'])
+                            ->where('menu_id', '!=', $menu->id)
+                            ->with('recipes')
+                            ->first();
+                        if ($existingItem && $existingItem->recipes->isNotEmpty()) {
+                            $menuItem->copyRecipesFrom($existingItem);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Menu creation failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request_data' => $request->all()
+            ]);
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error creating menu: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ], 422);
+            }
+            
+            return back()->withErrors(['error' => 'Error creating menu: ' . $e->getMessage()]);
+        }
 
         // Create notification for admins/superadmin about menu creation
-        $this->createAdminNotification('menu_created', 'menus', 'A new menu has been created by ' . Auth::user()->name, [
-            'menu_id' => $menu->id,
-            'menu_name' => $menu->name ?? 'Unnamed',
-            'type' => $menu->type,
-            'meal_time' => $menu->meal_time,
-            'updated_by' => Auth::user()->name,
-        ]);
+        try {
+            $this->createAdminNotification('menu_created', 'menus', 'A new menu has been created by ' . Auth::user()?->name ?? 'Unknown', [
+                'menu_id' => $menu->id,
+                'menu_name' => $menu->name ?? 'Unnamed',
+                'type' => $menu->type,
+                'meal_time' => $menu->meal_time,
+                'updated_by' => Auth::user()?->name ?? 'Unknown',
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to create menu notification: ' . $e->getMessage());
+            // Don't fail the whole request if notification fails
+        }
+
+        // Return JSON if AJAX request, otherwise redirect
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Menu created successfully',
+                'menu' => $menu
+            ]);
+        }
 
         return redirect()->route('admin.menus.index', ['type' => $payload['type'] ?? 'standard', 'meal' => $payload['meal_time'] ?? 'breakfast'])
-            ->with('success', 'Menu created. Add at least 5 foods to complete the bundle.');
+            ->with('menu_success', 'Menu created. Add at least 5 foods to complete the bundle.');
     }
 
     public function update(Request $request, Menu $menu): RedirectResponse
@@ -240,7 +314,7 @@ class MenuController extends Controller
         if ($hasDesc) $rules['description']= 'nullable|string';
         $rules['items'] = 'array';
         $rules['items.*.name'] = 'required|string|max:255';
-        $rules['items.*.type'] = 'required|in:food,drink,dessert';
+        $rules['items.*.type'] = 'required|in:food,drink,dessert,other';
         $rules['items.*.recipes'] = 'array';
         $rules['items.*.recipes.*.inventory_item_id'] = 'required|exists:inventory_items,id';
         $rules['items.*.recipes.*.quantity_needed'] = 'required|numeric|min:0.01';
@@ -258,6 +332,11 @@ class MenuController extends Controller
         $payload = [];
         foreach (['type','meal_time','name','description','price'] as $f) {
             if (isset($data[$f])) $payload[$f] = $data[$f];
+        }
+
+        // Auto-generate menu name if not provided (for updates too)
+        if (empty($payload['name'])) {
+            $payload['name'] = $this->getNextDefaultMenuName();
         }
 
         $menu->update($payload);
@@ -297,15 +376,15 @@ class MenuController extends Controller
         }
 
         // Create notification for admins/superadmin about menu update
-        $this->createAdminNotification('menu_updated', 'menus', 'A menu has been updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_updated', 'menus', 'A menu has been updated by ' . Auth::user()?->name ?? 'Unknown', [
             'menu_id' => $menu->id,
             'menu_name' => $menu->name ?? 'Unnamed',
             'type' => $menu->type,
             'meal_time' => $menu->meal_time,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return back()->with('success', 'Menu updated.');
+        return back()->with('menu_success', 'Menu updated.');
     }
 
     public function destroy(Menu $menu): RedirectResponse
@@ -321,9 +400,9 @@ class MenuController extends Controller
         ]);
 
         // Create notification for admins/superadmin about menu deletion
-        $this->createAdminNotification('menu_deleted', 'menus', 'A menu has been deleted by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_deleted', 'menus', 'A menu has been deleted by ' . Auth::user()?->name ?? 'Unknown', [
             'menu_name' => $menuName,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
         return redirect()->route('admin.menus.index')->with('success', 'Menu deleted.');
@@ -393,12 +472,12 @@ class MenuController extends Controller
         ]);
 
         // Create notification for admins/superadmin about price changes
-        $this->createAdminNotification('menu_prices_modified', 'menus', 'Menu prices have been updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('menu_prices_modified', 'menus', 'Menu prices have been updated by ' . Auth::user()?->name ?? 'Unknown', [
             'updated_prices' => $updatedPrices,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'Unknown',
         ]);
 
-        return back()->with('success', 'Menu prices updated successfully.');
+        return back()->with('menu_success', 'Menu prices updated successfully.');
     }
 
     public function customerIndex(): View
@@ -415,18 +494,7 @@ class MenuController extends Controller
     /** Create notification for admins/superadmin only */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
-        // Get all admin and superadmin users
-        $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
-        
-        // Create a notification for each admin/superadmin
-        foreach ($admins as $admin) {
-            Notification::create([
-                'user_id' => $admin->id,
-                'action' => $action,
-                'module' => $module,
-                'description' => $description,
-                'metadata' => $metadata,
-            ]);
-        }
+        $notificationService = new NotificationService();
+        $notificationService->createAdminNotification($action, $module, $description, $metadata);
     }
 }

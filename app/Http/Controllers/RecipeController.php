@@ -7,6 +7,7 @@ use App\Models\Recipe;
 use App\Models\InventoryItem;
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -30,10 +31,13 @@ class RecipeController extends Controller
         ]);
 
         $inventoryItem = InventoryItem::find($data['inventory_item_id']);
+        if (!$inventoryItem) {
+            return back()->with('error', 'Inventory item not found.');
+        }
 
         $menuItem->recipes()->updateOrCreate(
             ['inventory_item_id' => $data['inventory_item_id']],
-            ['quantity_needed'   => $data['quantity_needed'], 'unit' => $inventoryItem->unit]
+            ['quantity_needed'   => $data['quantity_needed'], 'unit' => $inventoryItem->unit ?? null]
         );
 
         AuditTrail::create([
@@ -44,12 +48,12 @@ class RecipeController extends Controller
         ]);
 
         // Create notification for admins/superadmin about recipe ingredient addition/update
-        $this->createAdminNotification('recipe_ingredient_added_updated', 'recipes', 'A recipe ingredient has been added/updated by ' . Auth::user()->name, [
+        $this->createAdminNotification('recipe_ingredient_added_updated', 'recipes', 'A recipe ingredient has been added/updated by ' . (Auth::user()?->name ?? 'System'), [
             'menu_item_name' => $menuItem->name,
             'inventory_item_name' => $inventoryItem->name,
             'quantity_needed' => $data['quantity_needed'],
             'unit' => $inventoryItem->unit,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'System',
         ]);
 
         return back()->with('success','Ingredient added/updated.');
@@ -72,10 +76,10 @@ class RecipeController extends Controller
         ]);
 
         // Create notification for admins/superadmin about recipe ingredient removal
-        $this->createAdminNotification('recipe_ingredient_removed', 'recipes', 'A recipe ingredient has been removed by ' . Auth::user()->name, [
+        $this->createAdminNotification('recipe_ingredient_removed', 'recipes', 'A recipe ingredient has been removed by ' . Auth::user()?->name ?? 'System', [
             'menu_item_name' => $menuItemName,
             'inventory_item_name' => $ingredientName,
-            'updated_by' => Auth::user()->name,
+            'updated_by' => Auth::user()?->name ?? 'System',
         ]);
 
         return back()->with('success','Ingredient removed.');
@@ -84,18 +88,7 @@ class RecipeController extends Controller
     /** Create notification for admins/superadmin */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
-        // Get all admin and superadmin users
-        $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
-        
-        // Create a notification for each admin/superadmin
-        foreach ($admins as $admin) {
-            Notification::create([
-                'user_id' => $admin->id,
-                'action' => $action,
-                'module' => $module,
-                'description' => $description,
-                'metadata' => $metadata,
-            ]);
-        }
+        $notificationService = new NotificationService();
+        $notificationService->createAdminNotification($action, $module, $description, $metadata);
     }
 }
