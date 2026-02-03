@@ -20,7 +20,7 @@
     }
     
     .sidebar-gradient {
-        background: linear-gradient(270deg,#1F2937  60%, #131820 100%);
+        background: linear-gradient(#1F2937 100%);
     }
     
     .active-menu-item {
@@ -62,7 +62,7 @@
     
     .menu-item {
         margin-bottom: 0.125rem; /* Original spacing */
-        border-radius: 12px;
+        border-radius: 0px;
         border-top-right-radius: 0%;
         border-bottom-right-radius: 0%;
         font-size: 0.95rem; /* Increased font size */
@@ -93,8 +93,18 @@
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
     
+    /* FONT CLASSES - ADDED */
     .font-poppins {
         font-family: 'Poppins', sans-serif;
+    }
+    
+    .font-fugaz {
+        font-family: 'Fugaz One', cursive;
+    }
+    
+    .font-damion {
+        font-family: 'Damion', cursive;
+        font-style: italic;
     }
     
     .sidebar-content {
@@ -124,58 +134,13 @@
         font-size: 0.8rem; /* Slightly larger section headers */
     }
 
+    /* UPDATED: Text Logo Section */
     .logo-section {
-        margin-bottom: 0; /* Remove bottom margin */
+        margin-bottom: 0;
         margin-right: 1rem;
-        padding: 1rem 0.8rem 1rem 1rem; /* Add vertical padding */
-    }
-
-    /* Logo Glow Effect */
-    .logo-glow {
-        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) 
-               drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))
-               drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
-        transition: all 0.3s ease-in-out;
-    }
-
-    .logo-glow:hover {
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) 
-               drop-shadow(0 0 16px rgba(255, 255, 255, 0.6))
-               drop-shadow(0 0 18px rgba(255, 255, 255, 0.4));
-        transform: scale(1.05);
-    }
-
-    /* Alternative: White outline with glow */
-    .logo-outline-glow {
-        filter: drop-shadow(0 0 2px white) 
-               drop-shadow(0 0 4px white)
-               drop-shadow(0 0 6px rgba(255, 255, 255, 0.7))
-               drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-        transition: all 0.3s ease-in-out;
-    }
-
-    .logo-outline-glow:hover {
-        filter: drop-shadow(0 0 3px white) 
-               drop-shadow(0 0 6px white)
-               drop-shadow(0 0 9px rgba(255, 255, 255, 0.8))
-               drop-shadow(0 0 14px rgba(255, 255, 255, 0.6));
-    }
-
-    /* Strong glow effect */
-    .logo-strong-glow {
-        filter: drop-shadow(0 0 2px white) 
-               drop-shadow(0 0 4px rgba(255, 255, 255, 0.8))
-               drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))
-               drop-shadow(0 0 16px rgba(255, 255, 255, 0.4));
-        transition: all 0.4s ease-in-out;
-    }
-
-    .logo-strong-glow:hover {
-        filter: drop-shadow(0 0 3px white) 
-               drop-shadow(0 0 6px rgba(255, 255, 255, 0.9))
-               drop-shadow(0 0 9px rgba(255, 255, 255, 0.7))
-               drop-shadow(0 0 14px rgba(255, 255, 255, 0.5));
-        transform: scale(1.02);
+        padding: 0.5rem 0.4rem 0.5rem 0.8rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
     }
 
     /* Mobile overlay */
@@ -237,7 +202,7 @@
 
     /* NEW: Connected Header Design */
     .header-connected {
-        background: linear-gradient(270deg, #1F2937 100%, #131820 60%);
+        background: linear-gradient(#1F2937 100%);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         color: white;
     }
@@ -270,17 +235,6 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
-
-    /* .notification-badge {
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        width: 8px;
-        height: 8px;
-        background: #EF4444;
-        border-radius: 50%;
-        border: 2px solid #1F2937;
-    } */
 
     /* Smooth transitions for header elements */
     .header-transition {
@@ -327,11 +281,11 @@
         <div class="sidebar-content">
             <!-- Top Section: Logo & Navigation -->
             <div class="flex-1 overflow-hidden">
-                <!-- Logo Section - Moved to absolute top -->
+                <!-- UPDATED: Text Logo Section (replaced image with text) -->
                 <div class="logo-section flex items-center justify-center border-b border-white/10">
-                    <img src="{{ asset('images/ret-logo-nav.png') }}" 
+                    <img src="{{ asset('images/ret-logoo.png') }}" 
                          alt="RET Cafeteria Logo" 
-                        class="h-10 w-auto logo-strong-glow">
+                        class="h-14 w-auto">
                 </div>
 
                 <!-- Navigation Menu -->
