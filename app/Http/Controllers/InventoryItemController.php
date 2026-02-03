@@ -28,7 +28,9 @@ class InventoryItemController extends Controller
             $query->where('category', $category);
         }
 
-        $items = $query->orderBy($sort, $direction)->get();
+        $items = $query->orderBy($sort, $direction)
+            ->paginate(10)
+            ->withQueryString();
 
         // Get distinct categories for the dropdown
         $categories = InventoryItem::distinct()->pluck('category')->sort();

@@ -156,7 +156,7 @@
 
 {{-- Header --}}
 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 menu-card">
-  <div class="flex items-center justify-between gap-4 flex-wrap w-full">
+  <div class="flex items-start justify-between gap-4 flex-wrap w-full">
     <div class="flex items-center">
       <div class="w-12 h-12 primary-gradient rounded-lg flex items-center justify-center mr-3 shadow-lg">
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,6 +362,12 @@
       </div>
     @endforelse
   </div>
+
+  @if($currentMenus->hasPages())
+    <div class="mt-6">
+      {{ $currentMenus->links('components.pagination') }}
+    </div>
+  @endif
 
   {{-- Success Modal --}}
   <x-success-modal name="menu-create-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">

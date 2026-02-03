@@ -6,12 +6,24 @@
 <div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 max-w-full overflow-hidden">
     {{-- Success/error shown as toasts from layout; no duplicated inline messages. --}}
 
-    <div class="flex flex-wrap items-center gap-4 mb-8">
-        <div class="w-12 h-12 rounded-admin-lg bg-gradient-to-br from-admin-primary to-admin-primary-light flex items-center justify-center shrink-0">
-            <x-admin.ui.icon name="fa-users" style="fas" class="!text-white w-6 h-6" />
+    <div class="page-header items-start">
+        <div class="header-content">
+            <div class="header-icon">
+                <x-admin.ui.icon name="fa-users" style="fas" class="text-white w-6 h-6" />
+            </div>
+            <div class="header-text">
+                <h1 class="header-title">User Management</h1>
+                <p class="header-subtitle">Manage admin accounts and access</p>
+                <div class="mt-3">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                        <x-admin.ui.icon name="fa-user-check" size="xs" />
+                        Total Users: {{ $users->total() }}
+                    </span>
+                </div>
+            </div>
         </div>
-        <h1 class="text-2xl font-bold text-admin-neutral-900">User Management</h1>
-        <div class="flex flex-col gap-3 ml-auto w-full sm:w-auto sm:items-end">
+
+        <div class="flex flex-col gap-3 w-full sm:w-auto">
             <div class="relative w-full sm:w-64 md:w-72">
                 <input type="search"
                        id="searchInput"
@@ -28,7 +40,8 @@
                     </svg>
                 </button>
             </div>
-            <div class="flex flex-wrap gap-3 w-full sm:w-auto sm:justify-end">
+
+            <div class="flex flex-wrap gap-3 w-full sm:w-auto justify-start sm:justify-end">
                 <x-admin.ui.button.secondary type="button" onclick="openRecentActivitiesModal()">
                     <x-admin.ui.icon name="fa-file-alt" size="sm" />
                     Recent Activities
@@ -45,6 +58,7 @@
         <table class="w-full border-collapse text-sm">
             <thead>
                 <tr>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14">#</th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Name</th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Email</th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Role</th>
@@ -54,6 +68,9 @@
             <tbody>
             @forelse($users as $user)
                 <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                    <td class="text-admin-neutral-500 py-4 px-4 border-b border-admin-neutral-100 font-semibold">
+                        {{ ($users->firstItem() ?? 0) + $loop->index }}
+                    </td>
                     <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100">{{ $user->name }}</td>
                     <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100">{{ $user->email }}</td>
                     <td class="py-4 px-4 border-b border-admin-neutral-100">
@@ -86,7 +103,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" class="py-12 px-4 text-center">
+                    <td colspan="5" class="py-12 px-4 text-center">
                         <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-admin-neutral-100 flex items-center justify-center">
                             <x-admin.ui.icon name="fa-exclamation-triangle" class="text-admin-neutral-400 w-8 h-8" />
                         </div>
@@ -98,6 +115,12 @@
             </tbody>
         </table>
     </div>
+
+    @if($users->hasPages())
+        <div class="mt-6">
+            {{ $users->links('components.pagination') }}
+        </div>
+    @endif
 </div>
 
 {{-- Unified admin modals: overlay blur, ESC/click-outside, body scroll lock. --}}
@@ -269,14 +292,14 @@ function renderTable() {
         tbodyHtml = `
             <tr>
                 <td colspan="5">
-                    <div class="empty-state py-8">
+                        <div class="empty-state py-8">
                         <div class="empty-state-icon">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-8 h-8 text-admin-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                         </div>
-                        <p class="text-lg font-semibold text-gray-900 mb-2">No recent activities found</p>
-                        <p class="text-sm text-gray-500">Activities will appear here as users interact with the system</p>
+                        <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No recent activities found</p>
+                        <p class="text-sm text-admin-neutral-500">Activities will appear here as users interact with the system</p>
                     </div>
                 </td>
             </tr>
@@ -286,11 +309,11 @@ function renderTable() {
             const date = new Date(audit.created_at).toLocaleString();
             tbodyHtml += `
                 <tr>
-                    <td class="font-semibold text-gray-900">${audit.user ? audit.user.name : 'Unknown'}</td>
-                    <td class="text-gray-600">${audit.action}</td>
-                    <td class="text-gray-600">${audit.module}</td>
-                    <td class="text-gray-600">${audit.description}</td>
-                    <td class="text-gray-600">${date}</td>
+                    <td class="font-semibold text-admin-neutral-900">${audit.user ? audit.user.name : 'Unknown'}</td>
+                    <td class="text-admin-neutral-600">${audit.action}</td>
+                    <td class="text-admin-neutral-600">${audit.module}</td>
+                    <td class="text-admin-neutral-600">${audit.description}</td>
+                    <td class="text-admin-neutral-600">${date}</td>
                 </tr>
             `;
         });

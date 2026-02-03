@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditTrail;
 use App\Models\User;
 use App\Models\Notification as NotificationModel;
 use Illuminate\Http\Request;
@@ -57,6 +58,12 @@ class GoogleController extends Controller
                 // User exists, log them in
                 \Log::info('Existing user logging in via Google', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
+                AuditTrail::create([
+                    'user_id' => $user->id,
+                    'action' => 'Logged in',
+                    'module' => 'auth',
+                    'description' => 'logged in',
+                ]);
                 return redirect()->intended(route('customer.homepage'));
             } else {
                 // User doesn't exist, create new user
@@ -81,6 +88,12 @@ class GoogleController extends Controller
 
                 \Log::info('New user created via Google OAuth', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
+                AuditTrail::create([
+                    'user_id' => $user->id,
+                    'action' => 'Logged in',
+                    'module' => 'auth',
+                    'description' => 'logged in',
+                ]);
                 return redirect()->intended(route('customer.homepage'));
             }
         } catch (\Exception $e) {

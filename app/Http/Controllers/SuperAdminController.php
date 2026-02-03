@@ -19,7 +19,10 @@ class SuperAdminController extends Controller
     public function index(): View
     {
         // Show everyone except superadmin
-        $users = User::where('role', '!=', 'superadmin')->orderBy('name')->get();
+        $users = User::where('role', '!=', 'superadmin')
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('superadmin.users', compact('users'));
     }
@@ -92,6 +95,15 @@ class SuperAdminController extends Controller
 
     public function audit(User $user): View
     {
+        if (Auth::check()) {
+            AuditTrail::create([
+                'user_id' => Auth::id(),
+                'action' => 'Viewed Audit Trail',
+                'module' => 'audit',
+                'description' => "viewed audit trail for {$user->name} ({$user->email})",
+            ]);
+        }
+
         $audits = AuditTrail::where('user_id', $user->id)->latest()->get();
         return view('superadmin.audit', compact('user','audits'));
     }

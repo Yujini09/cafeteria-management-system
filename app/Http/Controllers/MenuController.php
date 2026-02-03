@@ -61,7 +61,9 @@ class MenuController extends Controller
         if ($meal !== 'all' && Schema::hasColumn('menus', 'meal_time')) {
             $currentQuery->where('meal_time', $meal);
         }
-        $currentMenus = $currentQuery->orderBy('created_at', 'desc')->get();
+        $currentMenus = $currentQuery->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         // Menus by day (for convenience; 'all' = all meals for this type)
         $menusByDay = [

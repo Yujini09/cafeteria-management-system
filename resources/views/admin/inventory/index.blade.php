@@ -3,51 +3,6 @@
 
 @section('content')
 <style>
-/* Modern Card Styles */
-.modern-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
-    overflow: hidden;
-}
-
-/* Action Buttons */
-.action-btn {
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    text-decoration: none;
-    border: 1px solid transparent;
-}
-
-.action-btn-edit {
-    background: rgba(59, 130, 246, 0.1);
-    color: #2563eb;
-    border-color: rgba(59, 130, 246, 0.2);
-}
-
-.action-btn-edit:hover {
-    background: rgba(59, 130, 246, 0.2);
-    transform: translateY(-1px);
-}
-
-.action-btn-delete {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
-
-.action-btn-delete:hover {
-    background: rgba(239, 68, 68, 0.2);
-    transform: translateY(-1px);
-}
-
 /* Quantity Badge */
 .quantity-badge {
     display: inline-flex;
@@ -80,79 +35,6 @@
 .header-actions {
     flex-direction: column;
     align-items: flex-end;
-}
-
-/* Filter Section - Copied from Reservations */
-.filter-section {
-    background: var(--neutral-50);
-    padding: 1.25rem;
-    border-radius: 12px;
-    border: 1px solid var(--neutral-200);
-    margin-bottom: 1.5rem;
-}
-
-.filter-label {
-    font-weight: 600;
-    color: var(--neutral-700);
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-}
-
-.filter-label-inline {
-    margin-bottom: 0;
-}
-
-.filter-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-    .filter-row {
-        flex-direction: row;
-        align-items: center;
-    }
-}
-
-.select-with-arrows {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
-}
-
-.select-with-arrows .filter-select {
-    appearance: none;
-    padding-right: 2.75rem;
-}
-
-.select-arrows {
-    position: absolute;
-    right: 0.75rem;
-    pointer-events: none;
-    color: var(--neutral-500);
-}
-
-.select-arrows svg {
-    width: 16px;
-    height: 16px;
-}
-
-.filter-select {
-    background: white;
-    border: 1px solid var(--neutral-300);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
 }
 
 /* Form Styles */
@@ -249,13 +131,13 @@
         <p class="text-sm text-admin-neutral-600">Inventory item deleted successfully.</p>
     </x-success-modal>
     
-    <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
-        <div class="page-header">
+    <div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full">
+        <div class="page-header items-start">
             <div class="header-content">
                 <div class="header-icon">
-                    <i class="fas fa-boxes text-white"></i>
+                    <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-white w-6 h-6" />
                 </div>
-                <div>
+                <div class="header-text">
                     <h1 class="header-title">Inventory Management</h1>
                     <p class="header-subtitle">Manage and track your inventory items and quantities</p>
                 </div>
@@ -265,43 +147,38 @@
                     <input type="search"
                            id="searchInput"
                            placeholder="Search inventory items..."
-                           class="admin-search-input w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent"
+                           class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                            oninput="filterTable(this.value)"
                            aria-label="Search inventory items">
-                    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" style="display: none;">
+                    <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
                 <div class="flex flex-wrap gap-3 w-full sm:w-auto justify-end">
-                    <button @click="showCreateModal = true" class="btn-primary">
-                        <i class="fas fa-plus mr-2"></i>
+                    <x-admin.ui.button.primary type="button" @click="showCreateModal = true">
+                        <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
                         Add Item
-                    </button>
+                    </x-admin.ui.button.primary>
                 </div>
             </div>
         </div>
 
-        <div class="filter-section">
+        <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
             <form method="GET" action="{{ route('admin.inventory.index') }}" class="flex flex-col gap-4">
-                <div class="filter-row w-full">
-                    <label for="category" class="filter-label filter-label-inline">Filter by Category</label>
-                    <div class="select-with-arrows w-full sm:w-64">
-                        <select name="category" id="category" onchange="this.form.submit()" class="filter-select w-full" data-admin-select="true">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <label for="category" class="text-sm font-semibold text-admin-neutral-700">Filter by Category</label>
+                    <div class="w-full sm:w-64">
+                        <select name="category" id="category" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
                             <option value="">All Categories</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                             @endforeach
                         </select>
-                        <span class="select-arrows" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
-                            </svg>
-                        </span>
                     </div>
                 </div>
                 @if($sort)
@@ -317,15 +194,16 @@
             <table class="modern-table">
                 <thead>
                     <tr>
+                        <th class="w-14">#</th>
                         <th>
-                            <a href="?sort=name" class="hover:text-gray-700 transition-colors duration-200">Item Name</a>
+                            <a href="?sort=name" class="hover:text-admin-neutral-700 transition-colors duration-200">Item Name</a>
                         </th>
                         <th>
-                            <a href="?sort=qty" class="hover:text-gray-700 transition-colors duration-200">Quantity</a>
+                            <a href="?sort=qty" class="hover:text-admin-neutral-700 transition-colors duration-200">Quantity</a>
                         </th>
                         <th>Unit</th>
                         <th>
-                            <a href="?sort=expiry_date" class="hover:text-gray-700 transition-colors duration-200">Expiry Date</a>
+                            <a href="?sort=expiry_date" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
                         </th>
                         <th>Category</th>
                         <th class="hidden md:table-cell">Last Updated</th>
@@ -336,7 +214,11 @@
                 <tbody>
                     @forelse($items as $item)
                         <tr>
-                            <td class="font-semibold text-gray-900">
+                            <td class="text-admin-neutral-500 font-semibold">
+                                {{ ($items->firstItem() ?? 0) + $loop->index }}
+                            </td>
+
+                            <td class="font-semibold text-admin-neutral-900">
                                 {{ $item->name }}
                             </td>
 
@@ -349,39 +231,43 @@
                                 </span>
                             </td>
 
-                            <td class="text-gray-600">{{ $item->unit }}</td>
-                            <td class="text-gray-600">{{ $item->expiry_date ?? 'N/A' }}</td>
-                            <td class="text-gray-600">{{ $item->category }}</td>
-                            <td class="text-gray-600 hidden md:table-cell">{{ $item->updated_at->diffForHumans() }}</td>
+                            <td class="text-admin-neutral-600">{{ $item->unit }}</td>
+                            <td class="text-admin-neutral-600">{{ $item->expiry_date ?? 'N/A' }}</td>
+                            <td class="text-admin-neutral-600">{{ $item->category }}</td>
+                            <td class="text-admin-neutral-600 hidden md:table-cell">{{ $item->updated_at->diffForHumans() }}</td>
 
                             <td>
                                 <div class="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
-                                    <button @click="editingItem = JSON.parse($el.dataset.item); showEditModal = true"
-                                        data-item='@json($item)'
-                                        class="action-btn action-btn-edit">
-                                        <i class="fas fa-edit"></i>
+                                    <x-admin.ui.button.secondary
+                                        type="button"
+                                        class="!py-2 !px-3 text-xs"
+                                        @click="editingItem = JSON.parse($el.dataset.item); showEditModal = true"
+                                        data-item='@json($item)'>
+                                        <x-admin.ui.icon name="fa-pen" style="fas" size="sm" />
                                         Edit
-                                    </button>
+                                    </x-admin.ui.button.secondary>
 
                                     {{-- MODIFIED: Change to button that opens delete modal --}}
-                                    <button @click="deletingItem = JSON.parse($el.dataset.item); showDeleteModal = true"
-                                        data-item='@json($item)'
-                                        class="action-btn action-btn-delete">
-                                        <i class="fas fa-trash"></i>
+                                    <x-admin.ui.button.danger
+                                        type="button"
+                                        class="!py-2 !px-3 text-xs"
+                                        @click="deletingItem = JSON.parse($el.dataset.item); showDeleteModal = true"
+                                        data-item='@json($item)'>
+                                        <x-admin.ui.icon name="fa-trash-alt" style="fas" size="sm" />
                                         Delete
-                                    </button>
+                                    </x-admin.ui.button.danger>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 <div class="empty-state">
                                     <div class="empty-state-icon">
-                                        <i class="fas fa-boxes text-gray-400"></i>
+                                        <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-admin-neutral-400 w-6 h-6" />
                                     </div>
-                                    <p class="text-lg font-semibold text-gray-900 mb-2">No inventory items found</p>
-                                    <p class="text-sm text-gray-500">Start by adding your first item</p>
+                                    <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No inventory items found</p>
+                                    <p class="text-sm text-admin-neutral-500">Start by adding your first item</p>
                                 </div>
                             </td>
                         </tr>
@@ -389,16 +275,22 @@
                 </tbody>
             </table>
         </div>
+
+        @if($items->hasPages())
+            <div class="mt-6">
+                {{ $items->links('components.pagination') }}
+            </div>
+        @endif
     </div>
 
     <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
         <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10" x-transition.scale.90>
             <button @click="showCreateModal = false"
-                    class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
+                    class="absolute top-4 right-4 text-admin-neutral-500 hover:text-admin-neutral-800 text-xl">
                 &times;
             </button>
 
-            <h2 class="text-xl font-bold mb-4 text-gray-900">Add Inventory Item</h2>
+            <h2 class="text-xl font-bold mb-4 text-admin-neutral-900">Add Inventory Item</h2>
 
             <form id="createInventoryForm" action="{{ route('admin.inventory.store') }}" method="POST" class="space-y-4">
                 @csrf
@@ -445,16 +337,16 @@
                 <div>
                     <label for="create_expiry_date" class="form-label">Expiry Date</label>
                     <input type="date" name="expiry_date" id="create_expiry_date" class="modal-input">
-                    <small class="text-gray-500 text-xs">Leave blank if not applicable.</small>
+                    <small class="text-admin-neutral-500 text-xs">Leave blank if not applicable.</small>
                 </div>
 
-                <div class="flex justify-end space-x-3">
-                    <button type="button" @click="showCreateModal = false" class="btn-secondary">
+                <div class="flex justify-end gap-3">
+                    <x-admin.ui.button.secondary type="button" @click="showCreateModal = false">
                         Cancel
-                    </button>
-                    <button type="submit" class="btn-primary">
+                    </x-admin.ui.button.secondary>
+                    <x-admin.ui.button.primary type="submit">
                         Save Item
-                    </button>
+                    </x-admin.ui.button.primary>
                 </div>
             </form>
         </div>
@@ -463,11 +355,11 @@
     <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
         <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10" x-transition.scale.90>
             <button @click="showEditModal = false; editingItem = null"
-                    class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
+                    class="absolute top-4 right-4 text-admin-neutral-500 hover:text-admin-neutral-800 text-xl">
                 &times;
             </button>
 
-            <h2 class="text-xl font-bold mb-4 text-gray-900">Edit Inventory Item</h2>
+            <h2 class="text-xl font-bold mb-4 text-admin-neutral-900">Edit Inventory Item</h2>
 
             <form id="editInventoryForm" x-bind:action="editingItem ? updateRoute.replace(':id', editingItem.id) : ''" method="POST" class="space-y-4">
                 @csrf @method('PUT')
@@ -514,16 +406,16 @@
                 <div>
                     <label for="edit_expiry_date" class="form-label">Expiry Date</label>
                     <input type="date" name="expiry_date" id="edit_expiry_date" x-bind:value="editingItem ? editingItem.expiry_date : ''" class="modal-input">
-                    <small class="text-gray-500 text-xs">Leave blank if not applicable.</small>
+                    <small class="text-admin-neutral-500 text-xs">Leave blank if not applicable.</small>
                 </div>
 
-                <div class="flex justify-end space-x-3">
-                    <button type="button" @click="showEditModal = false; editingItem = null" class="btn-secondary">
+                <div class="flex justify-end gap-3">
+                    <x-admin.ui.button.secondary type="button" @click="showEditModal = false; editingItem = null">
                         Cancel
-                    </button>
-                    <button type="submit" class="btn-primary">
+                    </x-admin.ui.button.secondary>
+                    <x-admin.ui.button.primary type="submit">
                         Update Item
-                    </button>
+                    </x-admin.ui.button.primary>
                 </div>
             </form>
         </div>
@@ -586,13 +478,12 @@
                   class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
                 @csrf @method('DELETE')
 
-                <button type="button" @click="showDeleteModal = false; deletingItem = null"
-                        class="px-4 py-2 bg-white text-red-700 rounded-lg border border-red-200 hover:bg-red-50 transition-colors duration-200 font-medium text-sm">
+                <x-admin.ui.button.secondary type="button" @click="showDeleteModal = false; deletingItem = null">
                     Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 text-sm">
+                </x-admin.ui.button.secondary>
+                <x-admin.ui.button.danger type="submit">
                     Delete
-                </button>
+                </x-admin.ui.button.danger>
             </form>
         </div>
     </div>
