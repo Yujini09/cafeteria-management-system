@@ -16,11 +16,36 @@
     border-color: #EF4444;
 }
 
+/* Ensure these styles are loaded after any other styles */
 .menu-tab {
     background-color: white;
-    color: #1F2937; /* ret-dark color for non-active tabs */
-    border: 1px solid #D1D5DB; /* light gray border */
+    color: #1F2937;
+    border: 1px solid #D1D5DB;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
 }
+
+/* Force the hover state with !important to override other styles */
+.menu-tab:hover {
+    background-color: #10B981 !important; /* Green background on hover */
+    color: white !important; /* White text on hover */
+    border-color: #10B981 !important; /* Green border on hover */
+}
+
+.menu-tab-active {
+    background-color: #EF4444;
+    color: white;
+    border-color: #EF4444;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Active tab might also need a hover effect */
+.menu-tab-active:hover {
+    background-color: #DC2626 !important;
+    color: white !important;
+    border-color: #DC2626 !important;
+}
+
 /* Ensure only the default content (Breakfast) is visible initially */
 #am-snacks-content, #lunch-content, #pm-snacks-content, #dinner-content {
     display: none;
@@ -73,18 +98,18 @@
 
                 <div class="flex-1 p-6 lg:p-10 border-b lg:border-r lg:border-b-0 border-gray-300">
                     <h3 class="text-3xl font-bold mb-2">Standard Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱150 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱150 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['breakfast']['standard'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
@@ -96,23 +121,23 @@
 
                 <div class="flex-1 p-6 lg:p-10">
                     <h3 class="text-3xl font-bold mb-2">Special Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱170 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱170 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['breakfast']['special'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No special breakfast menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No special breakfast menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -128,46 +153,46 @@
 
                 <div class="flex-1 p-6 lg:p-10 border-b lg:border-r lg:border-b-0 border-gray-300">
                     <h3 class="text-3xl font-bold mb-2">Standard Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱100 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱100 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['am_snacks']['standard'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No standard AM snacks menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No standard AM snacks menus available.</div>
                         @endforelse
                     </div>
                 </div>
 
                 <div class="flex-1 p-6 lg:p-10">
                     <h3 class="text-3xl font-bold mb-2">Special Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱150 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱150 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['am_snacks']['special'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No special AM snacks menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No special AM snacks menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -183,23 +208,23 @@
                 <!-- LUNCH - STANDARD MENU -->
                 <div class="flex-1 p-6 lg:p-10 border-b lg:border-r lg:border-b-0 border-gray-300">
                     <h3 class="text-3xl font-bold mb-2">Standard Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱300 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱300 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['lunch']['standard'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No standard lunch menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No standard lunch menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -207,23 +232,23 @@
                 <!-- LUNCH - SPECIAL MENU -->
                 <div class="flex-1 p-6 lg:p-10">
                     <h3 class="text-3xl font-bold mb-2">Special Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱350 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱350 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['lunch']['special'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No special lunch menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No special lunch menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -239,23 +264,23 @@
                 <!-- P.M. SNACKS - STANDARD MENU -->
                 <div class="flex-1 p-6 lg:p-10 border-b lg:border-r lg:border-b-0 border-gray-300">
                     <h3 class="text-3xl font-bold mb-2">Standard Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱100 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱100 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['pm_snacks']['standard'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No standard PM snacks menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No standard PM snacks menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -263,23 +288,23 @@
                 <!-- P.M. SNACKS - SPECIAL MENU -->
                 <div class="flex-1 p-6 lg:p-10">
                     <h3 class="text-3xl font-bold mb-2">Special Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱150 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱150 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['pm_snacks']['special'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No special PM snacks menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No special PM snacks menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -295,23 +320,23 @@
                 <!-- DINNER - STANDARD MENU -->
                 <div class="flex-1 p-6 lg:p-10 border-b lg:border-r lg:border-b-0 border-gray-300">
                     <h3 class="text-3xl font-bold mb-2">Standard Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱300 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱300 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['dinner']['standard'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No standard dinner menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No standard dinner menus available.</div>
                         @endforelse
                     </div>
                 </div>
@@ -319,23 +344,23 @@
                 <!-- DINNER - SPECIAL MENU -->
                 <div class="flex-1 p-6 lg:p-10">
                     <h3 class="text-3xl font-bold mb-2">Special Menu</h3>
-                    <p class="text-xl font-semibold text-gray-700 mb-6">₱300 /head</p>
+                    <p class="text-xl font-semibold text-gray-800 mb-6">₱300 /head</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
                         @forelse($menus['dinner']['special'] ?? collect() as $menu)
                             <div>
                                 <h4 class="text-2xl font-bold text-ret-dark border-b border-gray-200 pb-1 mb-3">{{ $menu->name ?? 'Menu' }}</h4>
                                 @if($menu->description)
-                                    <p class="text-gray-600 text-sm mb-2">{{ $menu->description }}</p>
+                                    <p class="text-gray-800 text-sm mb-2">{{ $menu->description }}</p>
                                 @endif
-                                <ul class="space-y-1 text-gray-700">
+                                <ul class="space-y-1 text-gray-900">
                                     @foreach($menu->items as $item)
-                                        <li>{{ $item->name }} <span class="text-xs text-gray-500">({{ $item->type }})</span></li>
+                                        <li class="text-gray-900">{{ $item->name }} <span class="text-xs text-gray-700">({{ $item->type }})</span></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @empty
-                            <div class="col-span-full text-center text-gray-500">No special dinner menus available.</div>
+                            <div class="col-span-full text-center text-gray-700">No special dinner menus available.</div>
                         @endforelse
                     </div>
                 </div>

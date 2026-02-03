@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\InventoryItem;
+use App\Models\ContactMessage; // [1] Add this import
 use Carbon\Carbon;
 use Illuminate\View\View;
 
@@ -26,13 +27,16 @@ class AdminDashboardController extends Controller
             ->where('expiry_date', '>=', Carbon::now())
             ->get();
 
+        $unreadCount = ContactMessage::where('is_read', false)->count();
+
         return view('admin.dashboard', compact(
             'totalReservations',
             'pendingReservations',
             'menusSold',
             'lowStocks',
             'outOfStocks',
-            'expiringSoon'
+            'expiringSoon',
+            'unreadCount' // [3] Pass the variable to the view
         ));
     }
 }

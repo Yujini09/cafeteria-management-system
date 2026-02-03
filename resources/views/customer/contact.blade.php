@@ -1,4 +1,3 @@
-<!-- Load Font Awesome Link Here for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 @extends('layouts.app')
@@ -35,9 +34,7 @@
 
 @section('content')
 
-<!-- 1. HERO SECTION -->
 <section class="contact-hero-bg py-20 lg:py-20 bg-gray-900 text-white relative overflow-hidden">
-    <!-- Overlay for better text contrast -->
     <div class="absolute inset-0 bg-black opacity-10"></div>
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl lg:text-5xl font-extrabold mb-2 tracking-wider">
@@ -84,7 +81,6 @@
                             rows="12"
                             placeholder="Description"
                             class="contact-input max-h-[30rem] -mx-1 !w-full"
-                            autocomplete="off"
                             required></textarea>
                     </div>
 
@@ -109,24 +105,24 @@
                     <!-- Location -->
                     <li class="flex items-start">
                         <i class="fas fa-map-marker-alt text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
                             <a href="https://maps.app.goo.gl/MVBdw77FTwX9mmMV9"
-                                target="_blank"
-                                class="font-bold hover:underline text-gray-700">
                                 RET Bldg. CLSU, Muñoz, Nueva Ecija, Philippines
                             </a>
                         </div>
                     </li>
                     
+<<<<<<< HEAD
                     <!-- Phone -->
+=======
                     <li class="flex items-start">
-                        <i class="fas fa-phone text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
                             <p class="font-bold">0927 719 7639</p>
                         </div>
                     </li>
                     
+<<<<<<< HEAD
                     <!-- Facebook -->
+=======
+>>>>>>> other/main
                     <li class="flex items-start">
                         <i class="fab fa-facebook-f text-2xl ret-red-text mr-4 mt-1"></i>
                         <div>
@@ -134,12 +130,19 @@
                         </div>
                     </li>
                     
+<<<<<<< HEAD
                     <!-- Email -->
                     <li class="flex items-start">
                         <i class="fas fa-at text-2xl ret-red-text mr-4 mt-1"></i>
                         <div>
                             <!-- The target email for the mailto function -->
                             <p id="targetEmail" class="font-bold">RETCafeteria@clsu2.edu.ph</p>
+=======
+                    <li class="flex items-start">
+                        <i class="fas fa-at text-2xl ret-red-text mr-4 mt-1"></i>
+                        <div>
+                            <p class="font-bold">RETCafeteria@clsu2.edu.ph</p>
+>>>>>>> other/main
                         </div>
                     </li>
                 </ul>
@@ -150,6 +153,7 @@
 </section>
 
 <script>
+<<<<<<< HEAD
     /**
      * Helper function to display a message in the message box.
      * @param {string} message - The text message to display.
@@ -221,6 +225,62 @@
             displayMessage("Failed to open email client. Please manually email us at " + targetEmail, false);
         }
     }
+=======
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); // Stop page reload
+
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        const messageBox = document.getElementById('messageBox');
+
+        // 1. Set Loading State
+        btn.textContent = "Sending...";
+        btn.disabled = true;
+
+        // 2. Prepare Data
+        const formData = new FormData(form);
+
+        try {
+            // 3. Send to Backend
+            const response = await fetch("{{ route('contact.send') }}", {
+                method: "POST",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            // 4. Handle Response
+            if (response.ok) {
+                // Success: Green Box
+                messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+                messageBox.classList.add('bg-green-100', 'text-green-700', 'p-4', 'rounded');
+                messageBox.textContent = result.message; 
+                form.reset(); // Clear inputs
+            } else {
+                // Validation Error
+                throw new Error(result.message || 'Validation failed');
+            }
+        } catch (error) {
+            // Error: Red Box
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+            messageBox.classList.add('bg-red-100', 'text-red-700', 'p-4', 'rounded');
+            messageBox.textContent = "Something went wrong. Please try again.";
+            console.error(error);
+        } finally {
+            // 5. Reset Button
+            btn.textContent = originalText;
+            btn.disabled = false;
+            
+            // Hide message after 5 seconds
+            setTimeout(() => messageBox.classList.add('hidden'), 5000);
+        }
+    });
+>>>>>>> other/main
 </script>
 
 @endsection

@@ -357,30 +357,6 @@
         font-weight: 600;
     }
 
-    /* Custom styles for number input */
-    .quantity-input::-webkit-inner-spin-button,
-    .quantity-input::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    
-    .quantity-input[type="number"] {
-        -moz-appearance: textfield;
-    }
-    
-    .quantity-input:focus {
-        border-color: #1a5e3d;
-        ring: 2px;
-        ring-color: rgba(26, 94, 61, 0.2);
-        outline: none;
-    }
-    
-    .quantity-input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
 @endsection
 
 @section('content')
@@ -789,7 +765,7 @@
                 </svg>
                 <div class="text-sm text-yellow-800">
                     <p class="font-semibold">Important:</p>
-                    <p class="mt-1">Your reservation will be pending until it is confirmed.</p>
+                    <p class="mt-1">Your reservation will be pending until payment is confirmed. Please proceed to payment within 3 days to secure your booking.</p>
                 </div>
             </div>
         </div>
@@ -828,6 +804,7 @@
                     <ul class="mt-2 space-y-1">
                         <li>• You will be redirected to your reservation details</li>
                         <li>• You'll receive a confirmation email</li>
+                        <li>• Please proceed with payment within 3 days</li>
                     </ul>
                 </div>
             </div>
@@ -860,39 +837,34 @@
     }
 
     function submitReservation() {
-        // Get the form
-        const reservationForm = document.getElementById('reservation-form');
-        
         // Close confirmation modal first
         closeConfirmationModal();
         
-        // Show loading state on the confirm button
+        // Show loading state
         const confirmButton = document.getElementById('confirm-button');
         const originalText = confirmButton.innerHTML;
         confirmButton.innerHTML = '<span class="animate-spin mr-2">⟳</span> Processing...';
         confirmButton.disabled = true;
-        
-        // Show the success modal immediately (for user feedback)
-        showSuccessModal();
-        
-        // Submit the form after a short delay to let user see the success message
+
+        // Simulate processing delay
         setTimeout(() => {
-            reservationForm.submit();
-        }, 2000); // 2 second delay to let user read the success message
+            // Show success modal
+            showSuccessModal();
+            
+            // Reset button state
+            confirmButton.innerHTML = originalText;
+            confirmButton.disabled = false;
+        }, 1500);
     }
 
     function showSuccessModal() {
         const modal = document.getElementById('successModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
+        modal.style.display = 'flex';
     }
 
     function closeSuccessModal() {
         const modal = document.getElementById('successModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
+        modal.style.display = 'none';
     }
 
     function redirectToReservationDetails() {
@@ -1025,26 +997,27 @@
         }
 
         function updateDayInfo(day) {
-            const dayInfo = document.getElementById('day-info');
-            const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+        const dayInfo = document.getElementById('day-info');
+        const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+        
+        if (activeTab) {
+            const date = new Date(activeTab.dataset.date);
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
             
-            if (activeTab) {
-                const date = new Date(activeTab.dataset.date);
-                const formattedDate = date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
-                
-                let timeInfo = '';
-                if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
-                    timeInfo = ` | Time: ${activeTab.dataset.startTime} to ${activeTab.dataset.endTime}`;
-                }
-                
-                dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
+            let timeInfo = '';
+            if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
+                timeInfo = ` | Time: ${activeTab.dataset.startTime} to ${activeTab.dataset.endTime}`;
             }
+            
+            dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
         }
+    }
+
 
         function generateDayContentAreas(totalDays) {
             const container = document.getElementById('day-content-container');
@@ -1102,15 +1075,7 @@
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Pax Quantity</label>
                                 <div class="flex items-center">
                                     <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-l-md flex items-center justify-center text-lg font-bold" data-action="decrement" data-day="${day}" data-meal-time="{{ $meal_key }}">-</button>
-                                    <input type="number" 
-                                           name="reservations[${day}][{{ $meal_key }}][qty]" 
-                                           value="0" 
-                                           min="10" 
-                                           max="100" 
-                                           class="quantity-input w-16 h-8 text-center border-t border-b border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-clsu-green focus:border-clsu-green bg-white" 
-                                           data-day="${day}" 
-                                           data-meal-time="{{ $meal_key }}"
-                                           onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                                    <input type="number" name="reservations[${day}][{{ $meal_key }}][qty]" value="0" min="10" max="100" class="quantity-input w-12 h-8 text-center border-t border-b border-gray-300 p-0 text-sm focus:ring-0 focus:border-gray-300 bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}" readonly>
                                     <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-r-md flex items-center justify-center text-lg font-bold" data-action="increment" data-day="${day}" data-meal-time="{{ $meal_key }}">+</button>
                                 </div>
                                 <div class="text-xs text-red-500 mt-1 min-h-4 quantity-error" style="display: none;">
@@ -1138,33 +1103,6 @@
             document.querySelectorAll('.category-select').forEach(select => {
                 updateMenuOptions(select);
             });
-        }
-
-        function getMenuData(mealTime, category) {
-            // This function returns menu data based on meal time and category
-            @if(isset($menus))
-                @php
-                    $menuData = [];
-                    foreach ($menus as $meal_key => $types) {
-                        foreach (['standard', 'special'] as $cat) {
-                            if (isset($types[$cat])) {
-                                foreach ($types[$cat] as $menu) {
-                                    $menuData[$meal_key][$cat][] = [
-                                        'id' => $menu->id,
-                                        'name' => $menu->name,
-                                        'price' => $menu->price ?? ($cat === 'special' ? 200 : 150)
-                                    ];
-                                }
-                            }
-                        }
-                    }
-                @endphp
-                
-                const menuData = @json($menuData);
-                return menuData[mealTime] && menuData[mealTime][category] ? menuData[mealTime][category] : [];
-            @else
-                return [];
-            @endif
         }
 
         function updateMenuOptions(categorySelect) {
@@ -1202,6 +1140,37 @@
             updateSummary();
         }
 
+        function getMenuData(mealTime, category) {
+            // This function should return the appropriate menu data
+            // You'll need to adjust this based on your actual data structure
+            @php
+                $menuData = [];
+                foreach ($meal_times as $meal_key => $meal_label) {
+                    if (isset($menus[$meal_key])) {
+                        foreach ($categories as $cat_key => $cat_label) {
+                            if (isset($menus[$meal_key][$cat_key])) {
+                                foreach ($menus[$meal_key][$cat_key] as $menu) {
+                                    $price = $cat_key === 'standard' ? 
+                                        (isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice) :
+                                        (isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice);
+                                    
+                                    $menuData[$meal_key][$cat_key][] = [
+                                        'id' => $menu->id,
+                                        'name' => $menu->name,
+                                        'price' => $price
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            @endphp
+
+            // Return the appropriate menu data based on mealTime and category
+            const menuData = @json($menuData);
+            return menuData[mealTime] && menuData[mealTime][category] ? menuData[mealTime][category] : [];
+        }
+
         function switchToDay(day) {
             // Update active tab
             document.querySelectorAll('.day-tab').forEach(tab => {
@@ -1221,6 +1190,22 @@
             
             // Update summary for current day
             updateSummary();
+        }
+
+        function updateDayInfo(day) {
+            const dayInfo = document.getElementById('day-info');
+            const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+            
+            if (activeTab) {
+                const date = new Date(activeTab.dataset.date);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                dayInfo.textContent = `Currently viewing: ${formattedDate}`;
+            }
         }
 
         function initializeEventListeners() {
@@ -1247,42 +1232,7 @@
                 });
             });
 
-            // Quantity input change handlers (for manual typing)
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.addEventListener('input', function() {
-                    const day = this.getAttribute('data-day');
-                    const mealTime = this.getAttribute('data-meal-time');
-                    let value = parseInt(this.value) || 0;
-                    
-                    // Validate min and max
-                    if (value < 10) {
-                        value = 10;
-                        this.value = value;
-                    } else if (value > 100) {
-                        value = 100;
-                        this.value = value;
-                    }
-                    
-                    updateCardStyling(day, mealTime);
-                    validateQuantity(this);
-                    updateSummary();
-                });
-                
-                input.addEventListener('blur', function() {
-                    let value = parseInt(this.value) || 0;
-                    if (value < 10) {
-                        this.value = 10;
-                        updateCardStyling(
-                            this.getAttribute('data-day'),
-                            this.getAttribute('data-meal-time')
-                        );
-                        validateQuantity(this);
-                        updateSummary();
-                    }
-                });
-            });
-
-            // Category change handlers
+            // Category change handlers - UPDATED
             document.querySelectorAll('.category-select').forEach(select => {
                 select.addEventListener('change', function() {
                     updateMenuOptions(this);
@@ -1313,7 +1263,7 @@
             const value = parseInt(input.value);
             const errorElement = input.closest('.md\\:col-span-2').querySelector('.quantity-error');
             
-            if (value > 0 && value < 10) {
+            if (value < 10 && value > 0) {
                 input.classList.add('qty-error');
                 errorElement.style.display = 'block';
                 return false;
@@ -1656,7 +1606,6 @@
                         dayHasMeals = true;
                         const menuSelect = card.querySelector('.menu-select');
                         const selectedOption = menuSelect.options[menuSelect.selectedIndex];
-                        const menuId = selectedOption.value; // This should be the menu ID
                         const menuName = selectedOption.textContent;
                         const categorySelect = card.querySelector('.category-select');
                         const category = categorySelect ? categorySelect.value : 'standard';
@@ -1713,7 +1662,6 @@
             // Show modal
             modal.style.display = 'flex';
         }
-
 
         // --- BACK BUTTON FUNCTIONALITY ---
         document.getElementById('back-button').addEventListener('click', function() {

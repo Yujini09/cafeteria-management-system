@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!-- Add this CSS to your stylesheet -->
 <style>
     /* Active state styles for navigation */
@@ -38,13 +39,32 @@
             <a href="{{ url('/about') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('about') ? 'active' : 'text-gray-600' }}">About</a>
             <a href="{{ url('/menu') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('menu') ? 'active' : 'text-gray-600' }}">Menu</a>
             <a href="{{ url('/contact') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('contact') ? 'active' : 'text-gray-600' }}">Contact Us</a>
+=======
+<!-- Header Section -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+        <div class="flex items-center space-x-4">
+            <!-- Ensure your images path is correct, use /images/ret-logo-nav.png if needed -->
+            <img src="{{ asset('images/ret-logo-nav.png') }}" alt="RET Cafeteria Logo" class="h-12 w-auto" />
+        </div>
+
+        <nav class="hidden md:flex space-x-8 text-ret-dark font-poppins font-medium">
+            <a href="{{ url('/') }}" class="hover:text-ret-green-light py-1">Home</a>
+            <a href="{{ url('/about') }}" class="text-gray-600 hover:text-ret-green-light py-1">About</a>
+            <a href="{{ url('/menu') }}" class="text-gray-600 hover:text-ret-green-light py-1">Menu</a>
+            <a href="{{ url('/contact') }}" class="text-gray-600 hover:text-ret-green-light py-1">Contact Us</a>
+>>>>>>> other/main
 
             <!-- RESERVATION DROPDOWN START -->
             <div class="relative group flex items-center">
                 <!-- Dropdown Trigger Link -->
                 <a 
                     href="#" 
+<<<<<<< HEAD
                     class="nav-link text-gray-600 hover:text-ret-green-light flex items-center cursor-pointer py-1 {{ request()->is('reservation_form') || request()->is('reservation/details') ? 'active' : '' }}"
+=======
+                    class="text-gray-600 hover:text-ret-green-light flex items-center cursor-pointer py-1"
+>>>>>>> other/main
                 >
                     Reservation
                     <svg class="w-4 h-4 ml-1 transform transition duration-300 group-hover:rotate-180" 
@@ -57,12 +77,21 @@
                 <div class="absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 
                             opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 transform z-50">
                     <div class="py-1">
+<<<<<<< HEAD
                         <a href="{{ route('reservation_form') }}" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150 {{ request()->routeIs('reservation_form') || request()->routeIs('reservation_form_menu') ? 'active' : '' }}">
     Make a Reservation
 </a>
 <a href="{{ route('reservation_details') }}" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150 {{ request()->routeIs('reservation_details') || request()->routeIs('reservation_view') ? 'active' : '' }}">
     View My Reservations
 </a>
+=======
+                        <a href="{{ url('/reservation_form') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150">
+                            Make a Reservation
+                        </a>
+                        <a href="{{ url('/reservation_details') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150">
+                            View My Reservations
+                        </a>
+>>>>>>> other/main
                     </div>
                 </div>
             </div>
@@ -92,6 +121,7 @@
         </div>
     </div>
 </header>
+<<<<<<< HEAD
 
 <!-- Add this JavaScript for proper active state handling -->
 <script>
@@ -212,3 +242,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+=======
+>>>>>>> other/main

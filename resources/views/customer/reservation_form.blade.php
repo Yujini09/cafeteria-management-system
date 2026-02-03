@@ -3,7 +3,6 @@
 @section('title', 'Make a Reservation')
 
 @section('styles')
-
 .reservation-hero-bg {
 background-image: url('/images/banner1.jpg');
 background-size: cover;
@@ -130,7 +129,6 @@ background-position: top;
             </div>
         </div>
             <form id="reservation-form" action="{{ route('reservation.create') }}" method="GET" class="space-y-10">
-                @csrf
                 <!-- Hidden fields to pass personal information -->
                 <input type="hidden" name="name" id="hidden-name">
                 <input type="hidden" name="department" id="hidden-department">
@@ -152,36 +150,28 @@ background-position: top;
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
                             <input type="text" id="name" name="name" placeholder="Enter your name" required
-                                value="{{ old('name', Auth::user()->name ?? '') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
-                                autocomplete="name">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
 
                         <!-- Department/Office -->
                         <div>
                             <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department/Office</label>
                             <input type="text" id="department" name="department" placeholder="Enter your department/office" required
-                                value="{{ old('department', Auth::user()->department ?? '')  }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
-                                autocomplete="organization">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
                         
                         <!-- Address -->
                         <div>
                             <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
                             <input type="text" id="address" name="address" placeholder="Enter your address" required
-                                value="{{ old('address', Auth::user()->address ?? '')  }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
-                                autocomplete="street-address">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
 
                         <!-- Email -->
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email (CLSU Email only)</label>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span> (CLSU Email only)</label>
                             <input type="email" id="email" name="email" placeholder="Enter your CLSU email (@clsu2.edu.ph)" required
-                                value="{{ old('email', Auth::user()->email ?? '') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
-                                autocomplete="email">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                             <div id="email-error" class="text-sm text-red-500 mt-1 hidden">
                                 Please use a valid CLSU email address (must end with @clsu2.edu.ph)
                             </div>
@@ -196,16 +186,13 @@ background-position: top;
                                 inputmode="numeric"
                                 onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                value="{{ old('phone')  }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
-                                autocomplete="tel">
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
 
                         <!-- Activity -->
                         <div>
                             <label for="activity" class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
                             <input type="text" id="activity" name="activity" placeholder="Enter your activity" required
-                                value="{{ old('activity') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
 
@@ -213,7 +200,6 @@ background-position: top;
                         <div>
                             <label for="venue" class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
                             <input type="text" id="venue" name="venue" placeholder="Enter your venue" required
-                                value="{{ old('venue') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
                         
@@ -222,7 +208,6 @@ background-position: top;
                             <div>
                                 <label for="project_name" class="block text-sm font-medium text-gray-700 mb-1">Name of Project</label>
                                 <input type="text" id="project_name" name="project_name" placeholder="Enter project name (optional)"
-                                    value="{{ old('project_name') }}"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                             </div>
                             
@@ -230,7 +215,6 @@ background-position: top;
                             <div>
                                 <label for="account_code" class="block text-sm font-medium text-gray-700 mb-1">Account Code</label>
                                 <input type="text" id="account_code" name="account_code" placeholder="Enter account code (optional)"
-                                    value="{{ old('account_code') }}"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                             </div>
                         </div>
@@ -304,9 +288,9 @@ background-position: top;
                             </div>
                             
                             <!-- Hidden inputs to store selected date range and times for form submission -->
-                            <input type="hidden" id="start_date_input" name="start_date" required value="{{ old('start_date') }}">
-                            <input type="hidden" id="end_date_input" name="end_date" required value="{{ old('end_date') }}">
-                            <input type="hidden" id="day_times_input" name="day_times" required value="{{ old('day_times') }}">
+                            <input type="hidden" id="start_date_input" name="start_date" required>
+                            <input type="hidden" id="end_date_input" name="end_date" required>
+                            <input type="hidden" id="day_times_input" name="day_times" required>
                         </div>
                     </div>
                 </div>
@@ -330,21 +314,12 @@ background-position: top;
     <script>
         // Global state for the calendar
         let currentDisplayDate = new Date();
-        let selectedStartDate = "{{ old('start_date') }}";
-        let selectedEndDate = "{{ old('end_date') }}";
+        let selectedStartDate = null;
+        let selectedEndDate = null;
         let isSelectingStartDate = true; // Toggle between selecting start and end date
         let selectedDays = []; // Array to store all selected days
         let dayTimes = {}; // Object to store times for each day
         let activeDayTab = 0; // Index of currently active day tab
-        
-        // If we have old day_times data, parse it
-        @if(old('day_times'))
-            try {
-                dayTimes = JSON.parse('{{ old('day_times') }}');
-            } catch(e) {
-                console.error('Error parsing day_times:', e);
-            }
-        @endif
         
         const calendarDaysEl = document.getElementById('calendar-days');
         const monthYearEl = document.getElementById('current-month-year');
@@ -564,10 +539,9 @@ background-position: top;
                 selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
                 
                 // Initialize times for each day
+                dayTimes = {};
                 selectedDays.forEach(day => {
-                    if (!dayTimes[day]) {
-                        dayTimes[day] = { start_time: '07:00', end_time: '10:00' };
-                    }
+                    dayTimes[day] = { start_time: '07:00', end_time: '10:00' };
                 });
             }
             
@@ -638,19 +612,12 @@ background-position: top;
             dayTabsEl.innerHTML = '';
             timeSectionsContainer.innerHTML = '';
             
-            if (selectedStartDate && !selectedEndDate) {
-                selectedDays = [selectedStartDate];
-            } else if (selectedStartDate && selectedEndDate) {
-                selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
-            }
-            
             selectedDays.forEach((day, index) => {
                 // Create day tab
                 const tab = document.createElement('div');
                 tab.className = `day-tab ${index === activeDayTab ? 'day-tab-active' : ''}`;
                 tab.textContent = `Day ${index + 1} (${formatDateDisplay(day)})`;
                 tab.dataset.dayIndex = index;
-                tab.dataset.date = day;
                 
                 tab.addEventListener('click', () => {
                     activeDayTab = index;
@@ -664,22 +631,20 @@ background-position: top;
                 timeSection.className = `time-section ${index === activeDayTab ? 'time-section-active' : 'hidden'}`;
                 timeSection.id = `time-section-${index}`;
                 
-                const dayTime = dayTimes[day] || { start_time: '07:00', end_time: '10:00' };
-                
                 timeSection.innerHTML = `
                     <h4 class="font-semibold text-gray-700 mb-3">Time Selection for ${formatDateDisplay(day)}</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="start_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">Start Time</label>
                             <input type="time" id="start_time_${index}" name="start_time_${index}" 
-                                value="${dayTime.start_time}" 
+                                value="${dayTimes[day]?.start_time || '07:00'}" 
                                 class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                                 data-day="${day}" data-type="start_time">
                         </div>
                         <div>
                             <label for="end_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">End Time</label>
                             <input type="time" id="end_time_${index}" name="end_time_${index}" 
-                                value="${dayTime.end_time}" 
+                                value="${dayTimes[day]?.end_time || '10:00'}" 
                                 class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                                 data-day="${day}" data-type="end_time">
                         </div>
@@ -828,92 +793,146 @@ background-position: top;
             el.addEventListener('input', () => validateForm());
         });
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initial render
-            renderCalendar();
-            
-            // If we have existing data, update the display
-            if (selectedStartDate) {
-                if (selectedEndDate) {
-                    selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
-                } else {
-                    selectedDays = [selectedStartDate];
-                }
-                updateDateRangeDisplay();
-                renderDayTabs();
-                renderCalendar(); // Re-render to show existing selection
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initial render
+        renderCalendar();
+        
+        // Initial validation (sets up button state)
+        validateForm();
+        
+        // Initialize form submission handler
+        initializeFormSubmission();
+        
+        // Initialize CLSU email validation
+        initializeEmailValidation();
+    });
+
+    function initializeFormSubmission() {
+        document.getElementById('reservation-form').addEventListener('submit', (e) => {
+            // Re-run validation one last time
+            if (!validateForm()) {
+                e.preventDefault(); // Stop submission if validation fails
+                return;
             }
             
-            // Initial validation (sets up button state)
-            validateForm();
+            // Copy all personal info to hidden fields
+            const fields = ['name', 'department', 'address', 'email', 'phone', 'activity', 'venue', 'project_name', 'account_code'];
+            fields.forEach(field => {
+                const visibleInput = document.getElementById(field);
+                const hiddenInput = document.getElementById(`hidden-${field}`);
+                if (visibleInput && hiddenInput) {
+                    hiddenInput.value = visibleInput.value;
+                }
+            });
             
-            // Initialize form submission handler
-            initializeFormSubmission();
-            
-            // Initialize CLSU email validation
-            initializeEmailValidation();
+            // The form will now submit with all data as GET parameters
         });
+    }
 
-        function initializeFormSubmission() {
-            document.getElementById('reservation-form').addEventListener('submit', (e) => {
-                // Re-run validation one last time
-                if (!validateForm()) {
-                    e.preventDefault(); // Stop submission if validation fails
-                    return;
-                }
-                
-                // Copy all personal info to hidden fields
-                const fields = ['name', 'department', 'address', 'email', 'phone', 'activity', 'venue', 'project_name', 'account_code'];
-                fields.forEach(field => {
-                    const visibleInput = document.getElementById(field);
-                    const hiddenInput = document.getElementById(`hidden-${field}`);
-                    if (visibleInput && hiddenInput) {
-                        hiddenInput.value = visibleInput.value;
-                    }
-                });
-                
-                // The form will now submit with all data as GET parameters
-            });
+    function initializeEmailValidation() {
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('email-error');
+        const form = document.getElementById('reservation-form');
+        
+        function validateCLSUEmail(email) {
+            return email.endsWith('@clsu2.edu.ph');
         }
-
-        function initializeEmailValidation() {
-            const emailInput = document.getElementById('email');
-            const emailError = document.getElementById('email-error');
-            const form = document.getElementById('reservation-form');
-            
-            function validateCLSUEmail(email) {
-                return email.endsWith('@clsu2.edu.ph');
+        
+        emailInput.addEventListener('blur', function() {
+            if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
+                emailError.classList.remove('hidden');
+                emailInput.classList.add('border-red-500');
+            } else {
+                emailError.classList.add('hidden');
+                emailInput.classList.remove('border-red-500');
             }
-            
-            emailInput.addEventListener('blur', function() {
-                if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
-                    emailError.classList.remove('hidden');
-                    emailInput.classList.add('border-red-500');
-                } else {
-                    emailError.classList.add('hidden');
-                    emailInput.classList.remove('border-red-500');
-                }
-            });
-            
-            emailInput.addEventListener('input', function() {
-                if (validateCLSUEmail(emailInput.value)) {
-                    emailError.classList.add('hidden');
-                    emailInput.classList.remove('border-red-500');
-                }
-            });
-            
-            // Override form submission for email validation
-            form.addEventListener('submit', function(e) {
-                if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
-                    e.preventDefault();
-                    emailError.classList.remove('hidden');
-                    emailInput.classList.add('border-red-500');
-                    emailInput.focus();
-                    alert('Please use a valid CLSU email address (@clsu2.edu.ph)');
-                }
-            });
+        });
+        
+        emailInput.addEventListener('input', function() {
+            if (validateCLSUEmail(emailInput.value)) {
+                emailError.classList.add('hidden');
+                emailInput.classList.remove('border-red-500');
+            }
+        });
+        
+        // Override form submission for email validation
+        form.addEventListener('submit', function(e) {
+            if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
+                e.preventDefault();
+                emailError.classList.remove('hidden');
+                emailInput.classList.add('border-red-500');
+                emailInput.focus();
+                alert('Please use a valid CLSU email address (@clsu2.edu.ph)');
+            }
+        });
+    }
+
+    // Function to copy form data to hidden fields before submission
+    function copyFormDataToHiddenFields() {
+        const fields = ['name', 'department', 'address', 'email', 'phone', 'activity', 'venue', 'project_name', 'account_code'];
+        
+        fields.forEach(field => {
+            const visibleInput = document.getElementById(field);
+            const hiddenInput = document.getElementById(`hidden-${field}`);
+            if (visibleInput && hiddenInput) {
+                hiddenInput.value = visibleInput.value;
+            }
+        });
+    }
+
+    // Prevent actual form submission for demonstration
+    document.getElementById('reservation-form').addEventListener('submit', (e) => {
+        // Re-run validation one last time
+        if (!validateForm()) {
+             e.preventDefault(); // Stop submission if validation fails
+             // HTML5 required validation will also stop the submission and show a browser message
+             // Our custom validation message is already updated inside validateForm()
+            return;
         }
+        
+        // Copy form data to hidden fields before submission
+        copyFormDataToHiddenFields();
+    });
+
+    // CLSU email Validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('email-error');
+        const form = document.getElementById('reservation-form');
+        
+        function validateCLSUEmail(email) {
+            return email.endsWith('@clsu2.edu.ph');
+        }
+        
+        emailInput.addEventListener('blur', function() {
+            if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
+                emailError.classList.remove('hidden');
+                emailInput.classList.add('border-red-500');
+            } else {
+                emailError.classList.add('hidden');
+                emailInput.classList.remove('border-red-500');
+            }
+        });
+        
+        emailInput.addEventListener('input', function() {
+            if (validateCLSUEmail(emailInput.value)) {
+                emailError.classList.add('hidden');
+                emailInput.classList.remove('border-red-500');
+            }
+        });
+        
+        // Override form submission
+        form.addEventListener('submit', function(e) {
+            if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
+                e.preventDefault();
+                emailError.classList.remove('hidden');
+                emailInput.classList.add('border-red-500');
+                emailInput.focus();
+                alert('Please use a valid CLSU email address (@clsu2.edu.ph)');
+            }
+        });
+    });
 
     </script>
 

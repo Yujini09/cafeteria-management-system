@@ -46,11 +46,6 @@
         color: #856404;
         border: 1px solid #ffeeba;
     }
-    .status-cancelled {
-        background-color: #e5e7eb;
-        color: #374151;
-        border: 1px solid #d1d5db;
-    }
     .action-link {
         color: #007bff;
         text-decoration: none;
@@ -80,245 +75,121 @@
 <!-- Reservation Details Section -->
 <section class="py-16 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        @php
-            // Get user's reservations
-                $reservations = App\Models\Reservation::with(['items.menu.items'])
-                ->where('user_id', auth()->id())
-                ->orderBy('created_at', 'desc')
-                ->get();
-        @endphp
-        
-        @if($reservations->isEmpty())
-            <div class="bg-white rounded-xl shadow-lg p-8 text-center">
-                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-700 mb-3">No Reservations Yet</h3>
-                <p class="text-gray-600 mb-6">You haven't made any reservations yet.</p>
-                <a href="{{ route('reservation_form') }}" class="inline-flex items-center px-6 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 font-semibold">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Make Your First Reservation
-                </a>
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800">Your Reservations</h2>
             </div>
-        @else
-            <div class="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h2 class="text-xl font-bold text-gray-800">Your Reservations</h2>
-                    <p class="text-sm text-gray-600 mt-1">You have {{ $reservations->count() }} reservation(s)</p>
-                </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reservation ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Details</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu Items</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Persons</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($reservations as $reservation)
-                                @php
-                                    // Load the items with menu relationship
-                                    $reservation->load(['items.menu.items']);
-                                    $menuItems = [];
-                                    $totalMeals = $reservation->items->sum('quantity');
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date and Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meal</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        
+                        {{-- APPROVED EXAMPLE --}}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div class="font-medium">May 30</div>
+                                <div class="text-gray-500">10:00-12:00pm</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">A.M. Snacks</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Standard Menu</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Menu 1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">10 pax</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱6,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-label status-approved">Approved</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="{{ route('billing_info') }}" class="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150 text-xs font-semibold">
+                                    See Details
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        {{-- DECLINED EXAMPLE --}}
+                        <tr id="declined-row" class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div class="font-medium">June 10</div>
+                                <div class="text-gray-500">12:00-1:00pm</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Lunch</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Special Menu</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Menu 3</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">10 pax</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱6,600</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-label status-declined">Declined</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="showDeclineDetails('{{ addslashes('Menu 3 is currently unavailable for lunch on June 10 due to a shortage of key ingredients. Please select another menu.') }}')" 
+                                        class="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150 text-xs font-semibold">
+                                    See Details
+                                </button>
+                            </td>
+                        </tr>
+                        
+                        {{-- PENDING EXAMPLE --}}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div class="font-medium">June 23, June 24</div>
+                                <div class="text-gray-500">7:00-10:00am</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Breakfast</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Standard Menu</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Menu 1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">10 pax</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱6,600</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-label status-pending">Pending</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button class="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150 text-xs font-semibold">
+                                    See Details
+                                </button>
+                            </td>
+                        </tr>
 
-                                    foreach ($reservation->items as $item) {
-                                        if ($item->menu) {
-                                            $menuItems[] = $item->menu->name . ' (x' . $item->quantity . ')';
-                                        }
-                                    }
-                                @endphp
-                                
-                                <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <div class="font-medium">#{{ str_pad($reservation->id, 6, '0', STR_PAD_LEFT) }}</div>
-                                        <div class="text-gray-500 text-xs">Created: {{ $reservation->created_at->format('M d, Y') }}</div>
-                                    </td>
-
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 font-medium">{{ $reservation->event_name }}</div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ \Carbon\Carbon::parse($reservation->event_date)->format('M d, Y') }}
-                                            @if($reservation->end_date && $reservation->end_date != $reservation->event_date)
-                                                - {{ \Carbon\Carbon::parse($reservation->end_date)->format('M d, Y') }}
-                                            @endif
-                                            
-                                            {{-- Show time --}}
-                                            @if($reservation->day_times)
-                                                <br>
-                                                @php
-                                                    $dayTimes = $reservation->day_times;
-                                                    $startDate = \Carbon\Carbon::parse($reservation->event_date);
-                                                    $dateKey = $startDate->format('Y-m-d');
-                                                    
-                                                    if (isset($dayTimes[$dateKey])) {
-                                                        $firstDayTime = $dayTimes[$dateKey];
-                                                        $startTime = $firstDayTime['start_time'] ?? '';
-                                                        $endTime = $firstDayTime['end_time'] ?? '';
-                                                        
-                                                        // Format time with :00 if it doesn't have minutes
-                                                        $formatTime = function($time) {
-                                                            if (empty($time)) return '';
-                                                            
-                                                            // If time is just "7" or "10", add ":00"
-                                                            if (preg_match('/^\d{1,2}$/', $time)) {
-                                                                return $time . ':00';
-                                                            }
-                                                            
-                                                            // If time is "7:30" or "10:45", keep as is
-                                                            return $time;
-                                                        };
-                                                        
-                                                        $formattedStart = $formatTime($startTime);
-                                                        $formattedEnd = $formatTime($endTime);
-                                                        
-                                                        if ($formattedStart && $formattedEnd) {
-                                                            echo $formattedStart . ' - ' . $formattedEnd;
-                                                        } elseif ($formattedStart) {
-                                                            echo $formattedStart;
-                                                        }
-                                                    }
-                                                @endphp
-                                            @elseif($reservation->event_time)
-                                                <br>
-                                                @php
-                                                    // Format event_time similarly
-                                                    $formatTime = function($time) {
-                                                        if (empty($time)) return '';
-                                                        
-                                                        if (preg_match('/^\d{1,2}$/', $time)) {
-                                                            return $time . ':00';
-                                                        }
-                                                        
-                                                        return $time;
-                                                    };
-                                                    
-                                                    echo $formatTime($reservation->event_time);
-                                                @endphp
-                                            @endif
-                                        </div>
-                                        @if($reservation->venue)
-                                            <div class="text-xs text-gray-400">Venue: {{ $reservation->venue }}</div>
-                                        @endif
-                                    </td>
-
-<!-- In reservation_details.blade.php, update the menu items display section -->
-<td class="px-6 py-4">
-    @php
-        // Load menu items for this reservation
-        $reservation->load(['items.menu']);
-        $menuItems = [];
+                        {{-- CANCELLED EXAMPLE (Optional) --}}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div class="font-medium">July 1</div>
+                                <div class="text-gray-500">6:00-7:00pm</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Dinner</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Special Menu</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Menu 4</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">5 pax</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱3,250</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-label bg-gray-300 text-gray-700 border-gray-400">Cancelled</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button class="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150 text-xs font-semibold">
+                                    See Details
+                                </button>
+                            </td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
         
-        // Get menu names properly
-        foreach ($reservation->items as $item) {
-            if ($item->menu) {
-                $menuItems[] = $item->menu->name . ' (x' . $item->quantity . ')';
-            }
-        }
-    @endphp
-    
-    @if(count($menuItems) > 0)
-        <div class="text-sm text-gray-900">
-            @foreach(array_slice($menuItems, 0, 2) as $menuItem)
-                <div>{{ $menuItem }}</div>
-            @endforeach
-            @if(count($menuItems) > 2)
-                <div class="text-xs text-gray-500">+{{ count($menuItems) - 2 }} more items</div>
-            @endif
         </div>
-    @else
-        <div class="text-sm text-gray-500">No menu items</div>
-    @endif
-</td>
-
-
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ $reservation->number_of_persons ?? $totalMeals }} persons
-                                        @if($reservation->number_of_persons && $totalMeals)
-                                            <div class="text-xs text-gray-500">
-                                                ({{ $totalMeals }} meals)
-                                            </div>
-                                        @endif
-                                    </td>
-
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @switch($reservation->status)
-                                            @case('approved')
-                                                <span class="status-label status-approved">Approved</span>
-                                                @break
-                                            @case('declined')
-                                                <span class="status-label status-declined">Declined</span>
-                                                @break
-                                            @case('cancelled')
-                                                <span class="status-label status-cancelled">Cancelled</span>
-                                                @break
-                                            @default
-                                                <span class="status-label status-pending">Pending</span>
-                                        @endswitch
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <a href="{{ route('reservation.view', $reservation->id) }}" 
-                                            class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 text-xs font-semibold">
-                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                                View
-                                            </a>
-                                            
-                                            {{-- @if($reservation->status == 'approved')
-                                                <a href="{{ route('billing_info', $reservation->id) }}" 
-                                                   class="inline-flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 text-xs font-semibold">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                    </svg>
-                                                    Receipt
-                                                </a>
-                                            @endif --}}
-                                            
-                                            @if($reservation->status == 'declined' && $reservation->decline_reason)
-                                                <button onclick="showDeclineDetails('{{ addslashes($reservation->decline_reason) }}')" 
-                                                        class="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150 text-xs font-semibold">
-                                                    Reason
-                                                </button>
-                                            @endif
-                                            
-                                            @if(in_array($reservation->status, ['pending']))
-                                                <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" 
-                                                            class="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 text-xs font-semibold">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                        </svg>
-                                                        Cancel
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @endif
     </div>
 </section>
 
-{{-- MODAL STRUCTURE for Decline Reason --}}
+{{-- MODAL STRUCTURE for Decline Reason (Purely Frontend/JS for demonstration) --}}
 <div id="declineModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl overflow-hidden shadow-2xl transform transition-all sm:max-w-lg w-full">
         <div class="bg-red-500 px-6 py-4 text-white">
@@ -366,37 +237,6 @@
             closeDeclineDetails();
         }
     });
-
-        // Helper function to format time (remove seconds)
-    function formatTimeDisplay($timeString) {
-        if (empty($timeString)) {
-            return '';
-        }
-        
-        // If it's already in HH:MM format, return as-is
-        if (preg_match('/^\d{1,2}:\d{2}$/', $timeString)) {
-            return $timeString;
-        }
-        
-        // If it has seconds, remove them
-        if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $timeString)) {
-            return substr($timeString, 0, 5);
-        }
-        
-        // If it's a time range like "08:00-10:00", handle it
-        if (strpos($timeString, '-') !== false) {
-            $parts = explode('-', $timeString);
-            $formattedParts = array_map(function($part) {
-                $trimmed = trim($part);
-                return preg_replace('/:\d{2}$/', '', $trimmed);
-            }, $parts);
-            return implode(' - ', $formattedParts);
-        }
-        
-        // Default: just remove seconds if they exist
-        return preg_replace('/:\d{2}$/', '', $timeString);
-    }
-
 </script>
 
 @endsection
