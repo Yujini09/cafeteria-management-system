@@ -377,6 +377,15 @@
                             </span>
                             Calendar
                         </a>
+
+                        <a href="{{ route('admin.messages.index') }}"
+                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.messages.*') ? 'active-menu-item' : '' }}"
+                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
+                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
+                                <i class="far fa-envelope {{ request()->routeIs('admin.messages.*') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                            </span>
+                            Messages
+                        </a>
                     @endif
 
                     <!-- Account Settings Section -->
@@ -492,7 +501,7 @@
 {{-- Unified admin toasts: success/error/warning. ESC to clear. --}}
 <x-admin.ui.toast-container />
 
-@if(session('success'))
+@if(session('success') && empty($disableAdminSuccessToast))
 <script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'success', message: @json(session('success')) } })); });</script>
 @endif
 @if(session('error'))

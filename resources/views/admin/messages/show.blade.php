@@ -18,6 +18,18 @@
 @endphp
 
 <div class="max-w-4xl mx-auto space-y-6">
+
+    <x-success-modal name="message-show-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+        <p class="text-sm text-admin-neutral-600">{{ session('success') }}</p>
+    </x-success-modal>
+    <x-admin.ui.modal name="message-show-error" title="Error" variant="error" maxWidth="sm">
+        <p class="text-sm text-admin-neutral-700">{{ session('error') }}</p>
+        <x-slot name="footer">
+            <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'message-show-error')">
+                Close
+            </x-admin.ui.button.secondary>
+        </x-slot>
+    </x-admin.ui.modal>
     
     <a href="{{ route('admin.messages.index') }}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition-colors">
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,4 +87,20 @@
     </div>
 
 </div>
+@if(session('success') || session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const hasSuccess = @json((bool) session('success'));
+        const hasError = @json((bool) session('error'));
+
+        if (hasSuccess) {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-show-success' }));
+        }
+
+        if (hasError) {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-show-error' }));
+        }
+    });
+</script>
+@endif
 @endsection

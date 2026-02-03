@@ -55,7 +55,8 @@
             <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
                 <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">Customer Support</h2>
 
-                <form id="contactForm" onsubmit="handleContactFormSubmit(event)" class="space-y-4">
+                <form id="contactForm" method="POST" action="{{ route('contact.send') }}" onsubmit="handleContactFormSubmit(event)" class="space-y-4">
+                    @csrf
                     
                     <!-- Container for Name and Email - Full Width -->
                     <div class="flex flex-col sm:flex-row gap-4 w-full"> 
@@ -68,7 +69,15 @@
                         <!-- Email field (Full width) -->
                         <div class="space-y-2 w-full">
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" id="email" name="email" placeholder="Enter your email" class="contact-input" autocomplete="email" required>
+                            <input type="email"
+                                   id="email"
+                                   name="email"
+                                   placeholder="Enter your email"
+                                   class="contact-input {{ auth()->check() ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+                                   autocomplete="email"
+                                   value="{{ auth()->check() ? auth()->user()->email : '' }}"
+                                   {{ auth()->check() ? 'readonly aria-readonly=true' : '' }}
+                                   required>
                         </div>
                     </div>
                     
@@ -87,7 +96,7 @@
                     
                     <!-- Send Button -->
                     <div>
-                        <button type="submit" class="ret-green-bg text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 shadow-md">
+                        <button id="contactSubmitButton" type="submit" class="ret-green-bg text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 shadow-md">
                             Send
                         </button>
                     </div>
@@ -105,24 +114,22 @@
                     <!-- Location -->
                     <li class="flex items-start">
                         <i class="fas fa-map-marker-alt text-2xl ret-red-text mr-4 mt-1"></i>
-                            <a href="https://maps.app.goo.gl/MVBdw77FTwX9mmMV9"
+                        <div>
+                            <a href="https://maps.app.goo.gl/MVBdw77FTwX9mmMV9" target="_blank" class="hover:underline font-bold">
                                 RET Bldg. CLSU, Muñoz, Nueva Ecija, Philippines
                             </a>
                         </div>
                     </li>
                     
-<<<<<<< HEAD
                     <!-- Phone -->
-=======
                     <li class="flex items-start">
+                        <i class="fas fa-phone text-2xl ret-red-text mr-4 mt-1"></i>
+                        <div>
                             <p class="font-bold">0927 719 7639</p>
                         </div>
                     </li>
                     
-<<<<<<< HEAD
                     <!-- Facebook -->
-=======
->>>>>>> other/main
                     <li class="flex items-start">
                         <i class="fab fa-facebook-f text-2xl ret-red-text mr-4 mt-1"></i>
                         <div>
@@ -130,19 +137,12 @@
                         </div>
                     </li>
                     
-<<<<<<< HEAD
                     <!-- Email -->
                     <li class="flex items-start">
                         <i class="fas fa-at text-2xl ret-red-text mr-4 mt-1"></i>
                         <div>
                             <!-- The target email for the mailto function -->
                             <p id="targetEmail" class="font-bold">RETCafeteria@clsu2.edu.ph</p>
-=======
-                    <li class="flex items-start">
-                        <i class="fas fa-at text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
-                            <p class="font-bold">RETCafeteria@clsu2.edu.ph</p>
->>>>>>> other/main
                         </div>
                     </li>
                 </ul>
@@ -152,31 +152,46 @@
     </div>
 </section>
 
+{{-- Contact Success/Error Modals (reused components) --}}
+<x-success-modal name="contact-message-success" title="Message Sent" maxWidth="sm" overlayClass="bg-black/50">
+    <p id="contactSuccessMessage" class="text-sm text-green-700">
+        Your message has been sent to our admin team.
+    </p>
+</x-success-modal>
+
+<x-admin.ui.modal name="contact-message-error" title="Message Not Sent" variant="error" maxWidth="sm">
+    <p id="contactErrorMessage" class="text-sm text-admin-neutral-700">
+        We couldn't send your message. Please try again.
+    </p>
+    <x-slot name="footer">
+        <button type="button"
+                class="px-4 py-2 rounded-admin bg-admin-neutral-200 text-admin-neutral-700 hover:bg-admin-neutral-300 transition"
+                @click="$dispatch('close-admin-modal', 'contact-message-error')">
+            Close
+        </button>
+    </x-slot>
+</x-admin.ui.modal>
+
 <script>
-<<<<<<< HEAD
     /**
      * Helper function to display a message in the message box.
      * @param {string} message - The text message to display.
      * @param {boolean} isSuccess - True for success (green), false for error (red).
      */
-    function displayMessage(message, isSuccess) {
-        const messageBox = document.getElementById('messageBox');
-        
-        // Reset classes
-        messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
-        
-        if (isSuccess) {
-            messageBox.classList.add('bg-green-100', 'text-green-700');
-        } else {
-            messageBox.classList.add('bg-red-100', 'text-red-700');
+    function showSuccessModal(message) {
+        const messageEl = document.getElementById('contactSuccessMessage');
+        if (messageEl && message) {
+            messageEl.textContent = message;
         }
-        
-        messageBox.textContent = message;
-        
-        // Hide message after 7 seconds
-        setTimeout(() => {
-            messageBox.classList.add('hidden');
-        }, 7000);
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'contact-message-success' }));
+    }
+
+    function showErrorModal(message) {
+        const messageEl = document.getElementById('contactErrorMessage');
+        if (messageEl && message) {
+            messageEl.textContent = message;
+        }
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'contact-message-error' }));
     }
     
     /**
@@ -188,99 +203,85 @@
         event.preventDefault(); // Stop the default form submission
 
         const form = document.getElementById('contactForm');
+        const submitButton = document.getElementById('contactSubmitButton');
         const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
+        const emailInput = document.getElementById('email');
+        if (!emailInput) {
+            showErrorModal("Input valid email address");
+            return;
+        }
+        const email = emailInput.value.trim();
         const message = document.getElementById('message').value.trim();
         const targetEmail = document.getElementById('targetEmail').textContent.trim();
 
         if (!name || !email || !message) {
-            displayMessage("Please fill out all required fields.", false);
+            showErrorModal("Please fill out all required fields.");
             return;
         }
-        
-        // Construct the subject line
-        const subject = encodeURIComponent(`Inquiry from ${name} (${email})`);
 
-        // Construct the body, including the user's name and email for context
-        const body = encodeURIComponent(
-            `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
-        );
-        
-        // Create the full mailto link
-        const mailtoLink = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
-
-        try {
-            // Attempt to open the default email client
-            window.location.href = mailtoLink;
-            
-            // Clear the form fields after successful attempt
-            form.reset();
-            
-            // Provide feedback to the user
-            displayMessage("Your message is ready! Please check your default email client to send it.", true);
-
-        } catch (error) {
-            // Fallback error message
-            console.error("Mailto function failed:", error);
-            displayMessage("Failed to open email client. Please manually email us at " + targetEmail, false);
+        if (!emailInput.checkValidity()) {
+            showErrorModal("Please enter a valid email address.");
+            emailInput.focus();
+            return;
         }
-    }
-=======
-    document.getElementById('contactForm').addEventListener('submit', async function(e) {
-        e.preventDefault(); // Stop page reload
 
-        const form = e.target;
-        const btn = form.querySelector('button[type="submit"]');
-        const originalText = btn.textContent;
-        const messageBox = document.getElementById('messageBox');
+        if (submitButton) {
+            if (!submitButton.dataset.defaultText) {
+                submitButton.dataset.defaultText = submitButton.textContent.trim();
+            }
+            submitButton.disabled = true;
+            submitButton.textContent = "Sending...";
+            submitButton.classList.add('opacity-70', 'cursor-not-allowed');
+            submitButton.setAttribute('aria-busy', 'true');
+        }
 
-        // 1. Set Loading State
-        btn.textContent = "Sending...";
-        btn.disabled = true;
-
-        // 2. Prepare Data
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const formData = new FormData(form);
 
-        try {
-            // 3. Send to Backend
-            const response = await fetch("{{ route('contact.send') }}", {
-                method: "POST",
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                },
-                body: formData
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: formData
+        })
+            .then(async (response) => {
+                const payload = await response.json().catch(() => null);
+
+                if (response.ok) {
+                    return payload;
+                }
+
+                if (response.status === 422) {
+                    const firstError = payload?.errors ? Object.values(payload.errors).flat()[0] : null;
+                    throw new Error(firstError || "Please check your inputs and try again.");
+                }
+
+                throw new Error(payload?.message || "Something went wrong. Please try again later.");
+            })
+            .then((data) => {
+                if (data && data.success === false) {
+                    throw new Error(data.message || "Failed to send message. Please try again.");
+                }
+                form.reset();
+                showSuccessModal(data.message || "Message sent successfully!");
+            })
+            .catch((error) => {
+                console.error("Contact form submission failed:", error);
+                showErrorModal(error.message || ("Failed to send message. Please email us at " + targetEmail));
+            })
+            .finally(() => {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = submitButton.dataset.defaultText || "Send";
+                    submitButton.classList.remove('opacity-70', 'cursor-not-allowed');
+                    submitButton.removeAttribute('aria-busy');
+                }
             });
-
-            const result = await response.json();
-
-            // 4. Handle Response
-            if (response.ok) {
-                // Success: Green Box
-                messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
-                messageBox.classList.add('bg-green-100', 'text-green-700', 'p-4', 'rounded');
-                messageBox.textContent = result.message; 
-                form.reset(); // Clear inputs
-            } else {
-                // Validation Error
-                throw new Error(result.message || 'Validation failed');
-            }
-        } catch (error) {
-            // Error: Red Box
-            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-            messageBox.classList.add('bg-red-100', 'text-red-700', 'p-4', 'rounded');
-            messageBox.textContent = "Something went wrong. Please try again.";
-            console.error(error);
-        } finally {
-            // 5. Reset Button
-            btn.textContent = originalText;
-            btn.disabled = false;
-            
-            // Hide message after 5 seconds
-            setTimeout(() => messageBox.classList.add('hidden'), 5000);
-        }
-    });
->>>>>>> other/main
+    }
 </script>
 
 @endsection

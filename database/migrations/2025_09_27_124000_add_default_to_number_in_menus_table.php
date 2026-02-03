@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('menus', function (Blueprint $table) {
-            if (Schema::hasColumn('menus', 'number')) {
-                $table->integer('number')->default(1)->change();
-            }
-        });
+        if (!Schema::hasTable('menus') || !Schema::hasColumn('menus', 'number')) {
+            return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver === 'mysql') {
+            DB::statement("ALTER TABLE menus MODIFY number INT NOT NULL DEFAULT 1");
+        }
     }
 
     /**
@@ -23,10 +26,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('menus', function (Blueprint $table) {
-            if (Schema::hasColumn('menus', 'number')) {
-                $table->integer('number')->nullable(false)->default(null)->change();
-            }
-        });
+        if (!Schema::hasTable('menus') || !Schema::hasColumn('menus', 'number')) {
+            return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver === 'mysql') {
+            DB::statement("ALTER TABLE menus MODIFY number INT NULL DEFAULT NULL");
+        }
     }
 };

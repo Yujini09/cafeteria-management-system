@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->foreignId('menu_item_id')->constrained('menu_items')->cascadeOnDelete();
                 $table->foreignId('inventory_item_id')->constrained('inventory_items')->cascadeOnDelete();
                 $table->decimal('quantity_needed', 10, 3);
-                $table->string('unit')->default('kg');
+                $table->string('unit', 50)->nullable();
                 $table->timestamps();
                 $table->unique(['menu_item_id', 'inventory_item_id']);
                 $table->index('menu_item_id');
@@ -28,7 +28,7 @@ return new class extends Migration
             // Check if unit column exists (added in later migration)
             if (!Schema::hasColumn('recipes', 'unit')) {
                 Schema::table('recipes', function (Blueprint $table) {
-                    $table->string('unit')->default('kg');
+                    $table->string('unit', 50)->nullable()->after('quantity_needed');
                 });
             }
         }

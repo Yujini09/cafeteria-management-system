@@ -1,10 +1,11 @@
 @extends('layouts.sidebar')
 @section('page-title', 'Manage Users')
+@php($disableAdminSuccessToast = true)
 
 @section('content')
 {{-- Design system: admin tokens from tailwind (admin-primary, rounded-admin, etc.). No inline overrides. --}}
 <div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 max-w-full overflow-hidden">
-    {{-- Success/error shown as toasts from layout; no duplicated inline messages. --}}
+    {{-- Success handled via success modal; no duplicate inline messages. --}}
 
     <div class="page-header items-start">
         <div class="header-content">
@@ -124,6 +125,12 @@
 </div>
 
 {{-- Unified admin modals: overlay blur, ESC/click-outside, body scroll lock. --}}
+@if(session('success'))
+<x-success-modal name="users-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+    <p class="text-sm text-admin-neutral-600">{{ session('success') }}</p>
+</x-success-modal>
+@endif
+
 <x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
     <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm">
         @csrf
@@ -336,5 +343,11 @@ function getSortIcon(column) {
     if (currentSortBy !== column) return '';
     return currentSortDirection === 'asc' ? '▲' : '▼';
 }
+document.addEventListener('DOMContentLoaded', () => {
+    const hasSuccess = @json((bool) session('success'));
+    if (hasSuccess) {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));
+    }
+});
 </script>
 @endsection

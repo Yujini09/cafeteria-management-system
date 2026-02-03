@@ -6,18 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
+        if (!Schema::hasTable('recipes') || Schema::hasColumn('recipes', 'unit')) {
+            return;
+        }
+
         Schema::table('recipes', function (Blueprint $table) {
-            if (!Schema::hasColumn('recipes', 'unit')) {
-                $table->string('unit', 50)->nullable()->after('quantity_needed');
-            }
+            $table->string('unit', 50)->nullable()->after('quantity_needed');
         });
     }
 
     public function down(): void {
+        if (!Schema::hasTable('recipes') || !Schema::hasColumn('recipes', 'unit')) {
+            return;
+        }
+
         Schema::table('recipes', function (Blueprint $table) {
-            if (Schema::hasColumn('recipes', 'unit')) {
-                $table->dropColumn('unit');
-            }
+            $table->dropColumn('unit');
         });
     }
 };

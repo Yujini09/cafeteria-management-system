@@ -7,8 +7,9 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\{
-    MenuController, RecipeController, ReservationController, CalendarController, InventoryItemController, ReportsController
+    MenuController, RecipeController, ReservationController, CalendarController, InventoryItemController, ReportsController, ContactController
 };
+use App\Http\Controllers\Admin\MessageController;
 use App\Models\Menu;
 
 // 1. PUBLIC MARKETING PAGES (No authentication required)
@@ -107,6 +108,11 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
         Route::post('/reports/export/pdf', [ReportsController::class, 'exportPdf'])->name('reports.export.pdf');
         Route::post('/reports/export/excel', [ReportsController::class, 'exportExcel'])->name('reports.export.excel');
+
+        // Messages
+        Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+        Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
+        Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.delete');
     });
 
 
@@ -127,6 +133,7 @@ Route::get('/about', function () {
 Route::get('/contact', function () {
     return view('customer.contact');
 })->name('contact');
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
 // Group routes that require the user to be logged in (authenticated)
 Route::middleware(['auth'])->group(function () {

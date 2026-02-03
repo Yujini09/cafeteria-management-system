@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
@@ -12,6 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('menu_items') || !Schema::hasColumn('menu_items', 'type')) {
+            return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'mysql') {
+            return;
+        }
+
         // Temporarily change to VARCHAR to allow updates
         DB::statement("ALTER TABLE menu_items MODIFY COLUMN type VARCHAR(255)");
 
@@ -27,6 +35,15 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('menu_items') || !Schema::hasColumn('menu_items', 'type')) {
+            return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver !== 'mysql') {
+            return;
+        }
+
         // Temporarily change to VARCHAR
         DB::statement("ALTER TABLE menu_items MODIFY COLUMN type VARCHAR(255)");
 

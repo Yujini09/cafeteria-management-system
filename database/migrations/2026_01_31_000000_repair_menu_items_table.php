@@ -44,7 +44,12 @@ return new class extends Migration
             }
             
             // Ensure type enum has correct values
-            DB::statement("ALTER TABLE menu_items MODIFY COLUMN type ENUM('food','drink','dessert','other') DEFAULT 'other'");
+            if (Schema::hasColumn('menu_items', 'type')) {
+                $driver = Schema::getConnection()->getDriverName();
+                if ($driver === 'mysql') {
+                    DB::statement("ALTER TABLE menu_items MODIFY COLUMN type ENUM('food','drink','dessert','other') DEFAULT 'other'");
+                }
+            }
         }
     }
 
