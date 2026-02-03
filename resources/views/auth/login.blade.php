@@ -4,61 +4,57 @@
         $passwordResetStatus = __('passwords.reset');
         $passwordLinkStatus = __('passwords.sent');
     @endphp
-    {{-- Main Container: Dark Green (bg-green-950) --}}
-    <div class="min-h-screen flex items-center justify-center bg-green-950 relative overflow-hidden"> 
-        
-        {{-- External Background Bubble Designs: Orange and NEW RANDOMIZED POSITIONS --}}
-        <div class="absolute inset-0 opacity-30">
-            {{-- Large Bubble: Top-Center, slightly left --}}
-            <div class="w-96 h-96 bg-orange-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
-            {{-- Mid Bubble: Bottom-Right edge --}}
-            <div class="w-64 h-64 bg-orange-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
-            {{-- Large Bubble: Mid-Left edge --}}
-            <div class="w-80 h-80 bg-orange-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
-            {{-- Small Bubble: Bottom-Center, slightly right --}}
-            <div class="w-40 h-40 bg-orange-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
+    {{-- Main Container --}}
+    <div class="min-h-screen flex items-center justify-center bg-admin-neutral-100 relative overflow-hidden font-admin text-admin-neutral-900"> 
+        <div class="absolute inset-0">
+            <div class="absolute -top-24 -right-20 h-80 w-80 rounded-full bg-admin-primary/10 blur-3xl"></div>
+            <div class="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-ret-dark/10 blur-3xl"></div>
         </div>
 
         {{-- Card Container --}}
-        <div class="bg-white rounded-xl shadow-2xl flex overflow-hidden w-full max-w-5xl z-10"> 
+        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[560px]"> 
             
-            {{-- Left side (Logo Display) - White background with subtle left shift --}}
-            <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 
-                <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
-                     class="max-h-64 object-contain w-auto -ml-6"> 
-
-                <a href="{{ route('marketing.home') }}"
-                    class="absolute bottom-8 left-8 right-8 inline-flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800 transition hover:border-orange-400 hover:text-orange-600">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                    Continue to site
-                </a>
+            {{-- Left side (Logo Display) --}}
+            <div class="hidden md:flex w-1/2 items-center justify-center bg-ret-dark p-10 relative"> 
+                <div class="absolute inset-0 bg-gradient-to-br from-ret-dark via-[#1f2937] to-black/70"></div>
+                <div class="relative z-10 flex flex-col items-center gap-8 text-center text-white">
+                    <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
+                         class="max-h-56 object-contain w-auto"> 
+                    <div class="space-y-1">
+                        <h3 class="text-xl font-semibold">RET Cafeteria</h3>
+                        <p class="text-sm text-white/70">Access the admin portal securely.</p>
+                    </div>
+                    <a href="{{ route('marketing.home') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-admin border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Continue to site
+                    </a>
+                </div>
             </div>
 
-            {{-- Right side (Login Form) - Light Green (bg-green-100) --}}
-            <div class="w-full md:w-1/2 p-8 md:p-12 relative bg-green-100 h-[500px] overflow-y-auto"> 
-                
-                {{-- Internal bubbles: GREEN, RESTORED ORIGINAL POSITIONS --}}
-                <div class="absolute inset-0 opacity-50 overflow-hidden">
-                    {{-- Larger bubble: Top-right (Original position) --}}
-                    <div class="w-64 h-64 bg-green-200 rounded-full absolute -top-24 -right-24"></div> 
-                    {{-- Smaller bubble: Bottom-left (Original position) --}}
-                    <div class="w-48 h-48 bg-green-200 rounded-full absolute -bottom-16 -left-16"></div> 
+            {{-- Right side (Login Form) --}}
+            <div class="w-full md:w-1/2 p-8 md:p-10 relative bg-white overflow-hidden overflow-x-hidden md:h-full"> 
+                <div class="absolute inset-0 pointer-events-none">
+                    <div class="w-56 h-56 bg-admin-primary/5 rounded-full absolute -top-20 -right-16"></div> 
+                    <div class="w-40 h-40 bg-ret-dark/5 rounded-full absolute -bottom-16 -left-16"></div> 
                 </div>
 
                 <div class="relative z-10"> 
                     
                     <div class="text-left mb-10">
-                        <h2 class="text-green-900 text-4xl font-extrabold mb-2">Welcome!</h2> 
-                        <p class="text-green-700 text-lg">Log in to your account</p> 
+                        <h2 class="text-admin-neutral-900 text-3xl font-semibold mb-2">Welcome!!!!</h2> 
+                        <p class="text-admin-neutral-600 text-base">Log in to your account</p> 
                     </div>
 
                     @if(session('status') && session('status') !== $passwordResetStatus && session('status') !== $passwordLinkStatus)
-                        <x-auth-session-status class="mb-6" :status="session('status')" />
+                        <div class="mb-6 rounded-admin border border-admin-success/20 bg-admin-success-light px-4 py-3">
+                            <x-auth-session-status class="!text-admin-success" :status="session('status')" />
+                        </div>
                     @endif
 
-                    <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm">
+                    <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
                         <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
                     </x-success-modal>
 
@@ -69,45 +65,45 @@
                         <div class="mb-6">
                             <div class="relative">
                                 <x-text-input id="email" type="email" name="email"
-                                    class="block mt-1 w-full pl-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900"
+                                    class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20"
                                     placeholder="Enter clsu email" 
                                     :value="old('email')" required autofocus autocomplete="username" />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
                                 </svg>
                             </div>
-                            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-600" /> 
+                            <x-input-error :messages="$errors->get('email')" class="mt-2 !text-admin-danger" /> 
                         </div>
 
                         {{-- Password --}}
                         <div class="mb-6">
                             <div class="relative">
                                 <x-text-input id="password" type="password" name="password"
-                                    class="block mt-1 w-full pl-10 pr-10 h-12 border-green-400 focus:border-orange-500 focus:ring-orange-500 rounded-lg placeholder-green-500 text-green-900"
+                                    class="block mt-1 w-full pl-10 pr-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20"
                                     placeholder="Enter password"
                                     required autocomplete="current-password" />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                 </svg>
-                                <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-orange-500">
+                                <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-500 hover:text-admin-primary">
                                     <svg id="eyeIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                     </svg>
                                 </button>
                             </div>
-                            <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-600" /> 
+                            <x-input-error :messages="$errors->get('password')" class="mt-2 !text-admin-danger" /> 
                         </div>
 
                         {{-- Forgot + Register CONSOLIDATED --}}
                         <div class="flex justify-between items-center text-sm mb-8">
                             @if (Route::has('password.request'))
-                                <a id="openForgotPassword" href="{{ route('password.request') }}" class="text-orange-600 hover:text-orange-700 hover:underline transition duration-200">
+                                <a id="openForgotPassword" href="{{ route('password.request') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
                                     {{ __('Forgot Password?') }}
                                 </a>
                             @endif
-                            <p class="text-green-700">
+                            <p class="text-admin-neutral-600">
                                 {{ __("Don't have an Account?") }} 
-                                <a href="{{ route('register') }}" class="text-orange-600 hover:text-orange-700 hover:underline transition duration-200 font-semibold">
+                                <a href="{{ route('register') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200 font-semibold">
                                     {{ __('Register') }}
                                 </a>
                             </p>
@@ -115,15 +111,15 @@
 
                         {{-- Remember Me --}}
                         <div class="flex items-center mb-6">
-                            <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
-                            <label for="remember_me" class="ml-2 block text-sm text-green-700">
+                            <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 text-admin-primary focus:ring-admin-primary/20 border-admin-neutral-300 rounded">
+                            <label for="remember_me" class="ml-2 block text-sm text-admin-neutral-600">
                                 Remember me
                             </label>
                         </div>
 
                         {{-- Login Button (Orange remains the CTA color for max contrast) --}}
                         <div>
-                            <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-200 text-white">
+                            <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-200 text-white">
                                 {{ __('Login') }}
                             </x-primary-button>
                         </div>
@@ -140,26 +136,26 @@
                     aria-modal="true"
                     aria-hidden="{{ $showForgotModal ? 'false' : 'true' }}"
                     aria-labelledby="forgotPasswordTitle">
-                    <div id="forgotPasswordBackdrop" class="absolute inset-0 bg-green-950/60 backdrop-blur-sm"></div>
-                    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-green-200 bg-white shadow-2xl">
-                        <div class="flex items-start justify-between gap-4 border-b border-green-100 bg-green-50 px-6 py-4">
+                    <div id="forgotPasswordBackdrop" class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"></div>
+                    <div class="relative w-full max-w-md overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin-modal">
+                        <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 bg-admin-neutral-50 px-6 py-4">
                             <div>
-                                <h2 id="forgotPasswordTitle" class="text-lg font-semibold text-green-900">Reset Password</h2>
-                                <p class="text-xs text-green-700 mt-1">We will email you a reset link.</p>
+                                <h2 id="forgotPasswordTitle" class="text-lg font-semibold text-admin-neutral-900">Reset Password</h2>
+                                <p class="text-xs text-admin-neutral-600 mt-1">We will email you a reset link.</p>
                             </div>
-                            <button id="closeForgotPassword" type="button" class="rounded-full p-1 text-green-700 hover:text-orange-600">
+                            <button id="closeForgotPassword" type="button" class="rounded-full p-1 text-admin-neutral-500 hover:text-admin-primary">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
                             </button>
                         </div>
                         <div class="px-6 py-5">
-                            <div class="mb-4 text-sm text-orange-700 bg-orange-50 p-3 rounded-lg border-l-4 border-orange-500">
+                            <div class="mb-4 text-sm text-admin-neutral-600 bg-admin-neutral-50 p-3 rounded-admin border border-admin-neutral-200 border-l-4 border-l-admin-primary">
                                 {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
                             </div>
 
                             @if(session('status') === $passwordLinkStatus)
-                                <div class="mb-4 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                                <div class="mb-4 text-sm text-admin-success bg-admin-success-light p-3 rounded-admin border border-admin-success/20">
                                     {{ session('status') }}
                                 </div>
                             @endif
@@ -176,7 +172,7 @@
                             @endphp
 
                             @if($emailError && $isThrottled)
-                                <div class="mb-4 text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">
+                                <div class="mb-4 text-sm text-admin-danger bg-admin-danger-light p-3 rounded-admin border border-admin-danger/20">
                                     Too many reset requests. Please wait a few minutes and try again.
                                 </div>
                             @endif
@@ -185,24 +181,24 @@
                                 @csrf
 
                                 <div class="relative">
-                                    <x-input-label for="forgot_email" :value="__('Email')" class="text-green-700 font-medium mb-2" />
+                                    <x-input-label for="forgot_email" :value="__('Email')" class="text-admin-neutral-700 font-medium mb-2" />
                                     <div class="relative">
                                         <x-text-input id="forgot_email"
-                                            class="block mt-1 w-full pl-10 h-12 border-green-400 transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                            class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 transition-all duration-300 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                                             type="email"
                                             name="email"
                                             :value="old('email')"
                                             required
                                             autocomplete="email" />
-                                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
                                         </svg>
                                     </div>
-                                    <x-input-error :messages="$errors->passwordReset->get('email')" class="mt-2 text-red-600" />
+                                    <x-input-error :messages="$errors->passwordReset->get('email')" class="mt-2 !text-admin-danger" />
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-300">
+                                    <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300">
                                         {{ __('Email Password Reset Link') }}
                                     </x-primary-button>
                                 </div>

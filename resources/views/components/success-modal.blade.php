@@ -66,22 +66,22 @@ $maxWidthClass = match($maxWidth) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title-{{ $name }}"
-        class="relative w-full {{ $maxWidthClass }} overflow-hidden rounded-2xl border border-green-200 bg-white shadow-2xl"
+        class="relative w-full {{ $maxWidthClass }} overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin-modal"
     >
-        <div class="flex items-start justify-between gap-4 border-b border-green-100 bg-green-50 px-6 py-4">
+        <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 bg-admin-neutral-50 px-6 py-4">
             <div class="flex items-center gap-3">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-admin bg-admin-success-light text-admin-success">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </span>
                 <div>
-                    <h2 id="modal-title-{{ $name }}" class="text-lg font-semibold text-green-900">{{ $title }}</h2>
-                    <p class="text-xs text-green-700">Action completed successfully.</p>
+                    <h2 id="modal-title-{{ $name }}" class="text-lg font-semibold text-admin-neutral-900">{{ $title }}</h2>
+                    <p class="text-xs text-admin-neutral-600">Action completed successfully.</p>
                 </div>
             </div>
         </div>
-        <div class="px-6 py-5 text-sm text-green-700">
+        <div class="px-6 py-5 text-sm text-admin-neutral-700">
             @if($slot->isEmpty())
                 <p>Action completed successfully.</p>
             @else
@@ -89,7 +89,7 @@ $maxWidthClass = match($maxWidth) {
             @endif
         </div>
         @if(isset($footer))
-            <div class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-green-100 bg-green-50/60">
+            <div class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
                 {{ $footer }}
             </div>
         @endif
