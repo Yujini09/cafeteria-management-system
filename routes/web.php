@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:admin'])
         // Messages
         Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
         Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
+        Route::post('/messages/{message}/reply', [MessageController::class, 'reply'])->name('messages.reply');
         Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.delete');
     });
 

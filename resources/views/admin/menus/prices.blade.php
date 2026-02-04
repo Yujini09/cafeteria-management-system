@@ -157,7 +157,7 @@
         </div>
 
         <div class="flex flex-col gap-3 pt-6 border-t border-gray-100 sm:flex-row sm:justify-end">
-            <a href="{{ route('admin.menus.index') }}" class="btn-secondary">
+            <a href="{{ route('admin.menus.index') }}" wire:navigate class="btn-secondary">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -175,7 +175,7 @@
 
 @if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu prices updated'))
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('livewire:navigated', function () {
     requestAnimationFrame(() => {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-prices-success' }));
     });
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
 @endif
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('livewire:navigated', function() {
     const selectedType = '{{ $selectedType }}';
     const selectedMeal = '{{ $selectedMeal }}';
 

@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class MenuController extends Controller
 {
@@ -153,7 +154,7 @@ class MenuController extends Controller
      */
     private function getNextDefaultMenuName(): string
     {
-        // Get all menus with names matching "Menu #" pattern
+        // Get all menus with names matching "Menu #X" format
         $menus = Menu::query()
             ->where('name', 'like', 'Menu #%')
             ->pluck('name')
@@ -166,7 +167,6 @@ class MenuController extends Controller
         // Extract numbers from menu names
         $numbers = [];
         foreach ($menus as $name) {
-            // Extract number from "Menu #X" format
             if (preg_match('/^Menu #(\d+)$/', $name, $matches)) {
                 $numbers[] = (int) $matches[1];
             }
@@ -176,9 +176,42 @@ class MenuController extends Controller
             return 'Menu #1';
         }
 
-        // Find the highest number and return next
-        $highestNumber = max($numbers);
-        return 'Menu #' . ($highestNumber + 1);
+        // Find the smallest missing positive integer (reuses gaps after deletions)
+        $used = array_flip(array_unique($numbers));
+        $candidate = 1;
+        while (isset($used[$candidate])) {
+            $candidate++;
+        }
+        return 'Menu #' . $candidate;
+    }
+
+    private function assertNoDuplicateIngredients(array $items): void
+    {
+        $errors = [];
+        foreach ($items as $itemIndex => $itemData) {
+            $recipes = $itemData['recipes'] ?? [];
+            $seen = [];
+            foreach ($recipes as $recipeIndex => $recipeData) {
+                $id = $recipeData['inventory_item_id'] ?? null;
+                if (!$id) {
+                    continue;
+                }
+                $key = (string) $id;
+                if (isset($seen[$key])) {
+                    $itemLabel = $itemData['name'] ?? ('Item ' . ($itemIndex + 1));
+                    $errors["items.$itemIndex.recipes.$recipeIndex.inventory_item_id"] =
+                        "Duplicate ingredient in item \"{$itemLabel}\" (ingredient " . ($recipeIndex + 1) . ").";
+                    $errors["items.$itemIndex.recipes." . $seen[$key] . ".inventory_item_id"] =
+                        "Duplicate ingredient in item \"{$itemLabel}\" (ingredient " . ($seen[$key] + 1) . ").";
+                    continue;
+                }
+                $seen[$key] = $recipeIndex;
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -204,6 +237,7 @@ class MenuController extends Controller
             $rules['items.*.recipes.*.unit'] = 'required|string|max:50';
 
             $data = $request->validate($rules);
+            $this->assertNoDuplicateIngredients($data['items'] ?? []);
 
             if ($hasPrice && $hasType && $hasMeal) {
                 $type = $data['type'] ?? 'standard';
@@ -257,6 +291,16 @@ class MenuController extends Controller
                     }
                 }
             }
+        } catch (ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
             \Log::error('Menu creation failed: ' . $e->getMessage(), [
                 'exception' => $e,
@@ -323,6 +367,7 @@ class MenuController extends Controller
         $rules['items.*.recipes.*.unit'] = 'required|string|max:50';
 
         $data = $request->validate($rules);
+        $this->assertNoDuplicateIngredients($data['items'] ?? []);
 
         if ($hasPrice && $hasType && $hasMeal) {
             $type = $data['type'] ?? 'standard';

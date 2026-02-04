@@ -17,6 +17,7 @@
                 </span>
             @else
                 <a href="{{ $paginator->previousPageUrl() }}"
+                   wire:navigate
                    class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150"
                    rel="prev">
                     Prev
@@ -38,6 +39,7 @@
                             </span>
                         @else
                             <a href="{{ $url }}"
+                               wire:navigate
                                class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150"
                                aria-label="Go to page {{ $page }}">
                                 {{ $page }}
@@ -49,6 +51,7 @@
 
             @if ($paginator->hasMorePages())
                 <a href="{{ $paginator->nextPageUrl() }}"
+                   wire:navigate
                    class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150"
                    rel="next">
                     Next

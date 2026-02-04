@@ -20,10 +20,10 @@
 <div class="max-w-4xl mx-auto space-y-6">
 
     <x-success-modal name="message-show-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
-        <p class="text-sm text-admin-neutral-600">{{ session('success') }}</p>
+        <p class="text-sm text-admin-neutral-600">{{ session('message_success') }}</p>
     </x-success-modal>
     <x-admin.ui.modal name="message-show-error" title="Error" variant="error" maxWidth="sm">
-        <p class="text-sm text-admin-neutral-700">{{ session('error') }}</p>
+        <p class="text-sm text-admin-neutral-700">{{ session('message_error') }}</p>
         <x-slot name="footer">
             <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'message-show-error')">
                 Close
@@ -59,12 +59,13 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <a href="{{ $mailtoLink }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all text-sm font-medium flex items-center gap-2 shadow-sm">
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-reply' }))"
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all text-sm font-medium flex items-center gap-2 shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7l-5 5 5 5M2 12h11a6 6 0 016 6v1"></path>
                     </svg>
-                    Reply via Email
-                </a>
+                    Reply
+                </button>
                 
                 <form action="{{ route('admin.messages.delete', $message->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this message?');">
                     @csrf
@@ -87,11 +88,47 @@
     </div>
 
 </div>
-@if(session('success') || session('error'))
+
+<x-admin.ui.modal name="message-reply" title="Reply to {{ $message->name }}" variant="info" maxWidth="lg">
+    <form id="messageReplyForm" method="POST" action="{{ route('admin.messages.reply', $message->id) }}" class="space-y-4">
+        @csrf
+
+        <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-3">
+            <p class="text-xs uppercase tracking-wide text-admin-neutral-500">Recipient</p>
+            <p class="text-sm font-semibold text-admin-neutral-900">{{ $message->name }}</p>
+            <p class="text-xs text-admin-neutral-600">{{ $message->email }}</p>
+        </div>
+
+        <div>
+            <x-input-label for="reply_message" :value="__('Reply Message')" class="text-admin-neutral-700 font-medium mb-2" />
+            <textarea id="reply_message" name="reply_message" rows="6"
+                      class="block w-full rounded-admin border border-admin-neutral-300 bg-admin-neutral-50 px-3 py-2 text-sm text-admin-neutral-900 placeholder-admin-neutral-400 transition-all duration-200 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                      placeholder="Type your reply here...">{{ old('reply_message') }}</textarea>
+            @error('reply_message')
+                <p class="mt-2 text-sm text-admin-danger">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="rounded-admin border border-admin-neutral-200 bg-white p-3">
+            <p class="text-xs uppercase tracking-wide text-admin-neutral-500 mb-2">Original Message</p>
+            <p class="text-sm text-admin-neutral-700 whitespace-pre-line">{{ $message->message }}</p>
+        </div>
+    </form>
+    <x-slot name="footer">
+        <x-admin.ui.button.secondary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'message-reply' }))">
+            Cancel
+        </x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="submit" form="messageReplyForm">
+            Send Reply
+        </x-admin.ui.button.primary>
+    </x-slot>
+</x-admin.ui.modal>
+
+@if(session('message_success') || session('message_error'))
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const hasSuccess = @json((bool) session('success'));
-        const hasError = @json((bool) session('error'));
+    const showMessageStatusModal = () => {
+        const hasSuccess = @json((bool) session('message_success'));
+        const hasError = @json((bool) session('message_error'));
 
         if (hasSuccess) {
             window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-show-success' }));
@@ -100,7 +137,20 @@
         if (hasError) {
             window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-show-error' }));
         }
-    });
+    };
+
+    document.addEventListener('DOMContentLoaded', showMessageStatusModal);
+    document.addEventListener('livewire:navigated', showMessageStatusModal);
+</script>
+@endif
+
+@if($errors->has('reply_message'))
+<script>
+    const openReplyModal = () => {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-reply' }));
+    };
+    document.addEventListener('DOMContentLoaded', openReplyModal);
+    document.addEventListener('livewire:navigated', openReplyModal);
 </script>
 @endif
 @endsection

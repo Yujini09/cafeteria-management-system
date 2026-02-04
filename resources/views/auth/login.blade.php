@@ -196,7 +196,7 @@
                                 </div>
                             @endif
 
-                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
+                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4" x-data="{ sending: false }" @submit="if (sending) { $event.preventDefault(); return; } sending = true">
                                 @csrf
 
                                 <div class="relative">
@@ -217,8 +217,10 @@
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300">
-                                        {{ __('Email Password Reset Link') }}
+                                    <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300"
+                                        x-bind:disabled="sending"
+                                        x-bind:class="sending ? 'opacity-70 cursor-not-allowed' : ''">
+                                        <span x-text="sending ? 'Email is currently sending...' : 'Email Password Reset Link'">Email Password Reset Link</span>
                                     </x-primary-button>
                                 </div>
                             </form>

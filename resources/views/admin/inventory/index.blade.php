@@ -493,7 +493,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('livewire:navigated', function() {
     const rootCloseEvent = new Event('close-inventory-modals');
 
     function getCsrfToken() {

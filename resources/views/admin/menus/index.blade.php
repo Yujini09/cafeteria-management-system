@@ -178,6 +178,7 @@
   <div class="flex gap-2 flex-wrap mt-6">
     @foreach($types as $key => $label)
       <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>$meal]) }}"
+         wire:navigate
          class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
         {{ $label }}
       </a>
@@ -221,6 +222,7 @@
             </div>
           </div>
           <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}" 
+             wire:navigate
              class="ml-3 p-2 bg-white border border-green-300 rounded-lg hover:bg-green-50 transition-colors duration-200 shadow-sm">
             <svg class="icon-md primary-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -295,6 +297,7 @@
                       <span class="text-gray-500 mt-0.5 text-xs">{{ ucfirst($food->type) }}</span>
                     </div>
                     <a href="{{ route('admin.recipes.index', $food) }}" 
+                       wire:navigate
                        class="primary-color hover:text-[#00462E] font-medium flex items-center transition-colors duration-200 ml-2 text-xs">
                       Recipe
                       <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,15 +505,19 @@
 
                   <template x-if="form.items.length === 0">
                     <div class="text-center py-8 text-gray-500">
-                      <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                      </svg>
-                      <p class="text-sm">No items yet. Click the button below to add items.</p>
+                      <button type="button" @click="form.items.push({name: '', type: 'food', recipes: [], showRecipes: false})"
+                              class="w-12 h-12 mx-auto text-gray-300 mb-2 hover:text-[#057C3C] transition-colors duration-200"
+                              aria-label="Add new item">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                      </button>
+                      <p class="text-sm">No items yet. Click the plus button above to add items.</p>
                     </div>
                   </template>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="mt-4 pt-4 border-t border-gray-200" x-show="form.items.length > 0">
                   <button type="button" @click="form.items.push({name: '', type: 'food', recipes: [], showRecipes: false})" 
                           class="w-full primary-color hover:text-[#00462E] font-medium transition-colors duration-200 flex items-center justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C] text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -598,20 +605,14 @@
                                          style="font-size: 0.875rem;">
                                 </div>
                                 <div class="overflow-y-auto flex-1">
-                                  <template x-for="inv in allInventoryItems.filter(i => {
-                                    const search = form.searchTerms[index + '_' + rIndex] || '';
-                                    return !search || i.name.toLowerCase().includes(search.toLowerCase());
-                                  })" :key="inv.id">
+                                  <template x-for="inv in getAvailableIngredients(item, rIndex, form.searchTerms[index + '_' + rIndex])" :key="inv.id">
                                     <button type="button" 
                                             @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = '';"
                                             class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
                                       <span x-text="inv.name"></span>
                                     </button>
                                   </template>
-                                  <template x-if="allInventoryItems.filter(i => {
-                                    const search = form.searchTerms[index + '_' + rIndex] || '';
-                                    return !search || i.name.toLowerCase().includes(search.toLowerCase());
-                                  }).length === 0">
+                                  <template x-if="getAvailableIngredients(item, rIndex, form.searchTerms[index + '_' + rIndex]).length === 0">
                                     <div class="px-3 py-4 text-center text-gray-500 text-sm">
                                       <template x-if="allInventoryItems.length === 0">
                                         <span>No ingredients available in inventory</span>
@@ -625,6 +626,7 @@
                               </div>
                             </div>
                             <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
+                            <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
                           </div>
                           <div class="w-full sm:w-24">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Quantity</label>
@@ -819,7 +821,7 @@
                       <div class="space-y-2">
                         <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
                           <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                            <div class="flex-1 relative" x-data="{ dropdownOpen: false }">
+                            <div class="flex-1 relative" x-data="{ dropdownOpen: false, searchTerm: '' }">
                               <button type="button" @click="dropdownOpen = !dropdownOpen"
                                       class="form-input flex items-center justify-between hover:border-blue-500 text-left text-xs">
                                 <span class="truncate">
@@ -841,18 +843,19 @@
                                          placeholder="Search..." class="form-input" style="font-size: 0.75rem;">
                                 </div>
                                 <div class="overflow-y-auto max-h-60">
-                                  <template x-for="inv in getAllInventoryItems().filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))" :key="inv.id">
+                                  <template x-for="inv in getAvailableIngredients(item, rIndex, searchTerm)" :key="inv.id">
                                     <button type="button" @click="recipe.inventory_item_id = inv.id; dropdownOpen = false; searchTerm = '';"
                                             class="w-full text-left px-2 py-1.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors text-xs">
                                       <span x-text="inv.name"></span>
                                     </button>
                                   </template>
-                                  <template x-if="getAllInventoryItems().filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0">
+                                  <template x-if="getAvailableIngredients(item, rIndex, searchTerm).length === 0">
                                     <div class="px-2 py-2 text-center text-gray-500 text-xs">No ingredients found</div>
                                   </template>
                                 </div>
                               </div>
                               <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
+                              <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
                             </div>
                             <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="form-input w-full sm:w-20" required>
                             <input type="text" :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" placeholder="Unit" class="form-input w-full sm:w-16" required>
@@ -988,7 +991,7 @@
 
 @if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu created'))
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('livewire:navigated', function () {
     requestAnimationFrame(() => {
       window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-create-success' }));
     });
@@ -997,7 +1000,7 @@
 @endif
 @if(session('menu_success') && \Illuminate\Support\Str::contains(session('menu_success'), 'Menu updated'))
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('livewire:navigated', function () {
     requestAnimationFrame(() => {
       window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-update-success' }));
     });

@@ -1,11 +1,9 @@
 import './bootstrap';
 
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-// Register all Alpine data components before starting
+// Register all Alpine data components when Alpine initializes
 document.addEventListener('alpine:init', () => {
+    const Alpine = window.Alpine;
+    if (!Alpine) return;
     // Notifications panel
     Alpine.data('notificationsPanel', () => ({
         open: false,
@@ -256,6 +254,55 @@ document.addEventListener('alpine:init', () => {
         const item = this.allInventoryItems.find(i => i.id == id);
         return item ? item.name : '';
       },
+      normalizeIngredientId(id) {
+        if (id === null || id === undefined || id === '') return null;
+        return String(id);
+      },
+      getDuplicateRecipeIndexes(item) {
+        const duplicates = new Set();
+        const seen = new Map();
+        (item?.recipes || []).forEach((recipe, idx) => {
+          const id = this.normalizeIngredientId(recipe?.inventory_item_id);
+          if (!id) return;
+          if (seen.has(id)) {
+            duplicates.add(idx);
+            duplicates.add(seen.get(id));
+            return;
+          }
+          seen.set(id, idx);
+        });
+        return duplicates;
+      },
+      isRecipeDuplicate(item, rIndex) {
+        return this.getDuplicateRecipeIndexes(item).has(rIndex);
+      },
+      getDuplicateIngredientMessage(item, rIndex) {
+        if (!this.isRecipeDuplicate(item, rIndex)) return '';
+        const id = item?.recipes?.[rIndex]?.inventory_item_id;
+        const label = this.getIngredientLabel(id) || 'Ingredient';
+        return `Duplicate ingredient: ${label} already added for this item.`;
+      },
+      hasDuplicateIngredients(items = null) {
+        const list = Array.isArray(items) ? items : this.form.items;
+        return (list || []).some(item => this.getDuplicateRecipeIndexes(item).size > 0);
+      },
+      getAvailableIngredients(item, rIndex, searchTerm = '') {
+        const term = (searchTerm || '').toLowerCase();
+        const currentId = this.normalizeIngredientId(item?.recipes?.[rIndex]?.inventory_item_id);
+        const usedIds = new Set();
+        (item?.recipes || []).forEach((recipe, idx) => {
+          if (idx === rIndex) return;
+          const id = this.normalizeIngredientId(recipe?.inventory_item_id);
+          if (id) usedIds.add(id);
+        });
+        return this.allInventoryItems.filter(inv => {
+          const invId = this.normalizeIngredientId(inv?.id);
+          if (!invId) return false;
+          if (invId !== currentId && usedIds.has(invId)) return false;
+          if (!term) return true;
+          return (inv?.name || '').toLowerCase().includes(term);
+        });
+      },
       nextStep() { if (this.canProceed()) this.currentStep++; },
       previousStep() { if (this.currentStep > 1) this.currentStep--; },
       canProceed() {
@@ -265,7 +312,7 @@ document.addEventListener('alpine:init', () => {
           return this.form.items.length > 0 && this.form.items.every(item => {
             if (!item.recipes || item.recipes.length === 0) return false;
             return item.recipes.every(recipe => recipe.inventory_item_id && recipe.quantity_needed && recipe.unit);
-          });
+          }) && !this.hasDuplicateIngredients();
         }
         return false;
       },
@@ -279,6 +326,12 @@ document.addEventListener('alpine:init', () => {
               if (!recipe.inventory_item_id) errors.push(`Item "${item.name}", Ingredient ${recipeIndex + 1}: Ingredient selection is required`);
               if (!recipe.quantity_needed) errors.push(`Item "${item.name}", Ingredient ${recipeIndex + 1}: Quantity is required`);
               if (!recipe.unit) errors.push(`Item "${item.name}", Ingredient ${recipeIndex + 1}: Unit is required`);
+            });
+            const duplicateIndexes = this.getDuplicateRecipeIndexes(item);
+            duplicateIndexes.forEach((dupIndex) => {
+              const dupRecipe = item.recipes[dupIndex] || {};
+              const ingredientName = this.getIngredientLabel(dupRecipe.inventory_item_id) || 'Ingredient';
+              errors.push(`Item "${item.name || 'Unnamed'}", Ingredient ${dupIndex + 1}: Duplicate ingredient (${ingredientName})`);
             });
           }
         });
@@ -405,5 +458,3 @@ document.addEventListener('alpine:init', () => {
       }
     }));
 });
-
-Alpine.start();

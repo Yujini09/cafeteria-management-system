@@ -6,11 +6,11 @@
     
     {{-- Success/Error Modals --}}
     <x-success-modal name="messages-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
-        <p class="text-sm text-admin-neutral-600">{{ session('success') }}</p>
+        <p class="text-sm text-admin-neutral-600">{{ session('message_success') }}</p>
     </x-success-modal>
     
     <x-admin.ui.modal name="messages-error" title="Error" variant="error" maxWidth="sm">
-        <p class="text-sm text-admin-neutral-700">{{ session('error') }}</p>
+        <p class="text-sm text-admin-neutral-700">{{ session('message_error') }}</p>
         <x-slot name="footer">
             <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'messages-error')">
                 Close
@@ -246,9 +246,9 @@
         }));
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const hasSuccess = @json((bool) session('success'));
-        const hasError = @json((bool) session('error'));
+    document.addEventListener('livewire:navigated', () => {
+        const hasSuccess = @json((bool) session('message_success'));
+        const hasError = @json((bool) session('message_error'));
 
         if (hasSuccess) {
             window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'messages-success' }));

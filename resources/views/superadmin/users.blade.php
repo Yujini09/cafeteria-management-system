@@ -105,11 +105,11 @@
                                 <x-admin.ui.button.secondary type="button" class="!py-2 !px-3 text-xs" onclick="openEditModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}', '{{ addslashes(e($user->email)) }}')">
                                     <x-admin.ui.icon name="fa-pen" size="sm" /> Edit
                                 </x-admin.ui.button.secondary>
-                                <a href="{{ route('superadmin.users.audit', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
+                                <a href="{{ route('superadmin.users.audit', $user) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
                                     <x-admin.ui.icon name="fa-file-alt" size="sm" /> Audit
                                 </a>
                             @else
-                                <a href="{{ route('superadmin.users.audit', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
+                                <a href="{{ route('superadmin.users.audit', $user) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
                                     <x-admin.ui.icon name="fa-file-alt" size="sm" /> Audit
                                 </a>
                             @endif
@@ -443,7 +443,7 @@ function getSortIcon(column) {
     if (currentSortBy !== column) return '';
     return currentSortDirection === 'asc' ? '▲' : '▼';
 }
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('livewire:navigated', () => {
     const hasSuccess = @json((bool) session('success'));
     if (hasSuccess) {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));

@@ -107,7 +107,7 @@
 
 @if(session('status') == 'password-updated')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('livewire:navigated', function () {
         requestAnimationFrame(() => {
             window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'password-success' }));
         });
@@ -116,7 +116,7 @@
 @endif
 @if(session('status') == 'profile-updated')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('livewire:navigated', function () {
         requestAnimationFrame(() => {
             window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'profile-success' }));
         });
@@ -125,7 +125,7 @@
 @endif
 @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('livewire:navigated', function () {
         requestAnimationFrame(() => {
             window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
         });

@@ -66,13 +66,13 @@
         border-top-right-radius: 0%;
         border-bottom-right-radius: 0%;
         font-size: 0.95rem;
+        position: relative;
     }
     
     .menu-item:hover {
         background: rgba(255, 255, 255, 0.15);
-        transform: translateX(4px);
         color: #ffffff;
-        margin-left: 10px;
+        padding-left: 2.75rem;
     }
     
     .menu-item:hover i {
@@ -83,6 +83,7 @@
         background: #f5f5f5 !important;
         color: #FB3E05 !important;
         transform: none;
+        padding-left: 2.5rem;
     }
     
     .active-menu-item:hover i {
@@ -237,6 +238,17 @@
 
 <body class="font-poppins antialiased text-sm"
       x-data="{ openSidebar: false, confirmLogout: false }"
+      x-init="openSidebar = sessionStorage.getItem('sidebarOpen') === 'true';
+              $watch('openSidebar', value => sessionStorage.setItem('sidebarOpen', value ? 'true' : 'false'));
+              const scrollKey = 'sidebarScrollTop';
+              const sidebarScroll = $refs.sidebarScroll;
+              if (sidebarScroll) {
+                  const saved = sessionStorage.getItem(scrollKey);
+                  if (saved !== null) sidebarScroll.scrollTop = parseInt(saved, 10) || 0;
+                  sidebarScroll.addEventListener('scroll', () => {
+                      sessionStorage.setItem(scrollKey, sidebarScroll.scrollTop);
+                  }, { passive: true });
+              }"
       :class="{ 'overflow-hidden': openSidebar || confirmLogout }"
       @keydown.escape.window="openSidebar = false; confirmLogout = false">
 
@@ -250,12 +262,12 @@
          x-cloak>
     </div>
 
-    <aside class="sidebar-gradient text-white w-64 fixed inset-y-0 left-0 z-50 transform md:translate-x-0 transition-all duration-300  backdrop-blur-md animate-slide-in-left"
+    <aside class="sidebar-gradient text-white w-64 fixed inset-y-0 left-0 z-50 transform md:translate-x-0 transition-all duration-300 backdrop-blur-md"
            :class="openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
            x-cloak>
 
         <div class="sidebar-content">
-            <div class="flex-1 overflow-y-auto sidebar-scroll">
+            <div class="flex-1 overflow-y-auto sidebar-scroll" x-ref="sidebarScroll">
                 <div class="logo-section flex items-center justify-center border-b border-white/10">
                     <img src="{{ asset('images/ret-logoo.png') }}" 
                          alt="RET Cafeteria Logo" 
@@ -269,6 +281,7 @@
 
                     @if(Auth::user()->role === 'superadmin')
                         <a href="{{ route('superadmin.users') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('superadmin.users') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -281,6 +294,7 @@
                     @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
                         
                         <a href="{{ route('admin.dashboard') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.dashboard') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -290,6 +304,7 @@
                         </a>
 
                         <a href="{{ route('admin.reservations') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reservations') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -299,6 +314,7 @@
                         </a>
 
                         <a href="{{ route('admin.reports.index') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reports.index') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -308,6 +324,7 @@
                         </a>
 
                         <a href="{{ route('admin.inventory.index') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.inventory.index') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -317,6 +334,7 @@
                         </a>
 
                         <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -326,6 +344,7 @@
                         </a>
 
                         <a href="{{ route('admin.menus.prices') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.menus.prices') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -335,6 +354,7 @@
                         </a>
 
                         <a href="{{ route('admin.calendar') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.calendar') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -344,6 +364,7 @@
                         </a>
 
                         <a href="{{ route('admin.messages.index') }}"
+                           wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.messages.*') ? 'active-menu-item' : '' }}"
                            @click="openSidebar = false">
                             <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -358,6 +379,7 @@
                     </div>
 
                     <a href="{{ route('profile.edit') }}"
+                       wire:navigate
                        class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('profile.edit') ? 'active-menu-item' : '' }}"
                        @click="openSidebar = false">
                         <span class="flex items-center justify-center w-5 h-5 mr-3">
@@ -459,13 +481,13 @@
 <x-admin.ui.toast-container />
 
 @if(session('success') && empty($disableAdminSuccessToast))
-<script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'success', message: @json(session('success')) } })); });</script>
+<script>document.addEventListener('livewire:navigated', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'success', message: @json(session('success')) } })); });</script>
 @endif
 @if(session('error'))
-<script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'error', message: @json(session('error')) } })); });</script>
+<script>document.addEventListener('livewire:navigated', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'error', message: @json(session('error')) } })); });</script>
 @endif
 @if(session('warning'))
-<script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'warning', message: @json(session('warning')) } })); });</script>
+<script>document.addEventListener('livewire:navigated', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'warning', message: @json(session('warning')) } })); });</script>
 @endif
 
 <div x-show="confirmLogout"
@@ -533,7 +555,7 @@ function filterTable(query) {
 }
 
 // Clear search functionality
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('livewire:navigated', function() {
     const searchInput = document.getElementById('searchInput');
     const clearButton = document.getElementById('clearSearch');
 
@@ -757,7 +779,7 @@ function enhanceAdminSelects(root = document) {
     selects.forEach((select) => enhanceAdminSelect(select));
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('livewire:navigated', () => {
     enhanceAdminSelects(document);
 
     const observer = new MutationObserver((mutations) => {
