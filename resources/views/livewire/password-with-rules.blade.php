@@ -9,7 +9,7 @@
     $labelClass = $isAdmin ? 'text-admin-neutral-700' : 'text-green-700 font-medium';
     $eyeClass = $isAdmin ? 'text-admin-neutral-500 hover:text-admin-neutral-700' : 'text-green-600 hover:text-orange-500';
     $validIconClass = $isAdmin ? 'text-emerald-600' : 'text-green-600';
-    $validTextClass = $isAdmin ? 'text-admin-neutral-600' : 'text-green-700';
+    $validTextClass = $validIconClass;
     $invalidTextClass = 'text-red-600';
     $minLength = \App\Support\PasswordRules::MIN_LENGTH;
 @endphp
@@ -63,7 +63,6 @@
                 @php $passed = $ruleResults[$key] ?? false; @endphp
                 <li class="flex items-center gap-2 transition-colors duration-150">
                     <span
-                        class="text-red-500"
                         :class="passes('{{ $key }}') ? '{{ $validIconClass }}' : 'text-red-500'"
                         aria-hidden="true"
                     >
@@ -71,7 +70,6 @@
                         <span x-show="!passes('{{ $key }}')" x-cloak class="text-red-500">&#10007;</span>
                     </span>
                     <span
-                        class="{{ $invalidTextClass }}"
                         :class="passes('{{ $key }}') ? '{{ $validTextClass }}' : '{{ $invalidTextClass }}'"
                     >{{ $label }}</span>
                 </li>

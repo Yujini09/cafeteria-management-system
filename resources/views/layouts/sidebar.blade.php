@@ -657,6 +657,35 @@ function notificationsPanel() {
     };
 }
 
+function wrapSelectField(select) {
+    if (!select) return null;
+    const existing = select.closest('.admin-select-field');
+    if (existing) return existing;
+
+    const field = document.createElement('div');
+    field.className = 'admin-select-field';
+
+    if (select.parentNode) {
+        select.parentNode.insertBefore(field, select);
+        field.appendChild(select);
+    }
+
+    return field;
+}
+
+function ensureSelectIcon(field, select) {
+    if (!field || field.querySelector('.admin-select-icon')) return;
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-chevron-down admin-select-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    field.appendChild(icon);
+
+    if (select) {
+        select.classList.add('admin-select--icon');
+    }
+}
+
 function enhanceAdminSelect(select) {
     if (!select || select.dataset.enhanced === 'true') return;
 
@@ -718,6 +747,9 @@ function enhanceAdminSelect(select) {
             wrapper.appendChild(select);
         }
     }
+
+    const field = wrapSelectField(select);
+    ensureSelectIcon(field, select);
 }
 
 function enhanceAdminSelects(root = document) {

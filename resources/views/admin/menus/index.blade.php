@@ -14,27 +14,6 @@
 <style>
     [x-cloak] { display: none !important; }
     
-    .select-with-arrows {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        width: auto;
-    }
-
-    .select-with-arrows select {
-        appearance: none;
-        padding-right: 2.75rem;
-    }
-
-    .select-arrows {
-        position: absolute;
-        right: 0.75rem;
-        pointer-events: none;
-        color: #6b7280;
-        width: 16px;
-        height: 16px;
-    }
-    
     .type-tab {
         transition: all 0.3s ease;
         font-weight: 600;
@@ -211,7 +190,7 @@
     <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col sm:flex-row sm:items-center gap-3">
       <input type="hidden" name="type" value="{{ $type }}">
       <label class="form-label whitespace-nowrap">Filter by Meal:</label>
-      <div class="select-with-arrows w-full sm:w-64">
+      <div class="w-full sm:w-64">
         <select name="meal" data-admin-select="true" class="form-select" onchange="this.form.submit()">
           <option value="all" {{ $meal === 'all' ? 'selected' : '' }}>
             All Menus {{ !empty($totalCount) ? "($totalCount)" : '' }}
@@ -223,11 +202,6 @@
             </option>
           @endforeach
         </select>
-        <span class="select-arrows" aria-hidden="true">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
-          </svg>
-        </span>
       </div>
     </form>
 

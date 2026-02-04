@@ -6,13 +6,15 @@
 <div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 p-6 max-w-full relative overflow-hidden">
     {{-- Header matches admin cards: accent bar + gradient icon badge --}}
     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-admin-primary to-admin-primary-hover"></div>
-    <div class="flex flex-wrap items-center gap-4 mb-8 pt-2">
-        <div class="w-12 h-12 rounded-admin bg-gradient-to-r from-admin-primary to-admin-primary-hover flex items-center justify-center shrink-0 shadow-admin">
-            <x-admin.ui.icon name="user" style="fas" class="!text-white w-6 h-6" />
-        </div>
-        <div>
-            <h2 class="text-2xl font-bold text-admin-neutral-900">Account Settings</h2>
-            <p class="text-sm text-admin-neutral-500">Manage your profile and password securely.</p>
+    <div class="page-header items-start pt-2">
+        <div class="header-content">
+            <div class="header-icon">
+                <x-admin.ui.icon name="user" style="fas" />
+            </div>
+            <div class="header-text">
+                <h1 class="header-title">Account Settings</h1>
+                <p class="header-subtitle">Manage your profile and password securely.</p>
+            </div>
         </div>
     </div>
 

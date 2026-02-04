@@ -1,7 +1,7 @@
 {{-- Google OAuth Button Component --}}
-<div class="mt-6">
+<div class="mt-0">
     <a href="{{ route('auth.google') }}" 
-       class="w-full flex justify-center items-center bg-white border border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-200 text-gray-700"
+       class="w-full flex justify-center items-center bg-white border border-admin-neutral-200 hover:bg-admin-neutral-50 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary h-12 text-sm font-semibold rounded-admin shadow-admin transition duration-200 text-admin-neutral-700"
        aria-label="Continue with Google OAuth">
         <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
