@@ -63,7 +63,15 @@
                         <!-- Name field (Full width) -->
                         <div class="space-y-2 w-full">
                             <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" id="name" name="name" placeholder="Enter your name" class="contact-input" autocomplete="name" required>
+                            <input type="text"
+                                   id="name"
+                                   name="name"
+                                   placeholder="Enter your name"
+                                   class="contact-input {{ auth()->check() ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+                                   autocomplete="name"
+                                   value="{{ auth()->check() ? auth()->user()->name : '' }}"
+                                   {{ auth()->check() ? 'readonly aria-readonly=true' : '' }}
+                                   required>
                         </div>
                         
                         <!-- Email field (Full width) -->
@@ -90,6 +98,7 @@
                             rows="12"
                             placeholder="Description"
                             class="contact-input max-h-[30rem] -mx-1 !w-full"
+                            minlength="20"
                             required></textarea>
                     </div>
 
@@ -152,12 +161,35 @@
     </div>
 </section>
 
-{{-- Contact Success/Error Modals (reused components) --}}
-<x-success-modal name="contact-message-success" title="Message Sent" maxWidth="sm" overlayClass="bg-black/50">
-    <p id="contactSuccessMessage" class="text-sm text-green-700">
-        Your message has been sent to our admin team.
-    </p>
-</x-success-modal>
+{{-- Contact Success/Error Modals --}}
+<div id="contact-success-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-contact-success></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors" data-close-contact-success aria-label="Close">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="flex items-start gap-3">
+                <svg class="w-10 h-10 text-green-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Message Sent</h3>
+                    <p id="contactSuccessMessage" class="text-sm text-green-700 mt-1">
+                        Email has been sent.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button type="button" class="px-5 py-2.5 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition-colors font-semibold" data-close-contact-success>
+                    Okay
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <x-admin.ui.modal name="contact-message-error" title="Message Not Sent" variant="error" maxWidth="sm">
     <p id="contactErrorMessage" class="text-sm text-admin-neutral-700">
@@ -182,6 +214,17 @@
         const messageEl = document.getElementById('contactSuccessMessage');
         if (messageEl && message) {
             messageEl.textContent = message;
+        }
+        const modal = document.getElementById('contact-success-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            if (!modal.dataset.bound) {
+                modal.querySelectorAll('[data-close-contact-success]').forEach(btn => {
+                    btn.addEventListener('click', () => modal.classList.add('hidden'));
+                });
+                modal.dataset.bound = 'true';
+            }
+            return;
         }
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'contact-message-success' }));
     }
@@ -216,6 +259,12 @@
 
         if (!name || !email || !message) {
             showErrorModal("Please fill out all required fields.");
+            return;
+        }
+
+        if (message.length < 20) {
+            showErrorModal("Please enter at least 20 characters in your message.");
+            document.getElementById('message').focus();
             return;
         }
 
@@ -267,7 +316,7 @@
                     throw new Error(data.message || "Failed to send message. Please try again.");
                 }
                 form.reset();
-                showSuccessModal(data.message || "Message sent successfully!");
+                showSuccessModal(data.message || "Email has been sent.");
             })
             .catch((error) => {
                 console.error("Contact form submission failed:", error);

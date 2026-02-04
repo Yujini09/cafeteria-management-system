@@ -15,7 +15,7 @@ class ContactController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
-            'message' => 'required|string',
+            'message' => 'required|string|min:20',
         ]);
 
         // Save to Database
@@ -38,14 +38,20 @@ class ContactController extends Controller
         $primaryRecipient = $recipients->first();
         $bccRecipients = $recipients->slice(1)->values();
 
-        $body = "New Contact Message\n\n";
-        $body .= "Name: {$validated['name']}\n";
-        $body .= "Email: {$validated['email']}\n\n";
-        $body .= "Message:\n{$validated['message']}\n";
+        $mailData = [
+            'app_name' => config('app.name', 'Smart Cafeteria'),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'user_message' => $validated['message'],
+            'sent_at' => now()->format('M d, Y h:i A'),
+        ];
 
         $emailSent = false;
         try {
-            Mail::raw($body, function ($message) use ($validated, $primaryRecipient, $bccRecipients) {
+            Mail::send(
+                ['html' => 'emails.contact_message', 'text' => 'emails.contact_message_plain'],
+                $mailData,
+                function ($message) use ($validated, $primaryRecipient, $bccRecipients) {
                 $message->to($primaryRecipient)
                     ->subject('New Contact Message from ' . $validated['name'])
                     ->replyTo($validated['email'], $validated['name']);
@@ -71,7 +77,7 @@ class ContactController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Message sent successfully!'
+            'message' => 'Email has been sent.'
         ]);
     }
 }

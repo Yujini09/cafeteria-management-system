@@ -98,6 +98,25 @@ class ReservationController extends Controller
                 ->with('error', 'Only pending reservations can be approved.');
         }
 
+        // Block approvals that overlap an already approved reservation
+        $overlap = $this->findOverlappingApprovedReservation($reservation);
+        if ($overlap) {
+            $conflictId = $overlap['reservation']->id ?? null;
+            $conflictDate = $overlap['date'] ?? null;
+            $conflictDateLabel = $conflictDate
+                ? \Carbon\Carbon::parse($conflictDate)->format('M d, Y')
+                : null;
+
+            return redirect()
+                ->route('admin.reservations.show', $reservation)
+                ->with('overlap_warning', true)
+                ->with('overlap_reservation_id', $conflictId)
+                ->with('overlap_reservation_date', $conflictDateLabel)
+                ->with('error', $conflictId
+                    ? "This reservation overlaps with reservation #{$conflictId}."
+                    : 'This reservation overlaps with an already approved reservation.');
+        }
+
         // If not forced, check inventory availability
         if (!$forceApprove) {
             $reservation->load(['items.menu.items.recipes.inventoryItem']);
@@ -196,6 +215,170 @@ class ReservationController extends Controller
         }
 
         return array_values($insufficientItems);
+    }
+
+    /**
+     * Find an overlapping approved reservation (by date + time).
+     */
+    protected function findOverlappingApprovedReservation(Reservation $reservation): ?array
+    {
+        [$startDate, $endDate] = $this->getReservationDateRange($reservation);
+
+        $query = Reservation::query()
+            ->where('status', 'approved')
+            ->whereDate('event_date', '<=', $endDate->format('Y-m-d'))
+            ->whereDate(DB::raw('COALESCE(end_date, event_date)'), '>=', $startDate->format('Y-m-d'));
+
+        if (!empty($reservation->id)) {
+            $query->where('id', '!=', $reservation->id);
+        }
+
+        $candidates = $query->get();
+
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        $targetSlots = $this->getReservationSlots($reservation);
+
+        foreach ($candidates as $other) {
+            $otherSlots = $this->getReservationSlots($other);
+            foreach ($targetSlots as $date => [$startA, $endA]) {
+                if (!isset($otherSlots[$date])) {
+                    continue;
+                }
+
+                [$startB, $endB] = $otherSlots[$date];
+                if ($this->timeRangesOverlap($startA, $endA, $startB, $endB)) {
+                    return ['reservation' => $other, 'date' => $date];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected function getReservationDateRange(Reservation $reservation): array
+    {
+        $startDate = $reservation->event_date
+            ? \Carbon\Carbon::parse($reservation->event_date)
+            : \Carbon\Carbon::parse($reservation->date ?? $reservation->created_at);
+
+        $endDate = $reservation->end_date
+            ? \Carbon\Carbon::parse($reservation->end_date)
+            : $startDate->copy();
+
+        if ($endDate->lt($startDate)) {
+            $endDate = $startDate->copy();
+        }
+
+        return [$startDate->startOfDay(), $endDate->startOfDay()];
+    }
+
+    protected function getReservationSlots(Reservation $reservation): array
+    {
+        [$startDate, $endDate] = $this->getReservationDateRange($reservation);
+
+        $dayTimes = $reservation->day_times ?? [];
+        if (is_string($dayTimes)) {
+            $decoded = json_decode($dayTimes, true);
+            $dayTimes = is_array($decoded) ? $decoded : [];
+        }
+
+        $fallbackRange = $reservation->event_time ?? $reservation->time ?? null;
+        $slots = [];
+
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dateKey = $date->format('Y-m-d');
+            $startTime = null;
+            $endTime = null;
+            $rangeString = $fallbackRange;
+
+            if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
+                $timeData = $dayTimes[$dateKey];
+                if (is_array($timeData)) {
+                    $startTime = $timeData['start_time'] ?? $timeData['start'] ?? $timeData['time_start'] ?? null;
+                    $endTime = $timeData['end_time'] ?? $timeData['end'] ?? $timeData['time_end'] ?? null;
+                } elseif (is_string($timeData)) {
+                    $rangeString = $timeData;
+                }
+            }
+
+            [$startMin, $endMin] = $this->normalizeTimeRange($startTime, $endTime, $rangeString);
+            $slots[$dateKey] = [$startMin, $endMin];
+        }
+
+        return $slots;
+    }
+
+    protected function normalizeTimeRange(?string $startTime, ?string $endTime, ?string $rangeString): array
+    {
+        $startMin = $this->parseTimeToMinutes($startTime);
+        $endMin = $this->parseTimeToMinutes($endTime);
+
+        if (($startMin === null || $endMin === null) && !empty($rangeString)) {
+            [$rangeStart, $rangeEnd] = $this->parseRangeString($rangeString);
+            if ($startMin === null) $startMin = $rangeStart;
+            if ($endMin === null) $endMin = $rangeEnd;
+        }
+
+        // If still missing or invalid, treat as full-day to avoid false approvals.
+        if ($startMin === null || $endMin === null || $endMin <= $startMin) {
+            return [0, 1440];
+        }
+
+        return [$startMin, $endMin];
+    }
+
+    protected function parseRangeString(string $range): array
+    {
+        $parts = preg_split('/\s*-\s*/', trim($range));
+        if (count($parts) >= 2) {
+            return [
+                $this->parseTimeToMinutes($parts[0]),
+                $this->parseTimeToMinutes($parts[1])
+            ];
+        }
+
+        if (count($parts) === 1) {
+            return [$this->parseTimeToMinutes($parts[0]), null];
+        }
+
+        return [null, null];
+    }
+
+    protected function parseTimeToMinutes(?string $timeString): ?int
+    {
+        if ($timeString === null) return null;
+        $timeString = trim($timeString);
+        if ($timeString === '') return null;
+
+        if (preg_match('/^\d{1,2}$/', $timeString)) {
+            $hour = (int) $timeString;
+            if ($hour >= 0 && $hour <= 23) {
+                return $hour * 60;
+            }
+        }
+
+        $formats = ['H:i', 'H:i:s', 'g:i A', 'g:iA', 'g A', 'gA', 'g:i a', 'g:ia'];
+        foreach ($formats as $format) {
+            $dt = \DateTime::createFromFormat($format, $timeString);
+            if ($dt !== false) {
+                return ((int) $dt->format('H')) * 60 + (int) $dt->format('i');
+            }
+        }
+
+        try {
+            $dt = \Carbon\Carbon::parse($timeString);
+            return ($dt->hour * 60) + $dt->minute;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    protected function timeRangesOverlap(int $startA, int $endA, int $startB, int $endB): bool
+    {
+        return $startA < $endB && $startB < $endA;
     }
 
     public function decline(Request $request, Reservation $reservation)
@@ -542,6 +725,32 @@ class ReservationController extends Controller
             'project_name' => 'nullable|string',
             'account_code' => 'nullable|string',
         ]);
+
+        // Block date/time selections that overlap an approved reservation
+        $dayTimes = json_decode($validated['day_times'], true) ?? [];
+        $tempReservation = new Reservation();
+        $tempReservation->event_date = $validated['start_date'];
+        $tempReservation->end_date = $validated['end_date'];
+        $tempReservation->day_times = $dayTimes;
+
+        $overlap = $this->findOverlappingApprovedReservation($tempReservation);
+        if ($overlap) {
+            $conflictId = $overlap['reservation']->id ?? null;
+            $conflictDate = $overlap['date'] ?? null;
+            $conflictDateLabel = $conflictDate
+                ? \Carbon\Carbon::parse($conflictDate)->format('M d, Y')
+                : null;
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('reservation_conflict', true)
+                ->with('conflict_reservation_id', $conflictId)
+                ->with('conflict_reservation_date', $conflictDateLabel)
+                ->with('error', $conflictId
+                    ? "This date and time overlap with reservation #{$conflictId}."
+                    : 'This date and time overlap with an existing approved reservation.');
+        }
 
         // 2. Save all valid data into the session
         session(['reservation_data' => $validated]);

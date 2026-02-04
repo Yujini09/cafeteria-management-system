@@ -100,14 +100,119 @@ document.addEventListener('alpine:init', () => {
 
     // Reservation list page
     Alpine.data('reservationList', () => ({
-        // Implementation from blade file
+        approveConfirmationOpen: false,
+        declineConfirmationOpen: false,
+        selectedReservationId: null,
+        openApproveConfirmation(id) {
+            this.selectedReservationId = id ?? null;
+            this.declineConfirmationOpen = false;
+            this.approveConfirmationOpen = true;
+        },
+        openDeclineConfirmation(id) {
+            this.selectedReservationId = id ?? null;
+            this.approveConfirmationOpen = false;
+            this.declineConfirmationOpen = true;
+        },
+        redirectToShowPage() {
+            if (!this.selectedReservationId) return;
+            window.location.href = `/admin/reservations/${this.selectedReservationId}`;
+        }
     }));
 
     // Reservation show page
-    Alpine.data('reservationShow', (opts) => ({
-        accepted: opts?.accepted ?? false,
-        declined: opts?.declined ?? false,
-        // Implementation from blade file
+    Alpine.data('reservationShow', (opts = {}) => ({
+        approveConfirmationOpen: false,
+        declineConfirmationOpen: false,
+        acceptedOpen: false,
+        inventoryWarningOpen: false,
+        declineOpen: false,
+        overlapWarningOpen: false,
+        overlapReservationId: null,
+        overlapDate: '',
+        insufficientItems: [],
+        init() {
+            this.acceptedOpen = Boolean(opts?.accepted);
+            this.inventoryWarningOpen = Boolean(opts?.inventoryWarning);
+            this.insufficientItems = Array.isArray(opts?.insufficientItems) ? opts.insufficientItems : [];
+            this.overlapWarningOpen = Boolean(opts?.overlapWarning);
+            this.overlapReservationId = opts?.overlapReservationId ?? null;
+            this.overlapDate = opts?.overlapDate ?? '';
+        },
+        openApproveConfirmation() {
+            this.declineConfirmationOpen = false;
+            this.approveConfirmationOpen = true;
+        },
+        openDeclineConfirmation() {
+            this.approveConfirmationOpen = false;
+            this.declineConfirmationOpen = true;
+        },
+        async handleApprove() {
+            this.approveConfirmationOpen = false;
+
+            const form = document.getElementById('approveForm');
+            if (!form) {
+                console.warn('Approve form not found');
+                return;
+            }
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            let checkUrl = form.dataset.checkUrl || '';
+            if (!checkUrl) {
+                const action = form.getAttribute('action') || '';
+                if (action.includes('/approve')) {
+                    checkUrl = action.replace(/\/approve(?:\?.*)?$/, '/check-inventory');
+                }
+            }
+
+            if (!checkUrl) {
+                form.submit();
+                return;
+            }
+
+            try {
+                const res = await fetch(checkUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Inventory check failed: ${res.status}`);
+                }
+
+                const data = await res.json();
+                if (data && data.sufficient === false) {
+                    this.insufficientItems = Array.isArray(data.insufficient_items) ? data.insufficient_items : [];
+                    this.inventoryWarningOpen = true;
+                    return;
+                }
+
+                form.submit();
+            } catch (error) {
+                console.warn('Inventory check error, submitting anyway', error);
+                form.submit();
+            }
+        },
+        proceedWithApproval() {
+            const form = document.getElementById('approveForm');
+            if (!form) return;
+            const forceInput = form.querySelector('#forceApproveInput');
+            if (forceInput) forceInput.value = '1';
+            this.inventoryWarningOpen = false;
+            form.submit();
+        },
+        openDeclineForm() {
+            this.declineConfirmationOpen = false;
+            this.declineOpen = true;
+        },
+        openDeclineFromOverlap() {
+            this.overlapWarningOpen = false;
+            this.declineOpen = true;
+        }
     }));
 
     // Menu create modal

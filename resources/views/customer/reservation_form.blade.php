@@ -154,6 +154,7 @@
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span> (CLSU Email only)</label>
                         <input type="email" id="email" name="email" placeholder="Enter your CLSU email (@clsu2.edu.ph)" required
+                            value="{{ old('email', auth()->user()->email ?? '') }}" readonly
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         <div id="email-error" class="text-sm text-red-500 mt-1 hidden">
                             Please use a valid CLSU email address (must end with @clsu2.edu.ph)
@@ -270,6 +271,44 @@
         </form>
     </div>
 </section>
+
+@if(session('reservation_conflict'))
+<div id="reservation-conflict-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-conflict></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative">
+            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors" data-close-conflict aria-label="Close">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="flex items-start gap-3">
+                <svg class="w-10 h-10 text-red-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Date already taken</h3>
+                    <p class="text-sm text-gray-700 mt-1">
+                        This date and time overlap with an approved reservation
+                        @if(session('conflict_reservation_id'))
+                            <span class="font-semibold">#{{ session('conflict_reservation_id') }}</span>
+                        @endif
+                        @if(session('conflict_reservation_date'))
+                            on <span class="font-semibold">{{ session('conflict_reservation_date') }}</span>
+                        @endif
+                        . Please choose another date or time.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button type="button" class="px-5 py-2.5 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition-colors font-semibold" data-close-conflict>
+                    Okay
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script>
     // Global state for the calendar
@@ -802,6 +841,19 @@
             }
         });
     }
+
+    (function() {
+        const shouldShowConflict = @json(session('reservation_conflict', false));
+        if (!shouldShowConflict) return;
+
+        const modal = document.getElementById('reservation-conflict-modal');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        modal.querySelectorAll('[data-close-conflict]').forEach(btn => {
+            btn.addEventListener('click', () => modal.classList.add('hidden'));
+        });
+    })();
 
 </script>
 @endsection

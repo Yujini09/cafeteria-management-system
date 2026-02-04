@@ -113,10 +113,13 @@
         accepted:@js(session('accepted',false)),
         declined:@js(session('declined',false)),
         inventoryWarning:@js(session('inventory_warning',false)),
-        insufficientItems:@js(session('insufficient_items',[]))
+        insufficientItems:@js(session('insufficient_items',[])),
+        overlapWarning:@js(session('overlap_warning',false)),
+        overlapReservationId:@js(session('overlap_reservation_id',null)),
+        overlapDate:@js(session('overlap_reservation_date',null))
 })"
-     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen || acceptedOpen || inventoryWarningOpen || declineOpen)"
-     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false">
+     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen || acceptedOpen || inventoryWarningOpen || declineOpen || overlapWarningOpen)"
+     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false; overlapWarningOpen = false">
     
     <!-- Header -->
     <div class="page-header">
@@ -567,7 +570,7 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
              x-transition.scale.90
@@ -587,7 +590,7 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="declineConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
              x-transition.scale.90
@@ -605,10 +608,40 @@
             </div>
         </div>
     </div>
+
+    {{-- Overlap Warning Modal --}}
+    <div x-cloak x-show="overlapWarningOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="overlapWarningOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10"
+             x-transition.scale.90
+             @click.stop>
+            <div class="flex items-center mb-4">
+                <svg class="w-10 h-10 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold">Schedule Conflict</h3>
+                    <p class="text-sm text-gray-600">This reservation overlaps with an already approved reservation.</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-5">
+                This reservation overlaps with reservation
+                <span class="font-semibold">#<span x-text="overlapReservationId ?? 'N/A'"></span></span>
+                <template x-if="overlapDate">
+                    <span> on <span x-text="overlapDate"></span></span>
+                </template>.
+                You can’t approve overlapping reservations. Would you like to proceed with declining this reservation?
+            </p>
+            <div class="flex justify-end gap-3">
+                <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="overlapWarningOpen = false">Close</button>
+                <button type="button" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium" @click="openDeclineFromOverlap()">Proceed to Decline</button>
+            </div>
+        </div>
+    </div>
     
 
     {{-- Accepted popup --}}
-    <div x-cloak x-show="acceptedOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="acceptedOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="acceptedOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
              x-transition.scale.90
@@ -624,7 +657,7 @@
         </div>
     </div>
     {{-- Inventory Warning modal --}}
-    <div x-cloak x-show="inventoryWarningOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="inventoryWarningOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="inventoryWarningOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="modern-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10"
              x-transition.scale.90
@@ -698,7 +731,7 @@
     </div>
 
     {{-- Decline Form Modal --}}
-    <div x-cloak x-show="declineOpen" x-transition.opacity class="fixed inset-0 flex items-center justify-center p-4">
+    <div x-cloak x-show="declineOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="declineOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div class="modern-modal p-6 w-full max-w-lg relative z-10"
              x-transition.scale.90

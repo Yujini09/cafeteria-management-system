@@ -352,7 +352,7 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <div @click="approveConfirmationOpen=false" class="absolute inset-0"></div>
         <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
              x-transition.scale.90
@@ -372,7 +372,7 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <div @click="declineConfirmationOpen=false" class="absolute inset-0"></div>
         <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
              x-transition.scale.90

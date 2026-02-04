@@ -9,6 +9,7 @@ use App\Models\Notification as NotificationModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
 
@@ -58,13 +59,14 @@ class GoogleController extends Controller
                 // User exists, log them in
                 \Log::info('Existing user logging in via Google', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
+                Session::regenerate();
                 AuditTrail::create([
                     'user_id' => $user->id,
                     'action' => 'Logged in',
                     'module' => 'auth',
                     'description' => 'logged in',
                 ]);
-                return redirect()->intended(route('customer.homepage'));
+                return redirect()->route('dashboard');
             } else {
                 // User doesn't exist, create new user
                 \Log::info('Creating new user from Google OAuth', ['email' => $googleUser->getEmail()]);
@@ -88,13 +90,14 @@ class GoogleController extends Controller
 
                 \Log::info('New user created via Google OAuth', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
+                Session::regenerate();
                 AuditTrail::create([
                     'user_id' => $user->id,
                     'action' => 'Logged in',
                     'module' => 'auth',
                     'description' => 'logged in',
                 ]);
-                return redirect()->intended(route('customer.homepage'));
+                return redirect()->route('dashboard');
             }
         } catch (\Exception $e) {
             \Log::error('Google OAuth Error: ' . $e->getMessage(), [
