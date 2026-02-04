@@ -3,7 +3,6 @@
 @section('title', 'Menu Selection - CLSU RET Cafeteria')
 
 @section('styles')
-
     .menu_selection-hero-bg {
         background-image: url('/images/banner1.jpg');
         background-size: cover;
@@ -361,7 +360,6 @@
 
 @section('content')
 
-<!-- Reservation Banner Header -->
 <section class="menu_selection-hero-bg py-20 lg:py-20 bg-gray-900 text-white relative overflow-hidden">
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl lg:text-5xl font-extrabold mb-2 tracking-wider">
@@ -373,10 +371,8 @@
     </div>
 </section>
 
-<!-- Menu Selection Section -->
 <section class="py-10 bg-gray-50 text-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Progress Indicator -->
         <div class="mb-8">
             <div class="flex items-center justify-center">
                 <div class="flex items-center">
@@ -406,17 +402,29 @@
 
             {{-- Main Form (Menu Selection) - Occupies 8/12 columns on large screens --}}
             <div class="lg:col-span-8">
+                {{-- Pointing to final submission route --}}
                 <form action="{{ route('reservation.store') }}" method="POST" class="space-y-6" id="reservation-form">
                     @csrf
+                    
+                    {{-- CRITICAL: Hidden fields to capture Session Data from Step 1 --}}
+                    @if(session('reservation_data'))
+                        <input type="hidden" name="name" value="{{ session('reservation_data.name') }}">
+                        <input type="hidden" name="department" value="{{ session('reservation_data.department') }}">
+                        <input type="hidden" name="address" value="{{ session('reservation_data.address') }}">
+                        <input type="hidden" name="email" value="{{ session('reservation_data.email') }}">
+                        <input type="hidden" name="phone" value="{{ session('reservation_data.phone') }}">
+                        <input type="hidden" name="activity" value="{{ session('reservation_data.activity') }}">
+                        <input type="hidden" name="venue" value="{{ session('reservation_data.venue') }}">
+                        <input type="hidden" name="project_name" value="{{ session('reservation_data.project_name') }}">
+                        <input type="hidden" name="account_code" value="{{ session('reservation_data.account_code') }}">
+                    @endif
 
                     {{-- Day Navigation --}}
                     <div class="day-nav-container">
                         <div class="day-tabs" id="day-tabs">
-                            <!-- Day tabs will be dynamically generated -->
-                        </div>
+                            </div>
                         <div class="day-info" id="day-info">
-                            <!-- Day info will be dynamically updated -->
-                        </div>
+                            </div>
                     </div>
 
                     {{-- Menu Selection Grid --}}
@@ -439,7 +447,7 @@
 
                             // Get date range from session or previous form
                             $startDate = session('reservation_data.start_date') ?? now()->format('Y-m-d');
-                            $endDate = session('reservation_data.end_date') ?? now()->addDays(2)->format('Y-m-d');
+                            $endDate = session('reservation_data.end_date') ?? now()->addDays(0)->format('Y-m-d'); // Default to 0 days added if null
 
                             // Parse day_times JSON if available
                             $dayTimes = [];
@@ -480,8 +488,7 @@
 
                         {{-- Day Content Areas --}}
                         <div id="day-content-container">
-                            <!-- Day content will be dynamically generated -->
-                        </div>
+                            </div>
 
                         {{-- Quick Actions --}}
                         <div class="mt-6 pt-4 border-t border-gray-200">
@@ -730,7 +737,6 @@
     </div>
 </section>
 
-<!-- Confirmation Modal -->
 <div id="confirmationModal" class="confirmation-modal">
     <div class="confirmation-modal-content">
         <div class="text-center mb-6">
@@ -747,8 +753,7 @@
             <h4 class="text-lg font-bold text-clsu-green mb-4">Reservation Summary</h4>
             
             <div id="modal-reservation-summary">
-                <!-- Dynamic content will be inserted here -->
-            </div>
+                </div>
 
             <div class="total-section">
                 <div class="flex justify-between items-center">
@@ -781,7 +786,6 @@
     </div>
 </div>
 
-<!-- Success Modal -->
 <div id="successModal" class="confirmation-modal">
     <div class="confirmation-modal-content">
         <div class="text-center mb-6">
@@ -842,19 +846,9 @@
         
         // Show loading state
         const confirmButton = document.getElementById('confirm-button');
-        const originalText = confirmButton.innerHTML;
-        confirmButton.innerHTML = '<span class="animate-spin mr-2">⟳</span> Processing...';
-        confirmButton.disabled = true;
-
-        // Simulate processing delay
-        setTimeout(() => {
-            // Show success modal
-            showSuccessModal();
-            
-            // Reset button state
-            confirmButton.innerHTML = originalText;
-            confirmButton.disabled = false;
-        }, 1500);
+        
+        // Actually submit the form
+        document.getElementById('reservation-form').submit();
     }
 
     function showSuccessModal() {
@@ -1067,8 +1061,7 @@
                             <div class="md:col-span-4">
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Menu Choice</label>
                                 <select name="reservations[${day}][{{ $meal_key }}][menu]" class="menu-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
-                                    <!-- Menu options will be dynamically populated based on category selection -->
-                                </select>
+                                    </select>
                             </div>
 
                             <div class="md:col-span-2">

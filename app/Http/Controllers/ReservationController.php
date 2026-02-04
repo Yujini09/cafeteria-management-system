@@ -255,51 +255,38 @@ class ReservationController extends Controller
     }
 
     public function create(Request $request)
-    {
-        // Capture date range and time selection from GET parameters
-        $reservationData = [
-            'start_date' => $request->query('start_date'),
-            'end_date' => $request->query('end_date'),
-            'day_times' => $request->query('day_times'),
-            // Capture personal info if needed
-            'name' => $request->query('name'),
-            'department' => $request->query('department'),
-            'address' => $request->query('address'),
-            'email' => $request->query('email'),
-            'phone' => $request->query('phone'),
-            'activity' => $request->query('activity'),
-            'venue' => $request->query('venue'),
-            'project_name' => $request->query('project_name'),
-            'account_code' => $request->query('account_code'),
-        ];
-        
-        // Store in session for use in the form
-        session(['reservation_data' => $reservationData]);
-        
-        // Fetch all menus grouped by meal_time and type, eager load 'items' relationship
-        $menus = \App\Models\Menu::with('items')->get()->groupBy(['meal_time', 'type']);
-        
-        // Get default prices
-        $menuPrices = [];
-        $defaultStandardPrice = 150;
-        $defaultSpecialPrice = 200;
-        
-        // Organize prices by meal time and type
-        foreach ($menus as $meal_time => $types) {
-            foreach ($types as $type => $menuList) {
-                if ($menuList->isNotEmpty()) {
-                    $menuPrices[$type][$meal_time] = $menuList->map(function($menu) {
-                        return (object)[
-                            'price' => $menu->price ?? ($menu->type === 'special' ? 200 : 150)
-                        ];
-                    });
+        {
+            // 1. Retrieve data from session (saved by postDetails)
+            $reservationData = session('reservation_data');
+
+            // Security check: If no session data exists, send them back to Step 1
+            if (!$reservationData) {
+                return redirect()->route('reservation_form')
+                    ->with('error', 'Please fill out the reservation details first.');
+            }
+
+            // 2. Fetch menus
+            $menus = \App\Models\Menu::with('items')->get()->groupBy(['meal_time', 'type']);
+
+            // 3. Setup prices
+            $menuPrices = [];
+            $defaultStandardPrice = 150;
+            $defaultSpecialPrice = 200;
+
+            foreach ($menus as $meal_time => $types) {
+                foreach ($types as $type => $menuList) {
+                    if ($menuList->isNotEmpty()) {
+                        $menuPrices[$type][$meal_time] = $menuList->map(function($menu) {
+                            return (object)[
+                                'price' => $menu->price ?? ($menu->type === 'special' ? 200 : 150)
+                            ];
+                        });
+                    }
                 }
             }
+
+            return view('customer.reservation_form_menu', compact('menus', 'reservationData', 'menuPrices'));
         }
-        
-        // Pass the menus and reservation data to the view
-        return view('customer.reservation_form_menu', compact('menus', 'reservationData', 'menuPrices'));
-    }
 
     public function store(Request $request)
     {
@@ -533,4 +520,33 @@ class ReservationController extends Controller
     
     return redirect()->back()->with('success', 'Receipt uploaded successfully!');
 }
+/**
+     * Handle Step 1 (Details) submission and save to Session
+     */
+    public function postDetails(Request $request)
+    {
+        // 1. Validate the Step 1 inputs
+        $validated = $request->validate([
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+            'day_times'  => 'required|json', // Validate that day_times is present
+            // Basic fields
+            'name'       => 'required|string',
+            'email'      => 'required|email',
+            'phone'      => 'required|string',
+            'venue'      => 'required|string',
+            'activity'   => 'required|string',
+            'department' => 'required|string',
+            'address'    => 'required|string',
+            // Optionals
+            'project_name' => 'nullable|string',
+            'account_code' => 'nullable|string',
+        ]);
+
+        // 2. Save all valid data into the session
+        session(['reservation_data' => $validated]);
+
+        // 3. Redirect to Step 2 (Menu Selection)
+        return redirect()->route('reservation.create');
+    }
 }

@@ -3,9 +3,12 @@
 
 @section('content')
 <div x-data="messageList()" x-effect="document.body.classList.toggle('overflow-hidden', deleteConfirmationOpen)">
+    
+    {{-- Success/Error Modals --}}
     <x-success-modal name="messages-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">{{ session('success') }}</p>
     </x-success-modal>
+    
     <x-admin.ui.modal name="messages-error" title="Error" variant="error" maxWidth="sm">
         <p class="text-sm text-admin-neutral-700">{{ session('error') }}</p>
         <x-slot name="footer">
@@ -16,10 +19,12 @@
     </x-admin.ui.modal>
 
     <div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full">
+        
         <div class="page-header items-start">
             <div class="header-content">
-                <div class="header-icon">
-                    <x-admin.ui.icon name="fa-envelope" style="fas" class="text-white w-6 h-6" />
+                <div class="header-icon flex items-center justify-center">
+                    {{-- FIXED: Replaced component with direct icon --}}
+                    <i class="fas fa-envelope text-white text-lg"></i>
                 </div>
                 <div class="header-text">
                     <h1 class="header-title">Customer Messages</h1>
@@ -60,12 +65,14 @@
                 @endphp
                 @if($unreadCount > 0)
                     <span class="inline-flex items-center gap-2 rounded-full border border-admin-success bg-admin-success-light px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-success">
-                        <x-admin.ui.icon name="fa-envelope" size="xs" />
+                        {{-- FIXED: Replaced component with direct icon --}}
+                        <i class="fas fa-envelope text-xs"></i>
                         {{ $unreadCount }} New Message{{ $unreadCount > 1 ? 's' : '' }}
                     </span>
                 @else
                     <span class="inline-flex items-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
-                        <x-admin.ui.icon name="fa-check" size="xs" />
+                        {{-- FIXED: Replaced component with direct icon --}}
+                        <i class="fas fa-check text-xs"></i>
                         All caught up
                     </span>
                 @endif
@@ -92,7 +99,8 @@
                             </td>
                             <td>
                                 <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase {{ $msg->is_read ? 'bg-admin-neutral-100 text-admin-neutral-600 border-admin-neutral-200' : 'bg-admin-success-light text-admin-success border-admin-success' }}">
-                                    <x-admin.ui.icon name="{{ $msg->is_read ? 'fa-check' : 'fa-envelope' }}" size="xs" />
+                                    {{-- FIXED: Dynamic Icon Logic --}}
+                                    <i class="fas {{ $msg->is_read ? 'fa-check' : 'fa-envelope' }} text-xs"></i>
                                     {{ $msg->is_read ? 'Read' : 'New' }}
                                 </span>
                             </td>
@@ -110,16 +118,19 @@
                                 <div class="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
                                     <x-admin.ui.button.secondary
                                         type="button"
-                                        class="!py-2 !px-3 text-xs"
+                                        class="!py-2 !px-3 text-xs flex items-center gap-1"
                                         onclick="window.location='{{ route('admin.messages.show', $msg->id) }}'">
-                                        <x-admin.ui.icon name="fa-file-alt" size="sm" />
+                                        {{-- FIXED: Icon --}}
+                                        <i class="fas fa-file-alt text-xs"></i>
                                         View
                                     </x-admin.ui.button.secondary>
+                                    
                                     <x-admin.ui.button.danger
                                         type="button"
-                                        class="!py-2 !px-3 text-xs"
+                                        class="!py-2 !px-3 text-xs flex items-center gap-1"
                                         @click="openDeleteConfirmation({{ $msg->id }})">
-                                        <x-admin.ui.icon name="fa-trash-alt" size="sm" />
+                                        {{-- FIXED: Icon --}}
+                                        <i class="fas fa-trash-alt text-xs"></i>
                                         Delete
                                     </x-admin.ui.button.danger>
                                 </div>
@@ -129,8 +140,9 @@
                         <tr>
                             <td colspan="6">
                                 <div class="empty-state">
-                                    <div class="empty-state-icon">
-                                        <x-admin.ui.icon name="fa-envelope" style="fas" class="text-admin-neutral-400 w-6 h-6" />
+                                    <div class="empty-state-icon flex items-center justify-center">
+                                        {{-- FIXED: Empty state icon --}}
+                                        <i class="fas fa-envelope text-admin-neutral-400 text-3xl"></i>
                                     </div>
                                     <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No messages found</p>
                                     <p class="text-sm text-admin-neutral-500">Your inbox is currently empty.</p>

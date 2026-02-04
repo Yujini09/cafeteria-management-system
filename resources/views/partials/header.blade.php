@@ -1,4 +1,3 @@
-<!-- Add this CSS to your stylesheet -->
 <style>
     /* Active state styles for navigation */
     .nav-link.active {
@@ -24,24 +23,19 @@
     }
 </style>
 
-<!-- Header Section -->
 <header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16 relative">
-        <!-- Left side: Logo -->
         <div class="flex items-center space-x-4">
             <img src="{{ asset('images/ret-logo-nav.png') }}" alt="RET Cafeteria Logo" class="h-12 w-auto" />
         </div>
 
-        <!-- Center: Navigation (absolutely positioned) -->
         <nav class="hidden md:flex space-x-8 text-ret-dark font-poppins font-medium absolute left-1/2 -translate-x-1/2">
             <a href="{{ url('/') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('/') ? 'active' : 'text-gray-600' }}">Home</a>
             <a href="{{ url('/about') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('about') ? 'active' : 'text-gray-600' }}">About</a>
             <a href="{{ url('/menu') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('menu') ? 'active' : 'text-gray-600' }}">Menu</a>
             <a href="{{ url('/contact') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('contact') ? 'active' : 'text-gray-600' }}">Contact Us</a>
 
-            <!-- RESERVATION DROPDOWN START -->
             <div class="relative group flex items-center">
-                <!-- Dropdown Trigger Link -->
                 <a 
                     href="#" 
                     class="nav-link text-gray-600 hover:text-ret-green-light flex items-center cursor-pointer py-1 {{ request()->is('reservation_form') || request()->is('reservation_form_menu') || request()->is('reservation_details') || request()->is('reservations/*') ? 'active' : '' }}"
@@ -53,7 +47,6 @@
                     </svg>
                 </a>
 
-                <!-- Dropdown Menu Content -->
                 <div class="absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 
                             opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 transform z-50">
                     <div class="py-1">
@@ -66,11 +59,9 @@
                     </div>
                 </div>
             </div>
-            <!-- RESERVATION DROPDOWN END -->
-        </nav>
+            </nav>
 
-        <!-- Right side: Auth content -->
-        <div class="flex items-center space-x-4 text-sm text-gray-600 font-poppins">
+        <div class="flex items-center space-x-4 text-sm text-gray-600 font-poppins" x-data="{ confirmLogout: false }">
             @guest
                 <a href="{{ route('login') }}" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
                     LOGIN
@@ -87,13 +78,52 @@
                     <button type="button" @click="confirmLogout = true" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
                         LOGOUT
                     </button>
+
+                    <div 
+                        x-show="confirmLogout" 
+                        style="display: none;" 
+                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                    >
+                        <div 
+                            class="bg-white rounded-lg shadow-xl w-96 p-6 mx-4 transform transition-all"
+                            @click.away="confirmLogout = false"
+                        >
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Confirm Logout</h3>
+                            <p class="text-gray-600 mb-6">Are you sure you want to log out?</p>
+                            
+                            <div class="flex justify-end space-x-3">
+                                <button 
+                                    @click="confirmLogout = false" 
+                                    class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200"
+                                >
+                                    Cancel
+                                </button>
+                                
+                                <button 
+                                    @click="document.getElementById('logout-form').submit()" 
+                                    class="px-4 py-2 text-white bg-clsu-green hover:bg-green-700 rounded-lg transition duration-200"
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+                        @csrf
+                    </form>
                 @endif
             @endauth
         </div>
     </div>
 </header>
 
-<!-- Add this JavaScript for proper active state handling -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Function to update active states based on current URL

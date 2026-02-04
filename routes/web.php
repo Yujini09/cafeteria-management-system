@@ -142,6 +142,8 @@ Route::middleware(['auth'])->group(function () {
         return view('customer.reservation_form');
     })->name('reservation_form');
 
+    Route::post('/reservation/step1', [ReservationController::class, 'postDetails'])->name('reservation.post_details');
+
     // 2. Route for transitioning to the menu selection after basic reservation details are entered
     Route::get('/reservation_form_menu', [ReservationController::class, 'create'])->name('reservation.create');
 

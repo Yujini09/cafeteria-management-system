@@ -25,7 +25,7 @@
     
     .active-menu-item {
         background-color: #f5f5f5;
-        color: #FB3E05; /* Changed to orange */
+        color: #FB3E05;
         border-top-left-radius: 50px;
         border-bottom-left-radius: 50px;
         border-top-right-radius: 0;
@@ -61,11 +61,11 @@
     }
     
     .menu-item {
-        margin-bottom: 0.125rem; /* Original spacing */
+        margin-bottom: 0.125rem;
         border-radius: 0px;
         border-top-right-radius: 0%;
         border-bottom-right-radius: 0%;
-        font-size: 0.95rem; /* Increased font size */
+        font-size: 0.95rem;
     }
     
     .menu-item:hover {
@@ -81,37 +81,27 @@
     
     .active-menu-item:hover {
         background: #f5f5f5 !important;
-        color: #FB3E05 !important; /* Orange for active hover */
+        color: #FB3E05 !important;
         transform: none;
     }
     
     .active-menu-item:hover i {
-        color: #FB3E05 !important; /* Orange for active icons on hover */
+        color: #FB3E05 !important;
     }  
     
     .hover-glow:hover {
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
     
-    /* FONT CLASSES - ADDED */
-    .font-poppins {
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    .font-fugaz {
-        font-family: 'Fugaz One', cursive;
-    }
-    
-    .font-damion {
-        font-family: 'Damion', cursive;
-        font-style: italic;
-    }
+    .font-poppins { font-family: 'Poppins', sans-serif; }
+    .font-fugaz { font-family: 'Fugaz One', cursive; }
+    .font-damion { font-family: 'Damion', cursive; }
     
     .sidebar-content {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        padding: 0 0rem 1rem 0rem; /* Removed top padding */
+        padding: 0 0rem 1rem 0rem;
         justify-content: space-between;
     }
     
@@ -129,21 +119,35 @@
     }
     
     .section-header {
-        margin-top: 1.5rem; /* Original spacing */
-        margin-bottom: 0.75rem; /* Original spacing */
-        font-size: 0.8rem; /* Slightly larger section headers */
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.8rem;
     }
 
-    /* UPDATED: Text Logo Section */
     .logo-section {
         margin-bottom: 0;
         margin-right: 1rem;
         padding: 0.5rem 0.4rem 0.5rem 0.8rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         text-align: center;
+        flex-shrink: 0; /* Prevent logo from shrinking */
     }
 
-    /* Mobile overlay */
+    /* Custom Scrollbar for Sidebar */
+    .sidebar-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+    .sidebar-scroll::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+    }
+    .sidebar-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 4px;
+    }
+    .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,255,255,0.4);
+    }
+
     .mobile-overlay {
         display: none;
         position: fixed;
@@ -155,52 +159,33 @@
         z-index: 40;
     }
 
-    .mobile-overlay.active {
-        display: block;
-    }
+    .mobile-overlay.active { display: block; }
+    .sidebar-gradient { z-index: 50; }
 
-    /* Ensure sidebar is above overlay */
-    .sidebar-gradient {
-        z-index: 50;
-    }
-
-    /* Mobile-specific styles */
     @media (max-width: 768px) {
         .active-menu-item {
-            border-radius: 12px !important; /* Remove curved edges on mobile */
-            margin-left: 1rem !important; /* Standard margin on mobile */
-            margin-right: 1rem !important; /* Balanced margin */
+            border-radius: 12px !important;
+            margin-left: 1rem !important;
+            margin-right: 1rem !important;
         }
-        
         .active-menu-item::before,
         .active-menu-item::after {
-            display: none !important; /* Hide the curved pseudo-elements on mobile */
+            display: none !important;
         }
-        
         .menu-item {
             margin-left: 1rem;
             margin-right: 0rem;
             font-size: 0.85rem;
-            border-radius: 12px; /* Consistent border radius on mobile */
+            border-radius: 12px;
         }
-        
-        .menu-item:hover {
-            margin-left: 1rem; /* Consistent margin on hover for mobile */
-            
-        }
-        
+        .menu-item:hover { margin-left: 1rem; }
         .active-menu-item:hover {
-            margin-left: 1rem !important; /* Consistent margin for active hover on mobile */
+            margin-left: 1rem !important;
             margin-right: 1rem !important;
         }
-        
-        /* Adjust sidebar rounded corners for mobile */
-        .sidebar-gradient {
-            border-radius: 0 !important; /* Remove rounded corners on mobile */
-        }
+        .sidebar-gradient { border-radius: 0 !important; }
     }
 
-    /* NEW: Connected Header Design */
     .header-connected {
         background: linear-gradient(#1F2937 100%);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -212,11 +197,7 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
         color: white;
     }
-
-    .header-search::placeholder {
-        color: rgba(255, 255, 255, 0.7);
-    }
-
+    .header-search::placeholder { color: rgba(255, 255, 255, 0.7); }
     .header-search:focus {
         background: rgba(255, 255, 255, 0.15);
         border-color: rgba(255, 255, 255, 0.3);
@@ -229,25 +210,16 @@
         color: white;
         transition: all 0.3s ease;
     }
-
     .header-button:hover {
         background: rgba(255, 255, 255, 0.2);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
-
-    /* Smooth transitions for header elements */
-    .header-transition {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Glass morphism effect for header */
+    .header-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .header-glass {
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
     }
-
-    /* Connected design - seamless transition from sidebar */
     .main-content-wrapper {
         width: 100%;
         margin-left: 0;
@@ -256,7 +228,7 @@
 
     @media (min-width: 768px) {
         .main-content-wrapper {
-            margin-left: 16rem; /* 64 * 4 = 256px equivalent to w-64 */
+            margin-left: 16rem;
             width: calc(100% - 16rem);
         }
     }
@@ -270,7 +242,6 @@
 
 <div class="min-h-screen flex">
 
-    <!-- Mobile Overlay -->
     <div class="mobile-overlay md:hidden"
          :class="{ 'active': openSidebar }"
          @click="openSidebar = false"
@@ -279,145 +250,135 @@
          x-cloak>
     </div>
 
-    <!-- Modern Gradient Sidebar -->
     <aside class="sidebar-gradient text-white w-64 fixed inset-y-0 left-0 z-50 transform md:translate-x-0 transition-all duration-300  backdrop-blur-md animate-slide-in-left"
            :class="openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
            x-cloak>
 
         <div class="sidebar-content">
-            <!-- Top Section: Logo & Navigation -->
-            <div class="flex-1 overflow-hidden">
-                <!-- UPDATED: Text Logo Section (replaced image with text) -->
+            <div class="flex-1 overflow-y-auto sidebar-scroll">
                 <div class="logo-section flex items-center justify-center border-b border-white/10">
                     <img src="{{ asset('images/ret-logoo.png') }}" 
                          alt="RET Cafeteria Logo" 
-                        class="h-14 w-auto">
+                         class="h-14 w-auto">
                 </div>
 
-                <!-- Navigation Menu -->
                 <nav class="nav-section">
                     <div class="section-header text-xs px-6 py-1 font-semibold text-white/70 uppercase tracking-wider">
                             Management
                         </div>
 
-
                     @if(Auth::user()->role === 'superadmin')
                         <a href="{{ route('superadmin.users') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('superadmin.users') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="far fa-user {{ request()->routeIs('superadmin.users') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="far fa-user {{ request()->routeIs('superadmin.users') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>                  
                             Manage Users
                         </a>
                     @endif
 
                     @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
-                        <!-- Dashboard Section -->
                         
                         <a href="{{ route('admin.dashboard') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.dashboard') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="fas fa-chart-line {{ request()->routeIs('admin.dashboard') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="fas fa-chart-line {{ request()->routeIs('admin.dashboard') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Dashboard
                         </a>
 
                         <a href="{{ route('admin.reservations') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reservations') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="far fa-calendar-check {{ request()->routeIs('admin.reservations') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="far fa-calendar-check {{ request()->routeIs('admin.reservations') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Reservations
                         </a>
 
                         <a href="{{ route('admin.reports.index') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reports.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="fas fa-chart-pie {{ request()->routeIs('admin.reports.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="fas fa-chart-pie {{ request()->routeIs('admin.reports.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Reports
                         </a>
 
                         <a href="{{ route('admin.inventory.index') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.inventory.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="fas fa-boxes-stacked {{ request()->routeIs('admin.inventory.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="fas fa-boxes-stacked {{ request()->routeIs('admin.inventory.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Inventory
                         </a>
 
                         <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="fas fa-utensils {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="fas fa-utensils {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Manage Menus
                         </a>
 
                         <a href="{{ route('admin.menus.prices') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.menus.prices') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="fas fa-peso-sign {{ request()->routeIs('admin.menus.prices') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="fas fa-peso-sign {{ request()->routeIs('admin.menus.prices') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Manage Prices
                         </a>
 
                         <a href="{{ route('admin.calendar') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.calendar') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="far fa-calendar-days {{ request()->routeIs('admin.calendar') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="far fa-calendar-days {{ request()->routeIs('admin.calendar') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Calendar
                         </a>
 
                         <a href="{{ route('admin.messages.index') }}"
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.messages.*') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                            <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                                <i class="far fa-envelope {{ request()->routeIs('admin.messages.*') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="far fa-envelope {{ request()->routeIs('admin.messages.*') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                             </span>
                             Messages
                         </a>
                     @endif
 
-                    <!-- Account Settings Section -->
                     <div class="section-header text-xs px-6 font-semibold text-white/70 uppercase tracking-wider">
                         Settings
                     </div>
 
                     <a href="{{ route('profile.edit') }}"
                        class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('profile.edit') ? 'active-menu-item' : '' }}"
-                       @click="openSidebar = false"> <!-- Close sidebar on mobile click -->
-                        <span class="flex items-center justify-center w-5 h-5 mr-3"> <!-- Original icon size -->
-                            <i class="fas fa-gear {{ request()->routeIs('profile.edit') ? 'text-[#FB3E05]' : 'text-white' }}"></i> <!-- Changed to orange -->
+                       @click="openSidebar = false">
+                        <span class="flex items-center justify-center w-5 h-5 mr-3">
+                            <i class="fas fa-gear {{ request()->routeIs('profile.edit') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
                         </span>
                         Account Settings
                     </a>
                 </nav>
             </div>
 
-            <!-- Bottom Section: Logout Button -->
             <div class="logout-section">
                 <button @click="confirmLogout = true"
-                        class="w-full flex items-center justify-center gap-2 bg-white/20 text-white hover:bg-red-500/90 hover-glow transition-all duration-300 rounded-full px-4 py-2.5 font-semibold shadow-md"> <!-- Original padding -->
-                    <i class="fas fa-right-from-bracket"></i> <!-- Original icon size -->
+                        class="w-full flex items-center justify-center gap-2 bg-white/20 text-white hover:bg-red-500/90 hover-glow transition-all duration-300 rounded-full px-4 py-2.5 font-semibold shadow-md">
+                    <i class="fas fa-right-from-bracket"></i>
                     Logout
                 </button>
             </div>
         </div>
     </aside>
 
-    <!-- Main Content Area with Connected Header -->
     <div class="flex-1 flex flex-col main-content-wrapper">
-        <!-- Connected Header -->
         <header class="header-connected header-glass px-4 sm:px-6 py-3 fixed top-0 left-0 right-0 md:left-64 z-30 transition-all duration-300">
             <div class="flex items-center justify-between gap-3 sm:gap-4">
                 <div class="flex items-center gap-4">
@@ -433,16 +394,13 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-3 sm:gap-4">
-                    <!-- Notifications -->
                     <div class="relative" x-data="notificationsPanel()" x-init="init()">
                         <button @click="open = !open"
                                 :aria-expanded="open.toString()"
                                 class="header-button p-2 rounded-full header-transition relative">
-                            <!-- Bell icon -->
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
                             </svg>
-                            <!-- Unread badge -->
                             <span x-show="unreadCount > 0"
                                   x-text="unreadCount > 99 ? '99+' : unreadCount"
                                   class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[0.65rem] font-semibold flex items-center justify-center shadow"
@@ -491,7 +449,6 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="admin-shell p-4 sm:p-6 overflow-y-auto flex-1 mt-24 sm:mt-16 bg-gray-100">
             @yield('content')
         </main>
@@ -511,7 +468,6 @@
 <script>document.addEventListener('DOMContentLoaded', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'warning', message: @json(session('warning')) } })); });</script>
 @endif
 
-<!-- Logout Confirmation Modal -->
 <div x-show="confirmLogout"
      class="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
      x-transition.opacity
@@ -786,11 +742,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-});
-
-// Close sidebar when clicking outside on mobile
-document.addEventListener('DOMContentLoaded', function() {
-    // This is handled by Alpine.js now, but keeping for reference
 });
 </script>
 

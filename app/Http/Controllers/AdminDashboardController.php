@@ -21,7 +21,9 @@ class AdminDashboardController extends Controller
         $totalReservations = Reservation::count();
         $pendingReservations = Reservation::where('status', 'pending')->count();
         $menusSold = ReservationItem::sum('quantity');
-        $lowStocks = InventoryItem::where('qty', '<', 5)->get();
+        $lowStocks = InventoryItem::where('qty', '>', 0)
+            ->where('qty', '<=', 5)
+            ->get();
         $outOfStocks = InventoryItem::where('qty', 0)->get();
         $expiringSoon = InventoryItem::where('expiry_date', '<=', Carbon::now()->addDays(7))
             ->where('expiry_date', '>=', Carbon::now())
