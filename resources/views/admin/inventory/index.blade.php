@@ -159,26 +159,28 @@
                         </svg>
                     </button>
                 </div>
-                <div class="flex flex-wrap gap-3 w-full sm:w-auto justify-end">
-                    <x-admin.ui.button.primary type="button" @click="showCreateModal = true">
-                        <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
-                        Add Item
-                    </x-admin.ui.button.primary>
-                </div>
             </div>
         </div>
 
         <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
             <form method="GET" action="{{ route('admin.inventory.index') }}" class="flex flex-col gap-4">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <label for="category" class="text-sm font-semibold text-admin-neutral-700">Filter by Category</label>
-                    <div class="w-full sm:w-64">
-                        <select name="category" id="category" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
-                            <option value="">All Categories</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                            @endforeach
-                        </select>
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <label for="category" class="text-sm font-semibold text-admin-neutral-700">Filter by Category</label>
+                        <div class="w-full sm:w-64">
+                            <select name="category" id="category" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
+                                <option value="">All Categories</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <x-admin.ui.button.primary type="button" @click="showCreateModal = true">
+                            <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
+                            Add Item
+                        </x-admin.ui.button.primary>
                     </div>
                 </div>
                 @if($sort)

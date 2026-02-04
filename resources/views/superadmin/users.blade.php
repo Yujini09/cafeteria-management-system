@@ -15,16 +15,10 @@
             <div class="header-text">
                 <h1 class="header-title">User Management</h1>
                 <p class="header-subtitle">Manage admin accounts and access</p>
-                <div class="mt-3">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
-                        <x-admin.ui.icon name="fa-user-check" size="xs" />
-                        Total Users: {{ $users->total() }}
-                    </span>
-                </div>
             </div>
         </div>
 
-        <div class="flex flex-col gap-3 w-full sm:w-auto">
+        <div class="header-actions w-full md:w-auto flex flex-col items-end">
             <div class="relative w-full sm:w-64 md:w-72">
                 <input type="search"
                        id="searchInput"
@@ -42,7 +36,11 @@
                 </button>
             </div>
 
-            <div class="flex flex-wrap gap-3 w-full sm:w-auto justify-start sm:justify-end">
+            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600 mr-auto">
+                    <x-admin.ui.icon name="fa-user-check" size="xs" />
+                    Total Users: {{ $users->total() }}
+                </span>
                 <x-admin.ui.button.secondary type="button" onclick="openRecentActivitiesModal()">
                     <x-admin.ui.icon name="fa-file-alt" size="sm" />
                     Recent Activities
@@ -55,31 +53,53 @@
         </div>
     </div>
 
-    <div class="overflow-auto max-h-96 rounded-admin border border-admin-neutral-200">
-        <table class="w-full border-collapse text-sm">
+    <div class="overflow-x-auto overflow-y-scroll max-h-96 min-h-96 rounded-admin border border-admin-neutral-200">
+        <table class="w-full border-collapse text-sm table-fixed">
+            <colgroup>
+                <col class="w-14">
+                <col class="w-64">
+                <col class="w-72">
+                <col class="w-48">
+                <col class="w-64">
+            </colgroup>
             <thead>
                 <tr>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14">#</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Name</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Email</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Role</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Actions</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14 whitespace-nowrap overflow-hidden text-ellipsis">#</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                        <button type="button" class="group inline-flex items-center gap-2" onclick="toggleUserNameSort()" aria-label="Sort by name">
+                            <span>Name</span>
+                            <x-admin.ui.icon id="nameSortIcon" name="fa-sort" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
+                        </button>
+                    </th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Email</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                        <div class="flex flex-nowrap items-center gap-2">
+                            <span>Role</span>
+                            <div class="min-w-[9rem] relative">
+                                <x-admin.forms.select name="roleFilter"
+                                    :options="['admin' => 'Admin', 'customer' => 'Customer']"
+                                    placeholder="All Roles"
+                                    class="text-xs pr-8" />
+                            </div>
+                        </div>
+                    </th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="usersTableBody">
             @forelse($users as $user)
-                <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin" data-user-row="true" data-user-name="{{ strtolower($user->name) }}" data-user-role="{{ $user->role }}">
                     <td class="text-admin-neutral-500 py-4 px-4 border-b border-admin-neutral-100 font-semibold">
                         {{ ($users->firstItem() ?? 0) + $loop->index }}
                     </td>
-                    <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100">{{ $user->name }}</td>
-                    <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100">{{ $user->email }}</td>
+                    <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->name }}</td>
+                    <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->email }}</td>
                     <td class="py-4 px-4 border-b border-admin-neutral-100">
                         <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->role === 'admin' ? 'bg-admin-primary-light text-admin-primary' : 'bg-admin-neutral-100 text-admin-neutral-600' }}">
                             {{ ucfirst($user->role) }}
                         </span>
                     </td>
-                    <td class="py-4 px-4 border-b border-admin-neutral-100">
+                    <td class="py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">
                         <div class="flex flex-wrap gap-2">
                             @if($user->role === 'admin')
                                 <x-admin.ui.button.secondary type="button" class="!py-2 !px-3 text-xs" onclick="openEditModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}', '{{ addslashes(e($user->email)) }}')">
@@ -113,6 +133,15 @@
                     </td>
                 </tr>
             @endforelse
+                <tr id="usersEmptyState" class="hidden">
+                    <td colspan="5" class="py-10 px-4 text-center">
+                        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-admin-neutral-100 flex items-center justify-center">
+                            <x-admin.ui.icon name="fa-filter" class="text-admin-neutral-400 w-6 h-6" />
+                        </div>
+                        <p class="font-semibold text-admin-neutral-900 mb-1">No users match this filter</p>
+                        <p class="text-sm text-admin-neutral-500">Try adjusting the role filter or search.</p>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -234,6 +263,77 @@ function confirmDelete() {
     }
 }
 
+let userSortDirection = 'asc';
+let userSortActive = false;
+
+function toggleUserNameSort() {
+    if (userSortActive) {
+        userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        userSortActive = true;
+        userSortDirection = 'asc';
+    }
+
+    sortUserRows();
+    updateNameSortIcon();
+}
+
+function sortUserRows() {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr[data-user-row="true"]'));
+    rows.sort((a, b) => {
+        const aName = (a.dataset.userName || '').toLowerCase();
+        const bName = (b.dataset.userName || '').toLowerCase();
+        const comparison = aName.localeCompare(bName);
+        return userSortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+function updateNameSortIcon() {
+    const icon = document.getElementById('nameSortIcon');
+    if (!icon) return;
+
+    icon.classList.remove('fa-sort', 'fa-arrow-up', 'fa-arrow-down');
+    if (!userSortActive) {
+        icon.classList.add('fa-sort');
+        return;
+    }
+
+    icon.classList.add(userSortDirection === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down');
+}
+
+function applyUserFilters() {
+    const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+    const role = document.getElementById('roleFilter')?.value || '';
+    const rows = document.querySelectorAll('#usersTableBody tr[data-user-row="true"]');
+    const emptyState = document.getElementById('usersEmptyState');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const roleMatch = !role || row.dataset.userRole === role;
+        const searchMatch = text.includes(query);
+        const isVisible = roleMatch && searchMatch;
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) {
+            visibleCount += 1;
+        }
+    });
+
+    if (emptyState && rows.length > 0) {
+        emptyState.classList.toggle('hidden', visibleCount !== 0);
+    }
+
+    const clearButton = document.getElementById('clearSearch');
+    if (clearButton) {
+        clearButton.style.display = query.length > 0 ? 'block' : 'none';
+    }
+}
+
 let allAudits = [];
 let currentSortBy = 'created_at';
 let currentSortDirection = 'desc';
@@ -348,6 +448,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hasSuccess) {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));
     }
+
+    const roleFilter = document.getElementById('roleFilter');
+    if (roleFilter) {
+        roleFilter.addEventListener('change', applyUserFilters);
+    }
+
+    if (typeof window.filterTable === 'function') {
+        window.filterTable = function(query) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && typeof query === 'string') {
+                searchInput.value = query;
+            }
+            applyUserFilters();
+        };
+    }
+
+    updateNameSortIcon();
+    applyUserFilters();
 });
 </script>
 @endsection

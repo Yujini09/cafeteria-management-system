@@ -91,10 +91,14 @@
 
     <!-- Header -->
     <div class="page-header">
-        <div class="header-icon">
-            <i class="fas fa-peso-sign"></i>
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-peso-sign"></i>
+            </div>
+            <div class="header-text">
+                <h1 class="header-title">Manage Menu Prices</h1>
+            </div>
         </div>
-        <h1 class="header-title">Manage Menu Prices</h1>
     </div>
 
     <!-- Price Form -->

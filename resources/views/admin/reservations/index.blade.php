@@ -235,7 +235,12 @@
                 <tr>
                     <th class="column-id">#</th>
                     <th class="column-customer">Customer</th>
-                    <th class="column-status">Status</th>
+                    <th class="column-status">
+                        <span class="inline-flex items-center gap-2">
+                            <span>Status</span>
+                            <x-admin.ui.icon name="fa-chevron-down" style="fas" size="sm" class="text-admin-neutral-400" />
+                        </span>
+                    </th>
                     <th class="column-email hidden md:table-cell">Email</th>
                     <th class="column-date hidden lg:table-cell">Created</th>
                     <th class="column-actions">Actions</th>

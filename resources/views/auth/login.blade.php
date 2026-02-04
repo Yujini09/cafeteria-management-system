@@ -12,10 +12,10 @@
         </div>
 
         {{-- Card Container --}}
-        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[560px]"> 
+        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[600px]"> 
             
             {{-- Left side (Logo Display) --}}
-            <div class="hidden md:flex w-1/2 items-center justify-center bg-ret-dark p-10 relative"> 
+            <div class="hidden md:flex md:w-5/12 items-center justify-center bg-ret-dark p-10 relative"> 
                 <div class="absolute inset-0 bg-gradient-to-br from-ret-dark via-[#1f2937] to-black/70"></div>
                 <div class="relative z-10 flex flex-col items-center gap-8 text-center text-white">
                     <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
@@ -35,16 +35,32 @@
             </div>
 
             {{-- Right side (Login Form) --}}
-            <div class="w-full md:w-1/2 p-8 md:p-10 relative bg-white overflow-hidden overflow-x-hidden md:h-full"> 
+            <div class="w-full md:w-7/12 p-8 md:p-12 relative bg-white overflow-hidden overflow-x-hidden md:h-full"> 
                 <div class="absolute inset-0 pointer-events-none">
                     <div class="w-56 h-56 bg-admin-primary/5 rounded-full absolute -top-20 -right-16"></div> 
                     <div class="w-40 h-40 bg-ret-dark/5 rounded-full absolute -bottom-16 -left-16"></div> 
                 </div>
 
-                <div class="relative z-10"> 
-                    
-                    <div class="text-left mb-10">
-                        <h2 class="text-admin-neutral-900 text-3xl font-semibold mb-2">Welcome!!!!</h2> 
+                <div class="relative z-10 flex h-full flex-col"> 
+                    <div class="flex flex-col gap-6 mb-8">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="md:hidden h-12 w-12 rounded-admin bg-ret-dark/90 flex items-center justify-center">
+                                    <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
+                                         class="h-8 w-8 object-contain"> 
+                                </div>
+                                <div>
+                                    <h2 class="text-admin-neutral-900 text-3xl font-semibold">Welcome!!!!</h2> 
+                                </div>
+                            </div>
+                            <a href="{{ route('marketing.home') }}"
+                                class="md:hidden inline-flex items-center justify-center gap-2 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold text-admin-neutral-700 transition hover:bg-admin-neutral-100">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                </svg>
+                                Continue
+                            </a>
+                        </div>
                         <p class="text-admin-neutral-600 text-base">Log in to your account</p> 
                     </div>
 
@@ -58,11 +74,11 @@
                         <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
                     </x-success-modal>
 
-                    <form method="POST" action="{{ route('login') }}">
+                    <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-6">
                         @csrf
                         
                         {{-- Email --}}
-                        <div class="mb-6">
+                        <div>
                             <div class="relative">
                                 <x-text-input id="email" type="email" name="email"
                                     class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20"
@@ -76,7 +92,7 @@
                         </div>
 
                         {{-- Password --}}
-                        <div class="mb-6">
+                        <div>
                             <div class="relative">
                                 <x-text-input id="password" type="password" name="password"
                                     class="block mt-1 w-full pl-10 pr-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20"
@@ -94,27 +110,17 @@
                             <x-input-error :messages="$errors->get('password')" class="mt-2 !text-admin-danger" /> 
                         </div>
 
-                        {{-- Forgot + Register CONSOLIDATED --}}
-                        <div class="flex justify-between items-center text-sm mb-8">
+                        {{-- Remember + Forgot --}}
+                        <div class="flex items-center justify-between text-sm">
+                            <label for="remember_me" class="flex items-center gap-2 text-admin-neutral-600">
+                                <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 text-admin-primary focus:ring-admin-primary/20 border-admin-neutral-300 rounded">
+                                <span>Remember me</span>
+                            </label>
                             @if (Route::has('password.request'))
                                 <a id="openForgotPassword" href="{{ route('password.request') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
                                     {{ __('Forgot Password?') }}
                                 </a>
                             @endif
-                            <p class="text-admin-neutral-600">
-                                {{ __("Don't have an Account?") }} 
-                                <a href="{{ route('register') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200 font-semibold">
-                                    {{ __('Register') }}
-                                </a>
-                            </p>
-                        </div>
-
-                        {{-- Remember Me --}}
-                        <div class="flex items-center mb-6">
-                            <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 text-admin-primary focus:ring-admin-primary/20 border-admin-neutral-300 rounded">
-                            <label for="remember_me" class="ml-2 block text-sm text-admin-neutral-600">
-                                Remember me
-                            </label>
                         </div>
 
                         {{-- Login Button (Orange remains the CTA color for max contrast) --}}
@@ -124,10 +130,23 @@
                             </x-primary-button>
                         </div>
 
+                        <div class="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-admin-neutral-400">
+                            <span class="h-px flex-1 bg-admin-neutral-200"></span>
+                            <span>or</span>
+                            <span class="h-px flex-1 bg-admin-neutral-200"></span>
+                        </div>
+
                         {{-- Google OAuth Button --}}
                         <x-google-oauth-button />
 
                     </form>
+
+                    <div class="mt-6 text-center text-sm text-admin-neutral-600">
+                        {{ __("Don't have an Account?") }} 
+                        <a href="{{ route('register') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200 font-semibold">
+                            {{ __('Register') }}
+                        </a>
+                    </div>
                 </div> 
 
                 <div id="forgotPasswordModal"

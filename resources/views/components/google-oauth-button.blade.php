@@ -1,5 +1,5 @@
 {{-- Google OAuth Button Component --}}
-<div class="mt-6">
+<div class="mt-0">
     <a href="{{ route('auth.google') }}" 
        class="w-full flex justify-center items-center bg-white border border-admin-neutral-200 hover:bg-admin-neutral-50 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary h-12 text-sm font-semibold rounded-admin shadow-admin transition duration-200 text-admin-neutral-700"
        aria-label="Continue with Google OAuth">

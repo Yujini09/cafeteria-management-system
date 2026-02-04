@@ -60,30 +60,6 @@
     background: white;
 }
 
-.select-with-arrows {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
-}
-
-.select-with-arrows .form-select {
-    appearance: none;
-    padding-right: 2.75rem;
-}
-
-.select-arrows {
-    position: absolute;
-    right: 0.75rem;
-    pointer-events: none;
-    color: var(--neutral-500);
-}
-
-.select-arrows svg {
-    width: 16px;
-    height: 16px;
-}
-
 .form-select:focus, .form-input:focus {
     outline: none;
     border-color: var(--primary);
@@ -190,24 +166,17 @@
             <label for="report_type" class="form-label form-label-inline">
                 Report Type
             </label>
-            <div class="select-with-arrows">
-                <select id="report_type"
-                        name="report_type"
-                        class="form-select @error('report_type') form-error @enderror"
-                        data-admin-select="true"
-                        required>
-                    <option value="">Select Report Type</option>
-                    <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report</option>
-                    <option value="sales" {{ old('report_type') == 'sales' ? 'selected' : '' }}>Cafeteria Sales Report</option>
-                    <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>Inventory Usage Report</option>
-                    <option value="crm" {{ old('report_type') == 'crm' ? 'selected' : '' }}>CRM Report</option>
-                </select>
-                <span class="select-arrows" aria-hidden="true">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
-                    </svg>
-                </span>
-            </div>
+            <select id="report_type"
+                    name="report_type"
+                    class="form-select @error('report_type') form-error @enderror"
+                    data-admin-select="true"
+                    required>
+                <option value="">Select Report Type</option>
+                <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report</option>
+                <option value="sales" {{ old('report_type') == 'sales' ? 'selected' : '' }}>Cafeteria Sales Report</option>
+                <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>Inventory Usage Report</option>
+                <option value="crm" {{ old('report_type') == 'crm' ? 'selected' : '' }}>CRM Report</option>
+            </select>
             @error('report_type')
                 <p class="error-message">{{ $message }}</p>
             @enderror

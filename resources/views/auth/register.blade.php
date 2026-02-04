@@ -7,10 +7,10 @@
         </div>
 
         {{-- Card Container --}}
-        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[560px]"> 
+        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[600px]"> 
             
             {{-- Left side (Logo Display) --}}
-            <div class="hidden md:flex w-1/2 items-center justify-center bg-ret-dark p-10 relative">
+            <div class="hidden md:flex md:w-5/12 items-center justify-center bg-ret-dark p-10 relative">
                 <div class="absolute inset-0 bg-gradient-to-br from-ret-dark via-[#1f2937] to-black/70"></div>
                 <div class="relative z-10 flex flex-col items-center gap-8 text-center text-white">
                     <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
@@ -30,56 +30,51 @@
             </div>
 
             {{-- Right side (Form) --}}
-            <div class="w-full md:w-1/2 p-8 md:p-10 relative bg-white overflow-y-auto overflow-x-hidden md:h-full"> 
+            <div class="w-full md:w-7/12 p-8 pb-16 md:px-12 md:pt-12 md:pb-20 relative bg-white overflow-y-auto overflow-x-hidden scroll-pb-10 md:h-full"> 
                 <div class="absolute inset-0 pointer-events-none">
                     <div class="w-56 h-56 bg-admin-primary/5 rounded-full absolute -top-20 -right-16"></div>
                     <div class="w-40 h-40 bg-ret-dark/5 rounded-full absolute -bottom-16 -left-16"></div>
                 </div>
 
-                <div class="relative z-10">
-                    
-                    <div class="text-left mb-8">
-                        <h2 class="text-admin-neutral-900 text-3xl font-semibold mb-2">Create Account</h2> 
+                <div class="relative z-10 flex h-full flex-col">
+                    <div class="flex flex-col gap-6 mb-8">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="md:hidden h-12 w-12 rounded-admin bg-ret-dark/90 flex items-center justify-center">
+                                    <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
+                                         class="h-8 w-8 object-contain"> 
+                                </div>
+                                <div>
+                                    <h2 class="text-admin-neutral-900 text-3xl font-semibold mt-1">Create Account</h2> 
+                                </div>
+                            </div>
+                            <a href="{{ route('marketing.home') }}"
+                                class="md:hidden inline-flex items-center justify-center gap-2 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold text-admin-neutral-700 transition hover:bg-admin-neutral-100">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                </svg>
+                                 Continue
+                            </a>
+                        </div>
                         <p class="text-admin-neutral-600 text-base">Join our cafeteria community</p> 
                     </div>
 
-                    <form method="POST" action="{{ route('register') }}" id="registerForm">
+                    <form method="POST" action="{{ route('register') }}" id="registerForm" class="flex flex-col gap-6">
                         @csrf
 
-                        <div class="mb-6">
-                            <x-input-label for="name" :value="__('Name')" class="text-admin-neutral-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="name" name="name" type="text"
-                                    class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" 
-                                    required autofocus />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="mb-6">
-                            <x-input-label for="address" :value="__('Address')" class="text-admin-neutral-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="address" name="address" type="text"
-                                    class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid gap-6 md:grid-cols-2">
                             <div>
-                                <x-input-label for="email" :value="__('Email')" class="text-admin-neutral-700 font-medium" />
+                                <x-input-label for="name" :value="__('Name')" class="text-admin-neutral-700 font-medium" />
                                 <div class="relative">
-                                    <x-text-input id="email" name="email" type="email"
-                                        class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" required />
+                                    <x-text-input id="name" name="name" type="text"
+                                        class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" 
+                                        required autofocus />
                                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
                                 </div>
                             </div>
+
                             <div>
                                 <x-input-label for="contact_no" :value="__('Contact No')" class="text-admin-neutral-700 font-medium" />
                                 <div class="relative">
@@ -90,20 +85,42 @@
                                     </svg>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="mb-6">
-                            <x-input-label for="department" :value="__('Department/Office')" class="text-admin-neutral-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="department" name="department" type="text"
-                                    class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" />
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                </svg>
+                            <div class="md:col-span-2">
+                                <x-input-label for="address" :value="__('Address')" class="text-admin-neutral-700 font-medium" />
+                                <div class="relative">
+                                    <x-text-input id="address" name="address" type="text"
+                                        class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" />
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div>
+                                <x-input-label for="email" :value="__('Email')" class="text-admin-neutral-700 font-medium" />
+                                <div class="relative">
+                                    <x-text-input id="email" name="email" type="email"
+                                        class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" required />
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div>
+                                <x-input-label for="department" :value="__('Department/Office')" class="text-admin-neutral-700 font-medium" />
+                                <div class="relative">
+                                    <x-text-input id="department" name="department" type="text"
+                                        class="block mt-1 w-full pl-10 h-12 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 placeholder-admin-neutral-400 focus:border-admin-primary focus:ring-admin-primary/20" />
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-6">
+                        <div>
                             {!! app('livewire')->mount('password-with-rules', [
                                 'name' => 'password',
                                 'label' => __('Password'),
@@ -113,7 +130,7 @@
                             ]) !!}
                         </div>
 
-                        <div class="mb-6">
+                        <div>
                             {!! app('livewire')->mount('password-with-rules', [
                                 'name' => 'password_confirmation',
                                 'label' => __('Confirm Password'),
@@ -133,22 +150,30 @@
                             @endif
                         </div>
 
-                        <div class="mb-6">
+                        <div>
                             <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-200 text-white" id="registerBtn">
                                 {{ __('Register') }}
                             </x-primary-button>
                         </div>
                     </form>
                     
+                    <div class="mt-6">
+                        <div class="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-admin-neutral-400">
+                            <span class="h-px flex-1 bg-admin-neutral-200"></span>
+                            <span>or</span>
+                            <span class="h-px flex-1 bg-admin-neutral-200"></span>
+                        </div>
+                        <div class="mt-3">
+                            {{-- Google OAuth Button --}}
+                            <x-google-oauth-button />
+                        </div>
 
-                {{-- Google OAuth Button --}}
-                        <x-google-oauth-button />
-
-                    {{-- CORRECTED LOCATION: Already have account link moved outside of the form --}}
-                    <div class="flex justify-center text-sm mt-4"> 
-                        <a href="{{ route('login') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
-                            {{ __('Have an account already?') }}
-                        </a>
+                        {{-- CORRECTED LOCATION: Already have account link moved outside of the form --}}
+                        <div class="flex justify-center text-sm mt-4"> 
+                            <a href="{{ route('login') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
+                                {{ __('Have an account already?') }}
+                            </a>
+                        </div>
                     </div>
                 </div> {{-- End of z-10 wrapper --}}
             </div>

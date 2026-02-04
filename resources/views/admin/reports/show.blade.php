@@ -86,11 +86,11 @@
 
 <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
     <!-- Header -->
-    <div class="page-header">
-        <div class="header-content">
-            <a href="{{ route('admin.reports.index') }}" 
-               class=" w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200"
-               title="Back to Reports">
+        <div class="page-header">
+            <div class="header-content">
+                <a href="{{ route('admin.reports.index') }}" 
+                   class=" w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200"
+                   title="Back to Reports">
                 <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -98,7 +98,7 @@
             <div class="header-icon">
                 <i class="fas fa-chart-bar text-white"></i>
             </div>
-            <div>
+            <div class="header-text">
                 <h1 class="header-title">
                     @if(isset($reportType))
                         @switch($reportType)
