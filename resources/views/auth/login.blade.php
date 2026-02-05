@@ -6,43 +6,42 @@
     @endphp
     {{-- Main Container --}}
     <div class="min-h-screen flex items-center justify-center bg-admin-neutral-100 relative overflow-hidden font-admin text-admin-neutral-900"> 
-        <div class="absolute inset-0">
-            <div class="absolute -top-24 -right-20 h-80 w-80 rounded-full bg-admin-primary/10 blur-3xl"></div>
-            <div class="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-ret-dark/10 blur-3xl"></div>
+        <div class="absolute inset-0 opacity-30">
+            {{-- Large Bubble: Top-Center, slightly left --}}
+            <div class="w-96 h-96 bg-green-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            {{-- Mid Bubble: Bottom-Right edge --}}
+            <div class="w-64 h-64 bg-green-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
+            {{-- Large Bubble: Mid-Left edge --}}
+            <div class="w-80 h-80 bg-green-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            {{-- Small Bubble: Bottom-Center, slightly right --}}
+            <div class="w-40 h-40 bg-green-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
         </div>
 
         {{-- Card Container --}}
-        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[600px]"> 
+            <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[560px]"> 
             
             {{-- Left side (Logo Display) --}}
-            <div class="hidden md:flex md:w-5/12 items-center justify-center bg-ret-dark p-10 relative"> 
-                <div class="absolute inset-0 bg-gradient-to-br from-ret-dark via-[#1f2937] to-black/70"></div>
-                <div class="relative z-10 flex flex-col items-center gap-8 text-center text-white">
-                    <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
-                         class="max-h-56 object-contain w-auto"> 
-                    <div class="space-y-1">
-                        <h3 class="text-xl font-semibold">RET Cafeteria</h3>
-                        <p class="text-sm text-white/70">Access the admin portal securely.</p>
-                    </div>
-                    <a href="{{ route('marketing.home') }}"
-                        class="inline-flex items-center justify-center gap-2 rounded-admin border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
-                        Continue to site
-                    </a>
-                </div>
+            <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 
+                <a href="{{ route('marketing.home') }}"
+                class="absolute top-6 left-6 inline-flex items-center justify-center rounded-lg p-2 text-green-800 transition hover:border-orange-400 hover:text-orange-600 z-20">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
+                     class="max-h-64 object-contain w-auto -ml-6"> 
+
             </div>
 
             {{-- Right side (Login Form) --}}
-            <div class="w-full md:w-7/12 p-8 md:p-12 relative bg-white overflow-hidden overflow-x-hidden md:h-full"> 
+            <div class="w-full md:w-7/12 p-8 md:p-12 relative  bg-green-100 overflow-hidden overflow-x-hidden md:h-full"> 
                 <div class="absolute inset-0 pointer-events-none">
-                    <div class="w-56 h-56 bg-admin-primary/5 rounded-full absolute -top-20 -right-16"></div> 
-                    <div class="w-40 h-40 bg-ret-dark/5 rounded-full absolute -bottom-16 -left-16"></div> 
+                    <div class="w-56 h-56 bg-green-200 rounded-full absolute -top-20 -right-16"></div> 
+                    <div class="w-40 h-40 bg-green-200 rounded-full absolute -bottom-16 -left-16"></div> 
                 </div>
 
                 <div class="relative z-10 flex h-full flex-col"> 
-                    <div class="flex flex-col gap-6 mb-8">
+                    <div class="flex flex-col gap-3 mb-4">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
                                 <div class="md:hidden h-12 w-12 rounded-admin bg-ret-dark/90 flex items-center justify-center">
@@ -50,7 +49,8 @@
                                          class="h-8 w-8 object-contain"> 
                                 </div>
                                 <div>
-                                    <h2 class="text-admin-neutral-900 text-3xl font-semibold">Welcome!!!!</h2> 
+                                    <h2 class="text-green-900 text-4xl font-extrabold mb-1">Welcome!</h2> 
+                                        <p class="text-green-700 text-lg">Log in to your account</p> 
                                 </div>
                             </div>
                             <a href="{{ route('marketing.home') }}"
@@ -61,7 +61,6 @@
                                 Continue
                             </a>
                         </div>
-                        <p class="text-admin-neutral-600 text-base">Log in to your account</p> 
                     </div>
 
                     @if(session('status') && session('status') !== $passwordResetStatus && session('status') !== $passwordLinkStatus)
@@ -129,17 +128,20 @@
                                 {{ __('Login') }}
                             </x-primary-button>
                         </div>
-
+                        </form>
+                        
+                        <div class="mt-3">
                         <div class="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-admin-neutral-400">
                             <span class="h-px flex-1 bg-admin-neutral-200"></span>
                             <span>or</span>
                             <span class="h-px flex-1 bg-admin-neutral-200"></span>
                         </div>
-
-                        {{-- Google OAuth Button --}}
-                        <x-google-oauth-button />
-
-                    </form>
+                        <div class="mt-4">
+                            {{-- Google OAuth Button --}}
+                            <x-google-oauth-button />
+                        </div>
+                    </div>
+                    
 
                     <div class="mt-6 text-center text-sm text-admin-neutral-600">
                         {{ __("Don't have an Account?") }} 

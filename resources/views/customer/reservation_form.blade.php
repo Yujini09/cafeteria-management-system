@@ -9,7 +9,7 @@
     background-position: top;
 }
 
-/* Custom styles provided by the user, applied using Tailwind classes defined in config */
+/* Custom styles */
 .date-selector-btn {
     padding: 0.5rem 1rem;
     font-weight: 600;
@@ -36,26 +36,26 @@
     cursor: pointer;
     transition-property: color, background-color;
     transition-duration: 150ms;
-    color: #374151 !important; /* Force dark gray text */
+    color: #374151 !important; 
     font-weight: 500;
 }
 .calendar-day-inactive {
     background-color: transparent;
 }
 .calendar-day-inactive:hover {
-    background-color: rgb(243 244 246); /* gray-100 */
+    background-color: rgb(243 244 246); 
 }
 .calendar-day-other-month {
-    color: rgb(156 163 175) !important; /* gray-400 */
+    color: rgb(156 163 175) !important;
     cursor: default;
     background-color: transparent;
 }
 .calendar-day-in-range {
-    background-color: rgba(34, 197, 94, 0.2); /* Light green for dates in range */
+    background-color: rgba(34, 197, 94, 0.2); 
 }
 .calendar-day-range-start, .calendar-day-range-end {
-    background-color: #16a34a !important; /* clsu-green */
-    color: white !important; /* White text on green background */
+    background-color: #16a34a !important; 
+    color: white !important; 
     font-weight: 700;
 }
 .day-tab {
@@ -85,14 +85,28 @@
 
 @section('content')
 
+{{-- 
+    LOGIC BLOCK: 
+    Determine if we are in Edit Mode and setup data helpers 
+--}}
+@php
+    $isEditMode = session('editing_reservation_id') ? true : false;
+    $data = session('reservation_data', []);
+    
+    // Helper to get value (Old Input > Session Data > Auth/Default)
+    $val = function($key, $default = '') use ($data) {
+        return old($key, $data[$key] ?? $default);
+    };
+@endphp
+
 <section class="reservation-hero-bg py-20 lg:py-20 bg-gray-900 text-white relative overflow-hidden">
     <div class="absolute inset-0 bg-black opacity-10"></div>
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl lg:text-5xl font-extrabold mb-3 tracking-wide">
-            Make a Reservation
+            {{ $isEditMode ? 'Update Reservation' : 'Make a Reservation' }}
         </h1>
         <p class="text-lg lg:text-xl font-poppins opacity-90">
-            Reserve your spot with us today!
+            {{ $isEditMode ? 'Edit your details below.' : 'Reserve your spot with us today!' }}
         </p>
     </div>
 </section>
@@ -124,38 +138,43 @@
             </div>
         </div>
 
-        {{-- IMPORTANT: Changed to POST and generic route --}}
         <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10">
             @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
+                {{-- PERSONAL & EVENT INFO (Fully Editable except Email) --}}
                 <div class="bg-white p-8 rounded-xl shadow-2xl space-y-6 border border-gray-100">
                     <h2 class="text-2xl font-bold text-gray-800 border-b pb-4">Personal & Event Information</h2>
 
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
                         <input type="text" id="name" name="name" placeholder="Enter your name" required
+                            value="{{ $val('name', Auth::user()->name) }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
 
                     <div>
                         <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department/Office</label>
                         <input type="text" id="department" name="department" placeholder="Enter your department/office" required
+                            value="{{ $val('department') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
                     
                     <div>
                         <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
                         <input type="text" id="address" name="address" placeholder="Enter your address" required
+                            value="{{ $val('address') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
 
+                    {{-- EMAIL IS READ-ONLY --}}
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span> (CLSU Email only)</label>
                         <input type="email" id="email" name="email" placeholder="Enter your CLSU email (@clsu2.edu.ph)" required
-                            value="{{ old('email', auth()->user()->email ?? '') }}" readonly
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
+                            value="{{ old('email', $data['email'] ?? Auth::user()->email) }}" 
+                            readonly
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed">
                         <div id="email-error" class="text-sm text-red-500 mt-1 hidden">
                             Please use a valid CLSU email address (must end with @clsu2.edu.ph)
                         </div>
@@ -164,6 +183,7 @@
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                         <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
+                            value="{{ $val('phone') }}"
                             pattern="[0-9]{10,15}"
                             inputmode="numeric"
                             onkeypress="return event.charCode >= 48 && event.charCode <= 57"
@@ -174,12 +194,14 @@
                     <div>
                         <label for="activity" class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
                         <input type="text" id="activity" name="activity" placeholder="Enter your activity" required
+                            value="{{ $val('activity') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
 
                     <div>
                         <label for="venue" class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
                         <input type="text" id="venue" name="venue" placeholder="Enter your venue" required
+                            value="{{ $val('venue') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
                     
@@ -187,17 +209,20 @@
                         <div>
                             <label for="project_name" class="block text-sm font-medium text-gray-700 mb-1">Name of Project</label>
                             <input type="text" id="project_name" name="project_name" placeholder="Enter project name (optional)"
+                                value="{{ $val('project_name') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
                         
                         <div>
                             <label for="account_code" class="block text-sm font-medium text-gray-700 mb-1">Account Code</label>
                             <input type="text" id="account_code" name="account_code" placeholder="Enter account code (optional)"
+                                value="{{ $val('account_code') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                         </div>
                     </div>
                 </div>
 
+                {{-- DATE & TIME SELECTION --}}
                 <div class="bg-white p-8 rounded-xl shadow-2xl space-y-6 border border-gray-100">
                     <h2 class="text-2xl font-bold text-gray-800 border-b pb-4">Date & Time Selection</h2>
 
@@ -250,9 +275,10 @@
                                 </div>
                         </div>
                         
-                        <input type="hidden" id="start_date_input" name="start_date" required>
-                        <input type="hidden" id="end_date_input" name="end_date" required>
-                        <input type="hidden" id="day_times_input" name="day_times" required>
+                        {{-- Hidden inputs populated by JS (Pre-filled via value attribute for edit mode) --}}
+                        <input type="hidden" id="start_date_input" name="start_date" value="{{ $val('start_date') }}" required>
+                        <input type="hidden" id="end_date_input" name="end_date" value="{{ $val('end_date') }}" required>
+                        <input type="hidden" id="day_times_input" name="day_times" value="{{ $val('day_times') }}" required>
                     </div>
                 </div>
             </div>
@@ -315,10 +341,10 @@
     let currentDisplayDate = new Date();
     let selectedStartDate = null;
     let selectedEndDate = null;
-    let isSelectingStartDate = true; // Toggle between selecting start and end date
-    let selectedDays = []; // Array to store all selected days
-    let dayTimes = {}; // Object to store times for each day
-    let activeDayTab = 0; // Index of currently active day tab
+    let isSelectingStartDate = true; 
+    let selectedDays = []; 
+    let dayTimes = {}; 
+    let activeDayTab = 0; 
     
     const calendarDaysEl = document.getElementById('calendar-days');
     const monthYearEl = document.getElementById('current-month-year');
@@ -386,45 +412,33 @@
 
     // --- Core Calendar Functions ---
 
-    /**
-     * Renders the calendar grid for the currentDisplayDate month.
-     */
     const renderCalendar = () => {
         const year = currentDisplayDate.getFullYear();
-        const month = currentDisplayDate.getMonth(); // 0-11
+        const month = currentDisplayDate.getMonth(); 
         
-        // Update Month/Year Header
         monthYearEl.textContent = currentDisplayDate.toLocaleString('en-US', { month: 'long' }) + ' ' + year;
 
-        // Get the first day of the month (0 = Sun, 6 = Sat)
         const firstDayOfMonth = new Date(year, month, 1).getDay();
-        
-        // Get the number of days in the month
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        // Get the number of days in the previous month
         const daysInPrevMonth = new Date(year, month, 0).getDate();
         
-        // Clear existing days
         calendarDaysEl.innerHTML = '';
         
-        // Today's date for comparison (midnight of today)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 1. Add days from the previous month (other-month)
+        // Previous month days
         for (let i = firstDayOfMonth; i > 0; i--) {
             const day = daysInPrevMonth - i + 1;
             const cell = createCalendarDay(day, 'other-month');
             calendarDaysEl.appendChild(cell);
         }
 
-        // 2. Add current month days
+        // Current month days
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             const dateStr = formatDate(date);
             
-            // Determine the status of this date
             let status = 'inactive';
             if (isDateInRange(dateStr)) {
                 status = 'in-range';
@@ -437,15 +451,13 @@
                 }
             }
             
-            // Only allow selection of current or future dates
             const isPast = date < today;
             if (isPast) {
-                status = 'other-month'; // Treat past dates as disabled/other-month
+                status = 'other-month'; 
             }
             
             const cell = createCalendarDay(day, status, dateStr);
             
-            // Add click listener only for non-past dates
             if (!isPast) {
                 cell.addEventListener('click', () => handleDateSelection(dateStr, cell));
             }
@@ -453,7 +465,7 @@
             calendarDaysEl.appendChild(cell);
         }
 
-        // 3. Add days from the next month
+        // Next month days
         let totalCells = firstDayOfMonth + daysInMonth;
         let nextDay = 1;
         while (totalCells % 7 !== 0) {
@@ -461,40 +473,31 @@
             calendarDaysEl.appendChild(cell);
             nextDay++;
             totalCells++;
-            // Break after a maximum of 6 rows (42 cells) to prevent infinite loop
             if (totalCells > 42) break; 
         }
     };
 
-    /**
-     * Creates a single calendar day element.
-     */
     const createCalendarDay = (day, status, dateStr = null) => {
         const cell = document.createElement('span');
         cell.classList.add('calendar-day');
         
-        // Apply appropriate custom class from CSS and set inline styles for visibility
         if (status === 'range-start' || status === 'range-end') {
             cell.classList.add('calendar-day-range-start');
-            // Force white text on green background for range boundaries
             cell.style.backgroundColor = '#16a34a';
             cell.style.color = 'white';
             cell.style.fontWeight = '700';
         } else if (status === 'in-range') {
             cell.classList.add('calendar-day-in-range');
-            // Force dark text on light green background for in-range dates
             cell.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
             cell.style.color = '#374151';
             cell.style.fontWeight = '500';
         } else if (status === 'inactive') {
             cell.classList.add('calendar-day-inactive');
-            // Force dark text on transparent background
             cell.style.backgroundColor = 'transparent';
             cell.style.color = '#374151';
             cell.style.fontWeight = '500';
         } else if (status === 'other-month') {
             cell.classList.add('calendar-day-other-month');
-            // Force light gray text for other months
             cell.style.backgroundColor = 'transparent';
             cell.style.color = '#9ca3af';
             cell.style.fontWeight = '500';
@@ -507,59 +510,50 @@
         return cell;
     };
 
-    /**
-     * Handles date selection for the range picker.
-     */
     const handleDateSelection = (dateStr, cell) => {
         if (isSelectingStartDate) {
-            // Selecting the start date
             selectedStartDate = dateStr;
-            selectedEndDate = null; // Reset end date when selecting a new start
+            selectedEndDate = null; 
             isSelectingStartDate = false;
             selectedDays = [dateStr];
             dayTimes = { [dateStr]: { start_time: '07:00', end_time: '10:00' } };
         } else {
-            // Selecting the end date
             const startDate = new Date(selectedStartDate);
             const endDate = new Date(dateStr);
             
-            // Ensure end date is not before start date
             if (endDate < startDate) {
-                // Swap dates if end is before start
                 selectedEndDate = selectedStartDate;
                 selectedStartDate = dateStr;
             } else {
                 selectedEndDate = dateStr;
             }
             
-            isSelectingStartDate = true; // Reset for next selection
-            
-            // Generate all dates in range
+            isSelectingStartDate = true; 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
             
-            // Initialize times for each day
-            dayTimes = {};
+            // Handle times for new range
+            const newDayTimes = {};
             selectedDays.forEach(day => {
-                dayTimes[day] = { start_time: '07:00', end_time: '10:00' };
+                if (dayTimes[day]) {
+                    newDayTimes[day] = dayTimes[day];
+                } else {
+                    newDayTimes[day] = { start_time: '07:00', end_time: '10:00' };
+                }
             });
+            dayTimes = newDayTimes;
         }
         
         updateDateRangeDisplay();
         renderDayTabs();
-        renderCalendar(); // Re-render to show the updated range
+        renderCalendar(); 
         validateForm();
     };
 
-    /**
-     * Updates the date range display above the calendar.
-     */
     const updateDateRangeDisplay = () => {
         if (selectedStartDate && selectedEndDate) {
-            // Both dates selected - show the range
             startDateDisplay.textContent = formatDateDisplay(selectedStartDate);
             endDateDisplay.textContent = formatDateDisplay(selectedEndDate);
             
-            // Calculate and display total days
             const start = new Date(selectedStartDate);
             const end = new Date(selectedEndDate);
             const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
@@ -568,14 +562,11 @@
             dateRangeDisplay.classList.remove('hidden');
             document.getElementById('no-dates-selected').classList.add('hidden');
             
-            // Update hidden inputs for form submission
             startDateInput.value = selectedStartDate;
             endDateInput.value = selectedEndDate;
             
-            // Show day tabs container
             dayTabsContainer.classList.remove('hidden');
         } else if (selectedStartDate) {
-            // Only start date selected
             startDateDisplay.textContent = formatDateDisplay(selectedStartDate);
             endDateDisplay.textContent = 'Select end date';
             totalDaysIndicator.textContent = '';
@@ -583,36 +574,27 @@
             dateRangeDisplay.classList.remove('hidden');
             document.getElementById('no-dates-selected').classList.add('hidden');
             
-            // Update hidden inputs for form submission
             startDateInput.value = selectedStartDate;
             endDateInput.value = '';
             
-            // Show day tabs container for single day
             dayTabsContainer.classList.remove('hidden');
         } else {
-            // No dates selected
             dateRangeDisplay.classList.add('hidden');
             document.getElementById('no-dates-selected').classList.remove('hidden');
             totalDaysIndicator.textContent = '';
             
-            // Clear hidden inputs
             startDateInput.value = '';
             endDateInput.value = '';
             
-            // Hide day tabs container
             dayTabsContainer.classList.add('hidden');
         }
     };
 
-    /**
-     * Renders day tabs for time selection
-     */
     const renderDayTabs = () => {
         dayTabsEl.innerHTML = '';
         timeSectionsContainer.innerHTML = '';
         
         selectedDays.forEach((day, index) => {
-            // Create day tab
             const tab = document.createElement('div');
             tab.className = `day-tab ${index === activeDayTab ? 'day-tab-active' : ''}`;
             tab.textContent = `Day ${index + 1} (${formatDateDisplay(day)})`;
@@ -620,12 +602,11 @@
             
             tab.addEventListener('click', () => {
                 activeDayTab = index;
-                renderDayTabs(); // Re-render to update active state
+                renderDayTabs(); 
             });
             
             dayTabsEl.appendChild(tab);
             
-            // Create time section for this day
             const timeSection = document.createElement('div');
             timeSection.className = `time-section ${index === activeDayTab ? 'time-section-active' : 'hidden'}`;
             timeSection.id = `time-section-${index}`;
@@ -656,30 +637,23 @@
             timeSectionsContainer.appendChild(timeSection);
         });
         
-        // Add event listeners to time inputs
         document.querySelectorAll('.day-time-input').forEach(input => {
             input.addEventListener('change', handleTimeChange);
         });
         
-        // Update the hidden input with current day times
         updateDayTimesInput();
     };
 
-    /**
-     * Handles time changes for individual days
-     */
     const handleTimeChange = (e) => {
         const day = e.target.dataset.day;
         const type = e.target.dataset.type;
         const value = e.target.value;
         
-        // Update the dayTimes object
         if (!dayTimes[day]) {
             dayTimes[day] = {};
         }
         dayTimes[day][type] = value;
         
-        // Validate time for this day
         const dayIndex = selectedDays.indexOf(day);
         const startTime = dayTimes[day].start_time;
         const endTime = dayTimes[day].end_time;
@@ -691,34 +665,24 @@
             errorEl.classList.add('hidden');
         }
         
-        // Update the hidden input
         updateDayTimesInput();
         validateForm();
     };
 
-    /**
-     * Updates the hidden input with JSON string of day times
-     */
     const updateDayTimesInput = () => {
         dayTimesInput.value = JSON.stringify(dayTimes);
     };
 
-    /**
-     * Handles navigation to the previous month.
-     */
     document.getElementById('prev-month-btn').addEventListener('click', () => {
-        // Check if navigating to a past month is allowed (only current or future months)
         const today = new Date();
-        today.setDate(1); // Set to 1st of the month
+        today.setDate(1); 
         today.setHours(0, 0, 0, 0);
 
         const potentialDate = new Date(currentDisplayDate);
         potentialDate.setMonth(potentialDate.getMonth() - 1);
-        potentialDate.setDate(1); // Set to 1st of the month
+        potentialDate.setDate(1); 
         
         if (potentialDate < today) {
-            // Optionally show a message or do nothing
-            console.log("Cannot navigate to previous years/months.");
             return;
         }
         
@@ -726,20 +690,15 @@
         renderCalendar();
     });
 
-    /**
-     * Handles navigation to the next month.
-     */
     document.getElementById('next-month-btn').addEventListener('click', () => {
         currentDisplayDate.setMonth(currentDisplayDate.getMonth() + 1);
         renderCalendar();
     });
 
-    // --- Form Validation & Button State ---
     const validateForm = () => {
         const isDateRangeSelected = selectedStartDate && selectedEndDate;
-        const isNativeValid = document.getElementById('reservation-form').checkValidity(); // Check HTML5 required fields
+        const isNativeValid = document.getElementById('reservation-form').checkValidity(); 
         
-        // Validate all day times
         let allTimesValid = true;
         if (isDateRangeSelected) {
             for (const day of selectedDays) {
@@ -766,13 +725,11 @@
             menuSelectionBtn.classList.remove('bg-clsu-green', 'hover:bg-green-700');
             validationMessageEl.classList.remove('hidden');
             
-            // Update validation message based on failure reason
             if (!isDateRangeSelected) {
                 validationMessageEl.textContent = 'Please select a complete date range (start and end dates).';
             } else if (!allTimesValid) {
                 validationMessageEl.textContent = 'Please ensure the end time is after the start time for all days.';
             } else if (!isNativeValid) {
-                 // Check for the first missing required field
                 const form = document.getElementById('reservation-form');
                 const firstInvalid = Array.from(form.elements).find(el => el.required && !el.value);
                 if (firstInvalid) {
@@ -784,23 +741,43 @@
                 validationMessageEl.textContent = 'Please fill out the form completely and resolve any errors.';
             }
         }
-        return isValid; // Return the final validation state
+        return isValid; 
     }
 
-    // Add listeners to required fields for real-time validation check
     document.getElementById('reservation-form').querySelectorAll('[required]').forEach(el => {
         el.addEventListener('input', () => validateForm());
     });
 
-    // --- Initialization ---
+    // --- Initialization & Edit Mode Pre-fill ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Initial render
+        const savedStart = document.getElementById('start_date_input').value;
+        const savedEnd = document.getElementById('end_date_input').value;
+        const savedTimes = document.getElementById('day_times_input').value;
+
+        if (savedStart && savedEnd) {
+            selectedStartDate = savedStart;
+            selectedEndDate = savedEnd;
+            isSelectingStartDate = true; 
+
+            if (savedTimes) {
+                try {
+                    dayTimes = JSON.parse(savedTimes);
+                } catch(e) { console.error('Error parsing saved times', e); }
+            }
+
+            selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
+
+            const startDateObj = new Date(selectedStartDate);
+            if (!isNaN(startDateObj.getTime())) {
+                 currentDisplayDate = startDateObj;
+            }
+            
+            updateDateRangeDisplay();
+            renderDayTabs();
+        }
+
         renderCalendar();
-        
-        // Initial validation (sets up button state)
         validateForm();
-        
-        // Initialize CLSU email validation
         initializeEmailValidation();
     });
 
@@ -830,7 +807,6 @@
             }
         });
         
-        // Override form submission for email validation
         form.addEventListener('submit', function(e) {
             if (emailInput.value && !validateCLSUEmail(emailInput.value)) {
                 e.preventDefault();

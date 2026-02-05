@@ -10,30 +10,23 @@ use App\Http\Controllers\{
     MenuController, RecipeController, ReservationController, CalendarController, InventoryItemController, ReportsController, ContactController
 };
 use App\Http\Controllers\Admin\MessageController;
-use App\Models\Menu;
 
-// 1. PUBLIC MARKETING PAGES (No authentication required)
+// 1. PUBLIC MARKETING PAGES
 Route::get('/', function () {
     return view('customer.homepage');
 })->name('marketing.home');
 
-// 2. EXPLICIT LOGIN ROUTE (WAS '/' BEFORE)
-// Users click the 'Reserve' button, which points here.
+// 2. EXPLICIT LOGIN ROUTE
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 
-// ---------- Breeze auth routes (login, register, logout, password, etc.) ----------
+// ---------- Breeze auth routes ----------
 require __DIR__ . '/auth.php';
 
 // Google OAuth Routes
-// Note: Only the redirect needs 'guest' middleware. Callback must NOT be in guest middleware
-// because Socialite needs session access to validate the state parameter
 Route::middleware('guest')->group(function () {
     Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 });
-
-// Callback route WITHOUT guest middleware - allows Socialite to access session for state validation
 Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');
-
 
 // ---------- Dashboard redirect helper ----------
 Route::get('/dashboard', function () {
@@ -41,13 +34,14 @@ Route::get('/dashboard', function () {
     if (!$user) return redirect()->route('login');
 
     return match ($user->role) {
-        'superadmin' => redirect()->route('admin.dashboard'), // Superadmin goes to admin dashboard
+        'superadmin' => redirect()->route('admin.dashboard'),
         'admin'      => redirect()->route('admin.dashboard'),
-        default      => redirect()->route('customer.homepage'),
+        'customer'   => redirect()->route('customer.homepage'),
+        default      => redirect()->route('login'),
     };
 })->middleware(['auth'])->name('dashboard');
 
-// ---------- Profile (Account Settings) ----------
+// ---------- Profile ----------
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
@@ -59,15 +53,15 @@ Route::middleware(['auth', 'role:superadmin'])
     ->prefix('superadmin')
     ->name('superadmin.')
     ->group(function () {
-        Route::get   ('/users',            [SuperAdminController::class, 'index'])->name('users');
-        Route::post  ('/users',            [SuperAdminController::class, 'store'])->name('users.store');
-        Route::put   ('/users/{user}',     [SuperAdminController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}',     [SuperAdminController::class, 'destroy'])->name('users.destroy');
+        Route::get   ('/users',             [SuperAdminController::class, 'index'])->name('users');
+        Route::post  ('/users',             [SuperAdminController::class, 'store'])->name('users.store');
+        Route::put   ('/users/{user}',      [SuperAdminController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}',      [SuperAdminController::class, 'destroy'])->name('users.destroy');
         Route::get   ('/users/{user}/audit',[SuperAdminController::class, 'audit'])->name('users.audit');
-        Route::get   ('/recent-audits',    [SuperAdminController::class, 'recentAudits'])->name('recent-audits');
+        Route::get   ('/recent-audits',     [SuperAdminController::class, 'recentAudits'])->name('recent-audits');
     });
 
-// ---------- Admin and Superadmin shared routes ----------
+// ---------- Admin/Superadmin Shared ----------
 Route::middleware(['auth'])
     ->prefix('admin')
     ->name('admin.')
@@ -77,7 +71,7 @@ Route::middleware(['auth'])
         Route::patch('/notifications/{notification}/read', [SuperAdminController::class, 'setNotificationRead'])->name('notifications.set-read');
     });
 
-// ---------- Admin only routes ----------
+// ---------- Admin Only ----------
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
@@ -91,36 +85,28 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('menus', MenuController::class);
         Route::post('/menus/{menu}/items', [MenuController::class,'addItem'])->name('menus.items.store');
 
-        // Recipes
         Route::get   ('/menu-items/{menuItem}/recipes', [RecipeController::class,'index'])->name('recipes.index');
         Route::post  ('/menu-items/{menuItem}/recipes', [RecipeController::class,'store'])->name('recipes.store');
         Route::delete('/menu-items/{menuItem}/recipes/{recipe}', [RecipeController::class,'destroy'])->name('recipes.destroy');
 
-        // Reservations (names align with your Blade: admin.reservations, admin.reservations.show, etc.)
         Route::get  ('/reservations',                       [ReservationController::class,'index'])->name('reservations');
         Route::get  ('/reservations/{reservation}',         [ReservationController::class,'show'])->name('reservations.show');
         Route::post ('/reservations/{reservation}/check-inventory', [ReservationController::class,'checkInventory'])->name('reservations.check-inventory');
         Route::patch('/reservations/{reservation}/approve', [ReservationController::class,'approve'])->name('reservations.approve');
         Route::patch('/reservations/{reservation}/decline', [ReservationController::class,'decline'])->name('reservations.decline');
 
-        // Reports
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
         Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
         Route::post('/reports/export/pdf', [ReportsController::class, 'exportPdf'])->name('reports.export.pdf');
         Route::post('/reports/export/excel', [ReportsController::class, 'exportExcel'])->name('reports.export.excel');
 
-        // Messages
         Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
         Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
         Route::post('/messages/{message}/reply', [MessageController::class, 'reply'])->name('messages.reply');
         Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.delete');
     });
 
-
-
 // ---------- Customer ----------
-// Customer
-
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/homepage', [CustomerHomeController::class, 'index'])->name('customer.homepage');
 });
@@ -138,45 +124,46 @@ Route::post('/contact', [ContactController::class, 'send'])->name('contact.send'
 
 // Group routes that require the user to be logged in (authenticated)
 Route::middleware(['auth'])->group(function () {
-    // 1. Route for displaying the initial reservation form (GET)
+    // 1. Initial reservation form (GET)
     Route::get('/reservation_form', function () {
         return view('customer.reservation_form');
     })->name('reservation_form');
 
     Route::post('/reservation/step1', [ReservationController::class, 'postDetails'])->name('reservation.post_details');
 
-    // 2. Route for transitioning to the menu selection after basic reservation details are entered
+    // 2. Menu selection
     Route::get('/reservation_form_menu', [ReservationController::class, 'create'])->name('reservation.create');
 
-    // 3. Route for handling the final submission and storing the reservation (POST)
+    // 3. Store reservation (POST)
     Route::post('/reservations', [ReservationController::class, 'store'])->name('reservation.store');
 
-    // 4. Route for viewing ALL reservation details (list of all reservations)
+    // 4. View ALL reservations
     Route::get('/reservation_details', function () {
         $reservations = \App\Models\Reservation::with(['items.menu.items'])
             ->where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
             ->get();
-        
         return view('customer.reservation_details', compact('reservations'));
     })->name('reservation_details');
 
-    // 5. Route for viewing a SINGLE reservation detail
+    // 5. View SINGLE reservation
     Route::get('/reservations/{id}', function ($id) {
         $reservation = \App\Models\Reservation::with(['items.menu.items'])
             ->where('user_id', auth()->id())
             ->findOrFail($id);
-        
         return view('customer.reservation_view', compact('reservation'));
     })->name('reservation.view');
 
-    // 6. Route for viewing billing info/receipt
+    // 6. Billing info
     Route::get('/billing_info/{id?}', function ($id = null) {
         return view('customer.billing_info', ['id' => $id]);
     })->name('billing_info');
 
     Route::post('/reservations/{reservation}/upload-receipt', [ReservationController::class, 'uploadReceipt'])->name('reservation.upload-receipt');
     
-    // 7. Route for cancelling a reservation
+    // 7. Cancel reservation
     Route::patch('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');
-}); // THIS LINE CLOSES THE auth() GROUP
+
+    // [FIXED] 8. Edit Reservation Route - Removed "action:" to fix "Route not defined" error
+    Route::get('/reservations/{reservation}/edit', [ReservationController::class, 'edit'])->name('reservation.edit');
+});
