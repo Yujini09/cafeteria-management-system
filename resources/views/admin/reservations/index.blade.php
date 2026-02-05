@@ -2,178 +2,8 @@
 @section('page-title', 'Reservations')
 
 @section('content')
-<style>
-/* Right-aligned columns */
-.modern-table th:nth-child(3),
-.modern-table th:nth-child(4),
-.modern-table th:nth-child(5) {
-    text-align: right;
-}
 
-/* Right-aligned columns */
-.modern-table td:nth-child(3),
-.modern-table td:nth-child(4),
-.modern-table td:nth-child(5) {
-    text-align: right;
-}
-
-/* Status Badges - Same size as role badges in manage users */
-.status-badge {
-    border-radius: 20px; /* Same as role-badge */
-    text-transform: uppercase;
-    letter-spacing: 0.5px; /* Same as role-badge */
-    gap: 0.375rem;
-    border: 1px solid transparent;
-}
-
-/* Header Styles */
-.page-header {
-    flex-wrap: wrap;
-}
-
-/* Customer Info - Same font sizes as manage users */
-.customer-name {
-    font-weight: 600;
-    color: var(--neutral-900);
-    font-size: 0.875rem; /* Same as table font */
-}
-
-.customer-department {
-    color: var(--neutral-500);
-    font-size: 0.75rem; /* Smaller like in manage users */
-    margin-top: 0.125rem;
-}
-
-/* ID Link */
-.id-link {
-    color: var(--primary);
-    font-weight: 600;
-    text-decoration: none;
-    transition: color 0.2s ease;
-    font-size: 0.875rem; /* Same as table font */
-}
-
-.id-link:hover {
-    color: var(--primary-light);
-}
-
-/* Short Email Display */
-.short-email {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.short-email:hover {
-    overflow: visible;
-    white-space: normal;
-    background: white;
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-/* Icon Sizes - Same as manage users */
-.icon-sm {
-    width: 14px; /* Same as w-3.5 (14px) */
-    height: 14px;
-}
-
-.icon-md {
-    width: 16px; /* Same as w-4 (16px) */
-    height: 16px;
-}
-
-.icon-lg {
-    width: 20px; /* Same as in header */
-    height: 20px;
-}
-
-/* Action Buttons Container - Single line */
-.action-buttons {
-    display: flex;
-    gap: 0.375rem;
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-}
-
-/* Column Widths for better alignment */
-.column-id {
-    width: 80px;
-}
-
-.column-customer {
-    width: 150px;
-}
-
-.column-status {
-    width: 120px;
-}
-
-.column-email {
-    width: 140px;
-}
-
-.column-date {
-    width: 140px;
-}
-
-.column-actions {
-    width: 200px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .header-content {
-        width: 100%;
-    }
-    
-    .modern-table th:nth-child(4),
-    .modern-table td:nth-child(4),
-    .modern-table th:nth-child(5),
-    .modern-table td:nth-child(5) {
-        display: none;
-    }
-    
-    .action-buttons {
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .action-buttons {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-    
-    .action-buttons a,
-    .action-buttons button {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* Modal Styles */
-.modern-modal {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--neutral-200);
-}
-
-[x-cloak] { display: none !important; }
-</style>
-
-<div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
+<div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0 overflow-hidden flex flex-col"
      x-data="reservationList()"
      x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen)"
      @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false">
@@ -188,21 +18,29 @@
                 <p class="header-subtitle">Manage and review all reservation requests</p>
             </div>
         </div>
-        <div class="relative w-full sm:w-64 md:w-72 ml-auto">
-            <input type="search"
-                   id="searchInput"
-                   placeholder="Search reservations..."
-                   class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                   oninput="filterTable(this.value)"
-                   aria-label="Search reservations">
-            <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
+            <div class="relative w-full sm:w-64 md:w-72">
+                <input type="search"
+                       id="searchInput"
+                       placeholder="Search reservations..."
+                       class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                       oninput="filterTable(this.value)"
+                       aria-label="Search reservations">
+                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
-            </button>
+                <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                    <x-admin.ui.icon name="fa-calendar-check" size="xs" />
+                    Total Reservations: {{ $reservations->total() }}
+                </span>
+            </div>
         </div>
     </div>
 
@@ -229,21 +67,29 @@
     </div>
 
     <!-- Table -->
-    <div class="overflow-auto max-h-96 modern-scrollbar">
-        <table class="modern-table">
+    <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+        <table class="modern-table table-fixed">
+            <colgroup>
+                <col class="w-14">
+                <col class="w-64">
+                <col class="w-40">
+                <col class="w-64">
+                <col class="w-48">
+                <col class="w-48">
+            </colgroup>
             <thead>
                 <tr>
-                    <th class="column-id">#</th>
-                    <th class="column-customer">Customer</th>
-                    <th class="column-status">
+                    <th class="w-14">#</th>
+                    <th class="whitespace-nowrap">Customer</th>
+                    <th class="whitespace-nowrap">
                         <span class="inline-flex items-center gap-2">
                             <span>Status</span>
                             <x-admin.ui.icon name="fa-chevron-down" style="fas" size="sm" class="text-admin-neutral-400" />
                         </span>
                     </th>
-                    <th class="column-email hidden md:table-cell">Email</th>
-                    <th class="column-date hidden lg:table-cell">Created</th>
-                    <th class="column-actions">Actions</th>
+                    <th class="hidden md:table-cell whitespace-nowrap">Email</th>
+                    <th class="hidden lg:table-cell whitespace-nowrap">Created</th>
+                    <th class="whitespace-nowrap">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -264,9 +110,9 @@
                         };
                         
                         $statusIcon = match($status) {
-                            'approved' => '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
-                            'declined' => '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
-                            default => '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                            'approved' => 'fa-check',
+                            'declined' => 'fa-xmark',
+                            default => 'fa-clock'
                         };
 
                         // Get customer name from contact_person field
@@ -280,35 +126,34 @@
                             $shortEmail = $email;
                         }
                     @endphp
-                    <tr>
-                        <td class="column-id">
-                            <a href="{{ route('admin.reservations.show', $r) }}" class="id-link">{{ $r->id }}</a>
+                    <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                        <td class="text-admin-neutral-500 font-semibold">
+                            <a href="{{ route('admin.reservations.show', $r) }}" wire:navigate class="text-admin-primary font-semibold hover:text-admin-primary-light transition-colors duration-admin">
+                                {{ $r->id }}
+                            </a>
                         </td>
-                        <td class="column-customer">
-                            <div class="customer-name">{{ $customerName }}</div>
-                            <div class="customer-department md:hidden">{{ $r->department ?? '—' }}</div>
+                        <td>
+                            <div class="font-semibold text-admin-neutral-900">{{ $customerName }}</div>
+                            <div class="text-xs text-admin-neutral-500 md:hidden">{{ $r->department ?? '—' }}</div>
                         </td>
-                        <td class="column-status">
-                            <span class="status-badge {{ $statusClass }}">
-                                {!! $statusIcon !!}
+                        <td>
+                            <span class="status-badge {{ $statusClass }} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide">
+                                <x-admin.ui.icon name="{{ $statusIcon }}" style="fas" size="sm" />
                                 {{ $statusLabel }}
                             </span>
                         </td>
-                        <td class="column-email hidden md:table-cell text-admin-neutral-600">
-                            <span class="short-email" title="{{ $email }}">
+                        <td class="hidden md:table-cell text-admin-neutral-600">
+                            <span class="max-w-[160px] truncate" title="{{ $email }}">
                                 {{ $shortEmail }}
                             </span>
                         </td>
-                        <td class="column-date hidden lg:table-cell text-admin-neutral-600">
+                        <td class="hidden lg:table-cell text-admin-neutral-600 whitespace-nowrap">
                             {{ $r->created_at->format('M d, Y H:i') }}
                         </td>
-                        <td class="column-actions">
-                            <div class="action-buttons">
-                                <a href="{{ route('admin.reservations.show', $r) }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-secondary text-admin-secondary-text border border-admin-neutral-200 hover:bg-admin-secondary-hover transition-all duration-admin ease-out">
-                                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
+                        <td class="whitespace-nowrap">
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{{ route('admin.reservations.show', $r) }}" wire:navigate class="inline-flex items-center gap-2 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-secondary text-admin-secondary-text border border-admin-neutral-200 hover:bg-admin-secondary-hover transition-all duration-admin ease-out">
+                                    <x-admin.ui.icon name="fa-eye" style="fas" size="sm" />
                                     View
                                 </a>
                                 {{-- @if ($status === 'pending')
@@ -352,19 +197,21 @@
     </div>
 
     {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div @click="approveConfirmationOpen=false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-sm rounded-admin-lg bg-white shadow-admin-modal border border-admin-neutral-200"
              x-transition.scale.90
              @click.stop>
-            <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-admin-neutral-100">
+                <span class="flex h-10 w-10 items-center justify-center rounded-admin bg-admin-primary-light text-admin-primary">
+                    <x-admin.ui.icon name="fa-check" style="fas" size="sm" />
+                </span>
+                <h3 class="text-lg font-semibold text-admin-neutral-900">Confirm Approval</h3>
             </div>
-            <h3 class="text-lg font-semibold mb-2">Confirm Approval</h3>
-            <p class="text-sm text-admin-neutral-600 mb-4">Are you sure you want to approve this reservation?</p>
-            <div class="flex justify-center gap-3">
+            <div class="px-6 py-4 text-sm text-admin-neutral-600">
+                Are you sure you want to approve this reservation?
+            </div>
+            <div class="flex justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
                 <x-admin.ui.button.secondary type="button" @click="approveConfirmationOpen=false">Cancel</x-admin.ui.button.secondary>
                 <x-admin.ui.button.primary type="button" @click="redirectToShowPage()">Yes, Approve</x-admin.ui.button.primary>
             </div>
@@ -372,19 +219,21 @@
     </div>
 
     {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div @click="declineConfirmationOpen=false" class="absolute inset-0"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
+    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="declineConfirmationOpen=false" class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-sm rounded-admin-lg bg-white shadow-admin-modal border border-admin-neutral-200"
              x-transition.scale.90
              @click.stop>
-            <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-admin-neutral-100">
+                <span class="flex h-10 w-10 items-center justify-center rounded-admin bg-admin-danger-light text-admin-danger">
+                    <x-admin.ui.icon name="fa-exclamation-triangle" style="fas" size="sm" />
+                </span>
+                <h3 class="text-lg font-semibold text-admin-neutral-900">Confirm Decline</h3>
             </div>
-            <h3 class="text-lg font-semibold mb-2">Confirm Decline</h3>
-            <p class="text-sm text-admin-neutral-600 mb-4">Are you sure you want to decline this reservation?</p>
-            <div class="flex justify-center gap-3">
+            <div class="px-6 py-4 text-sm text-admin-neutral-600">
+                Are you sure you want to decline this reservation?
+            </div>
+            <div class="flex justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
                 <x-admin.ui.button.secondary type="button" @click="declineConfirmationOpen=false">Cancel</x-admin.ui.button.secondary>
                 <x-admin.ui.button.danger type="button" @click="redirectToShowPage()">Yes, Decline</x-admin.ui.button.danger>
             </div>

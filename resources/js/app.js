@@ -213,6 +213,23 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 
+    // Messages list page
+    Alpine.data('messageList', () => ({
+        deleteConfirmationOpen: false,
+        selectedMessageId: null,
+        openDeleteConfirmation(id) {
+            this.selectedMessageId = id ?? null;
+
+            const form = document.getElementById('delete-form');
+            const template = form?.dataset?.deleteTemplate || '';
+            if (form && template) {
+                form.action = template.replace('999999', String(id));
+            }
+
+            this.deleteConfirmationOpen = true;
+        }
+    }));
+
     // Menu create modal
     Alpine.data('menuCreateModal', (opts = {}) => ({
       isCreateOpen: false,

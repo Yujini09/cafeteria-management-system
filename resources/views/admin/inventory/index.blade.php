@@ -2,111 +2,6 @@
 @section('page-title', 'Inventory Management')
 
 @section('content')
-<style>
-/* Quantity Badge */
-.quantity-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.375rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.quantity-low {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.quantity-medium {
-    background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
-    border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.quantity-good {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border: 1px solid rgba(34, 197, 94, 0.2);
-}
-
-/* Header Styles */
-.header-actions {
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-/* Form Styles */
-.modern-form {
-    background: var(--neutral-50);
-    border-radius: 12px;
-    border: 1px solid var(--neutral-200);
-    padding: 1.5rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-label {
-    display: block;
-    font-weight: 600;
-    color: var(--neutral-700);
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-}
-
-.form-select, .form-input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--neutral-300);
-    border-radius: 10px;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-    background: white;
-}
-
-.form-select:focus, .form-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
-}
-
-.form-error {
-    border-color: #dc2626 !important;
-}
-
-.error-message {
-    font-size: 0.75rem;
-    color: #dc2626;
-    margin-top: 0.25rem;
-}
-
-/* Modal Styles */
-.modern-modal {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--neutral-200);
-}
-
-.modal-input {
-    width: 100%;
-    padding: 0.875rem;
-    border: 1px solid var(--neutral-300);
-    border-radius: 8px;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-}
-
-.modal-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
-}
-
-</style>
 
 <div x-data="{ 
     showCreateModal: false, 
@@ -131,7 +26,7 @@
         <p class="text-sm text-admin-neutral-600">Inventory item deleted successfully.</p>
     </x-success-modal>
     
-    <div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full">
+    <div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full overflow-hidden flex flex-col">
         <div class="page-header items-start">
             <div class="header-content">
                 <div class="header-icon">
@@ -142,7 +37,7 @@
                     <p class="header-subtitle">Manage and track your inventory items and quantities</p>
                 </div>
             </div>
-            <div class="header-actions w-full md:w-auto">
+            <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
                 <div class="relative w-full sm:w-64 md:w-72">
                     <input type="search"
                            id="searchInput"
@@ -158,6 +53,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600 mr-auto">
+                        <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
+                        Total Items: {{ $items->total() }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -176,7 +77,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="flex justify-end">
+                    <div class="flex w-full sm:w-auto sm:justify-end">
                         <x-admin.ui.button.primary type="button" @click="showCreateModal = true">
                             <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
                             Add Item
@@ -192,30 +93,40 @@
             </form>
         </div>
 
-        <div class="overflow-auto max-h-96 modern-scrollbar">
-            <table class="modern-table">
+        <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+            <table class="modern-table table-fixed">
+                <colgroup>
+                    <col class="w-14">
+                    <col class="w-64">
+                    <col class="w-32">
+                    <col class="w-24">
+                    <col class="w-40">
+                    <col class="w-40">
+                    <col class="w-40">
+                    <col class="w-48">
+                </colgroup>
                 <thead>
                     <tr>
                         <th class="w-14">#</th>
-                        <th>
+                        <th class="whitespace-nowrap">
                             <a href="?sort=name" class="hover:text-admin-neutral-700 transition-colors duration-200">Item Name</a>
                         </th>
-                        <th>
+                        <th class="whitespace-nowrap">
                             <a href="?sort=qty" class="hover:text-admin-neutral-700 transition-colors duration-200">Quantity</a>
                         </th>
-                        <th>Unit</th>
-                        <th>
+                        <th class="whitespace-nowrap">Unit</th>
+                        <th class="whitespace-nowrap">
                             <a href="?sort=expiry_date" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
                         </th>
-                        <th>Category</th>
-                        <th class="hidden md:table-cell">Last Updated</th>
-                        <th>Actions</th>
+                        <th class="whitespace-nowrap">Category</th>
+                        <th class="hidden md:table-cell whitespace-nowrap">Last Updated</th>
+                        <th class="whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($items as $item)
-                        <tr>
+                        <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
                             <td class="text-admin-neutral-500 font-semibold">
                                 {{ ($items->firstItem() ?? 0) + $loop->index }}
                             </td>
@@ -225,21 +136,21 @@
                             </td>
 
                             <td>
-                                <span class="quantity-badge
-                                    @if($item->qty <= 5) quantity-low
-                                    @elseif($item->qty <= 10) quantity-medium
-                                    @else quantity-good @endif">
+                                @php
+                                    $qtyClass = $item->qty <= 5 ? 'status-critical' : ($item->qty <= 10 ? 'status-warning' : 'status-good');
+                                @endphp
+                                <span class="status-badge {{ $qtyClass }} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide">
                                     {{ $item->qty }}
                                 </span>
                             </td>
 
                             <td class="text-admin-neutral-600">{{ $item->unit }}</td>
-                            <td class="text-admin-neutral-600">{{ $item->expiry_date ?? 'N/A' }}</td>
+                            <td class="text-admin-neutral-600 whitespace-nowrap">{{ $item->expiry_date ?? 'N/A' }}</td>
                             <td class="text-admin-neutral-600">{{ $item->category }}</td>
-                            <td class="text-admin-neutral-600 hidden md:table-cell">{{ $item->updated_at->diffForHumans() }}</td>
+                            <td class="text-admin-neutral-600 hidden md:table-cell whitespace-nowrap">{{ $item->updated_at->diffForHumans() }}</td>
 
-                            <td>
-                                <div class="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
+                            <td class="whitespace-nowrap">
+                                <div class="flex flex-wrap gap-2">
                                     <x-admin.ui.button.secondary
                                         type="button"
                                         class="!py-2 !px-3 text-xs"
@@ -285,8 +196,8 @@
         @endif
     </div>
 
-    <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
-        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10" x-transition.scale.90>
+    <div x-show="showCreateModal" @click="showCreateModal = false" class="fixed inset-0 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
+        <div @click.stop class="w-full max-w-lg rounded-admin-lg bg-white shadow-admin-modal border border-admin-neutral-200 p-6 relative z-10" x-transition.scale.90>
             <button @click="showCreateModal = false"
                     class="absolute top-4 right-4 text-admin-neutral-500 hover:text-admin-neutral-800 text-xl">
                 &times;
@@ -298,13 +209,13 @@
                 @csrf
 
                 <div>
-                    <label for="create_name" class="form-label">Item Name</label>
-                    <input type="text" name="name" id="create_name" required class="modal-input" autocomplete="off">
+                    <label for="create_name" class="block text-sm font-medium text-admin-neutral-700">Item Name</label>
+                    <input type="text" name="name" id="create_name" required class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20" autocomplete="off">
                 </div>
 
                 <div>
-                    <label for="create_category" class="form-label">Category</label>
-                    <select name="category" id="create_category" required class="modal-input" data-admin-select="true">
+                    <label for="create_category" class="block text-sm font-medium text-admin-neutral-700">Category</label>
+                    <select name="category" id="create_category" required class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a category</option>
                         <option value="Perishable">Perishable</option>
                         <option value="Condiments">Condiments</option>
@@ -315,13 +226,13 @@
                 </div>
 
                 <div>
-                    <label for="create_qty" class="form-label">Quantity</label>
-                    <input type="number" name="qty" id="create_qty" min="1" required class="modal-input">
+                    <label for="create_qty" class="block text-sm font-medium text-admin-neutral-700">Quantity</label>
+                    <input type="number" name="qty" id="create_qty" min="1" required class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                 </div>
 
                 <div>
-                    <label for="create_unit" class="form-label">Unit</label>
-                    <select name="unit" id="create_unit" required class="modal-input" data-admin-select="true">
+                    <label for="create_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
+                    <select name="unit" id="create_unit" required class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
                         <optgroup label="Count">
                             <option value="Pieces">Pieces</option>
@@ -337,8 +248,8 @@
                 </div>
 
                 <div>
-                    <label for="create_expiry_date" class="form-label">Expiry Date</label>
-                    <input type="date" name="expiry_date" id="create_expiry_date" class="modal-input">
+                    <label for="create_expiry_date" class="block text-sm font-medium text-admin-neutral-700">Expiry Date</label>
+                    <input type="date" name="expiry_date" id="create_expiry_date" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                     <small class="text-admin-neutral-500 text-xs">Leave blank if not applicable.</small>
                 </div>
 
@@ -354,8 +265,8 @@
         </div>
     </div>
 
-    <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
-        <div @click.stop class="modern-modal w-full max-w-lg p-6 relative z-10" x-transition.scale.90>
+    <div x-show="showEditModal" @click="showEditModal = false; editingItem = null" class="fixed inset-0 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-transition.opacity x-cloak>
+        <div @click.stop class="w-full max-w-lg rounded-admin-lg bg-white shadow-admin-modal border border-admin-neutral-200 p-6 relative z-10" x-transition.scale.90>
             <button @click="showEditModal = false; editingItem = null"
                     class="absolute top-4 right-4 text-admin-neutral-500 hover:text-admin-neutral-800 text-xl">
                 &times;
@@ -367,13 +278,13 @@
                 @csrf @method('PUT')
 
                 <div>
-                    <label for="edit_name" class="form-label">Item Name</label>
-                    <input type="text" name="name" id="edit_name" required x-bind:value="editingItem ? editingItem.name : ''" class="modal-input" autocomplete="off">
+                    <label for="edit_name" class="block text-sm font-medium text-admin-neutral-700">Item Name</label>
+                    <input type="text" name="name" id="edit_name" required x-bind:value="editingItem ? editingItem.name : ''" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20" autocomplete="off">
                 </div>
 
                 <div>
-                    <label for="edit_category" class="form-label">Category</label>
-                    <select name="category" id="edit_category" required x-bind:value="editingItem ? editingItem.category : ''" class="modal-input" data-admin-select="true">
+                    <label for="edit_category" class="block text-sm font-medium text-admin-neutral-700">Category</label>
+                    <select name="category" id="edit_category" required x-bind:value="editingItem ? editingItem.category : ''" class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a category</option>
                         <option value="Perishable">Perishable</option>
                         <option value="Condiments">Condiments</option>
@@ -384,13 +295,13 @@
                 </div>
 
                 <div>
-                    <label for="edit_qty" class="form-label">Quantity</label>
-                    <input type="number" name="qty" id="edit_qty" min="1" required x-bind:value="editingItem ? editingItem.qty : ''" class="modal-input">
+                    <label for="edit_qty" class="block text-sm font-medium text-admin-neutral-700">Quantity</label>
+                    <input type="number" name="qty" id="edit_qty" min="1" required x-bind:value="editingItem ? editingItem.qty : ''" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                 </div>
 
                 <div>
-                    <label for="edit_unit" class="form-label">Unit</label>
-                    <select name="unit" id="edit_unit" required x-bind:value="editingItem ? editingItem.unit : ''" class="modal-input" data-admin-select="true">
+                    <label for="edit_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
+                    <select name="unit" id="edit_unit" required x-bind:value="editingItem ? editingItem.unit : ''" class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
                         <optgroup label="Count">
                             <option value="Pieces">Pieces</option>
@@ -406,8 +317,8 @@
                 </div>
 
                 <div>
-                    <label for="edit_expiry_date" class="form-label">Expiry Date</label>
-                    <input type="date" name="expiry_date" id="edit_expiry_date" x-bind:value="editingItem ? editingItem.expiry_date : ''" class="modal-input">
+                    <label for="edit_expiry_date" class="block text-sm font-medium text-admin-neutral-700">Expiry Date</label>
+                    <input type="date" name="expiry_date" id="edit_expiry_date" x-bind:value="editingItem ? editingItem.expiry_date : ''" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                     <small class="text-admin-neutral-500 text-xs">Leave blank if not applicable.</small>
                 </div>
 
@@ -432,7 +343,7 @@
             x-transition:leave="ease-in duration-150"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="absolute inset-0 bg-red-950/40 backdrop-blur-sm"
+            class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"
             @click="showDeleteModal = false; deletingItem = null"
             aria-hidden="true"
         ></div>
@@ -445,39 +356,39 @@
             x-transition:leave="ease-in duration-150"
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
-            class="relative w-full max-w-sm overflow-hidden rounded-2xl border border-red-200 bg-white shadow-2xl"
+            class="relative w-full max-w-sm overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin-modal"
             @click.stop
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-inventory-title"
             aria-describedby="delete-inventory-desc"
         >
-            <div class="flex items-start justify-between gap-4 border-b border-red-100 bg-red-50 px-6 py-4">
+            <div class="flex items-center justify-between gap-4 border-b border-admin-neutral-100 px-6 py-4">
                 <div class="flex items-center gap-3">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-admin bg-admin-danger-light text-admin-danger">
                         <i class="fas fa-exclamation-triangle text-lg"></i>
                     </span>
                     <div>
-                        <h2 id="delete-inventory-title" class="text-lg font-semibold text-red-900">Confirm Deletion</h2>
-                        <p class="text-xs text-red-700">This action cannot be undone.</p>
+                        <h2 id="delete-inventory-title" class="text-lg font-semibold text-admin-neutral-900">Confirm Deletion</h2>
+                        <p class="text-xs text-admin-neutral-500">This action cannot be undone.</p>
                     </div>
                 </div>
                 <button @click="showDeleteModal = false; deletingItem = null"
-                        class="rounded-full p-1 text-red-600 hover:text-red-700" aria-label="Close">
+                        class="rounded-full p-1 text-admin-neutral-400 hover:text-admin-neutral-600" aria-label="Close">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
 
-            <div id="delete-inventory-desc" class="px-6 py-5 text-sm text-red-700">
+            <div id="delete-inventory-desc" class="px-6 py-5 text-sm text-admin-neutral-600">
                 Are you sure you want to delete
-                <span class="font-semibold text-red-900" x-text="deletingItem ? deletingItem.name : 'this item'"></span>?
+                <span class="font-semibold text-admin-neutral-900" x-text="deletingItem ? deletingItem.name : 'this item'"></span>?
                 This item will be removed from inventory.
             </div>
 
             <form id="deleteInventoryForm" x-bind:action="deletingItem ? deleteRoute.replace(':id', deletingItem.id) : '#'" x-bind:data-id="deletingItem ? deletingItem.id : ''" method="POST"
-                  class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
+                  class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
                 @csrf @method('DELETE')
 
                 <x-admin.ui.button.secondary type="button" @click="showDeleteModal = false; deletingItem = null">

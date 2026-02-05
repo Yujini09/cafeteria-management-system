@@ -11,6 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    private const MAX_ATTEMPTS = 5;
+    private const THROTTLE_SECONDS = 180;
+    private const THROTTLE_MESSAGE = 'You have input wrong password several times. Please wait for 3 mins and try again';
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -42,7 +45,13 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->throttleKey(), self::THROTTLE_SECONDS);
+
+            if (RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
+                throw ValidationException::withMessages([
+                    'email' => self::THROTTLE_MESSAGE,
+                ]);
+            }
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
@@ -53,7 +62,7 @@ class LoginRequest extends FormRequest
         $user = Auth::user();
         if (! $user->hasVerifiedEmail() && ! in_array($user->role, ['admin', 'superadmin'])) {
             Auth::logout();
-            RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->throttleKey(), self::THROTTLE_SECONDS);
 
             throw ValidationException::withMessages([
                 'email' => 'You must verify your email address before logging in.',
@@ -70,19 +79,14 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
             return;
         }
 
         event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
-
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => self::THROTTLE_MESSAGE,
         ]);
     }
 

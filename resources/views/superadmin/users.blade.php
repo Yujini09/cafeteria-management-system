@@ -4,7 +4,7 @@
 
 @section('content')
 {{-- Design system: admin tokens from tailwind (admin-primary, rounded-admin, etc.). No inline overrides. --}}
-<div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 max-w-full overflow-hidden">
+<div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 max-w-full overflow-hidden flex flex-col">
     {{-- Success handled via success modal; no duplicate inline messages. --}}
 
     <div class="page-header items-start">
@@ -53,8 +53,8 @@
         </div>
     </div>
 
-    <div class="overflow-x-auto overflow-y-scroll max-h-96 min-h-96 rounded-admin border border-admin-neutral-200">
-        <table class="w-full border-collapse text-sm table-fixed">
+    <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+        <table class="modern-table table-fixed">
             <colgroup>
                 <col class="w-14">
                 <col class="w-64">
@@ -249,7 +249,7 @@ function openEditModal(id, name, email) {
     window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
 }
 
-let deleteUserId = null;
+var deleteUserId = null;
 
 function openDeleteModal(userId, userName) {
     deleteUserId = userId;
@@ -263,8 +263,8 @@ function confirmDelete() {
     }
 }
 
-let userSortDirection = 'asc';
-let userSortActive = false;
+var userSortDirection = 'asc';
+var userSortActive = false;
 
 function toggleUserNameSort() {
     if (userSortActive) {
@@ -334,9 +334,9 @@ function applyUserFilters() {
     }
 }
 
-let allAudits = [];
-let currentSortBy = 'created_at';
-let currentSortDirection = 'desc';
+var allAudits = [];
+var currentSortBy = 'created_at';
+var currentSortDirection = 'desc';
 
 async function openRecentActivitiesModal() {
     window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'recentActivities' }));

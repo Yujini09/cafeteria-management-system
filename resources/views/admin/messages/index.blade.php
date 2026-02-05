@@ -213,6 +213,7 @@
             </div>
 
             <form id="delete-form" method="POST" action=""
+                  data-delete-template="{{ route('admin.messages.delete', 999999) }}"
                   class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
                 @csrf
                 @method('DELETE')
@@ -228,24 +229,6 @@
 </div>
 
 <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('messageList', () => ({
-            deleteConfirmationOpen: false,
-            selectedMessageId: null,
-
-            openDeleteConfirmation(id) {
-                this.selectedMessageId = id;
-
-                // Generate a valid route with a dummy ID, then replace it.
-                let url = "{{ route('admin.messages.delete', 999999) }}";
-                url = url.replace('999999', id);
-                document.getElementById('delete-form').action = url;
-
-                this.deleteConfirmationOpen = true;
-            }
-        }));
-    });
-
     document.addEventListener('livewire:navigated', () => {
         const hasSuccess = @json((bool) session('message_success'));
         const hasError = @json((bool) session('message_error'));

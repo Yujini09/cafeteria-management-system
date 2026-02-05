@@ -188,11 +188,19 @@
                                         break;
                                     }
                                 }
+                                $throttleSeconds = (int) config('auth.passwords.users.throttle');
+                                $throttleMinutes = $throttleSeconds > 0 ? (int) ceil($throttleSeconds / 60) : null;
                             @endphp
 
                             @if($emailError && $isThrottled)
                                 <div class="mb-4 text-sm text-admin-danger bg-admin-danger-light p-3 rounded-admin border border-admin-danger/20">
-                                    Too many reset requests. Please wait a few minutes and try again.
+                                    You just have a recent reset request. Please wait
+                                    @if($throttleMinutes)
+                                        {{ $throttleMinutes }} minute{{ $throttleMinutes === 1 ? '' : 's' }}
+                                    @else
+                                        a few minutes
+                                    @endif
+                                    and try again.
                                 </div>
                             @endif
 

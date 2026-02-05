@@ -576,38 +576,36 @@
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-end bg-white p-3 rounded-lg">
                           <div class="flex-1 relative">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                              <button type="button" 
-                                      @click="form.openDropdowns[index + '_' + rIndex] = !form.openDropdowns[index + '_' + rIndex]"
-                                      class="form-input w-full flex items-center justify-between hover:border-[#057C3C] text-left bg-white">
-                                <span class="truncate text-sm">
-                                  <template x-if="recipe.inventory_item_id">
-                                    <span x-text="getIngredientLabel(recipe.inventory_item_id)"></span>
-                                  </template>
-                                  <template x-if="!recipe.inventory_item_id">
-                                    <span class="text-gray-400">Select ingredient...</span>
-                                  </template>
-                                </span>
-                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                                </svg>
-                              </button>
-                              
+                            <div class="relative" @click.outside="form.openDropdowns[index + '_' + rIndex] = false">
+                              <input type="text"
+                                     x-model="form.searchTerms[index + '_' + rIndex]"
+                                     x-init="if (!form.searchTerms[index + '_' + rIndex] && recipe.inventory_item_id) { form.searchTerms[index + '_' + rIndex] = getIngredientLabel(recipe.inventory_item_id); }"
+                                     @focus="form.openDropdowns[index + '_' + rIndex] = true"
+                                     @blur="form.openDropdowns[index + '_' + rIndex] = false"
+                                     @input="
+                                      form.openDropdowns[index + '_' + rIndex] = true;
+                                      const key = index + '_' + rIndex;
+                                      const typed = (form.searchTerms[key] || '').toLowerCase();
+                                      const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
+                                      if (!typed) { recipe.inventory_item_id = ''; }
+                                      else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
+                                     "
+                                     @keydown.escape="form.openDropdowns[index + '_' + rIndex] = false"
+                                     placeholder="Search ingredient..."
+                                     autocomplete="off"
+                                     class="form-input w-full bg-white"
+                                     role="combobox"
+                                     aria-autocomplete="list"
+                                     :aria-expanded="form.openDropdowns[index + '_' + rIndex] ? 'true' : 'false'"
+                                     :aria-controls="'ingredient-list-' + index + '-' + rIndex">
+
                               <div x-show="form.openDropdowns[index + '_' + rIndex]" 
-                                   @click.outside="form.openDropdowns[index + '_' + rIndex] = false" 
                                    class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-[100] w-full flex flex-col max-h-72">
-                                <div class="flex-shrink-0 border-b border-gray-300 p-2">
-                                  <input type="text" 
-                                         x-model="form.searchTerms[index + '_' + rIndex]" 
-                                         @keydown.escape="form.openDropdowns[index + '_' + rIndex] = false"
-                                         placeholder="Search ingredients..." 
-                                         class="form-input w-full" 
-                                         style="font-size: 0.875rem;">
-                                </div>
-                                <div class="overflow-y-auto flex-1">
+                                <div class="overflow-y-auto flex-1" :id="'ingredient-list-' + index + '-' + rIndex">
                                   <template x-for="inv in getAvailableIngredients(item, rIndex, form.searchTerms[index + '_' + rIndex])" :key="inv.id">
                                     <button type="button" 
-                                            @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = '';"
+                                            @mousedown.prevent
+                                            @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = inv.name;"
                                             class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
                                       <span x-text="inv.name"></span>
                                     </button>
