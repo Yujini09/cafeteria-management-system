@@ -113,7 +113,7 @@
         border-radius: 8px;
         padding: 15px;
         margin-bottom: 0;
-        border: 1px solid #e5e7eb; /* Replaced border-left with a full light border */
+        border: 1px solid #e5e7eb; 
         height: 100%;
     }
     
@@ -269,7 +269,6 @@
                                     function formatTimeForDisplay($timeString) {
                                         if (empty($timeString) || trim($timeString) === '') return '';
                                         $timeString = trim($timeString);
-                                        // Simple heuristic: if it contains AM/PM, assume it's formatted
                                         if (preg_match('/(AM|PM|am|pm)/', $timeString)) return strtoupper($timeString);
                                         try {
                                             return \Carbon\Carbon::parse($timeString)->format('g:i A');
@@ -335,11 +334,11 @@
                 
                 @php
                     $reservation->load(['items.menu.items']);
+                    $grandTotal = 0; // Initialize a grand total variable
                 @endphp
                 
                 @if($reservation->items && $reservation->items->count() > 0)
                     @php
-                        $totalAmount = 0;
                         $groupedItems = [];
                         
                         foreach ($reservation->items as $item) {
@@ -376,9 +375,14 @@
                                         @foreach($dayItems as $item)
                                             @if($item->menu)
                                                 @php
-                                                    $price = $item->menu->price ?? 150;
+                                                    $price = $item->menu->price ?? 0;
+                                                    // Fallback price logic if database is 0
+                                                    if($price == 0) {
+                                                        $price = ($item->menu->type == 'special' ? 200 : 150);
+                                                    }
+                                                    
                                                     $itemTotal = $item->quantity * $price;
-                                                    $totalAmount += $itemTotal;
+                                                    $grandTotal += $itemTotal; // Add to grand total
                                                 @endphp
                                                 <tr>
                                                     <td>
@@ -409,10 +413,12 @@
                             </div>
                         @endforeach
                     </div>
+
+                    {{-- TOTAL SECTION (Now uses the calculated $grandTotal) --}}
                     <div class="total-amount-box mt-6 p-4 bg-gray-50 rounded-lg">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-600">Subtotal:</span>
-                            <span class="font-semibold">₱{{ number_format($totalAmount, 2) }}</span>
+                            <span class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span>
                         </div>
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-gray-600">Service Fee:</span>
@@ -420,7 +426,7 @@
                         </div>
                         <div class="flex justify-between items-center pt-4 border-t border-gray-300">
                             <span class="text-lg font-bold text-gray-900">TOTAL:</span>
-                            <span class="text-xl font-bold text-clsu-green">₱{{ number_format($totalAmount, 2) }}</span>
+                            <span class="text-xl font-bold text-clsu-green">₱{{ number_format($grandTotal, 2) }}</span>
                         </div>
                     </div>
                 @else
@@ -455,12 +461,26 @@
                 <p class="text-xs text-gray-400">Generated on {{ now()->format('M d, Y h:i A') }}</p>
                 
                 @if($reservation->status == 'pending')
-                    <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="mt-6 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-center gap-4">
+                        
+                        {{-- EDIT RESERVATION BUTTON --}}
+                        <a href="{{ route('reservation.edit', $reservation->id) }}"
+                           class="inline-flex items-center justify-center px-6 py-2.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-150 font-semibold shadow-sm w-full sm:w-auto">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit Reservation
+                        </a>
+
+                        {{-- CANCEL RESERVATION BUTTON --}}
                         <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" 
-                              onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
+                              onsubmit="return confirm('Are you sure you want to cancel this reservation?')" class="w-full sm:w-auto">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                            <button type="submit" class="inline-flex items-center justify-center px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 font-semibold shadow-sm w-full sm:w-auto">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
                                 Cancel Reservation
                             </button>
                         </form>

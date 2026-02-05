@@ -171,12 +171,13 @@
         display: block;
     }
 
-    /* Green menu list styles */
+    /* Green menu list styles - UPDATED HEIGHT */
     .green-menu-list {
         background: linear-gradient(135deg, #f0f9f0 0%, #e8f5e8 100%);
         border: 2px solid #1a5e3d;
         border-radius: 10px;
-        height: 735px;
+        height: 800px; /* Increased height */
+        display: flex; /* Changed to flex to manage children */
         flex-direction: column; 
     }
     .green-menu-header {
@@ -184,6 +185,7 @@
         color: white;
         padding: 12px 16px;
         border-radius: 8px 8px 0 0;
+        flex-shrink: 0; /* Prevent header from shrinking */
     }
     .menu-list-item {
         border-left: 4px solid #1a5e3d;
@@ -199,19 +201,41 @@
     /* Fixed menu preview styles */
     .menu-preview-container {
         padding: 0;
+        flex-grow: 1; /* Allow container to fill remaining space */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Contain scroll area */
     }
     .menu-tabs-container {
         padding: 8px;
         margin: 0;
         background-color: #e8f5e8;
         border-radius: 6px;
+        flex-shrink: 0;
     }
     .menu-content-area {
-        padding: 0 12px;
+        padding: 0 12px 12px 12px;
         margin: 8px 0 0 0;
-        max-height: 520px;
+        /* Removed max-height, let flexbox handle it */
         overflow-y: auto;
+        flex-grow: 1;
+        scrollbar-width: thin;
+        scrollbar-color: #1a5e3d #f0f0f0;
     }
+    /* Webkit scrollbar styling */
+    .menu-content-area::-webkit-scrollbar {
+        width: 8px;
+    }
+    .menu-content-area::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 4px;
+    }
+    .menu-content-area::-webkit-scrollbar-thumb {
+        background-color: #1a5e3d;
+        border-radius: 4px;
+        border: 2px solid #f0f0f0;
+    }
+
     .compact-menu-item {
         padding: 12px;
         margin-bottom: 10px;
@@ -222,6 +246,7 @@
         padding: 12px 16px;
         background-color: #f8fff9;
         border-bottom: 1px solid #e8f5e8;
+        flex-shrink: 0;
     }
     .menu-search-input {
         border: 1px solid #1a5e3d;
@@ -402,7 +427,6 @@
 
             {{-- Main Form (Menu Selection) - Occupies 8/12 columns on large screens --}}
             <div class="lg:col-span-8">
-                {{-- Pointing to final submission route --}}
                 <form action="{{ route('reservation.store') }}" method="POST" class="space-y-6" id="reservation-form">
                     @csrf
                     
@@ -447,7 +471,7 @@
 
                             // Get date range from session or previous form
                             $startDate = session('reservation_data.start_date') ?? now()->format('Y-m-d');
-                            $endDate = session('reservation_data.end_date') ?? now()->addDays(0)->format('Y-m-d'); // Default to 0 days added if null
+                            $endDate = session('reservation_data.end_date') ?? now()->addDays(0)->format('Y-m-d');
 
                             // Parse day_times JSON if available
                             $dayTimes = [];
@@ -470,14 +494,13 @@
                         <div id="menu-prices-data" style="display: none;">
                             @foreach($meal_times as $meal_key => $meal_label)
                                 @php
-                                    // Ensure we have valid prices with fallbacks
                                     $standardPrice = isset($menuPrices['standard'][$meal_key][0]) && is_numeric($menuPrices['standard'][$meal_key][0]->price) 
-                                        ? $menuPrices['standard'][$meal_key][0]->price 
-                                        : $defaultStandardPrice;
-                                        
+                                            ? $menuPrices['standard'][$meal_key][0]->price 
+                                            : $defaultStandardPrice;
+                                    
                                     $specialPrice = isset($menuPrices['special'][$meal_key][0]) && is_numeric($menuPrices['special'][$meal_key][0]->price)
-                                        ? $menuPrices['special'][$meal_key][0]->price
-                                        : $defaultSpecialPrice;
+                                            ? $menuPrices['special'][$meal_key][0]->price
+                                            : $defaultSpecialPrice;
                                 @endphp
                                 <div data-meal-time="{{ $meal_key }}" 
                                      data-standard-price="{{ number_format($standardPrice, 2, '.', '') }}" 
@@ -571,7 +594,7 @@
             <div class="lg:col-span-4 py-6 space-y-8">
 
                 {{-- Menu Details Card - Fixed with compact layout and search --}}
-                <div class="green-menu-list overflow-hidden">
+                <div class="green-menu-list">
                     <div class="green-menu-header">
                         <div class="flex justify-between items-center">
                             <div>
@@ -827,6 +850,7 @@
     let currentDay = 1;
     let totalDays = 1;
     let dayData = {};
+    let menuPrices = {};
 
     // Make functions globally available first
     window.closeConfirmationModal = closeConfirmationModal;
@@ -915,20 +939,20 @@
     // Get all menu prices from hidden data - improved version
     function initializeMenuPrices() {
         const menuPricesData = document.getElementById('menu-prices-data');
-        const menuPrices = {};
+        const prices = {};
         
         menuPricesData.querySelectorAll('div[data-meal-time]').forEach(priceElement => {
             const mealTime = priceElement.getAttribute('data-meal-time');
             const standardPrice = parseFloat(priceElement.getAttribute('data-standard-price')) || 150;
             const specialPrice = parseFloat(priceElement.getAttribute('data-special-price')) || 200;
             
-            menuPrices[mealTime] = {
+            prices[mealTime] = {
                 standard: standardPrice,
                 special: specialPrice
             };
         });
         
-        return menuPrices;
+        return prices;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -936,7 +960,7 @@
         initializeDaySystem();
 
         // Get menu prices
-        const menuPrices = initializeMenuPrices();
+        menuPrices = initializeMenuPrices();
 
         // --- DAY SYSTEM FUNCTIONS ---
         function initializeDaySystem() {
@@ -991,27 +1015,26 @@
         }
 
         function updateDayInfo(day) {
-        const dayInfo = document.getElementById('day-info');
-        const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
-        
-        if (activeTab) {
-            const date = new Date(activeTab.dataset.date);
-            const formattedDate = date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
+            const dayInfo = document.getElementById('day-info');
+            const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
             
-            let timeInfo = '';
-            if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
-                timeInfo = ` | Time: ${activeTab.dataset.startTime} to ${activeTab.dataset.endTime}`;
+            if (activeTab) {
+                const date = new Date(activeTab.dataset.date);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                let timeInfo = '';
+                if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
+                    timeInfo = ` | Time: ${activeTab.dataset.startTime} to ${activeTab.dataset.endTime}`;
+                }
+                
+                dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
             }
-            
-            dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
         }
-    }
-
 
         function generateDayContentAreas(totalDays) {
             const container = document.getElementById('day-content-container');
@@ -1068,7 +1091,10 @@
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Pax Quantity</label>
                                 <div class="flex items-center">
                                     <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-l-md flex items-center justify-center text-lg font-bold" data-action="decrement" data-day="${day}" data-meal-time="{{ $meal_key }}">-</button>
-                                    <input type="number" name="reservations[${day}][{{ $meal_key }}][qty]" value="0" min="10" max="100" class="quantity-input w-12 h-8 text-center border-t border-b border-gray-300 p-0 text-sm focus:ring-0 focus:border-gray-300 bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}" readonly>
+                                    
+                                    {{-- Allow user to type here --}}
+                                    <input type="number" name="reservations[${day}][{{ $meal_key }}][qty]" value="0" min="0" max="100" class="quantity-input w-12 h-8 text-center border-t border-b border-gray-300 p-0 text-sm focus:ring-0 focus:border-gray-300 bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
+                                    
                                     <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-r-md flex items-center justify-center text-lg font-bold" data-action="increment" data-day="${day}" data-meal-time="{{ $meal_key }}">+</button>
                                 </div>
                                 <div class="text-xs text-red-500 mt-1 min-h-4 quantity-error" style="display: none;">
@@ -1185,22 +1211,6 @@
             updateSummary();
         }
 
-        function updateDayInfo(day) {
-            const dayInfo = document.getElementById('day-info');
-            const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
-            
-            if (activeTab) {
-                const date = new Date(activeTab.dataset.date);
-                const formattedDate = date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
-                dayInfo.textContent = `Currently viewing: ${formattedDate}`;
-            }
-        }
-
         function initializeEventListeners() {
             // Quantity buttons
             document.querySelectorAll('.qty-btn').forEach(button => {
@@ -1210,18 +1220,59 @@
                     const mealTime = e.currentTarget.dataset.mealTime;
                     
                     const input = document.querySelector(`input[data-day="${day}"][data-meal-time="${mealTime}"]`);
-                    let value = parseInt(input.value);
+                    let value = parseInt(input.value) || 0; // Handle NaN
 
                     if (action === 'increment') {
-                        value = value < 100 ? value + 1 : 100;
+                        // If current is 0, jump to 10 immediately
+                        if (value === 0) {
+                            value = 10;
+                        } else {
+                            value = value < 100 ? value + 1 : 100;
+                        }
                     } else if (action === 'decrement') {
-                        value = value > 10 ? value - 1 : 10;
+                        // If current is 10, drop to 0 immediately
+                        if (value === 10) {
+                            value = 0;
+                        } else if (value > 10) {
+                            value = value - 1;
+                        } else {
+                            value = 0; // If somehow between 0 and 10, reset to 0
+                        }
                     }
                     input.value = value;
                     
                     updateCardStyling(day, mealTime);
                     updateSummary();
                     validateQuantity(input);
+                });
+            });
+
+            // Input manual typing listener
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const day = this.dataset.day;
+                    const mealTime = this.dataset.mealTime;
+                    updateCardStyling(day, mealTime);
+                    updateSummary();
+                    // Live validation can show error but allow typing
+                    validateQuantity(this); 
+                });
+
+                // Enforce rules on blur (when user leaves the field)
+                input.addEventListener('blur', function() {
+                    let val = parseInt(this.value);
+                    if (isNaN(val) || val < 0) val = 0;
+                    
+                    // If between 1 and 9, force up to 10 or down to 0? 
+                    // Usually better to force to minimum if they tried to enter something
+                    if (val > 0 && val < 10) {
+                        this.value = 10; // Auto-correct to minimum
+                        validateQuantity(this); // Re-validate to clear error
+                        updateSummary();
+                    } else if (val > 100) {
+                        this.value = 100;
+                        updateSummary();
+                    }
                 });
             });
 
@@ -1364,7 +1415,15 @@
             let totalPax = 0;
             let selectedMeals = 0;
             let estimatedTotal = 0;
+            let standardSubtotal = 0;
+            let specialSubtotal = 0;
             
+            // Format currency helper
+            const formatCurrency = (val) => '₱' + val.toLocaleString('en-PH', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+
             document.querySelectorAll('.quantity-input').forEach(input => {
                 const value = parseInt(input.value);
                 if (value > 0) {
@@ -1373,46 +1432,39 @@
                     
                     const day = input.dataset.day;
                     const mealTime = input.dataset.mealTime;
-                    const menuSelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].menu-select`);
+                    const categorySelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].category-select`);
                     
-                    if (menuSelect && menuSelect.options[menuSelect.selectedIndex]) {
-                        const selectedOption = menuSelect.options[menuSelect.selectedIndex];
-                        const priceText = selectedOption.getAttribute('data-price');
+                    if (categorySelect) {
+                        const category = categorySelect.value;
+                        // Get price from menuPrices based on meal time and category
+                        const price = menuPrices[mealTime] ? 
+                            menuPrices[mealTime][category] : 
+                            (category === 'special' ? 200 : 150);
                         
-                        // Safely parse the price with fallback
-                        let price = 0;
-                        if (priceText) {
-                            price = parseFloat(priceText);
-                        } else {
-                            // Fallback prices based on category
-                            const categorySelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].category-select`);
-                            const category = categorySelect ? categorySelect.value : 'standard';
-                            price = category === 'special' ? 200 : 150; // Default prices
-                        }
+                        const lineTotal = value * price;
+                        estimatedTotal += lineTotal;
                         
-                        // Ensure price is a valid number
-                        if (!isNaN(price) && isFinite(price)) {
-                            estimatedTotal += value * price;
+                        // Add to respective subtotal based on category
+                        if (category === 'standard') {
+                            standardSubtotal += lineTotal;
                         } else {
-                            console.warn('Invalid price found:', priceText);
-                            estimatedTotal += value * 150; // Fallback to standard price
+                            specialSubtotal += lineTotal;
                         }
                     }
                 }
             });
             
+            // Update UI elements
             document.getElementById('total-pax-count').textContent = totalPax;
+            document.getElementById('estimated-total').textContent = formatCurrency(estimatedTotal);
             
-            // Format the total amount safely
-            let formattedTotal = '₱0.00';
-            if (!isNaN(estimatedTotal) && isFinite(estimatedTotal)) {
-                formattedTotal = `₱${estimatedTotal.toLocaleString('en-PH', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                })}`;
-            }
+            // Update rate displays (show per head rate for first meal time as example)
+            const firstMealTime = 'breakfast';
+            const standardRate = menuPrices[firstMealTime] ? menuPrices[firstMealTime]['standard'] : 150;
+            const specialRate = menuPrices[firstMealTime] ? menuPrices[firstMealTime]['special'] : 200;
             
-            document.getElementById('estimated-total').textContent = formattedTotal;
+            document.getElementById('summary-standard-rate').textContent = formatCurrency(standardRate) + ' /head';
+            document.getElementById('summary-special-rate').textContent = formatCurrency(specialRate) + ' /head';
         }
 
         // --- MEAL TYPE BUTTONS FUNCTIONALITY ---
@@ -1602,8 +1654,10 @@
                         const menuName = selectedOption.textContent;
                         const categorySelect = card.querySelector('.category-select');
                         const category = categorySelect ? categorySelect.value : 'standard';
-                        const priceText = selectedOption.getAttribute('data-price');
-                        const price = parseFloat(priceText) || (category === 'special' ? 200 : 150);
+                        // Get price from menuPrices
+                        const price = menuPrices[mealTime] ? 
+                            menuPrices[mealTime][category] : 
+                            (category === 'special' ? 200 : 150);
                         const mealTotal = quantity * price;
                         dayTotal += mealTotal;
                         
@@ -1681,5 +1735,4 @@
         }
     });
 </script>
-
 @endsection

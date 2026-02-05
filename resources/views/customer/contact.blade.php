@@ -1,39 +1,10 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
 @extends('layouts.app')
 
 @section('title', 'Contact Us - CLSU RET Cafeteria')
 
-@section('styles')
-/* Custom background similar to the menu header for consistency */
-.contact-hero-bg {
-    /* Assuming you have a general background image like spices.webp */
-    background-image: url('/images/banner.jpg');
-    background-size: cover;
-    background-position: bottom;
-}
-.ret-dark-card {
-    background-color: #1F2937; /* Dark blue/gray from your site */
-}
-.ret-red-text {
-    color: #EF4444; /* Vibrant red/orange color */
-}
-.ret-green-bg {
-    background-color: #057C3C; /* Custom green color for the button */
-}
-.ret-green-light {
-    color: #057C3C; /* Custom green color for text/icons */
-}
-
-/* Base input styling - Ensure w-full is applied universally */
-.contact-input {
-    /* CRITICAL CHANGE: Ensure all elements using this class, including the textarea, are full width */
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ret-green-light focus:border-ret-green-light transition duration-150;
-}
-@endsection
-
 @section('content')
 
+<!-- Old Contact Hero Design -->
 <section class="contact-hero-bg py-20 lg:py-20 bg-gray-900 text-white relative overflow-hidden">
     <div class="absolute inset-0 bg-black opacity-10"></div>
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -46,290 +17,437 @@
     </div>
 </section>
 
-<!-- 2. MAIN CONTENT (Contact Form and Info) -->
-<section class="py-10 bg-gray-50 text-gray-800">
+<section class="py-16 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             <!-- Left Card: Customer Support Form -->
-            <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">Customer Support</h2>
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 h-full flex flex-col">
+                <div class="mb-8 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Contact Support</h2>
+                    <p class="text-gray-600">We're here to help! Send us your questions or concerns.</p>
+                </div>
 
-                <form id="contactForm" method="POST" action="{{ route('contact.send') }}" onsubmit="handleContactFormSubmit(event)" class="space-y-4">
+                <form id="contactForm" method="POST" action="{{ route('contact.send') }}" onsubmit="handleContactFormSubmit(event)" class="space-y-6 flex-grow">
                     @csrf
                     
-                    <!-- Container for Name and Email - Full Width -->
-                    <div class="flex flex-col sm:flex-row gap-4 w-full"> 
-                        <!-- Name field (Full width) -->
-                        <div class="space-y-2 w-full">
-                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text"
-                                   id="name"
-                                   name="name"
-                                   placeholder="Enter your name"
-                                   class="contact-input {{ auth()->check() ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                   autocomplete="name"
-                                   value="{{ auth()->check() ? auth()->user()->name : '' }}"
-                                   {{ auth()->check() ? 'readonly aria-readonly=true' : '' }}
-                                   required>
+                    <!-- Name and Email in responsive grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Name field -->
+                        <div class="space-y-3">
+                            <label for="name" class="block text-sm font-semibold text-gray-700 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                Full Name
+                            </label>
+                            <div class="relative">
+                                <input type="text"
+                                       id="name"
+                                       name="name"
+                                       placeholder="Enter your full name"
+                                       class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 {{ auth()->check() ? 'bg-gray-50 text-gray-600' : 'bg-white' }}"
+                                       autocomplete="name"
+                                       value="{{ auth()->check() ? auth()->user()->name : '' }}"
+                                       {{ auth()->check() ? 'readonly aria-readonly=true' : '' }}
+                                       required>
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Email field (Full width) -->
-                        <div class="space-y-2 w-full">
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email"
-                                   id="email"
-                                   name="email"
-                                   placeholder="Enter your email"
-                                   class="contact-input {{ auth()->check() ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                   autocomplete="email"
-                                   value="{{ auth()->check() ? auth()->user()->email : '' }}"
-                                   {{ auth()->check() ? 'readonly aria-readonly=true' : '' }}
-                                   required>
+                        <!-- Email field -->
+                        <div class="space-y-3">
+                            <label for="email" class="block text-sm font-semibold text-gray-700 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                Email Address
+                            </label>
+                            <div class="relative">
+                                <input type="email"
+                                       id="email"
+                                       name="email"
+                                       placeholder="your.email@example.com"
+                                       class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 {{ auth()->check() ? 'bg-gray-50 text-gray-600' : 'bg-white' }}"
+                                       autocomplete="email"
+                                       value="{{ auth()->check() ? auth()->user()->email : '' }}"
+                                       {{ auth()->check() ? 'readonly aria-readonly=true' : '' }}
+                                       required>
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Message/Description (Full width container) -->
-                    <div class="space-y-2 w-full">
-                        <label for="message" class="block text-sm font-medium text-gray-700">Message</label>
-                        <textarea
-                            id="message"
-                            name="message"
-                            rows="12"
-                            placeholder="Description"
-                            class="contact-input max-h-[30rem] -mx-1 !w-full"
-                            minlength="20"
-                            required></textarea>
+                    <!-- Message - Increased Height -->
+                    <div class="space-y-3 flex-grow">
+                        <label for="message" class="block text-sm font-semibold text-gray-700 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                            </svg>
+                            Your Message
+                            <span class="ml-auto text-xs text-gray-500 font-normal">Minimum 20 characters</span>
+                        </label>
+                        <div class="relative h-full">
+                            <textarea
+                                id="message"
+                                name="message"
+                                placeholder="How can we help you? Please describe your issue or question in detail..."
+                                class="w-full h-64 px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none"
+                                minlength="20"
+                                required></textarea>
+                            <div class="absolute left-3 top-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                                </svg>
+                            </div>
+                            <div class="absolute bottom-2 right-2 text-xs text-gray-500" id="charCounter">
+                                0 characters
+                            </div>
+                        </div>
                     </div>
 
-                    
-                    <!-- Send Button -->
-                    <div>
-                        <button id="contactSubmitButton" type="submit" class="ret-green-bg text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition duration-300 shadow-md">
-                            Send
+                    <!-- Message Box -->
+                    <div id="messageBox" class="hidden p-4 rounded-lg text-sm font-medium border" role="alert"></div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button id="contactSubmitButton" type="submit" 
+                                class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                            </svg>
+                            Send Message
                         </button>
+                        <p class="text-xs text-gray-500 text-center mt-2">
+                            We'll respond to your inquiry within 24-48 hours
+                        </p>
                     </div>
                 </form>
-                
-                <!-- Simple confirmation/error message box (replaces alert()) -->
-                <div id="messageBox" class="mt-4 hidden p-3 rounded-lg text-sm" role="alert"></div>
             </div>
 
-            <!-- Right Card: Get in touch with Us (Contact Details) -->
-            <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-100">
-                <h2 class="text-2xl font-bold mb-10 text-gray-800 border-b pb-3">Get in touch With Us</h2>
-                
-                <ul class="space-y-10 text-gray-700 text-lg">
-                    <!-- Location -->
-                    <li class="flex items-start">
-                        <i class="fas fa-map-marker-alt text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
-                            <a href="https://maps.app.goo.gl/MVBdw77FTwX9mmMV9" target="_blank" class="hover:underline font-bold">
-                                RET Bldg. CLSU, Muñoz, Nueva Ecija, Philippines
-                            </a>
+            <!-- Right Card: Contact Information -->
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 h-full flex flex-col">
+                <div class="mb-8 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Visit Us</h2>
+                    <p class="text-gray-600">Find us at our convenient location</p>
+                </div>
+
+                <div class="space-y-6 mt-2 flex-grow">
+                    <!-- Address Card -->
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Our Location</h3>
+                                <p class="text-gray-700">
+                                    RET Cafeteria, Central Luzon State University<br>
+                                    Science City of Muñoz, 3119 Nueva Ecija, Philippines
+                                </p>
+                            </div>
                         </div>
-                    </li>
-                    
-                    <!-- Phone -->
-                    <li class="flex items-start">
-                        <i class="fas fa-phone text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
-                            <p class="font-bold">0927 719 7639</p>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition duration-200">
+                            <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-800">Phone Number</h4>
+                                <p class="text-gray-600">(044) 456-0701</p>
+                            </div>
                         </div>
-                    </li>
-                    
-                    <!-- Facebook -->
-                    <li class="flex items-start">
-                        <i class="fab fa-facebook-f text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
-                            <a href="https://www.facebook.com/clsuretcafe?rdid=inNkCQLwgAL4bFeF&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F15qu3aENz9%2F#" target="_blank" class="hover:underline font-bold">CLSU RET Cafeteria</a>
+
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition duration-200">
+                            <div class="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-800">Email Address</h4>
+                                <p class="text-gray-600">support@clsu-ret.com</p>
+                                <p class="text-sm text-gray-500">For general inquiries and support</p>
+                            </div>
                         </div>
-                    </li>
-                    
-                    <!-- Email -->
-                    <li class="flex items-start">
-                        <i class="fas fa-at text-2xl ret-red-text mr-4 mt-1"></i>
-                        <div>
-                            <!-- The target email for the mailto function -->
-                            <p id="targetEmail" class="font-bold">RETCafeteria@clsu2.edu.ph</p>
+
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition duration-200">
+                            <div class="flex-shrink-0 w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-800">Business Hours</h4>
+                                <p class="text-gray-600">
+                                    Monday - Friday: 8:00 AM - 5:00 PM
+                                </p>
+                            </div>
                         </div>
-                    </li>
-                </ul>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="mt-3 pt-6 border-t border-gray-200">
+                    <h4 class="font-semibold text-gray-800 mb-3">Additional Information</h4>
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <p class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            For reservation inquiries, please include your reservation ID if available
+                        </p>
+                        <p class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Response time is typically within 24-48 business hours
+                        </p>
+                        <p class="flex items-start">
+                            <svg class="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            For urgent matters, please call during business hours
+                        </p>
+                    </div>
+                </div>
             </div>
-            
         </div>
     </div>
 </section>
 
-{{-- Contact Success/Error Modals --}}
-<div id="contact-success-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" data-close-contact-success></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors" data-close-contact-success aria-label="Close">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            <div class="flex items-start gap-3">
-                <svg class="w-10 h-10 text-green-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Message Sent</h3>
-                    <p id="contactSuccessMessage" class="text-sm text-green-700 mt-1">
-                        Email has been sent.
-                    </p>
+<!-- FAQ Section -->
+<section class="py-16 bg-gradient-to-br from-green-50 to-blue-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <p class="text-gray-700">Find quick answers to common questions</p>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition duration-200">
+                    <span class="font-semibold text-gray-800">How do I make a reservation?</span>
+                    <svg class="w-5 h-5 text-green-600 transform rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div class="px-6 pb-4 hidden">
+                    <p class="text-gray-600">You can make a reservation through our online system by navigating to the "Make Reservation" page. You'll need to provide event details, select your menu, and confirm your booking.</p>
                 </div>
             </div>
-            <div class="mt-6 flex justify-end">
-                <button type="button" class="px-5 py-2.5 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition-colors font-semibold" data-close-contact-success>
-                    Okay
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition duration-200">
+                    <span class="font-semibold text-gray-800">What are your payment methods?</span>
+                    <svg class="w-5 h-5 text-green-600 transform rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
                 </button>
+                <div class="px-6 pb-4 hidden">
+                    <p class="text-gray-600">We accept various payment methods including online bank transfer, GCash, and over-the-counter payments at the CLSU cashier. Payment details will be provided upon reservation confirmation.</p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition duration-200">
+                    <span class="font-semibold text-gray-800">Can I modify or cancel my reservation?</span>
+                    <svg class="w-5 h-5 text-green-600 transform rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div class="px-6 pb-4 hidden">
+                    <p class="text-gray-600">Yes, you can modify or cancel your reservation up to 48 hours before the event. Please contact our support team or access your reservation through your account dashboard.</p>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<x-admin.ui.modal name="contact-message-error" title="Message Not Sent" variant="error" maxWidth="sm">
-    <p id="contactErrorMessage" class="text-sm text-admin-neutral-700">
-        We couldn't send your message. Please try again.
-    </p>
-    <x-slot name="footer">
-        <button type="button"
-                class="px-4 py-2 rounded-admin bg-admin-neutral-200 text-admin-neutral-700 hover:bg-admin-neutral-300 transition"
-                @click="$dispatch('close-admin-modal', 'contact-message-error')">
-            Close
-        </button>
-    </x-slot>
-</x-admin.ui.modal>
-
-<script>
-    /**
-     * Helper function to display a message in the message box.
-     * @param {string} message - The text message to display.
-     * @param {boolean} isSuccess - True for success (green), false for error (red).
-     */
-    function showSuccessModal(message) {
-        const messageEl = document.getElementById('contactSuccessMessage');
-        if (messageEl && message) {
-            messageEl.textContent = message;
-        }
-        const modal = document.getElementById('contact-success-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            if (!modal.dataset.bound) {
-                modal.querySelectorAll('[data-close-contact-success]').forEach(btn => {
-                    btn.addEventListener('click', () => modal.classList.add('hidden'));
-                });
-                modal.dataset.bound = 'true';
-            }
-            return;
-        }
-        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'contact-message-success' }));
-    }
-
-    function showErrorModal(message) {
-        const messageEl = document.getElementById('contactErrorMessage');
-        if (messageEl && message) {
-            messageEl.textContent = message;
-        }
-        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'contact-message-error' }));
+<style>
+    /* Custom styles for consistent height */
+    .h-full {
+        height: 100%;
     }
     
-    /**
-     * Handles the form submission event, constructs the mailto link, 
-     * and attempts to open the user's default email client.
-     * @param {Event} event - The form submission event.
-     */
-    function handleContactFormSubmit(event) {
-        event.preventDefault(); // Stop the default form submission
+    .flex-grow {
+        flex-grow: 1;
+    }
+    
+    /* Focus styles */
+    input:focus, textarea:focus {
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    
+    /* Smooth transitions */
+    input, textarea, button {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    /* Character counter styling */
+    #charCounter {
+        transition: color 0.2s ease;
+    }
+    
+    /* Message box styling */
+    #messageBox.success {
+        background-color: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
+    
+    #messageBox.error {
+        background-color: #fef2f2;
+        border-color: #fecaca;
+        color: #991b1b;
+    }
+    
+    /* Contact Hero Background */
+.contact-hero-bg {
+    /* Assuming you have a general background image like spices.webp */
+    background-image: url('/images/banner.jpg');
+    background-size: cover;
+    background-position: bottom;
+}
+</style>
 
-        const form = document.getElementById('contactForm');
-        const submitButton = document.getElementById('contactSubmitButton');
-        const name = document.getElementById('name').value.trim();
-        const emailInput = document.getElementById('email');
-        if (!emailInput) {
-            showErrorModal("Input valid email address");
-            return;
-        }
-        const email = emailInput.value.trim();
-        const message = document.getElementById('message').value.trim();
-        const targetEmail = document.getElementById('targetEmail').textContent.trim();
-
-        if (!name || !email || !message) {
-            showErrorModal("Please fill out all required fields.");
-            return;
-        }
-
-        if (message.length < 20) {
-            showErrorModal("Please enter at least 20 characters in your message.");
-            document.getElementById('message').focus();
-            return;
-        }
-
-        if (!emailInput.checkValidity()) {
-            showErrorModal("Please enter a valid email address.");
-            emailInput.focus();
-            return;
-        }
-
-        if (submitButton) {
-            if (!submitButton.dataset.defaultText) {
-                submitButton.dataset.defaultText = submitButton.textContent.trim();
-            }
-            submitButton.disabled = true;
-            submitButton.textContent = "Sending...";
-            submitButton.classList.add('opacity-70', 'cursor-not-allowed');
-            submitButton.setAttribute('aria-busy', 'true');
-        }
-
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const formData = new FormData(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': token,
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin',
-            body: formData
-        })
-            .then(async (response) => {
-                const payload = await response.json().catch(() => null);
-
-                if (response.ok) {
-                    return payload;
-                }
-
-                if (response.status === 422) {
-                    const firstError = payload?.errors ? Object.values(payload.errors).flat()[0] : null;
-                    throw new Error(firstError || "Please check your inputs and try again.");
-                }
-
-                throw new Error(payload?.message || "Something went wrong. Please try again later.");
-            })
-            .then((data) => {
-                if (data && data.success === false) {
-                    throw new Error(data.message || "Failed to send message. Please try again.");
-                }
-                form.reset();
-                showSuccessModal(data.message || "Email has been sent.");
-            })
-            .catch((error) => {
-                console.error("Contact form submission failed:", error);
-                showErrorModal(error.message || ("Failed to send message. Please email us at " + targetEmail));
-            })
-            .finally(() => {
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.textContent = submitButton.dataset.defaultText || "Send";
-                    submitButton.classList.remove('opacity-70', 'cursor-not-allowed');
-                    submitButton.removeAttribute('aria-busy');
+<script>
+    // Character counter for message textarea
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageField = document.getElementById('message');
+        if (messageField) {
+            messageField.addEventListener('input', function(e) {
+                const charCounter = document.getElementById('charCounter');
+                const length = e.target.value.length;
+                charCounter.textContent = `${length} characters`;
+                
+                if (length < 20) {
+                    charCounter.classList.add('text-red-500');
+                    charCounter.classList.remove('text-green-500');
+                } else {
+                    charCounter.classList.remove('text-red-500');
+                    charCounter.classList.add('text-green-500');
                 }
             });
+        }
+
+        // FAQ Accordion functionality
+        const faqButtons = document.querySelectorAll('button[class*="px-6 py-4"]');
+        faqButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                const icon = button.querySelector('svg');
+                
+                content.classList.toggle('hidden');
+                icon.classList.toggle('rotate-0');
+                icon.classList.toggle('rotate-180');
+            });
+        });
+    });
+
+    // Form submission handler
+    function handleContactFormSubmit(event) {
+        event.preventDefault();
+        
+        // Show loading state
+        const button = document.getElementById('contactSubmitButton');
+        const originalText = button.innerHTML;
+        button.innerHTML = `
+            <svg class="animate-spin w-5 h-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Sending...
+        `;
+        button.disabled = true;
+        
+        // Submit the form
+        const form = event.target;
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message || 'Message sent successfully! We\'ll get back to you soon.', 'success');
+                form.reset();
+                
+                // Reset character counter
+                document.getElementById('charCounter').textContent = '0 characters';
+                document.getElementById('charCounter').classList.remove('text-green-500', 'text-red-500');
+            } else {
+                showMessage(data.message || 'Error sending message. Please try again.', 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error sending message. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Reset button
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+
+    function showMessage(text, type) {
+        const messageBox = document.getElementById('messageBox');
+        messageBox.textContent = text;
+        messageBox.className = `p-4 rounded-lg text-sm font-medium border ${type === 'success' ? 'success' : 'error'}`;
+        messageBox.classList.remove('hidden');
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            messageBox.classList.add('hidden');
+        }, 5000);
     }
 </script>
 
