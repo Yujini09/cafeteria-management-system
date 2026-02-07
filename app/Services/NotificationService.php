@@ -54,6 +54,28 @@ class NotificationService
     }
 
     /**
+     * Create a notification for a specific user (e.g., customers).
+     */
+    public function createUserNotification(
+        int $userId,
+        string $action,
+        string $module,
+        string $description,
+        array $metadata = [],
+        ?string $title = null
+    ): Notification
+    {
+        return Notification::create([
+            'user_id' => $userId,
+            'title' => $title,
+            'action' => $action,
+            'module' => $module,
+            'description' => $description,
+            'metadata' => $metadata,
+        ]);
+    }
+
+    /**
      * Get notifications for the current user
      * 
      * For superadmins: shows all system notifications

@@ -36,10 +36,47 @@
         letter-spacing: 0.5px;
     }
     
-    .status-approved { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
-    .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-    .status-declined { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-    .status-cancelled { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
+    .status-approved {
+        background: #d1fae5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    
+    .status-declined {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+    
+    .status-cancelled {
+        background: #e5e7eb;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    .payment-pending {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .payment-under_review {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .payment-paid {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
     
     .receipt-section {
         padding: 25px 30px;
@@ -238,6 +275,17 @@
                                 @default
                                     <span class="status-badge status-pending">Pending Approval</span>
                             @endswitch
+
+                            @php
+                                $paymentStatus = $reservation->payment_status ?? 'pending';
+                            @endphp
+                            @if($paymentStatus === 'paid')
+                                <span class="status-badge payment-paid">Payment: Paid</span>
+                            @elseif($paymentStatus === 'under_review')
+                                <span class="status-badge payment-under_review">Payment: Under Review</span>
+                            @else
+                                <span class="status-badge payment-pending">Payment: Pending</span>
+                            @endif
                         </div>
                     </div>
                     <div class="header-right">
@@ -484,6 +532,19 @@
                                 Cancel Reservation
                             </button>
                         </form>
+                    </div>
+                @endif
+
+                @if($reservation->status === 'approved' && $reservation->payment_status === 'pending')
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <a href="{{ route('payments.show', $reservation->id) }}"
+                           class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            Submit Payment Reference
+                        </a>
+                    </div>
+                @elseif($reservation->payment_status === 'under_review')
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-sm text-blue-700">
+                        Your payment is under review.
                     </div>
                 @endif
             </div>

@@ -2,8 +2,344 @@
 @section('page-title', 'Reservations')
 
 @section('content')
+<style>
+.modern-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--neutral-100);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
 
-<div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0 overflow-hidden flex flex-col"
+.modern-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
+}
+
+/* Right-aligned columns */
+.modern-table th:nth-child(3),
+.modern-table th:nth-child(4),
+.modern-table th:nth-child(5) {
+    text-align: right;
+}
+
+/* Right-aligned columns */
+.modern-table td:nth-child(3),
+.modern-table td:nth-child(4),
+.modern-table td:nth-child(5) {
+    text-align: right;
+}
+
+/* Status Badges - Same size as role badges in manage users */
+.status-badge {
+    border-radius: 20px; /* Same as role-badge */
+    text-transform: uppercase;
+    letter-spacing: 0.5px; /* Same as role-badge */
+    gap: 0.375rem;
+    border: 1px solid transparent;
+}
+
+.payment-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.payment-under-review {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.payment-paid {
+    background: #dcfce7;
+    color: #166534;
+}
+
+
+/* Action Buttons - Same as manage users */
+.action-btn {
+    padding: 0.5rem 0.75rem; /* Same padding */
+    border-radius: 8px; /* Same radius */
+    font-size: 0.75rem; /* Same font size */
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem; /* Same gap */
+    text-decoration: none;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.action-btn-view {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.action-btn-view:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateY(-1px);
+}
+
+.action-btn-approve {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+.action-btn-approve:hover {
+    background: rgba(34, 197, 94, 0.2);
+    transform: translateY(-1px);
+}
+
+.action-btn-decline {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.action-btn-decline:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Filter Styles */
+.filter-select {
+    background: white;
+    border: 1px solid var(--neutral-300);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
+}
+
+/* Header Styles */
+.page-header {
+    flex-wrap: wrap;
+}
+
+/* Filter Section */
+.filter-section {
+    background: var(--neutral-50);
+    padding: 1.25rem; /* Adjusted padding */
+    border-radius: 12px;
+    border: 1px solid var(--neutral-200);
+    margin-bottom: 1.5rem; /* Same margin */
+}
+
+.filter-label {
+    font-weight: 600;
+    color: var(--neutral-700);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-label-inline {
+    margin-bottom: 0;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .filter-row {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.select-with-arrows {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.select-with-arrows .filter-select {
+    appearance: none;
+    padding-right: 2.75rem;
+}
+
+.select-arrows {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    color: var(--neutral-500);
+}
+
+.select-arrows svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Created sort dropdown */
+
+/* Customer Info - Same font sizes as manage users */
+.customer-name {
+    font-weight: 600;
+    color: var(--neutral-900);
+    font-size: 0.875rem; /* Same as table font */
+}
+
+.customer-department {
+    color: var(--neutral-500);
+    font-size: 0.75rem; /* Smaller like in manage users */
+    margin-top: 0.125rem;
+}
+
+/* ID Link */
+.id-link {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-size: 0.875rem; /* Same as table font */
+}
+
+.id-link:hover {
+    color: var(--primary-light);
+}
+
+/* Short Email Display */
+.short-email {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.short-email:hover {
+    overflow: visible;
+    white-space: normal;
+    background: white;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Icon Sizes - Same as manage users */
+.icon-sm {
+    width: 14px; /* Same as w-3.5 (14px) */
+    height: 14px;
+}
+
+.icon-md {
+    width: 16px; /* Same as w-4 (16px) */
+    height: 16px;
+}
+
+.icon-lg {
+    width: 20px; /* Same as in header */
+    height: 20px;
+}
+
+/* Action Buttons Container - Single line */
+.action-buttons {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+/* Column Widths for better alignment */
+.column-id {
+    width: 80px;
+}
+
+.column-customer {
+    width: 150px;
+}
+
+.column-status {
+    width: 120px;
+}
+
+.column-email {
+    width: 140px;
+}
+
+.column-date {
+    width: 140px;
+}
+
+.column-actions {
+    width: 200px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-content {
+        width: 100%;
+    }
+    
+    .modern-table th:nth-child(4),
+    .modern-table td:nth-child(4),
+    .modern-table th:nth-child(5),
+    .modern-table td:nth-child(5) {
+        display: none;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Menu Card Styling for Inventory Sections */
+
+
+
+/* Modal Styles */
+.modern-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--neutral-200);
+}
+
+[x-cloak] { display: none !important; }
+</style>
+
+</style>
+
+<div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
      x-data="reservationList()"
      x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen)"
      @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false">
@@ -47,6 +383,7 @@
     <!-- Filter Section -->
     <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
         <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col gap-4">
+            <input type="hidden" name="created_sort" value="{{ $createdSort }}">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <label for="status" class="text-sm font-semibold text-admin-neutral-700">Filter by Status</label>
                 @php
@@ -79,17 +416,24 @@
             </colgroup>
             <thead>
                 <tr>
-                    <th class="w-14">#</th>
-                    <th class="whitespace-nowrap">Customer</th>
-                    <th class="whitespace-nowrap">
-                        <span class="inline-flex items-center gap-2">
-                            <span>Status</span>
-                            <x-admin.ui.icon name="fa-chevron-down" style="fas" size="sm" class="text-admin-neutral-400" />
-                        </span>
+                    <th class="column-id">ID</th>
+                    <th class="column-customer">Customer</th>
+                    <th class="column-status">Status</th>
+                    <th class="column-payment">Payment</th>
+                    <th class="column-email hidden md:table-cell">Email</th>
+                    <th class="column-date hidden lg:table-cell">
+                        @php
+                            $nextCreatedSort = $createdSort === 'asc' ? 'desc' : 'asc';
+                            $createdSortIcon = $createdSort === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down';
+                        @endphp
+                        <a href="{{ request()->fullUrlWithQuery(['created_sort' => $nextCreatedSort, 'page' => null]) }}"
+                           class="group inline-flex items-center gap-2"
+                           aria-label="Sort by created date">
+                            <span>Created</span>
+                            <x-admin.ui.icon name="{{ $createdSortIcon }}" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
+                        </a>
                     </th>
-                    <th class="hidden md:table-cell whitespace-nowrap">Email</th>
-                    <th class="hidden lg:table-cell whitespace-nowrap">Created</th>
-                    <th class="whitespace-nowrap">Actions</th>
+                    <th class="column-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -142,8 +486,20 @@
                                 {{ $statusLabel }}
                             </span>
                         </td>
-                        <td class="hidden md:table-cell text-admin-neutral-600">
-                            <span class="max-w-[160px] truncate" title="{{ $email }}">
+                        <td class="column-payment">
+                            @php
+                                $paymentStatus = $r->payment_status ?? 'pending';
+                                $paymentClass = match($paymentStatus) {
+                                    'paid' => 'payment-paid',
+                                    'under_review' => 'payment-under-review',
+                                    default => 'payment-pending'
+                                };
+                                $paymentLabel = $paymentStatus === 'under_review' ? 'Under Review' : ucfirst($paymentStatus);
+                            @endphp
+                            <span class="status-badge {{ $paymentClass }}">{{ $paymentLabel }}</span>
+                        </td>
+                        <td class="column-email hidden md:table-cell text-gray-600">
+                            <span class="short-email" title="{{ $email }}">
                                 {{ $shortEmail }}
                             </span>
                         </td>

@@ -68,7 +68,7 @@
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                         <button type="button" class="group inline-flex items-center gap-2" onclick="toggleUserNameSort()" aria-label="Sort by name">
                             <span>Name</span>
-                            <x-admin.ui.icon id="nameSortIcon" name="fa-sort" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
+                            <x-admin.ui.icon id="nameSortIcon" name="fa-arrow-down" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
                         </button>
                     </th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Email</th>
@@ -263,17 +263,10 @@ function confirmDelete() {
     }
 }
 
-var userSortDirection = 'asc';
-var userSortActive = false;
+var userSortDirection = 'desc';
 
 function toggleUserNameSort() {
-    if (userSortActive) {
-        userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        userSortActive = true;
-        userSortDirection = 'asc';
-    }
-
+    userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
     sortUserRows();
     updateNameSortIcon();
 }
@@ -297,12 +290,7 @@ function updateNameSortIcon() {
     const icon = document.getElementById('nameSortIcon');
     if (!icon) return;
 
-    icon.classList.remove('fa-sort', 'fa-arrow-up', 'fa-arrow-down');
-    if (!userSortActive) {
-        icon.classList.add('fa-sort');
-        return;
-    }
-
+    icon.classList.remove('fa-arrow-up', 'fa-arrow-down');
     icon.classList.add(userSortDirection === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down');
 }
 
@@ -465,6 +453,7 @@ document.addEventListener('livewire:navigated', () => {
     }
 
     updateNameSortIcon();
+    sortUserRows();
     applyUserFilters();
 });
 </script>

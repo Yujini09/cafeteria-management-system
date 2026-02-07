@@ -75,6 +75,7 @@
 
                     <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-6">
                         @csrf
+                        <input type="hidden" name="redirect" value="{{ request('redirect') ?? session('login_redirect') }}">
                         
                         {{-- Email --}}
                         <div>

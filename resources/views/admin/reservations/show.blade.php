@@ -564,6 +564,20 @@
                         <dd class="text-gray-900">{{ $r->updated_at->format('M d, Y h:i A') }}</dd>
                     </div>
                     @endif
+                    @php
+                        $paymentStatus = $r->payment_status ?? 'pending';
+                        $paymentLabel = $paymentStatus === 'under_review' ? 'Under Review' : ucfirst($paymentStatus);
+                        $latestPayment = $r->payments->sortByDesc('created_at')->first();
+                    @endphp
+                    <div class="flex justify-between items-center">
+                        <dt class="text-gray-500">Payment Status:</dt>
+                        <dd class="text-gray-900">
+                            {{ $paymentLabel }}
+                            @if($latestPayment)
+                                <a href="{{ route('admin.payments.show', $latestPayment) }}" class="ml-2 text-xs text-blue-600 hover:text-blue-800">View</a>
+                            @endif
+                        </dd>
+                    </div>
                 </dl>
             </div>
         </div>

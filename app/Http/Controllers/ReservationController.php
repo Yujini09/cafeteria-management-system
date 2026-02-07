@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\User;
+use App\Models\InventoryItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
@@ -19,18 +20,30 @@ class ReservationController extends Controller
     public function index(Request $request)
     {
         $status = $request->query('status');
+        $createdSort = $request->query('created_sort', 'desc');
+        if (!in_array($createdSort, ['asc', 'desc'], true)) {
+            $createdSort = 'desc';
+        }
+
         $q = Reservation::with(['user']);
         if (in_array($status, ['pending','approved','declined', 'cancelled'], true)) {
             $q->where('status', $status);
         }
-        $reservations = $q->latest()->paginate(10)->withQueryString();
+        $reservations = $q->orderBy('created_at', $createdSort)->paginate(10)->withQueryString();
         $counts = Reservation::selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total','status');
-        return view('admin.reservations.index', compact('reservations','status','counts'));
+        return view('admin.reservations.index', compact('reservations','status','counts','createdSort'));
     }
 
     public function show(Reservation $reservation)
     {
-        $reservation->load(['user', 'items.menu.items', 'items.menu.items.recipes.inventoryItem']);
+        // Load all necessary relationships
+        $reservation->load([
+            'user',
+            'items.menu.items', // menu items
+            'items.menu.items.recipes.inventoryItem', // for inventory checks
+            'payments'
+        ]);
+        
         return view('admin.reservations.show', ['r' => $reservation]);
     }
 
@@ -276,6 +289,340 @@ class ReservationController extends Controller
         return $timeString;
     }
 
+    protected function findOverlappingApprovedReservation(Reservation $reservation): ?array
+    {
+        [$startDate, $endDate] = $this->getReservationDateRange($reservation);
+
+        $query = Reservation::query()
+            ->where('status', 'approved')
+            ->whereDate('event_date', '<=', $endDate->format('Y-m-d'))
+            ->whereDate(DB::raw('COALESCE(end_date, event_date)'), '>=', $startDate->format('Y-m-d'));
+
+        if (!empty($reservation->id)) {
+            $query->where('id', '!=', $reservation->id);
+        }
+
+        $candidates = $query->get();
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        $targetSlots = $this->getReservationSlots($reservation);
+        foreach ($candidates as $other) {
+            $otherSlots = $this->getReservationSlots($other);
+            foreach ($targetSlots as $date => [$startA, $endA]) {
+                if (!isset($otherSlots[$date])) {
+                    continue;
+                }
+                [$startB, $endB] = $otherSlots[$date];
+                if ($this->timeRangesOverlap($startA, $endA, $startB, $endB)) {
+                    return ['reservation' => $other, 'date' => $date];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected function getReservationDateRange(Reservation $reservation): array
+    {
+        $startDate = $reservation->event_date
+            ? Carbon::parse($reservation->event_date)
+            : Carbon::parse($reservation->date ?? $reservation->created_at);
+
+        $endDate = $reservation->end_date
+            ? Carbon::parse($reservation->end_date)
+            : $startDate->copy();
+
+        if ($endDate->lt($startDate)) {
+            $endDate = $startDate->copy();
+        }
+
+        return [$startDate->startOfDay(), $endDate->startOfDay()];
+    }
+
+    protected function getReservationSlots(Reservation $reservation): array
+    {
+        [$startDate, $endDate] = $this->getReservationDateRange($reservation);
+        $dayTimes = $reservation->day_times ?? [];
+
+        if (is_string($dayTimes)) {
+            $decoded = json_decode($dayTimes, true);
+            $dayTimes = is_array($decoded) ? $decoded : [];
+        }
+
+        $fallbackRange = $reservation->event_time ?? $reservation->time ?? null;
+        $slots = [];
+
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dateKey = $date->format('Y-m-d');
+            $startTime = null;
+            $endTime = null;
+            $rangeString = $fallbackRange;
+
+            if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
+                $timeData = $dayTimes[$dateKey];
+                if (is_array($timeData)) {
+                    $startTime = $timeData['start_time'] ?? $timeData['start'] ?? $timeData['time_start'] ?? null;
+                    $endTime = $timeData['end_time'] ?? $timeData['end'] ?? $timeData['time_end'] ?? null;
+                } elseif (is_string($timeData)) {
+                    $rangeString = $timeData;
+                }
+            }
+
+            [$startMin, $endMin] = $this->normalizeTimeRange($startTime, $endTime, $rangeString);
+            $slots[$dateKey] = [$startMin, $endMin];
+        }
+
+        return $slots;
+    }
+
+    protected function normalizeTimeRange(?string $startTime, ?string $endTime, ?string $rangeString): array
+    {
+        $startMin = $this->parseTimeToMinutes($startTime);
+        $endMin = $this->parseTimeToMinutes($endTime);
+
+        if (($startMin === null || $endMin === null) && !empty($rangeString)) {
+            [$rangeStart, $rangeEnd] = $this->parseRangeString($rangeString);
+            if ($startMin === null) $startMin = $rangeStart;
+            if ($endMin === null) $endMin = $rangeEnd;
+        }
+
+        if ($startMin === null || $endMin === null || $endMin <= $startMin) {
+            return [0, 1440];
+        }
+
+        return [$startMin, $endMin];
+    }
+
+    protected function parseRangeString(string $range): array
+    {
+        $parts = preg_split('/\s*-\s*/', trim($range));
+        if (count($parts) >= 2) {
+            return [$this->parseTimeToMinutes($parts[0]), $this->parseTimeToMinutes($parts[1])];
+        }
+        if (count($parts) === 1) {
+            return [$this->parseTimeToMinutes($parts[0]), null];
+        }
+        return [null, null];
+    }
+
+    protected function parseTimeToMinutes(?string $timeString): ?int
+    {
+        if ($timeString === null) return null;
+        $timeString = trim($timeString);
+        if ($timeString === '') return null;
+
+        if (preg_match('/^\d{1,2}$/', $timeString)) {
+            $hour = (int) $timeString;
+            if ($hour >= 0 && $hour <= 23) return $hour * 60;
+        }
+
+        $formats = ['H:i', 'H:i:s', 'g:i A', 'g:iA', 'g A', 'gA', 'g:i a', 'g:ia'];
+        foreach ($formats as $format) {
+            $dt = \DateTime::createFromFormat($format, $timeString);
+            if ($dt !== false) {
+                return ((int) $dt->format('H')) * 60 + (int) $dt->format('i');
+            }
+        }
+
+        try {
+            $dt = Carbon::parse($timeString);
+            return ($dt->hour * 60) + $dt->minute;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    protected function timeRangesOverlap(int $startA, int $endA, int $startB, int $endB): bool
+    {
+        return $startA < $endB && $startB < $endA;
+    }
+
+    public function checkInventory(Reservation $reservation)
+    {
+        $usage = $this->buildInventoryUsage($reservation);
+        $insufficient = array_values(array_filter($usage, function ($item) {
+            return ($item['shortage'] ?? 0) > 0;
+        }));
+
+        return response()->json([
+            'sufficient' => count($insufficient) === 0,
+            'insufficient_items' => $insufficient,
+        ]);
+    }
+
+    public function approve(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending reservations can be approved.');
+        }
+
+        $overlap = $this->findOverlappingApprovedReservation($reservation);
+        if ($overlap) {
+            return redirect()->back()->with([
+                'overlap_warning' => true,
+                'overlap_reservation_id' => $overlap['reservation']->id ?? null,
+                'overlap_reservation_date' => $overlap['date'] ?? null,
+            ]);
+        }
+
+        $usage = $this->buildInventoryUsage($reservation);
+        $insufficient = array_values(array_filter($usage, function ($item) {
+            return ($item['shortage'] ?? 0) > 0;
+        }));
+
+        $forceApprove = $request->boolean('force_approve');
+        if (!$forceApprove && count($insufficient) > 0) {
+            return redirect()->back()->with([
+                'inventory_warning' => true,
+                'insufficient_items' => $insufficient,
+            ]);
+        }
+
+        DB::transaction(function () use ($reservation, $usage) {
+            foreach ($usage as $itemId => $row) {
+                $required = (float) ($row['required'] ?? 0);
+                if ($required <= 0) {
+                    continue;
+                }
+
+                $inventoryItem = InventoryItem::whereKey($itemId)->lockForUpdate()->first();
+                if (!$inventoryItem) {
+                    continue;
+                }
+
+                $inventoryItem->qty = max(0, (float) $inventoryItem->qty - $required);
+                $inventoryItem->save();
+            }
+
+            $reservation->update([
+                'status' => 'approved',
+                'decline_reason' => null,
+                'payment_status' => $reservation->payment_status ?? 'pending',
+            ]);
+        });
+
+        AuditTrail::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'Approved Reservation',
+            'module'      => 'reservations',
+            'description' => 'approved reservation #' . $reservation->id,
+        ]);
+
+        $user = $reservation->user;
+        if ($user) {
+            NotificationFacade::send($user, new ReservationStatusChanged($reservation, 'approved'));
+            (new NotificationService())->createUserNotification(
+                $reservation->user_id,
+                'reservation_approved',
+                'reservations',
+                "Reservation #{$reservation->id} approved",
+                [
+                    'reservation_id' => $reservation->id,
+                    'url' => route('reservation.view', $reservation->id),
+                    'link_label' => 'View Details',
+                ]
+            );
+        }
+
+        return redirect()->back()->with(['accepted' => true, 'success' => 'Reservation approved.']);
+    }
+
+    public function decline(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending reservations can be declined.');
+        }
+
+        $data = $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        $reservation->update([
+            'status' => 'declined',
+            'decline_reason' => $data['reason'],
+        ]);
+
+        AuditTrail::create([
+            'user_id'     => Auth::id(),
+            'action'      => 'Declined Reservation',
+            'module'      => 'reservations',
+            'description' => 'declined reservation #' . $reservation->id,
+        ]);
+
+        $user = $reservation->user;
+        if ($user) {
+            NotificationFacade::send($user, new ReservationStatusChanged($reservation, 'declined', $data['reason']));
+            (new NotificationService())->createUserNotification(
+                $reservation->user_id,
+                'reservation_declined',
+                'reservations',
+                "Reservation #{$reservation->id} declined",
+                [
+                    'reservation_id' => $reservation->id,
+                    'url' => route('reservation.view', $reservation->id),
+                    'link_label' => 'View Details',
+                ]
+            );
+        }
+
+        return redirect()->back()->with(['declined' => true, 'success' => 'Reservation declined.']);
+    }
+
+    protected function buildInventoryUsage(Reservation $reservation): array
+    {
+        $reservation->loadMissing(['items.menu.items.recipes.inventoryItem']);
+
+        $usage = [];
+        foreach ($reservation->items as $reservationItem) {
+            $menu = $reservationItem->menu;
+            if (!$menu) {
+                continue;
+            }
+
+            $reservationQty = (float) ($reservationItem->quantity ?? 0);
+            if ($reservationQty <= 0) {
+                continue;
+            }
+
+            foreach ($menu->items as $menuItem) {
+                foreach ($menuItem->recipes as $recipe) {
+                    $inventoryItem = $recipe->inventoryItem;
+                    if (!$inventoryItem) {
+                        continue;
+                    }
+
+                    $required = (float) ($recipe->quantity_needed ?? 0) * $reservationQty;
+                    if ($required <= 0) {
+                        continue;
+                    }
+
+                    $id = $inventoryItem->id;
+                    if (!isset($usage[$id])) {
+                        $usage[$id] = [
+                            'id' => $id,
+                            'name' => $inventoryItem->name ?? 'Unknown',
+                            'unit' => $recipe->unit ?? $inventoryItem->unit ?? '',
+                            'required' => 0.0,
+                            'available' => (float) ($inventoryItem->qty ?? 0),
+                            'shortage' => 0.0,
+                        ];
+                    }
+
+                    $usage[$id]['required'] += $required;
+                }
+            }
+        }
+
+        foreach ($usage as &$row) {
+            $row['shortage'] = max(0, ($row['required'] ?? 0) - ($row['available'] ?? 0));
+        }
+        unset($row);
+
+        return $usage;
+    }
+
     public function cancel(Request $request, Reservation $reservation)
     {
         if ($reservation->user_id !== Auth::id()) return redirect()->back()->with('error', 'Unauthorized.');
@@ -300,284 +647,12 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Reservation cancelled successfully.');
     }
 
-    public function uploadReceipt(Request $request, Reservation $reservation)
-    {
-        if ($reservation->user_id !== Auth::id()) return redirect()->back()->with('error', 'Unauthorized action.');
-        if ($reservation->status !== 'approved') return redirect()->back()->with('error', 'Only approved reservations can upload receipts.');
-        
-        $request->validate(['receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120']);
-        $path = $request->file('receipt')->store('receipts', 'public');
-        
-        $reservation->update([
-            'receipt_path' => $path,
-            'receipt_uploaded_at' => now(),
-            'payment_status' => 'paid',
-        ]);
-        
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Uploaded Receipt',
-            'module'      => 'reservations',
-            'description' => 'uploaded payment receipt for reservation #' . $reservation->id,
-        ]);
-        
-        return redirect()->back()->with('success', 'Receipt uploaded successfully!');
-    }
-
-    // --- HELPER METHODS ---
-
-    public function checkInventory(Reservation $reservation)
-    {
-        $reservation->load(['items.menu.items.recipes.inventoryItem']);
-        $insufficientItems = $this->getInsufficientItems($reservation);
-
-        return response()->json([
-            'sufficient' => empty($insufficientItems),
-            'insufficient_items' => $insufficientItems,
-        ]);
-    }
-
-    public function approve(Request $request, Reservation $reservation)
-    {
-        $forceApprove = $request->input('force_approve', false);
-
-        if (!$forceApprove && $reservation->status !== 'pending') {
-            return redirect()->route('admin.reservations.show', $reservation)->with('error', 'Only pending reservations can be approved.');
-        }
-
-        $overlap = $this->findOverlappingApprovedReservation($reservation);
-        if ($overlap) {
-            $conflictId = $overlap['reservation']->id ?? null;
-            $conflictDate = $overlap['date'] ?? null;
-            $conflictDateLabel = $conflictDate ? Carbon::parse($conflictDate)->format('M d, Y') : null;
-
-            return redirect()->route('admin.reservations.show', $reservation)
-                ->with('overlap_warning', true)
-                ->with('overlap_reservation_id', $conflictId)
-                ->with('overlap_reservation_date', $conflictDateLabel)
-                ->with('error', $conflictId ? "Overlap with reservation #{$conflictId}." : 'Overlap detected.');
-        }
-
-        if (!$forceApprove) {
-            $reservation->load(['items.menu.items.recipes.inventoryItem']);
-            $insufficientItems = $this->getInsufficientItems($reservation);
-            if (!empty($insufficientItems)) {
-                return redirect()->route('admin.reservations.show', $reservation)
-                    ->with('inventory_warning', true)
-                    ->with('insufficient_items', $insufficientItems);
-            }
-        }
-
-        DB::transaction(function () use ($reservation) {
-            $reservation->status = 'approved';
-            $reservation->save();
-            $guests = $reservation->number_of_persons; // Changed from guest_count to number_of_persons based on DB schema
-            foreach ($reservation->items as $resItem) {
-                $menu = $resItem->menu;
-                $bundleQty = $resItem->quantity ?? 1; // Actually usually individual qty per menu
-                if (!$menu) continue;
-                foreach ($menu->items as $food) {
-                    foreach ($food->recipes as $recipe) {
-                        $ingredient = $recipe->inventoryItem;
-                        if (!$ingredient) continue;
-                        
-                        // NOTE: Logic depends on if quantity is PER PAX or PER BUNDLE. 
-                        // Assuming quantity in items is total pax for that meal:
-                        $deduct = (float)($recipe->quantity_needed ?? 0) * $resItem->quantity;
-                        
-                        if ($deduct <= 0) continue;
-                        $ingredient->qty = max(0, ($ingredient->qty ?? 0) - $deduct);
-                        $ingredient->save();
-                    }
-                }
-            }
-        });
-
-        $this->notifyCustomer($reservation, 'approved');
-        $this->createAdminNotification('reservation_approved', 'reservations', "Reservation #{$reservation->id} approved", [
-            'reservation_id' => $reservation->id,
-            'customer_name' => optional($reservation->user)->name ?? 'Unknown',
-            'updated_by' => Auth::user()?->name ?? 'Unknown',
-        ]);
-
-        return redirect()->route('admin.reservations.show', $reservation)->with('success', 'Approved.');
-    }
-
-    protected function getInsufficientItems(Reservation $reservation)
-    {
-        $insufficientItems = [];
-        // Loop through items to calculate totals
-        foreach ($reservation->items as $resItem) {
-            $menu = $resItem->menu;
-            if (!$menu) continue;
-            foreach ($menu->items as $food) {
-                foreach ($food->recipes as $recipe) {
-                    $ingredient = $recipe->inventoryItem;
-                    if (!$ingredient) continue;
-                    
-                    $required = (float)($recipe->quantity_needed ?? 0) * $resItem->quantity;
-                    
-                    if ($required <= 0) continue;
-                    $available = (float)($ingredient->qty ?? 0);
-                    if ($available < $required) {
-                        $key = $ingredient->id;
-                        if (!isset($insufficientItems[$key])) {
-                            $insufficientItems[$key] = ['name' => $ingredient->name, 'required' => 0, 'available' => $available, 'unit' => $ingredient->unit ?? 'units'];
-                        }
-                        $insufficientItems[$key]['required'] += $required;
-                    }
-                }
-            }
-        }
-        // Final check
-        foreach ($insufficientItems as $key => $item) {
-            $insufficientItems[$key]['shortage'] = $item['required'] - $item['available'];
-        }
-        return array_values($insufficientItems);
-    }
-
-    protected function findOverlappingApprovedReservation(Reservation $reservation): ?array
-    {
-        [$startDate, $endDate] = $this->getReservationDateRange($reservation);
-        $query = Reservation::query()
-            ->where('status', 'approved')
-            ->whereDate('event_date', '<=', $endDate->format('Y-m-d'))
-            ->whereDate(DB::raw('COALESCE(end_date, event_date)'), '>=', $startDate->format('Y-m-d'));
-            
-        if (!empty($reservation->id)) {
-            $query->where('id', '!=', $reservation->id);
-        }
-        
-        $candidates = $query->get();
-        if ($candidates->isEmpty()) return null;
-        
-        $targetSlots = $this->getReservationSlots($reservation);
-        foreach ($candidates as $other) {
-            $otherSlots = $this->getReservationSlots($other);
-            foreach ($targetSlots as $date => [$startA, $endA]) {
-                if (!isset($otherSlots[$date])) continue;
-                [$startB, $endB] = $otherSlots[$date];
-                if ($this->timeRangesOverlap($startA, $endA, $startB, $endB)) {
-                    return ['reservation' => $other, 'date' => $date];
-                }
-            }
-        }
-        return null;
-    }
-
-    protected function getReservationDateRange(Reservation $reservation): array
-    {
-        $startDate = $reservation->event_date ? Carbon::parse($reservation->event_date) : Carbon::parse($reservation->date ?? $reservation->created_at);
-        $endDate = $reservation->end_date ? Carbon::parse($reservation->end_date) : $startDate->copy();
-        if ($endDate->lt($startDate)) $endDate = $startDate->copy();
-        return [$startDate->startOfDay(), $endDate->startOfDay()];
-    }
-
-    protected function getReservationSlots(Reservation $reservation): array
-    {
-        [$startDate, $endDate] = $this->getReservationDateRange($reservation);
-        $dayTimes = $reservation->day_times ?? [];
-        if (is_string($dayTimes)) { $decoded = json_decode($dayTimes, true); $dayTimes = is_array($decoded) ? $decoded : []; }
-        
-        $fallbackRange = $reservation->event_time ?? $reservation->time ?? null;
-        $slots = [];
-        
-        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-            $dateKey = $date->format('Y-m-d');
-            $startTime = null; $endTime = null; $rangeString = $fallbackRange;
-            
-            if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
-                $timeData = $dayTimes[$dateKey];
-                if (is_array($timeData)) {
-                    $startTime = $timeData['start_time'] ?? $timeData['start'] ?? $timeData['time_start'] ?? null;
-                    $endTime = $timeData['end_time'] ?? $timeData['end'] ?? $timeData['time_end'] ?? null;
-                } elseif (is_string($timeData)) { $rangeString = $timeData; }
-            }
-            
-            [$startMin, $endMin] = $this->normalizeTimeRange($startTime, $endTime, $rangeString);
-            $slots[$dateKey] = [$startMin, $endMin];
-        }
-        return $slots;
-    }
-
-    protected function normalizeTimeRange(?string $startTime, ?string $endTime, ?string $rangeString): array
-    {
-        $startMin = $this->parseTimeToMinutes($startTime); 
-        $endMin = $this->parseTimeToMinutes($endTime);
-        
-        if (($startMin === null || $endMin === null) && !empty($rangeString)) {
-            [$rangeStart, $rangeEnd] = $this->parseRangeString($rangeString);
-            if ($startMin === null) $startMin = $rangeStart;
-            if ($endMin === null) $endMin = $rangeEnd;
-        }
-        
-        if ($startMin === null || $endMin === null || $endMin <= $startMin) return [0, 1440];
-        return [$startMin, $endMin];
-    }
-
-    protected function parseRangeString(string $range): array
-    {
-        $parts = preg_split('/\s*-\s*/', trim($range));
-        if (count($parts) >= 2) return [$this->parseTimeToMinutes($parts[0]), $this->parseTimeToMinutes($parts[1])];
-        if (count($parts) === 1) return [$this->parseTimeToMinutes($parts[0]), null];
-        return [null, null];
-    }
-
-    protected function parseTimeToMinutes(?string $timeString): ?int
-    {
-        if ($timeString === null) return null;
-        $timeString = trim($timeString);
-        if ($timeString === '') return null;
-        if (preg_match('/^\d{1,2}$/', $timeString)) { $hour = (int) $timeString; if ($hour >= 0 && $hour <= 23) return $hour * 60; }
-        
-        $formats = ['H:i', 'H:i:s', 'g:i A', 'g:iA', 'g A', 'gA', 'g:i a', 'g:ia'];
-        foreach ($formats as $format) { 
-            $dt = \DateTime::createFromFormat($format, $timeString); 
-            if ($dt !== false) return ((int) $dt->format('H')) * 60 + (int) $dt->format('i'); 
-        }
-        
-        try { $dt = Carbon::parse($timeString); return ($dt->hour * 60) + $dt->minute; } catch (\Exception $e) { return null; }
-    }
-
-    protected function timeRangesOverlap(int $startA, int $endA, int $startB, int $endB): bool
-    {
-        return $startA < $endB && $startB < $endA;
-    }
-
-    public function decline(Request $request, Reservation $reservation)
-    {
-        $data = $request->validate(['reason' => 'required|string|max:1000']);
-        $reservation->status = 'declined';
-        $reservation->decline_reason = $data['reason'];
-        $reservation->save();
-        
-        $this->notifyCustomer($reservation, 'declined', $data['reason']);
-        $this->createAdminNotification('reservation_declined', 'reservations', "Reservation #{$reservation->id} declined", [
-            'reservation_id' => $reservation->id,
-            'customer_name' => optional($reservation->user)->name ?? 'Unknown',
-            'reason' => $data['reason'],
-            'updated_by' => Auth::user()?->name ?? 'Unknown',
-        ]);
-        
-        return redirect()->route('admin.reservations.show', $reservation)->with('success', 'Declined.');
-    }
-
-    protected function notifyCustomer(Reservation $reservation, string $status, ?string $reason = null): void
-    {
-        $notification = new ReservationStatusChanged($reservation, $status, $reason);
-        $user = $reservation->user;
-        if ($user) { $user->notify($notification); } 
-        elseif (!empty($reservation->email)) { NotificationFacade::route('mail', $reservation->email)->notify($notification); }
-        
-        $hasVonage = (bool) (config('services.vonage.key') && config('services.vonage.secret'));
-        if ($hasVonage) {
-            $phone = $reservation->contact_number ?? optional($reservation->user)->phone ?? null;
-            if ($phone) { NotificationFacade::route('vonage', $phone)->notify($notification); }
-        }
-    }
-
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
         (new NotificationService())->createAdminNotification($action, $module, $description, $metadata);
     }
+public function uploadReceipt(Request $request, Reservation $reservation)
+{
+    return redirect()->back()->with('error', 'Receipt uploads are disabled. Please submit your payment reference number instead.');
+}
 }
