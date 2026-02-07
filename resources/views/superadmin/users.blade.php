@@ -426,11 +426,6 @@ function sortBy(column) {
     }
     renderTable();
 }
-
-function getSortIcon(column) {
-    if (currentSortBy !== column) return '';
-    return currentSortDirection === 'asc' ? '▲' : '▼';
-}
 document.addEventListener('livewire:navigated', () => {
     const hasSuccess = @json((bool) session('success'));
     if (hasSuccess) {

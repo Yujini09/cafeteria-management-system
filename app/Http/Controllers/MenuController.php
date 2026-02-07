@@ -6,8 +6,6 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\MenuPrice;
 use App\Models\InventoryItem;
-use App\Models\User;
-use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;

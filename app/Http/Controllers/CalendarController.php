@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Reservation;
 use Illuminate\View\View;
 
 class CalendarController extends Controller

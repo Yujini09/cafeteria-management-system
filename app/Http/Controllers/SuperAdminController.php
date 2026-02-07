@@ -10,7 +10,6 @@ use App\Services\NotificationService;
 use App\Support\PasswordRules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -78,9 +77,6 @@ class SuperAdminController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        $role  = $user->role;
-        $email = $user->email;
-
         $user->delete();
 
         AuditTrail::create([
@@ -113,21 +109,6 @@ class SuperAdminController extends Controller
         $audits = AuditTrail::with('user')->latest()->take(50)->get();
         return response()->json($audits);
     }
-
-    public function clearRecentAudits(Request $request): RedirectResponse
-    {
-        AuditTrail::truncate();
-
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Cleared Audit Trails',
-            'module'      => 'audit',
-            'description' => 'cleared all recent activities',
-        ]);
-
-        return back()->with('success', 'All audit trails have been cleared.');
-    }
-
     public function recentNotifications()
     {
         $notificationService = new NotificationService();
