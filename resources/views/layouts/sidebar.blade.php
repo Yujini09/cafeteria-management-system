@@ -313,6 +313,15 @@
                             Reservations
                         </a>
 
+                        <a href="{{ route('admin.payments.index') }}"
+                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.payments.*') ? 'active-menu-item' : '' }}"
+                           @click="openSidebar = false">
+                            <span class="flex items-center justify-center w-5 h-5 mr-3">
+                                <i class="fas fa-file-invoice-dollar {{ request()->routeIs('admin.payments.*') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                            </span>
+                            Payments
+                        </a>
+
                         <a href="{{ route('admin.reports.index') }}"
                            wire:navigate
                            class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reports.index') ? 'active-menu-item' : '' }}"

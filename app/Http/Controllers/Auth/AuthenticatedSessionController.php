@@ -10,13 +10,25 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use App\Models\AuditTrail;
+use App\Models\Payment;
+use App\Services\NotificationService;
 
 class AuthenticatedSessionController extends Controller
 {
     // Show login (or redirect if already logged in)
-    public function create(): View|RedirectResponse
+    public function create(Request $request): View|RedirectResponse
     {
+        $redirect = $this->normalizeRedirect($request->query('redirect'));
+        if ($redirect) {
+            $request->session()->put('login_redirect', $redirect);
+        }
+
         if (Auth::check()) {
+            $redirect = $this->normalizeRedirect($request->query('redirect') ?? $request->session()->pull('login_redirect'));
+            if ($redirect) {
+                return redirect($redirect);
+            }
+
             if (Auth::user()->role === 'superadmin') return redirect()->route('superadmin.users');
             if (Auth::user()->role === 'admin')      return redirect()->route('admin.dashboard');
             if (Auth::user()->role === 'customer')   return redirect()->route('customer.homepage');
@@ -43,6 +55,30 @@ class AuthenticatedSessionController extends Controller
             'description' => 'logged in',
         ]);
 
+        $redirect = $this->normalizeRedirect($request->input('redirect') ?? $request->session()->pull('login_redirect'));
+        if ($redirect) {
+            return redirect($redirect);
+        }
+
+        if (in_array(Auth::user()->role, ['admin', 'superadmin'], true)) {
+            $pendingPayments = Payment::where('status', 'submitted')->count();
+            if ($pendingPayments > 0) {
+                $notificationService = new NotificationService();
+                $description = 'Payments awaiting review.';
+                if (! $notificationService->notificationExists('payments_pending', 'payments', $description)) {
+                    $notificationService->createAdminNotification(
+                        'payments_pending',
+                        'payments',
+                        $description,
+                        [
+                            'pending_count' => $pendingPayments,
+                            'url' => route('admin.payments.index'),
+                        ]
+                    );
+                }
+            }
+        }
+
         if (Auth::user()->role === 'superadmin') return redirect()->route('superadmin.users');
         if (Auth::user()->role === 'admin')      return redirect()->route('admin.dashboard');
 
@@ -66,5 +102,27 @@ class AuthenticatedSessionController extends Controller
     Session::regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function normalizeRedirect(?string $redirect): ?string
+    {
+        if (!$redirect) {
+            return null;
+        }
+
+        $parts = parse_url($redirect);
+        if ($parts === false) {
+            return null;
+        }
+
+        $path = $parts['path'] ?? '';
+        if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//')) {
+            return null;
+        }
+
+        $query = isset($parts['query']) ? '?'.$parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#'.$parts['fragment'] : '';
+
+        return $path.$query.$fragment;
     }
 }

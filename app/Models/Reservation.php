@@ -34,6 +34,9 @@ class Reservation extends Model
         'receipt_path',
         'receipt_uploaded_at',
         'payment_status', // 'pending', 'paid', 'overdue'
+        'payment_requested_at',
+        'payment_last_reminder_at',
+        'payment_reminder_count',
     ];
 
     protected $casts = [
@@ -41,6 +44,9 @@ class Reservation extends Model
         'receipt_uploaded_at' => 'datetime',
         'end_date' => 'date',
         'day_times' => 'array', // Add this cast
+        'payment_requested_at' => 'datetime',
+        'payment_last_reminder_at' => 'datetime',
+        'payment_reminder_count' => 'integer',
         // Don't cast event_time to datetime since it might contain JSON or time range string
         // 'event_time' => 'datetime', // Remove or comment this line
     ];
@@ -53,6 +59,11 @@ class Reservation extends Model
     public function items()
     {
         return $this->hasMany(ReservationItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function getGuestCountAttribute(): int

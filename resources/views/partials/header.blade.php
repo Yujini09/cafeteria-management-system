@@ -75,6 +75,58 @@
                 </div>
 
                 @if(Auth::user()->role == 'customer')
+                    <div class="relative" x-data="customerNotifications()" x-init="init()">
+                        <button @click="open = !open"
+                                class="relative inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
+                            </svg>
+                            <span x-show="unreadCount > 0"
+                                  x-text="unreadCount > 99 ? '99+' : unreadCount"
+                                  class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[0.65rem] font-semibold flex items-center justify-center"
+                                  x-cloak></span>
+                        </button>
+                        <div x-show="open"
+                             @click.outside="open = false"
+                             x-transition.opacity.scale.90
+                             class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white border border-gray-200 rounded-lg shadow-xl z-50"
+                             x-cloak>
+                            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                                <span class="font-semibold text-gray-800">Notifications</span>
+                                <button type="button" class="text-xs text-gray-500 hover:text-gray-700" @click="markAllRead" x-show="unreadCount > 0">
+                                    Mark all read
+                                </button>
+                            </div>
+                            <ul class="max-h-72 overflow-y-auto">
+                                <template x-if="loading">
+                                    <li class="px-4 py-3 text-gray-600">Loading notifications...</li>
+                                </template>
+                                <template x-if="!loading && items.length === 0">
+                                    <li class="px-4 py-3 text-gray-600">No new notifications</li>
+                                </template>
+                                <template x-for="item in items" :key="item.id">
+                                    <li class="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-start gap-3">
+                                            <span class="mt-2 w-2 h-2 rounded-full"
+                                                  :class="item.read ? 'bg-gray-300' : 'bg-blue-500'"></span>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm text-gray-700" x-text="item.description"></p>
+                                                <p class="text-xs text-gray-400 mt-1" x-text="item.time"></p>
+                                                <div class="mt-2 flex items-center gap-3">
+                                                    <a x-show="item.url" :href="item.url" class="text-xs text-green-700 hover:text-green-900 font-semibold" x-text="item.linkLabel"></a>
+                                                    <button type="button"
+                                                            class="text-xs text-blue-600 hover:text-blue-800"
+                                                            @click="toggleRead(item.id)">
+                                                        <span x-text="item.read ? 'Mark as unread' : 'Mark as read'"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
                     <button type="button" @click="confirmLogout = true" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
                         LOGOUT
                     </button>
@@ -241,4 +293,100 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 });
+</script>
+
+<script>
+function customerNotifications() {
+    return {
+        open: false,
+        items: [],
+        loading: true,
+        unreadCount: 0,
+        init() {
+            this.fetchNotifications();
+            setInterval(() => this.fetchNotifications(), 30000);
+        },
+        updateUnread() {
+            this.unreadCount = this.items.filter(item => !item.read).length;
+        },
+        markAllRead() {
+            fetch('{{ url("/customer/notifications/mark-all-read") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    this.items = this.items.map(item => ({ ...item, read: true }));
+                    this.updateUnread();
+                })
+                .catch(error => {
+                    console.error('Error marking all notifications read:', error);
+                });
+        },
+        toggleRead(id) {
+            const target = this.items.find(item => item.id === id);
+            if (!target) return;
+
+            const nextRead = !target.read;
+            fetch(`{{ url("/customer/notifications") }}/${id}/read`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ read: nextRead })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    this.items = this.items.map(item => item.id === id ? { ...item, read: nextRead } : item);
+                    this.updateUnread();
+                })
+                .catch(error => {
+                    console.error('Error toggling notification read:', error);
+                });
+        },
+        fetchNotifications() {
+            this.loading = true;
+            fetch('{{ url("/customer/recent-notifications") }}', {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    this.items = (data || []).map(notification => {
+                        const metadata = notification.metadata || {};
+                        return {
+                            id: notification.id,
+                            description: notification.description || 'Notification',
+                            time: notification.created_at ? new Date(notification.created_at).toLocaleString() : 'Unknown Time',
+                            read: Boolean(notification.read),
+                            url: metadata.url || null,
+                            linkLabel: metadata.link_label || 'Pay Now',
+                        };
+                    });
+                    this.updateUnread();
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    this.items = [];
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+        }
+    };
+}
 </script>
