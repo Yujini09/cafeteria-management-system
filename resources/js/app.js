@@ -108,7 +108,8 @@ document.addEventListener('alpine:init', () => {
         form: {
             reference_number: opts.oldReference || '',
             department_office: opts.oldDepartment || '',
-            payer_name: opts.oldPayer || ''
+            payer_name: opts.oldPayer || '',
+            account_code: opts.oldAccountCode || ''
         },
         init() {
             if (window.location.pathname.startsWith('/payments/')) {
@@ -179,6 +180,9 @@ document.addEventListener('alpine:init', () => {
                     }
                     if (!this.form.payer_name) {
                         this.form.payer_name = data.reservation.contact_person || '';
+                    }
+                    if (!this.form.account_code) {
+                        this.form.account_code = data.reservation.account_code || '';
                     }
                     this.open = true;
                 } else {

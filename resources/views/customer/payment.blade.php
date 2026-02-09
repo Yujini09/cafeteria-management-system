@@ -51,18 +51,33 @@
 
             @if($reservation->payment_status === 'paid')
                 <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-6">
-                    Payment has been approved. Thank you!
+                    <div class="font-semibold">Payment has been approved. Thank you!</div>
+                    @if($latestPayment?->receipt_path)
+                        <a href="{{ \Illuminate\Support\Facades\Storage::url($latestPayment->receipt_path) }}"
+                           target="_blank"
+                           class="inline-flex items-center text-sm text-green-700 hover:text-green-900 mt-2">
+                            View uploaded receipt
+                        </a>
+                    @endif
                 </div>
             @elseif($reservation->payment_status === 'under_review')
                 <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 mb-6">
-                    Your payment is under review. We will notify you once approved.
+                    <div class="font-semibold">Your payment is under review.</div>
+                    <div class="text-sm mt-1">We will notify you once approved.</div>
+                    @if($latestPayment?->receipt_path)
+                        <a href="{{ \Illuminate\Support\Facades\Storage::url($latestPayment->receipt_path) }}"
+                           target="_blank"
+                           class="inline-flex items-center text-sm text-blue-700 hover:text-blue-900 mt-2">
+                            View uploaded receipt
+                        </a>
+                    @endif
                 </div>
             @elseif(!$canSubmit)
                 <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 mb-6">
                     Payment can be submitted after the reservation is approved.
                 </div>
             @else
-                <form method="POST" action="{{ route('payments.store', $reservation->id) }}" class="space-y-5">
+                <form method="POST" action="{{ route('payments.store', $reservation->id) }}" enctype="multipart/form-data" class="space-y-5">
                     @csrf
 
                     <div>
@@ -75,14 +90,25 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label for="department_office" class="block text-sm font-semibold text-gray-700">Department/Office</label>
-                        <input id="department_office" name="department_office" type="text"
-                               class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-green-600 focus:ring-green-600"
-                               placeholder="Department or office" value="{{ old('department_office', $reservation->department) }}">
-                        @error('department_office')
-                            <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
-                        @enderror
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="department_office" class="block text-sm font-semibold text-gray-700">Department/Office</label>
+                            <input id="department_office" name="department_office" type="text"
+                                   class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-green-600 focus:ring-green-600"
+                                   placeholder="Department or office" value="{{ old('department_office', $reservation->department) }}">
+                            @error('department_office')
+                                <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="account_code" class="block text-sm font-semibold text-gray-700">Account Code</label>
+                            <input id="account_code" name="account_code" type="text"
+                                   class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-green-600 focus:ring-green-600"
+                                   placeholder="Enter account code" value="{{ old('account_code', $reservation->account_code) }}">
+                            @error('account_code')
+                                <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <div>
@@ -91,6 +117,16 @@
                                class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-green-600 focus:ring-green-600"
                                placeholder="Name of payer" value="{{ old('payer_name', $reservation->contact_person ?? $reservation->user->name) }}">
                         @error('payer_name')
+                            <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="receipt" class="block text-sm font-semibold text-gray-700">Payment Receipt (optional)</label>
+                        <input id="receipt" name="receipt" type="file" accept=".pdf,image/png,image/jpeg"
+                               class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-green-600 focus:ring-green-600 bg-white">
+                        <p class="text-xs text-gray-500 mt-2">Accepted formats: PDF, JPG, PNG. Max size 5MB.</p>
+                        @error('receipt')
                             <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
                         @enderror
                     </div>

@@ -163,6 +163,10 @@
                         <dd class="text-gray-900">{{ $payment->department_office ?? 'â€”' }}</dd>
                     </div>
                     <div class="flex justify-between">
+                        <dt class="text-gray-500">Account Code:</dt>
+                        <dd class="text-gray-900">{{ $payment->account_code ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between">
                         <dt class="text-gray-500">Payer Name:</dt>
                         <dd class="text-gray-900">{{ $payment->payer_name }}</dd>
                     </div>
@@ -173,6 +177,18 @@
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Submitted:</dt>
                         <dd class="text-gray-900">{{ $payment->created_at?->format('M d, Y h:i A') }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Receipt:</dt>
+                        <dd class="text-gray-900">
+                            @if($payment->receipt_path)
+                                <a href="{{ \Illuminate\Support\Facades\Storage::url($payment->receipt_path) }}"
+                                   target="_blank"
+                                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>
+                            @else
+                                —
+                            @endif
+                        </dd>
                     </div>
                     @if($payment->notes)
                         <div class="flex justify-between">

@@ -44,20 +44,29 @@ class PaymentController extends Controller
             'reference_number' => 'required|string|max:120',
             'department_office' => 'nullable|string|max:120',
             'payer_name' => 'required|string|max:120',
+            'account_code' => 'nullable|string|max:120',
+            'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $reservation->loadMissing(['items.menu', 'user']);
         $amount = $this->calculateReservationTotal($reservation);
+        $receiptPath = null;
+        if ($request->hasFile('receipt')) {
+            $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
+        }
 
-        DB::transaction(function () use ($reservation, $validated, $amount) {
+        DB::transaction(function () use ($reservation, $validated, $amount, $receiptPath) {
             $payment = Payment::create([
                 'reservation_id' => $reservation->id,
                 'user_id' => $reservation->user_id,
                 'reference_number' => $validated['reference_number'],
                 'department_office' => $validated['department_office'] ?? null,
                 'payer_name' => $validated['payer_name'],
+                'account_code' => $validated['account_code'] ?? $reservation->account_code ?? null,
                 'amount' => $amount,
                 'status' => 'submitted',
+                'receipt_path' => $receiptPath,
+                'receipt_uploaded_at' => $receiptPath ? now() : null,
             ]);
 
             $reservation->update([
@@ -113,6 +122,7 @@ class PaymentController extends Controller
                 'venue' => $reservation->venue,
                 'contact_person' => $reservation->contact_person ?? optional($reservation->user)->name,
                 'department' => $reservation->department ?? optional($reservation->user)->department,
+                'account_code' => $reservation->account_code ?? null,
             ],
             'total_amount' => $amount,
         ]);

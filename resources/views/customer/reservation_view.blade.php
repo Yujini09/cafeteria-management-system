@@ -78,6 +78,12 @@
         border: 1px solid #a7f3d0;
     }
     
+    .payment-na {
+        background: #e5e7eb;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+    
     .receipt-section {
         padding: 25px 30px;
         border-bottom: 1px solid #f0f0f0;
@@ -277,9 +283,12 @@
                             @endswitch
 
                             @php
-                                $paymentStatus = $reservation->payment_status ?? 'pending';
+                                $paymentStatus = $reservation->payment_status;
+                                $isPaymentApplicable = $reservation->status === 'approved';
                             @endphp
-                            @if($paymentStatus === 'paid')
+                            @if(!$isPaymentApplicable)
+                                <span class="status-badge payment-na">Payment: N/A</span>
+                            @elseif($paymentStatus === 'paid')
                                 <span class="status-badge payment-paid">Payment: Paid</span>
                             @elseif($paymentStatus === 'under_review')
                                 <span class="status-badge payment-under_review">Payment: Under Review</span>
