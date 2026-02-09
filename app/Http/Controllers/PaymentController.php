@@ -80,6 +80,44 @@ class PaymentController extends Controller
         return redirect()->route('payments.show', $reservation)->with('success', 'Payment submitted for review.');
     }
 
+    public function due()
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $yesterday = now()->subDay()->toDateString();
+
+        $reservation = Reservation::query()
+            ->where('user_id', $userId)
+            ->where('status', 'approved')
+            ->where('payment_status', 'pending')
+            ->whereDate(DB::raw('COALESCE(end_date, event_date)'), '<=', $yesterday)
+            ->with(['items.menu', 'user'])
+            ->orderByRaw('COALESCE(end_date, event_date) desc')
+            ->first();
+
+        if (! $reservation) {
+            return response()->json(['reservation' => null]);
+        }
+
+        $amount = $this->calculateReservationTotal($reservation);
+
+        return response()->json([
+            'reservation' => [
+                'id' => $reservation->id,
+                'event_name' => $reservation->event_name,
+                'event_date' => optional($reservation->event_date)->format('M d, Y'),
+                'end_date' => optional($reservation->end_date)->format('M d, Y'),
+                'venue' => $reservation->venue,
+                'contact_person' => $reservation->contact_person ?? optional($reservation->user)->name,
+                'department' => $reservation->department ?? optional($reservation->user)->department,
+            ],
+            'total_amount' => $amount,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $status = $request->query('status');

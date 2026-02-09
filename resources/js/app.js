@@ -1,4 +1,7 @@
 import './bootstrap';
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
 
 // Register all Alpine data components when Alpine initializes
 document.addEventListener('alpine:init', () => {
@@ -92,7 +95,103 @@ document.addEventListener('alpine:init', () => {
                 })
                 .finally(() => {
                     this.loading = false;
+            });
+        }
+    }));
+
+    // Customer payment prompt modal
+    Alpine.data('paymentPrompt', (opts = {}) => ({
+        open: false,
+        loading: true,
+        reservation: null,
+        totalAmount: 0,
+        form: {
+            reference_number: opts.oldReference || '',
+            department_office: opts.oldDepartment || '',
+            payer_name: opts.oldPayer || ''
+        },
+        init() {
+            if (window.location.pathname.startsWith('/payments/')) {
+                this.loading = false;
+                return;
+            }
+            this.fetchDueReservation();
+        },
+        get actionUrl() {
+            return this.reservation ? `/payments/${this.reservation.id}` : '#';
+        },
+        get formattedAmount() {
+            const amount = Number(this.totalAmount || 0);
+            return 'PHP ' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        get reservationLabel() {
+            if (!this.reservation) return '';
+            const id = String(this.reservation.id || '').padStart(6, '0');
+            return `${this.reservation.event_name || 'Reservation'} (#${id})`;
+        },
+        get reservationPeriod() {
+            if (!this.reservation) return '';
+            const start = this.reservation.event_date || '';
+            const end = this.reservation.end_date || '';
+            if (start && end && start !== end) return `${start} - ${end}`;
+            return start || end || 'Date not set';
+        },
+        get reservationVenue() {
+            return this.reservation?.venue || 'Venue not specified';
+        },
+        get reservationContact() {
+            return this.reservation?.contact_person || 'Contact not specified';
+        },
+        dismiss() {
+            this.open = false;
+        },
+        submitPayment() {
+            if (!this.reservation || !this.reservation.id) {
+                return;
+            }
+            const form = this.$refs?.paymentForm;
+            if (!form) return;
+            const action = this.actionUrl;
+            if (!action || action === '#') return;
+            form.setAttribute('action', action);
+            form.submit();
+        },
+        async fetchDueReservation() {
+            this.loading = true;
+            try {
+                const res = await fetch('/customer/payment-due', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
                 });
+
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+
+                if (data && data.reservation) {
+                    this.reservation = data.reservation;
+                    this.totalAmount = data.total_amount || 0;
+                    if (!this.form.department_office) {
+                        this.form.department_office = data.reservation.department || '';
+                    }
+                    if (!this.form.payer_name) {
+                        this.form.payer_name = data.reservation.contact_person || '';
+                    }
+                    this.open = true;
+                } else {
+                    this.reservation = null;
+                    this.open = false;
+                }
+            } catch (error) {
+                console.error('Error loading payment prompt:', error);
+                this.reservation = null;
+                this.open = false;
+            } finally {
+                this.loading = false;
+            }
         }
     }));
 
@@ -475,3 +574,5 @@ document.addEventListener('alpine:init', () => {
       }
     }));
 });
+
+Alpine.start();

@@ -81,8 +81,8 @@ class PaymentTestSeeder extends Seeder
                 'event_name' => 'Payment Test - Under Review',
             ],
             [
-                'event_date' => Carbon::today()->addDays(3)->toDateString(),
-                'end_date' => Carbon::today()->addDays(3)->toDateString(),
+                'event_date' => Carbon::today()->subDays(5)->toDateString(),
+                'end_date' => Carbon::today()->subDays(4)->toDateString(),
                 'event_time' => '12:00',
                 'number_of_persons' => 25,
                 'status' => 'approved',

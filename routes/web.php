@@ -121,6 +121,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::post('/customer/notifications/mark-all-read', [CustomerNotificationController::class, 'markAllRead'])->name('customer.notifications.mark-all-read');
     Route::patch('/customer/notifications/{notification}/read', [CustomerNotificationController::class, 'setRead'])->name('customer.notifications.set-read');
 
+    Route::get('/customer/payment-due', [PaymentController::class, 'due'])->name('customer.payment-due');
     Route::get('/payments/{reservation}', [PaymentController::class, 'show'])->name('payments.show');
     Route::post('/payments/{reservation}', [PaymentController::class, 'store'])->name('payments.store');
 });
