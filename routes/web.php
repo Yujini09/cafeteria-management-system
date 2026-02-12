@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role:superadmin'])
     ->group(function () {
         Route::get   ('/users',             [SuperAdminController::class, 'index'])->name('users');
         Route::post  ('/users',             [SuperAdminController::class, 'store'])->name('users.store');
+        Route::post  ('/users/check-email', [SuperAdminController::class, 'checkEmailRealtime'])->name('users.check-email');
         Route::put   ('/users/{user}',      [SuperAdminController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}',      [SuperAdminController::class, 'destroy'])->name('users.destroy');
         Route::get   ('/users/{user}/audit',[SuperAdminController::class, 'audit'])->name('users.audit');

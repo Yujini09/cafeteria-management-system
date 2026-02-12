@@ -107,14 +107,10 @@
                                 <x-admin.ui.button.secondary type="button" class="!py-2 !px-3 text-xs" onclick="openEditModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}', '{{ addslashes(e($user->email)) }}')">
                                     <x-admin.ui.icon name="fa-pen" size="sm" /> Edit
                                 </x-admin.ui.button.secondary>
-                                <a href="{{ route('superadmin.users.audit', $user) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
-                                    <x-admin.ui.icon name="fa-file-lines" size="sm" /> Audit
-                                </a>
-                            @else
-                                <a href="{{ route('superadmin.users.audit', $user) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
-                                    <x-admin.ui.icon name="fa-file-lines" size="sm" /> Audit
-                                </a>
                             @endif
+                            <a href="{{ route('superadmin.users.audit', $user) }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-warning-light text-admin-warning border border-amber-200 hover:bg-amber-100 transition-colors duration-admin">
+                                <x-admin.ui.icon name="fa-file-lines" size="sm" /> Audit
+                            </a>
                             <form method="POST" action="{{ route('superadmin.users.destroy', $user) }}" class="inline" id="deleteForm{{ $user->id }}">
                                 @csrf @method('DELETE')
                                 <x-admin.ui.button.danger type="button" class="!py-2 !px-3 text-xs" onclick="openDeleteModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}')">
@@ -163,20 +159,84 @@
 @endif
 
 <x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
-    <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm" data-action-loading>
+    <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm" data-action-loading onsubmit="event.preventDefault(); openCreateAdminConfirm();">
         @csrf
         <input type="hidden" name="form_context" value="add_admin">
+        @php($showAddAdminInlineStatus = session('error') && old('form_context') === 'add_admin' && session('error_code') !== 'email_not_found')
         <div class="space-y-4">
-            <x-admin.forms.input name="name" label="Full Name" required />
-            <x-admin.forms.input name="email" label="Email Address" type="email" required />
+            <div
+                id="addAdminInlineStatus"
+                class="rounded-admin border border-admin-danger bg-admin-danger-light px-3 py-2 text-sm text-admin-danger @unless($showAddAdminInlineStatus) hidden @endunless"
+                role="alert"
+            >
+                @if($showAddAdminInlineStatus)
+                    {{ session('error') }}
+                @endif
+            </div>
+
+            <div class="space-y-1">
+                <label for="addAdminName" class="block text-sm font-medium text-admin-neutral-700">
+                    Full Name
+                    <span class="text-admin-danger">*</span>
+                </label>
+                <input
+                    type="text"
+                    name="name"
+                    id="addAdminName"
+                    value="{{ old('name') }}"
+                    required
+                    autocomplete="name"
+                    class="w-full rounded-admin border px-admin-input py-2.5 text-sm transition-colors duration-admin focus:outline-none focus:ring-2 {{ $errors->has('name') ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20' }}"
+                >
+                <p
+                    id="addAdminNameError"
+                    class="min-h-[1.25rem] text-sm {{ $errors->has('name') ? 'text-admin-danger' : 'text-admin-neutral-500' }}"
+                    role="alert"
+                >
+                    @error('name')
+                        {{ $message }}
+                    @else
+                        &nbsp;
+                    @enderror
+                </p>
+            </div>
+
+            <div class="space-y-1">
+                <label for="addAdminEmail" class="block text-sm font-medium text-admin-neutral-700">
+                    Email Address
+                    <span class="text-admin-danger">*</span>
+                </label>
+                <input
+                    type="email"
+                    name="email"
+                    id="addAdminEmail"
+                    value="{{ old('email') }}"
+                    required
+                    autocomplete="email"
+                    class="w-full rounded-admin border px-admin-input py-2.5 text-sm transition-colors duration-admin focus:outline-none focus:ring-2 {{ $errors->has('email') ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20' }}"
+                >
+                <p
+                    id="addAdminEmailError"
+                    class="min-h-[1.25rem] text-sm {{ $errors->has('email') ? 'text-admin-danger' : 'text-admin-neutral-500' }}"
+                    role="alert"
+                >
+                    @error('email')
+                        {{ $message }}
+                    @else
+                        &nbsp;
+                    @enderror
+                </p>
+                <p id="addAdminEmailRealtimeStatus" class="min-h-[1rem] text-xs text-admin-neutral-500">&nbsp;</p>
+            </div>
+
             <p class="text-sm text-admin-neutral-500">
                 A temporary password will be generated and sent to this email address.
             </p>
         </div>
     </form>
     <x-slot:footer>
-        <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" @click="$dispatch('open-admin-modal', 'createAdminConfirm')">Create Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.secondary type="button" id="addAdminCancelButton" @click="show = false">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" id="openCreateAdminConfirmButton" onclick="openCreateAdminConfirm()" disabled aria-disabled="true">Create Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -221,9 +281,19 @@
     <p class="text-admin-neutral-600 text-sm">
         Are you sure you want to create this admin user? A temporary password will be emailed and they will be required to change it after login.
     </p>
+    <div id="createAdminLoadingState" class="mt-4 hidden rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2">
+        <div class="flex items-center gap-2 text-sm text-admin-neutral-700">
+            <svg class="h-4 w-4 animate-spin text-admin-primary" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <span>Creating account &amp; sending email...</span>
+        </div>
+    </div>
+    <div id="createAdminStatus" class="mt-3 hidden rounded-admin border px-3 py-2 text-sm" role="alert"></div>
     <x-slot:footer>
-        <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'createAdminConfirm')">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" onclick="submitAddAdminForm(this)" data-loading-text="Creating Admin...">Create Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.secondary type="button" id="createAdminCancelButton" @click="$dispatch('close-admin-modal', 'createAdminConfirm')">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" id="createAdminConfirmButton" onclick="submitAddAdminForm(this)" data-loading-text="Creating account...">Create Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -324,6 +394,443 @@
 </x-admin.ui.modal>
 
 <script>
+var createAdminSubmitting = false;
+var addAdminFieldConfig = {
+    name: { inputId: 'addAdminName', errorId: 'addAdminNameError' },
+    email: { inputId: 'addAdminEmail', errorId: 'addAdminEmailError' },
+};
+var addAdminNeutralInputClasses = ['border-admin-neutral-300', 'focus:border-admin-primary', 'focus:ring-admin-primary/20'];
+var addAdminInvalidInputClasses = ['border-red-500', 'focus:border-red-500', 'focus:ring-red-500/20'];
+var addAdminEmailRealtimeState = {
+    timer: null,
+    requestId: 0,
+    checking: false,
+    checkedValue: '',
+    verified: false,
+    errorCode: '',
+    message: '',
+};
+
+function normalizeAddAdminEmail(value) {
+    return (value || '').toString().trim().toLowerCase();
+}
+
+function syncCreateAdminTriggerState() {
+    const triggerButton = document.getElementById('openCreateAdminConfirmButton');
+    if (!triggerButton) return;
+
+    const emailInput = document.getElementById('addAdminEmail');
+    const currentEmail = normalizeAddAdminEmail(emailInput ? emailInput.value : '');
+    const isEmailVerified = Boolean(
+        addAdminEmailRealtimeState.verified
+        && currentEmail.length
+        && addAdminEmailRealtimeState.checkedValue === currentEmail
+    );
+    const shouldDisable = createAdminSubmitting || !isEmailVerified;
+
+    triggerButton.disabled = shouldDisable;
+    if (shouldDisable) {
+        triggerButton.setAttribute('aria-disabled', 'true');
+    } else {
+        triggerButton.removeAttribute('aria-disabled');
+    }
+}
+
+function setAddAdminEmailRealtimeStatus(message, tone = 'neutral') {
+    const statusEl = document.getElementById('addAdminEmailRealtimeStatus');
+    if (!statusEl) return;
+
+    statusEl.classList.remove('text-admin-neutral-500', 'text-admin-primary', 'text-admin-danger', 'text-admin-warning');
+
+    if (!message) {
+        statusEl.textContent = '\u00A0';
+        statusEl.classList.add('text-admin-neutral-500');
+        return;
+    }
+
+    if (tone === 'success') {
+        statusEl.classList.add('text-admin-primary');
+    } else if (tone === 'warning') {
+        statusEl.classList.add('text-admin-warning');
+    } else if (tone === 'error') {
+        statusEl.classList.add('text-admin-danger');
+    } else {
+        statusEl.classList.add('text-admin-neutral-500');
+    }
+
+    statusEl.textContent = message;
+}
+
+function resetAddAdminEmailRealtimeState(clearStatus = true) {
+    if (addAdminEmailRealtimeState.timer) {
+        clearTimeout(addAdminEmailRealtimeState.timer);
+    }
+    addAdminEmailRealtimeState.timer = null;
+    addAdminEmailRealtimeState.requestId += 1;
+    addAdminEmailRealtimeState.checking = false;
+    addAdminEmailRealtimeState.checkedValue = '';
+    addAdminEmailRealtimeState.verified = false;
+    addAdminEmailRealtimeState.errorCode = '';
+    addAdminEmailRealtimeState.message = '';
+
+    if (clearStatus) {
+        setAddAdminEmailRealtimeStatus('');
+    }
+
+    syncCreateAdminTriggerState();
+}
+
+async function ensureAddAdminEmailRealtimeCheck(force = false) {
+    const form = document.getElementById('addAdminForm');
+    const emailInput = document.getElementById('addAdminEmail');
+    const csrfToken = form ? form.querySelector('input[name="_token"]')?.value : '';
+    const email = normalizeAddAdminEmail(emailInput ? emailInput.value : '');
+
+    if (!emailInput) {
+        return { ok: true, errorCode: '', message: '' };
+    }
+
+    if (!email.length) {
+        addAdminEmailRealtimeState.verified = false;
+        addAdminEmailRealtimeState.errorCode = 'email_required';
+        addAdminEmailRealtimeState.message = 'Please enter an email address.';
+        setAddAdminEmailRealtimeStatus('');
+        syncCreateAdminTriggerState();
+        return { ok: false, errorCode: addAdminEmailRealtimeState.errorCode, message: addAdminEmailRealtimeState.message };
+    }
+
+    if (!force && addAdminEmailRealtimeState.checkedValue === email && addAdminEmailRealtimeState.verified) {
+        syncCreateAdminTriggerState();
+        return { ok: true, errorCode: '', message: '' };
+    }
+
+    const requestId = addAdminEmailRealtimeState.requestId + 1;
+    addAdminEmailRealtimeState.requestId = requestId;
+    addAdminEmailRealtimeState.checking = true;
+    setAddAdminEmailRealtimeStatus('Checking email account...');
+
+    const payload = new FormData();
+    payload.append('_token', csrfToken || '');
+    payload.append('email', email);
+
+    try {
+        const response = await fetch('{{ route('superadmin.users.check-email') }}', {
+            method: 'POST',
+            body: payload,
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        let data = {};
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            data = {};
+        }
+
+        if (requestId !== addAdminEmailRealtimeState.requestId) {
+            return { ok: false, errorCode: 'stale', message: '' };
+        }
+
+        if (response.ok) {
+            addAdminEmailRealtimeState.checkedValue = email;
+            addAdminEmailRealtimeState.verified = true;
+            addAdminEmailRealtimeState.errorCode = '';
+            addAdminEmailRealtimeState.message = '';
+            resetAddAdminFieldError('email');
+            setAddAdminEmailRealtimeStatus('Email account verified.', 'success');
+            return { ok: true, errorCode: '', message: '' };
+        }
+
+        const responseErrorCode = (data && typeof data.error_code === 'string') ? data.error_code : '';
+        const validationMessage = data && data.errors && Array.isArray(data.errors.email) && data.errors.email.length
+            ? data.errors.email[0]
+            : null;
+        const errorMessage = validationMessage
+            || (data && typeof data.message === 'string' && data.message.trim().length ? data.message.trim() : 'Could not verify this email address in real time.');
+
+        addAdminEmailRealtimeState.checkedValue = email;
+        addAdminEmailRealtimeState.verified = false;
+        addAdminEmailRealtimeState.errorCode = responseErrorCode || 'email_check_failed';
+        addAdminEmailRealtimeState.message = errorMessage;
+
+        setAddAdminFieldError('email', errorMessage);
+
+        return {
+            ok: false,
+            errorCode: addAdminEmailRealtimeState.errorCode,
+            message: addAdminEmailRealtimeState.message,
+        };
+    } catch (error) {
+        if (requestId !== addAdminEmailRealtimeState.requestId) {
+            return { ok: false, errorCode: 'stale', message: '' };
+        }
+
+        addAdminEmailRealtimeState.checkedValue = email;
+        addAdminEmailRealtimeState.verified = false;
+        addAdminEmailRealtimeState.errorCode = 'email_check_unavailable';
+        addAdminEmailRealtimeState.message = 'Could not verify this email account in real time. Please try again.';
+
+        setAddAdminFieldError('email', addAdminEmailRealtimeState.message);
+
+        return {
+            ok: false,
+            errorCode: addAdminEmailRealtimeState.errorCode,
+            message: addAdminEmailRealtimeState.message,
+        };
+    } finally {
+        if (requestId === addAdminEmailRealtimeState.requestId) {
+            addAdminEmailRealtimeState.checking = false;
+        }
+        syncCreateAdminTriggerState();
+    }
+}
+
+function bindAddAdminEmailRealtimeValidation() {
+    const emailInput = document.getElementById('addAdminEmail');
+    if (!emailInput || emailInput.dataset.realtimeBound === 'true') return;
+
+    emailInput.addEventListener('input', () => {
+        const currentEmail = normalizeAddAdminEmail(emailInput.value);
+        setAddAdminInlineStatus('');
+        setCreateAdminStatus('');
+
+        if (addAdminEmailRealtimeState.timer) {
+            clearTimeout(addAdminEmailRealtimeState.timer);
+            addAdminEmailRealtimeState.timer = null;
+        }
+
+        addAdminEmailRealtimeState.verified = false;
+        addAdminEmailRealtimeState.errorCode = '';
+        addAdminEmailRealtimeState.message = '';
+        syncCreateAdminTriggerState();
+
+        if (!currentEmail.length) {
+            resetAddAdminFieldError('email');
+            setAddAdminEmailRealtimeStatus('');
+            addAdminEmailRealtimeState.checkedValue = '';
+            syncCreateAdminTriggerState();
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentEmail)) {
+            resetAddAdminFieldError('email');
+            setAddAdminEmailRealtimeStatus('Enter a complete email address to verify.');
+            addAdminEmailRealtimeState.checkedValue = '';
+            syncCreateAdminTriggerState();
+            return;
+        }
+
+        setAddAdminEmailRealtimeStatus('Checking email account in real time...');
+        addAdminEmailRealtimeState.timer = setTimeout(() => {
+            ensureAddAdminEmailRealtimeCheck(false);
+        }, 500);
+    });
+
+    emailInput.addEventListener('blur', () => {
+        const currentEmail = normalizeAddAdminEmail(emailInput.value);
+        if (!currentEmail.length) {
+            return;
+        }
+        ensureAddAdminEmailRealtimeCheck(true);
+    });
+
+    emailInput.dataset.realtimeBound = 'true';
+}
+
+function lockCreateAdminModals(locked) {
+    const isLocked = Boolean(locked);
+    ['addAdmin', 'createAdminConfirm'].forEach((name) => {
+        window.dispatchEvent(new CustomEvent('admin-modal-lock', {
+            detail: { name, locked: isLocked },
+        }));
+    });
+}
+
+function setCreateAdminControlsDisabled(disabled) {
+    [
+        document.getElementById('openCreateAdminConfirmButton'),
+        document.getElementById('addAdminCancelButton'),
+        document.getElementById('createAdminCancelButton'),
+    ].forEach((button) => {
+        if (!button) return;
+        button.disabled = Boolean(disabled);
+        if (button.disabled) {
+            button.setAttribute('aria-disabled', 'true');
+        } else {
+            button.removeAttribute('aria-disabled');
+        }
+    });
+}
+
+function setCreateAdminLoadingState(visible) {
+    const loadingState = document.getElementById('createAdminLoadingState');
+    if (!loadingState) return;
+    loadingState.classList.toggle('hidden', !visible);
+}
+
+function setCreateAdminStatus(message, type = 'error') {
+    const statusEl = document.getElementById('createAdminStatus');
+    if (!statusEl) return;
+
+    const variantClassList = [
+        'border-admin-danger',
+        'bg-admin-danger-light',
+        'text-admin-danger',
+        'border-admin-warning',
+        'bg-admin-warning-light',
+        'text-admin-warning',
+        'border-admin-primary',
+        'bg-admin-primary-light',
+        'text-admin-primary',
+    ];
+    statusEl.classList.remove(...variantClassList);
+
+    if (!message) {
+        statusEl.textContent = '';
+        statusEl.classList.add('hidden');
+        return;
+    }
+
+    const variant = type === 'warning' ? ['border-admin-warning', 'bg-admin-warning-light', 'text-admin-warning'] : (type === 'info'
+        ? ['border-admin-primary', 'bg-admin-primary-light', 'text-admin-primary']
+        : ['border-admin-danger', 'bg-admin-danger-light', 'text-admin-danger']);
+
+    statusEl.classList.remove('hidden');
+    statusEl.classList.add(...variant);
+    statusEl.textContent = message;
+}
+
+function setAddAdminInlineStatus(message = '') {
+    const inlineStatus = document.getElementById('addAdminInlineStatus');
+    if (!inlineStatus) return;
+    if (!message) {
+        inlineStatus.textContent = '';
+        inlineStatus.classList.add('hidden');
+        return;
+    }
+    inlineStatus.textContent = message;
+    inlineStatus.classList.remove('hidden');
+}
+
+function resetAddAdminFieldError(fieldName) {
+    const field = addAdminFieldConfig[fieldName];
+    if (!field) return;
+
+    const input = document.getElementById(field.inputId);
+    const errorEl = document.getElementById(field.errorId);
+
+    if (input) {
+        input.classList.remove(...addAdminInvalidInputClasses);
+        input.classList.add(...addAdminNeutralInputClasses);
+        input.removeAttribute('aria-invalid');
+    }
+
+    if (errorEl) {
+        errorEl.textContent = '\u00A0';
+        errorEl.classList.remove('text-admin-danger');
+        errorEl.classList.add('text-admin-neutral-500');
+    }
+}
+
+function setAddAdminFieldError(fieldName, message) {
+    const field = addAdminFieldConfig[fieldName];
+    if (!field) return;
+
+    const input = document.getElementById(field.inputId);
+    const errorEl = document.getElementById(field.errorId);
+    const errorMessage = typeof message === 'string' && message.trim().length
+        ? message.trim()
+        : 'Please review this field.';
+
+    if (input) {
+        input.classList.remove(...addAdminNeutralInputClasses);
+        input.classList.add(...addAdminInvalidInputClasses);
+        input.setAttribute('aria-invalid', 'true');
+    }
+
+    if (errorEl) {
+        errorEl.textContent = errorMessage;
+        errorEl.classList.remove('text-admin-neutral-500');
+        errorEl.classList.add('text-admin-danger');
+    }
+
+    if (fieldName === 'email') {
+        addAdminEmailRealtimeState.verified = false;
+        setAddAdminEmailRealtimeStatus('');
+        syncCreateAdminTriggerState();
+    }
+}
+
+function clearAddAdminFieldErrors() {
+    Object.keys(addAdminFieldConfig).forEach((fieldName) => resetAddAdminFieldError(fieldName));
+}
+
+function applyAddAdminValidationErrors(errors = {}) {
+    const errorEntries = Object.entries(errors || {});
+    let firstInvalidInput = null;
+
+    errorEntries.forEach(([fieldName, messages]) => {
+        if (!addAdminFieldConfig[fieldName]) return;
+        const firstMessage = Array.isArray(messages) && messages.length ? messages[0] : null;
+        setAddAdminFieldError(fieldName, firstMessage);
+
+        if (!firstInvalidInput) {
+            const inputId = addAdminFieldConfig[fieldName].inputId;
+            firstInvalidInput = document.getElementById(inputId);
+        }
+    });
+
+    if (firstInvalidInput && typeof firstInvalidInput.focus === 'function') {
+        firstInvalidInput.focus();
+    }
+}
+
+function setCreateAdminSubmittingState(submitting, triggerButton = null) {
+    createAdminSubmitting = Boolean(submitting);
+    lockCreateAdminModals(createAdminSubmitting);
+    setCreateAdminControlsDisabled(createAdminSubmitting);
+    setCreateAdminLoadingState(createAdminSubmitting);
+    syncCreateAdminTriggerState();
+
+    const confirmButton = triggerButton || document.getElementById('createAdminConfirmButton');
+    if (!confirmButton || !window.cmsActionButtons) return;
+
+    if (createAdminSubmitting) {
+        window.cmsActionButtons.start(confirmButton, confirmButton.dataset.loadingText || 'Creating account...');
+        return;
+    }
+
+    window.cmsActionButtons.stop(confirmButton);
+}
+
+async function openCreateAdminConfirm() {
+    const form = document.getElementById('addAdminForm');
+    if (!form || createAdminSubmitting) return;
+
+    setAddAdminInlineStatus('');
+    clearAddAdminFieldErrors();
+    setCreateAdminStatus('');
+    setCreateAdminLoadingState(false);
+
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+        return;
+    }
+
+    const realtimeCheck = await ensureAddAdminEmailRealtimeCheck(true);
+    if (!realtimeCheck.ok) {
+        if (realtimeCheck.message) {
+            setCreateAdminStatus(realtimeCheck.message);
+        }
+        return;
+    }
+
+    window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'createAdminConfirm' }));
+}
+
 // Open modals via dispatch so unified admin modal component handles overlay, ESC, scroll lock.
 function openEditModal(id, name, email) {
     document.getElementById('editName').value = name;
@@ -336,25 +843,109 @@ function openEditModal(id, name, email) {
     window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
 }
 
-function submitAddAdminForm(triggerButton = null) {
+async function submitAddAdminForm(triggerButton = null) {
     const form = document.getElementById('addAdminForm');
-    if (!form) return;
+    if (!form || createAdminSubmitting) return;
 
     if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
         return;
     }
 
-    if (triggerButton && window.cmsActionButtons) {
-        const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Creating Admin...');
-        if (!started) return;
+    const realtimeCheck = await ensureAddAdminEmailRealtimeCheck(true);
+    if (!realtimeCheck.ok) {
+        if (realtimeCheck.message) {
+            setCreateAdminStatus(realtimeCheck.message);
+        }
+        return;
     }
 
-    window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'createAdminConfirm' }));
+    setAddAdminInlineStatus('');
+    clearAddAdminFieldErrors();
+    setCreateAdminStatus('');
+    setCreateAdminSubmittingState(true, triggerButton);
 
-    if (typeof form.requestSubmit === 'function') {
-        form.requestSubmit();
-    } else {
-        form.submit();
+    let shouldReopenAddAdmin = false;
+    let redirectUrl = null;
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        let payload = {};
+        try {
+            payload = await response.json();
+        } catch (jsonError) {
+            payload = {};
+        }
+
+        const errorCode = (payload && typeof payload.error_code === 'string')
+            ? payload.error_code
+            : '';
+
+        if (errorCode === 'email_not_found') {
+            const emailNotFoundMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
+                ? payload.message.trim()
+                : 'Email address/account could not be found. Please verify the email address and try again.';
+            setAddAdminFieldError('email', emailNotFoundMessage);
+            window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'createAdminConfirm' }));
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'addAdmin' }));
+            return;
+        }
+
+        if (errorCode === 'email_check_unavailable') {
+            const unavailableMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
+                ? payload.message.trim()
+                : 'Could not verify this email account in real time. Please try again.';
+            setCreateAdminStatus(unavailableMessage);
+            setAddAdminInlineStatus(unavailableMessage);
+            return;
+        }
+
+        if (response.status === 422) {
+            applyAddAdminValidationErrors(payload.errors || {});
+            setCreateAdminStatus('Please review the highlighted fields and try again.');
+            shouldReopenAddAdmin = true;
+            return;
+        }
+
+        if (!response.ok) {
+            const errorMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
+                ? payload.message.trim()
+                : 'Email failed to send. Please try again.';
+            setCreateAdminStatus(errorMessage);
+            setAddAdminInlineStatus(errorMessage);
+            return;
+        }
+
+        redirectUrl = (payload && typeof payload.redirect_url === 'string' && payload.redirect_url.trim().length)
+            ? payload.redirect_url
+            : '{{ route('superadmin.users') }}';
+    } catch (error) {
+        console.error('Error creating admin:', error);
+        const networkMessage = 'Unable to reach the server. Please try again.';
+        setCreateAdminStatus(networkMessage);
+        setAddAdminInlineStatus(networkMessage);
+    } finally {
+        setCreateAdminSubmittingState(false, triggerButton);
+    }
+
+    if (shouldReopenAddAdmin) {
+        window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'createAdminConfirm' }));
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'addAdmin' }));
+        return;
+    }
+
+    if (redirectUrl) {
+        window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'createAdminConfirm' }));
+        window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'addAdmin' }));
+        window.location.href = redirectUrl;
     }
 }
 
@@ -536,15 +1127,11 @@ function getActionBadgeClass(action) {
     return 'bg-admin-neutral-100 text-admin-neutral-700 border-admin-neutral-200';
 }
 
-function updateActivitiesCounters(total, visible) {
+function updateActivitiesCounters(total) {
     const totalEl = document.getElementById('activitiesTotalCount');
-    const visibleEl = document.getElementById('activitiesVisibleCount');
 
     if (totalEl) {
         totalEl.textContent = String(total);
-    }
-    if (visibleEl) {
-        visibleEl.textContent = String(visible);
     }
 }
 
@@ -874,7 +1461,7 @@ function applyActivitiesFilters(resetPage = false) {
     }
 
     renderActivitiesTable(filteredAudits);
-    updateActivitiesCounters(allAudits.length, filteredAudits.length);
+    updateActivitiesCounters(allAudits.length);
 
     if (clearButton) {
         clearButton.classList.toggle('hidden', !query.length);
@@ -888,7 +1475,7 @@ async function openRecentActivitiesModal() {
 
 async function loadActivities() {
     setActivitiesLoadingState();
-    updateActivitiesCounters(0, 0);
+    updateActivitiesCounters(0);
     filteredAudits = [];
     currentActivitiesPage = 1;
 
@@ -904,7 +1491,7 @@ async function loadActivities() {
         updateActivitiesSortIndicators();
     } catch (error) {
         setActivitiesErrorState();
-        updateActivitiesCounters(0, 0);
+        updateActivitiesCounters(0);
         console.error('Error fetching audits:', error);
     }
 }
@@ -975,6 +1562,14 @@ function sortBy(column) {
     applyActivitiesFilters();
 }
 function initUsersPage() {
+    setCreateAdminSubmittingState(false);
+    setCreateAdminStatus('');
+    setCreateAdminLoadingState(false);
+    resetAddAdminEmailRealtimeState(false);
+    bindAddAdminEmailRealtimeValidation();
+    setAddAdminEmailRealtimeStatus('');
+    syncCreateAdminTriggerState();
+
     const hasSuccess = @json((bool) session('success'));
     if (hasSuccess) {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));

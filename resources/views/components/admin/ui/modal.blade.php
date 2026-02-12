@@ -38,11 +38,12 @@ $iconColor = match($variant) {
 @endphp
 <template x-teleport="body">
 <div
-    x-data="{ show: false }"
+    x-data="{ show: false, locked: false }"
     x-init="
         $watch('show', v => {
             if (v) document.body.classList.add('overflow-hidden');
             else document.body.classList.remove('overflow-hidden');
+            if (!v) locked = false;
             window.dispatchEvent(
                 new CustomEvent('admin-modal-visibility', {
                     detail: { name: '{{ $name }}', open: v }
@@ -50,9 +51,10 @@ $iconColor = match($variant) {
             );
         });
     "
-    @keydown.escape.window="if (show) show = false"
+    @keydown.escape.window="if (show && !locked) show = false"
+    x-on:admin-modal-lock.window="if ($event.detail && $event.detail.name === '{{ $name }}') locked = Boolean($event.detail.locked)"
     x-on:open-admin-modal.window="if ($event.detail === '{{ $name }}') show = true"
-    x-on:close-admin-modal.window="if ($event.detail === '{{ $name }}') show = false"
+    x-on:close-admin-modal.window="if ($event.detail === '{{ $name }}' && !locked) show = false"
     x-show="show"
     x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -67,7 +69,7 @@ $iconColor = match($variant) {
         x-transition:leave="ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        @click="show = false"
+        @click="if (!locked) show = false"
         class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"
         aria-hidden="true"
     ></div>
