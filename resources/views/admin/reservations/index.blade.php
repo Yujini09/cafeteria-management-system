@@ -4,12 +4,12 @@
 @section('content')
 <style>
 .modern-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--neutral-200);
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     position: relative;
 }
 
@@ -19,8 +19,8 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
 }
 
 /* Right-aligned columns */

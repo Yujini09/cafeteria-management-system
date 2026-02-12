@@ -94,6 +94,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::post ('/reservations/{reservation}/check-inventory', [ReservationController::class,'checkInventory'])->name('reservations.check-inventory');
         Route::patch('/reservations/{reservation}/approve', [ReservationController::class,'approve'])->name('reservations.approve');
         Route::patch('/reservations/{reservation}/decline', [ReservationController::class,'decline'])->name('reservations.decline');
+        Route::post('/reservations/{reservation}/additionals', [ReservationController::class, 'storeAdditional'])->name('reservations.additionals.store');
+        Route::patch('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'updateAdditional'])->name('reservations.additionals.update');
+        Route::delete('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'deleteAdditional'])->name('reservations.additionals.destroy');
 
         // Payments
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');

@@ -163,16 +163,18 @@
 <x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
     <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm">
         @csrf
+        <input type="hidden" name="form_context" value="add_admin">
         <div class="space-y-4">
             <x-admin.forms.input name="name" label="Full Name" required />
             <x-admin.forms.input name="email" label="Email Address" type="email" required />
-            <x-admin.forms.password name="password" label="Password" :showRequirements="true" required />
-            <x-admin.forms.password name="password_confirmation" label="Confirm Password" required />
+            <p class="text-sm text-admin-neutral-500">
+                A temporary password will be generated and sent to this email address.
+            </p>
         </div>
     </form>
     <x-slot:footer>
         <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" @click="$dispatch('close-admin-modal', 'addAdmin'); $dispatch('open-admin-modal', 'createAdminConfirm')">Create Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.primary type="button" @click="$dispatch('open-admin-modal', 'createAdminConfirm')">Create Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -180,6 +182,8 @@
     <form id="editUserForm" method="POST">
         @csrf
         @method('PUT')
+        <input type="hidden" name="form_context" value="edit_admin">
+        <input type="hidden" name="edit_user_id" id="editUserId" value="{{ old('edit_user_id') }}">
         <div class="space-y-4">
             <x-admin.forms.input name="name" id="editName" label="Full Name" required />
             <x-admin.forms.input name="email" id="editEmail" label="Email Address" type="email" required />
@@ -187,7 +191,7 @@
     </form>
     <x-slot:footer>
         <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" @click="$dispatch('close-admin-modal', 'editUser'); $dispatch('open-admin-modal', 'updateAdminConfirm')">Update Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.primary type="button" @click="$dispatch('open-admin-modal', 'updateAdminConfirm')">Update Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -203,18 +207,20 @@
 </x-admin.ui.modal>
 
 <x-admin.ui.modal name="createAdminConfirm" title="Create New Admin" variant="confirmation" maxWidth="md">
-    <p class="text-admin-neutral-600 text-sm">Are you sure you want to create this admin user? They will have administrative privileges.</p>
+    <p class="text-admin-neutral-600 text-sm">
+        Are you sure you want to create this admin user? A temporary password will be emailed and they will be required to change it after login.
+    </p>
     <x-slot:footer>
-        <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'createAdminConfirm'); $dispatch('open-admin-modal', 'addAdmin')">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" onclick="document.getElementById('addAdminForm').submit()">Create Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'createAdminConfirm')">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" onclick="submitAddAdminForm()">Create Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
 <x-admin.ui.modal name="updateAdminConfirm" title="Update Admin" variant="confirmation" maxWidth="md">
     <p class="text-admin-neutral-600 text-sm">Are you sure you want to save the changes to this admin user?</p>
     <x-slot:footer>
-        <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" onclick="document.getElementById('editUserForm').submit()">Update Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'updateAdminConfirm')">Cancel</x-admin.ui.button.secondary>
+        <x-admin.ui.button.primary type="button" onclick="submitEditUserForm()">Update Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -245,8 +251,38 @@
 function openEditModal(id, name, email) {
     document.getElementById('editName').value = name;
     document.getElementById('editEmail').value = email;
+    const editUserIdInput = document.getElementById('editUserId');
+    if (editUserIdInput) {
+        editUserIdInput.value = id;
+    }
     document.getElementById('editUserForm').action = `{{ url('superadmin/users') }}/${id}`;
     window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
+}
+
+function submitAddAdminForm() {
+    const form = document.getElementById('addAdminForm');
+    if (!form) return;
+
+    window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'createAdminConfirm' }));
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
+}
+
+function submitEditUserForm() {
+    const form = document.getElementById('editUserForm');
+    if (!form) return;
+
+    window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'updateAdminConfirm' }));
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
 }
 
 var deleteUserId = null;
@@ -426,15 +462,31 @@ function sortBy(column) {
     }
     renderTable();
 }
-document.addEventListener('livewire:navigated', () => {
+function initUsersPage() {
     const hasSuccess = @json((bool) session('success'));
     if (hasSuccess) {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));
     }
 
+    const openAddAdmin = @json(old('form_context') === 'add_admin');
+    if (openAddAdmin) {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'addAdmin' }));
+    }
+
+    const openEditAdmin = @json(old('form_context') === 'edit_admin');
+    const editUserId = @json(old('edit_user_id'));
+    if (openEditAdmin && editUserId) {
+        const editForm = document.getElementById('editUserForm');
+        if (editForm) {
+            editForm.action = `{{ url('superadmin/users') }}/${editUserId}`;
+        }
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
+    }
+
     const roleFilter = document.getElementById('roleFilter');
-    if (roleFilter) {
+    if (roleFilter && !roleFilter.dataset.bound) {
         roleFilter.addEventListener('change', applyUserFilters);
+        roleFilter.dataset.bound = 'true';
     }
 
     if (typeof window.filterTable === 'function') {
@@ -450,6 +502,9 @@ document.addEventListener('livewire:navigated', () => {
     updateNameSortIcon();
     sortUserRows();
     applyUserFilters();
-});
+}
+
+document.addEventListener('DOMContentLoaded', initUsersPage);
+document.addEventListener('livewire:navigated', initUsersPage);
 </script>
 @endsection

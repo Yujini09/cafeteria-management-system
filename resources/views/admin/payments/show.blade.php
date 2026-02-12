@@ -15,12 +15,12 @@
 @section('content')
 <style>
 .modern-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--neutral-200);
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     position: relative;
 }
 
@@ -100,6 +100,58 @@
     color: #991b1b;
 }
 
+.receipt-preview {
+    border: 1px solid var(--neutral-200);
+    border-radius: 14px;
+    background: var(--neutral-50);
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.receipt-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 460px;
+    object-fit: contain;
+    background: #ffffff;
+}
+
+.receipt-preview-body {
+    padding: 1rem;
+}
+
+.receipt-preview-meta {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--neutral-500);
+}
+
+.receipt-preview-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--neutral-200);
+    background: #ffffff;
+}
+
+.receipt-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(0, 70, 46, 0.1);
+    color: var(--primary);
+}
+
 .icon-sm { width: 14px; height: 14px; }
 .icon-md { width: 16px; height: 16px; }
 .icon-lg { width: 20px; height: 20px; }
@@ -120,7 +172,7 @@
     };
 @endphp
 
-<div class="modern-card p-6 mx-auto max-w-full"
+<div class="admin-page-shell modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
      x-data="{ approvedOpen: @js($showPaymentApproved), rejectedOpen: @js($showPaymentRejected) }"
      x-effect="document.body.classList.toggle('overflow-hidden', approvedOpen || rejectedOpen)"
      @keydown.escape.window="approvedOpen = false; rejectedOpen = false">
@@ -184,7 +236,7 @@
                             @if($payment->receipt_path)
                                 <a href="{{ \Illuminate\Support\Facades\Storage::url($payment->receipt_path) }}"
                                    target="_blank"
-                                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</a>
+                                   class="text-admin-primary hover:text-admin-primary-hover text-sm font-medium">View</a>
                             @else
                                 —
                             @endif
@@ -232,6 +284,59 @@
         </div>
 
         <div class="space-y-6">
+            @php
+                $receiptPath = $payment->receipt_path;
+                $receiptUrl = $receiptPath ? \Illuminate\Support\Facades\Storage::url($receiptPath) : null;
+                $receiptExt = $receiptPath ? strtolower(pathinfo($receiptPath, PATHINFO_EXTENSION)) : '';
+                $receiptIsImage = in_array($receiptExt, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true);
+                $receiptIsPdf = $receiptExt === 'pdf';
+            @endphp
+
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h2 class="info-card-title">Receipt Preview</h2>
+                </div>
+
+                @if($receiptUrl)
+                    <div class="receipt-preview">
+                        @if($receiptIsImage)
+                            <a href="{{ $receiptUrl }}" target="_blank" rel="noopener">
+                                <img src="{{ $receiptUrl }}" alt="Payment receipt preview">
+                            </a>
+                        @elseif($receiptIsPdf)
+                            <div class="receipt-preview-body">
+                                <div class="receipt-preview-meta">PDF Receipt</div>
+                                <p class="text-sm text-gray-700 mt-2">
+                                    PDF receipts can’t be previewed inline. Use the button below to open it.
+                                </p>
+                            </div>
+                        @else
+                            <div class="receipt-preview-body">
+                                <div class="receipt-preview-meta">Receipt File</div>
+                                <p class="text-sm text-gray-700 mt-2">
+                                    File type not supported for preview. Use the button below to open it.
+                                </p>
+                            </div>
+                        @endif
+
+                        <div class="receipt-preview-actions">
+                            <span class="receipt-pill">
+                                {{ strtoupper($receiptExt ?: 'FILE') }}
+                            </span>
+                            <a href="{{ $receiptUrl }}" target="_blank" rel="noopener"
+                               class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold">
+                                Open Receipt
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-sm text-gray-600">No receipt uploaded for this payment.</p>
+                @endif
+            </div>
+
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

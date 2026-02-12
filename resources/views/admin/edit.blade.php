@@ -18,6 +18,12 @@
         </div>
     </div>
 
+    @if($user->must_change_password)
+        <div class="mb-4 rounded-admin border border-amber-200 bg-admin-warning-light px-4 py-3 text-sm text-admin-warning">
+            Your account requires a password change. Please update your password to continue using the system.
+        </div>
+    @endif
+
     {{-- Success modals: use unified admin modal styles for consistency --}}
     <x-success-modal name="password-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">Password successfully changed.</p>
@@ -128,6 +134,15 @@
 </script>
 @endif
 @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
+<script>
+    document.addEventListener('livewire:navigated', function () {
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
+        });
+    });
+</script>
+@endif
+@if($user->must_change_password)
 <script>
     document.addEventListener('livewire:navigated', function () {
         requestAnimationFrame(() => {

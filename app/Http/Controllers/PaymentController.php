@@ -238,6 +238,8 @@ class PaymentController extends Controller
 
     private function calculateReservationTotal(Reservation $reservation): float
     {
+        $reservation->loadMissing(['items.menu', 'additionals']);
+
         $total = 0;
         foreach ($reservation->items as $item) {
             $menu = $item->menu;
@@ -253,6 +255,8 @@ class PaymentController extends Controller
             $total += ($item->quantity ?? 0) * $price;
         }
 
-        return (float) $total;
+        $additionalsTotal = $reservation->additionals->sum('price');
+
+        return (float) ($total + $additionalsTotal);
     }
 }

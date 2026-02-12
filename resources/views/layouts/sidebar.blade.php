@@ -20,59 +20,29 @@
     }
     
     .sidebar-gradient {
-        background: linear-gradient(#1F2937 100%);
+        background: linear-gradient(180deg, #0f3b2a 0%, #0b2a20 55%, #081f18 100%);
     }
     
     .active-menu-item {
-        background-color: #f5f5f5;
-        color: #FB3E05;
-        border-top-left-radius: 50px;
-        border-bottom-left-radius: 50px;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        margin-right: 0px;
-        margin-left: 10px;
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        border-radius: 12px;
+        margin: 0.25rem 0.75rem;
         position: relative;
         z-index: 10;
-    }
-    
-    .active-menu-item::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        right: 0;
-        width: 20px;
-        height: 20px;
-        background: transparent;
-        border-bottom-right-radius: 20px;
-        box-shadow: 8px 8px 0 8px #f5f5f5;
-    }
-    
-    .active-menu-item::after {
-        content: '';
-        position: absolute;
-        bottom: -20px;
-        right: 0;
-        width: 20px;
-        height: 20px;
-        background: transparent;
-        border-top-right-radius: 20px;
-        box-shadow: 8px -8px 0 8px #f5f5f5;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
     }
     
     .menu-item {
-        margin-bottom: 0.125rem;
-        border-radius: 0px;
-        border-top-right-radius: 0%;
-        border-bottom-right-radius: 0%;
+        margin: 0.25rem 0.75rem;
+        border-radius: 12px;
         font-size: 0.95rem;
         position: relative;
     }
     
     .menu-item:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.12);
         color: #ffffff;
-        padding-left: 2.75rem;
     }
     
     .menu-item:hover i {
@@ -80,10 +50,9 @@
     }
     
     .active-menu-item:hover {
-        background: #f5f5f5 !important;
-        color: #FB3E05 !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
         transform: none;
-        padding-left: 2.5rem;
     }
     
     .active-menu-item:hover i {
@@ -166,55 +135,51 @@
     @media (max-width: 768px) {
         .active-menu-item {
             border-radius: 12px !important;
-            margin-left: 1rem !important;
-            margin-right: 1rem !important;
-        }
-        .active-menu-item::before,
-        .active-menu-item::after {
-            display: none !important;
+            margin-left: 0.75rem !important;
+            margin-right: 0.75rem !important;
         }
         .menu-item {
-            margin-left: 1rem;
-            margin-right: 0rem;
+            margin-left: 0.75rem;
+            margin-right: 0.75rem;
             font-size: 0.85rem;
             border-radius: 12px;
         }
-        .menu-item:hover { margin-left: 1rem; }
+        .menu-item:hover { margin-left: 0.75rem; }
         .active-menu-item:hover {
-            margin-left: 1rem !important;
-            margin-right: 1rem !important;
+            margin-left: 0.75rem !important;
+            margin-right: 0.75rem !important;
         }
         .sidebar-gradient { border-radius: 0 !important; }
     }
 
     .header-connected {
-        background: linear-gradient(#1F2937 100%);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
+        background: #ffffff;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        color: #1f2937;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     }
 
     .header-search {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        color: #374151;
     }
-    .header-search::placeholder { color: rgba(255, 255, 255, 0.7); }
+    .header-search::placeholder { color: #9ca3af; }
     .header-search:focus {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        background: #ffffff;
+        border-color: #86efac;
+        box-shadow: 0 0 0 3px rgba(5, 124, 60, 0.12);
     }
 
     .header-button {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        transition: all 0.3s ease;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+        transition: all 0.2s ease;
     }
     .header-button:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        background: #e5e7eb;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
     }
     .header-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .header-glass {
@@ -420,7 +385,7 @@
                         </svg>
                     </button>
                     <div class="hidden md:block">
-                        <h1 class="text-lg font-semibold text-white">@yield('page-title', 'Dashboard')</h1>
+                        <h1 class="text-lg font-semibold text-gray-900">@yield('page-title', 'Dashboard')</h1>
                     </div>
                 </div>
 
@@ -480,7 +445,7 @@
             </div>
         </header>
 
-        <main class="admin-shell p-4 sm:p-6 overflow-y-auto flex-1 mt-24 sm:mt-16 bg-gray-100">
+        <main class="admin-shell admin-surface p-4 sm:p-6 overflow-y-auto flex-1 mt-24 sm:mt-16">
             @yield('content')
         </main>
     </div>

@@ -6,12 +6,12 @@
 <style>
 /* Modern Card Styles */
 .modern-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--neutral-200);
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     position: relative;
 }
 
@@ -95,6 +95,37 @@
     border: 1px solid var(--neutral-200);
 }
 
+.additionals-input {
+    width: 100%;
+    border: 1px solid var(--neutral-300);
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+    background: #ffffff;
+    color: var(--neutral-900);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.additionals-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.12);
+}
+
+.additionals-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(0, 70, 46, 0.1);
+    color: var(--primary);
+}
+
 /* Back Button Container */
 .back-button-container {
     display: flex;
@@ -108,7 +139,7 @@
 [x-cloak] { display: none !important; }
 </style>
 
-<div class="modern-card p-6 mx-auto max-w-full"
+<div class="admin-page-shell modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
      x-data="reservationShow({
         accepted:@js(session('accepted',false)),
         declined:@js(session('declined',false)),
@@ -121,6 +152,10 @@
      x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen || acceptedOpen || inventoryWarningOpen || declineOpen || overlapWarningOpen)"
      @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false; overlapWarningOpen = false">
     
+    @php
+        $additionalsTotal = $r->additionals ? $r->additionals->sum('price') : 0;
+    @endphp
+
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
@@ -139,6 +174,7 @@
                 <p class="header-subtitle">Review and manage reservation details</p>
             </div>
         </div>
+
         <span class="status-badge {{ $r->status === 'approved' ? 'status-approved' : ($r->status === 'declined' ? 'status-declined' : 'status-pending') }}">
             @if($r->status === 'approved')
                 <svg class="icon-sm" fill="currentColor" viewBox="0 0 20 20">
@@ -433,20 +469,25 @@
                     @endforeach
                     
                     <!-- Total Amount -->
+                    @php
+                        $grandTotal = $totalAmount + $additionalsTotal;
+                    @endphp
                     <div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
                         <div class="flex justify-between items-center">
                             <div>
                                 <div class="text-sm text-green-800">Subtotal:</div>
+                                <div class="text-sm text-green-800">Additionals:</div>
                                 <div class="text-sm text-green-800">Service Fee:</div>
                             </div>
                             <div class="text-right">
                                 <div class="text-sm font-medium">₱{{ number_format($totalAmount, 2) }}</div>
+                                <div class="text-sm font-medium">₱{{ number_format($additionalsTotal, 2) }}</div>
                                 <div class="text-sm font-medium">₱0.00</div>
                             </div>
                         </div>
                         <div class="border-t border-green-300 mt-2 pt-2 flex justify-between items-center">
                             <div class="font-bold text-green-900">Total:</div>
-                            <div class="font-bold text-xl text-green-900">₱{{ number_format($totalAmount, 2) }}</div>
+                            <div class="font-bold text-xl text-green-900">₱{{ number_format($grandTotal, 2) }}</div>
                         </div>
                     </div>
                 @else
@@ -462,6 +503,103 @@
 
         <!-- Sidebar -->
         <div class="space-y-6">
+            <!-- Additionals -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m-6-6h12"></path>
+                    </svg>
+                    <h2 class="info-card-title">Event Additionals</h2>
+                </div>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    Add charges requested during the event (extra staff, overtime, add-on items). These are included in the total automatically.
+                </p>
+
+                @if($r->status === 'approved')
+                    <form method="POST" action="{{ route('admin.reservations.additionals.store', $r) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-6">
+                        @csrf
+                        <div class="sm:col-span-4">
+                            <label for="additional_name" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Additional Name</label>
+                            <input id="additional_name" name="name" type="text" placeholder="e.g. Extra chairs (20 pcs)"
+                                   class="additionals-input" value="{{ old('name') }}" required>
+                            @error('name')
+                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="additional_price" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Price</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₱</span>
+                                <input id="additional_price" name="price" type="number" step="0.01" min="0"
+                                       class="additionals-input pl-7 text-right" placeholder="0.00"
+                                       value="{{ old('price') }}" required>
+                            </div>
+                            @error('price')
+                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="sm:col-span-6 flex flex-wrap justify-end gap-2">
+                            <x-admin.ui.button.secondary type="reset">Clear</x-admin.ui.button.secondary>
+                            <x-admin.ui.button.primary type="submit">Add Additional</x-admin.ui.button.primary>
+                        </div>
+                    </form>
+                @endif
+
+                @if($r->additionals && $r->additionals->count() > 0)
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="additionals-pill">Additionals Total</span>
+                        <span class="text-sm font-semibold text-green-700">₱{{ number_format($additionalsTotal, 2) }}</span>
+                    </div>
+                    <div class="space-y-3">
+                        @foreach($r->additionals as $additional)
+                            <div class="rounded-xl border border-gray-200 bg-white p-3">
+                                <form method="POST" action="{{ route('admin.reservations.additionals.update', [$r, $additional]) }}"
+                                      class="grid grid-cols-1 sm:grid-cols-8 gap-3 items-end">
+                                    @csrf
+                                    @method('PATCH')
+                                    <div class="sm:col-span-4">
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Name</label>
+                                        <input type="text" name="name" class="additionals-input"
+                                               value="{{ old('name', $additional->name) }}" required>
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Price</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₱</span>
+                                            <input type="number" name="price" step="0.01" min="0"
+                                                   class="additionals-input pl-7 text-right"
+                                                   value="{{ old('price', $additional->price) }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="sm:col-span-2 flex gap-2 justify-end">
+                                        @if($r->status === 'approved')
+                                            <x-admin.ui.button.secondary type="submit">Update</x-admin.ui.button.secondary>
+                                            <button type="button"
+                                                    class="px-4 py-2 rounded-admin text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 transition"
+                                                    onclick="document.getElementById('deleteAdditional{{ $additional->id }}').submit()">
+                                                Delete
+                                            </button>
+                                        @else
+                                            <span class="text-xs text-gray-500">Locked</span>
+                                        @endif
+                                    </div>
+                                </form>
+                                <form id="deleteAdditional{{ $additional->id }}" method="POST"
+                                      action="{{ route('admin.reservations.additionals.destroy', [$r, $additional]) }}" class="hidden">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+                        No additionals recorded for this reservation.
+                    </div>
+                @endif
+            </div>
+
             <!-- Customer Information -->
             <div class="info-card">
                 <div class="info-card-header">
@@ -776,3 +914,6 @@
 </div>
 
 @endsection
+
+
+

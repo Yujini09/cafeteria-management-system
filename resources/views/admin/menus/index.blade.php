@@ -22,18 +22,18 @@
     }
     
     .type-tab.active {
-        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
         color: white;
-        border-color: #00462E;
+        border-color: var(--primary);
     }
     
     .type-tab:not(.active):hover {
-        background: #e2e8f0;
-        border-color: #cbd5e0;
+        background: var(--neutral-100);
+        border-color: var(--neutral-200);
     }
     
     .meal-badge {
-        background: linear-gradient(135deg, #057C3C 0%, #059669 100%);
+        background: linear-gradient(135deg, var(--primary-light) 0%, #059669 100%);
         color: white;
         font-weight: 600;
         text-transform: uppercase;
@@ -46,32 +46,32 @@
     }
     
     .price-pill {
-        background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
-        border: 1px solid #bbf7d0;
-        color: #065f46;
+        background: linear-gradient(135deg, rgba(0, 70, 46, 0.08) 0%, rgba(5, 124, 60, 0.12) 100%);
+        border: 1px solid rgba(5, 124, 60, 0.2);
+        color: var(--primary);
         font-weight: 600;
         font-size: 0.875rem;
     }
     
     .food-item {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+        border: 1px solid var(--neutral-200);
         transition: all 0.2s ease;
     }
     
     .food-item:hover {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border-color: #bbf7d0;
+        background: linear-gradient(135deg, rgba(0, 70, 46, 0.06) 0%, rgba(5, 124, 60, 0.1) 100%);
+        border-color: rgba(5, 124, 60, 0.2);
     }
     
     .recipe-form {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+        border: 1px solid var(--neutral-200);
     }
     
     .modal-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+        border-bottom: 1px solid var(--neutral-200);
     }
     
     .form-label {
@@ -80,12 +80,12 @@
         display: block;
         font-weight: 500;
         margin-bottom: 0.25rem;
-        color: #374151;
+        color: var(--neutral-700);
     }
     
     .form-input, .form-select, .form-textarea {
         width: 100%;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--neutral-300);
         border-radius: 0.5rem;
         padding: 0.5rem 0.75rem;
         font-family: 'Poppins', sans-serif;
@@ -101,9 +101,9 @@
     .form-input:focus, .form-select:focus, .form-textarea:focus {
         outline: none;
         ring: 2px;
-        --tw-ring-color: #057C3C;
+        --tw-ring-color: var(--primary-light);
         border-color: transparent;
-        box-shadow: 0 0 0 2px #057C3C;
+        box-shadow: 0 0 0 2px var(--primary-light);
     }
     
     .form-textarea {
@@ -111,11 +111,11 @@
     }
 
     .primary-gradient {
-        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     }
     
     .primary-color {
-        color: #057C3C;
+        color: var(--primary-light);
     }
     
     .icon-sm { width: 16px; height: 16px; }
@@ -131,7 +131,7 @@
      })'
      x-effect="document.body.classList.toggle('overflow-hidden', isCreateOpen || isEditOpen || isDeleteOpen)"
      @keydown.escape.window="isCreateOpen = false; isEditOpen = false; closeDelete()"
-     class="space-y-6">
+     class="admin-page-shell bg-transparent border-0 shadow-none p-0 space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
 
 {{-- Header --}}
 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 menu-card">
@@ -151,12 +151,12 @@
     <div class="flex flex-col gap-3 ml-auto w-full sm:w-auto sm:items-end">
       <div class="relative w-full sm:w-64 md:w-72">
         <input type="search" id="searchInput" placeholder="Search menus..."
-               class="admin-search-input w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent"
+               class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                oninput="filterTable(this.value)" aria-label="Search menus">
-        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
-        <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" style="display: none;">
+        <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
