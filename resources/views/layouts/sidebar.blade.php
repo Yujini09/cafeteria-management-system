@@ -34,12 +34,9 @@
     }
 
     .sidebar-gradient {
-        background:
-            radial-gradient(130% 70% at -8% -2%, rgba(5, 124, 60, 0.08) 0%, rgba(5, 124, 60, 0) 62%),
-            radial-gradient(105% 90% at 108% 103%, rgba(251, 62, 5, 0.07) 0%, rgba(251, 62, 5, 0) 70%),
-            linear-gradient(180deg, #f8fcfa 0%, #f0f7f3 55%, #ecf4ef 100%);
-        border-right: 1px solid #d9e7de;
-        box-shadow: 10px 0 30px rgba(15, 23, 42, 0.08);
+        background: #f4f8f6;
+        border-right: 1px solid #d9e4dd;
+        box-shadow: 6px 0 20px rgba(15, 23, 42, 0.06);
         width: var(--sidebar-expanded-width);
         overflow-x: hidden;
     }
@@ -62,25 +59,25 @@
     }
 
     .sidebar-shell {
-        margin: 0.75rem 0.75rem 0;
-        border-radius: 1.15rem;
-        border: 1px solid #d7e6dc;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: 0 10px 24px rgba(0, 70, 46, 0.08);
+        margin: 0.6rem 0.6rem 0;
+        border-radius: 1rem;
+        border: 1px solid #dbe7e0;
+        background: #ffffff;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
         overflow: hidden;
     }
 
     .sidebar-brand {
         margin: 0;
         border-radius: 0;
-        min-height: 4.25rem;
+        min-height: 4rem;
         padding: 0 1rem;
         background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
         border-bottom: 1px solid rgba(255, 255, 255, 0.18);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 14px 24px rgba(0, 70, 46, 0.24);
+        box-shadow: 0 8px 18px rgba(0, 70, 46, 0.2);
     }
 
     .sidebar-brand img {
@@ -91,74 +88,48 @@
     }
 
     .section-header {
-        margin: 1.05rem 0.7rem 0.45rem;
+        margin: 0.95rem 0.8rem 0.45rem;
         font-size: 0.67rem;
         font-weight: 700;
         color: #6a7f72;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0;
     }
 
     .section-header::before {
-        content: "";
-        width: 0.45rem;
-        height: 0.45rem;
-        border-radius: 9999px;
-        background: #057C3C;
-        box-shadow: 0 0 0 3px rgba(5, 124, 60, 0.2);
+        display: none;
     }
 
     .menu-item {
-        margin: 0.24rem 0.5rem;
-        border-radius: 0.88rem;
-        font-size: 0.88rem;
+        margin: 0.2rem 0.45rem;
+        border-radius: 0.75rem;
+        font-size: 0.86rem;
         font-weight: 600;
-        color: #334b3f;
+        color: #2f4b3f;
         border: 1px solid transparent;
         position: relative;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
     .menu-item::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(90deg, rgba(5, 124, 60, 0.08) 0%, rgba(5, 124, 60, 0) 100%);
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        pointer-events: none;
+        display: none;
     }
 
     .menu-item:hover {
         color: #1e352b;
-        background: #eef6f1;
-        border-color: #cfe3d6;
-        transform: translateX(2px);
-    }
-
-    .menu-item:hover::after {
-        opacity: 1;
+        background: #f1f6f3;
+        border-color: #d6e3dc;
+        transform: none;
     }
 
     .active-menu-item {
-        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
-        border: 1px solid #0b6d41;
+        background: #057C3C;
+        border: 1px solid #057C3C;
         color: #ffffff;
-        box-shadow: 0 10px 24px rgba(0, 70, 46, 0.25);
-    }
-
-    .active-menu-item::before {
-        content: "";
-        position: absolute;
-        left: -1px;
-        top: 0.32rem;
-        bottom: 0.32rem;
-        width: 3px;
-        border-radius: 9999px;
-        background: #FB3E05;
+        box-shadow: none;
     }
 
     .active-menu-item::after {
@@ -167,9 +138,9 @@
 
     .active-menu-item:hover {
         transform: none;
-        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
+        background: #057C3C;
         color: #ffffff;
-        border-color: #0b6d41;
+        border-color: #057C3C;
     }
 
     .active-menu-item:hover::after {
@@ -183,21 +154,21 @@
     }
 
     .menu-icon {
-        width: 1.95rem;
-        height: 1.95rem;
-        border-radius: 0.68rem;
+        width: 1.85rem;
+        height: 1.85rem;
+        border-radius: 0.6rem;
         display: grid;
         place-items: center;
-        background: #f8fcfa;
-        border: 1px solid #d5e7dd;
+        background: #f7fbf9;
+        border: 1px solid #d7e4dd;
         color: #2f5846;
         transition: all 0.2s ease;
     }
 
     .menu-item:hover .menu-icon {
-        background: #e2f1e8;
+        background: #e8f2ed;
         color: #00462E;
-        border-color: #bddac8;
+        border-color: #c7dbcf;
     }
 
     .active-menu-item .menu-icon {
@@ -477,6 +448,12 @@
     }
 
     .header-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    body.overflow-hidden .floating-sidebar-toggle,
+    body.overflow-hidden .floating-notification-button {
+        filter: blur(2px);
+        opacity: 0.55;
+        pointer-events: none;
+    }
     .main-content-wrapper {
         width: 100%;
         margin-left: 0;
@@ -524,8 +501,9 @@
 
 <div class="min-h-screen flex">
 
-    <aside class="sidebar-gradient fixed inset-y-0 left-0 z-50 transform transition-all duration-300"
-           :class="isDesktop ? (openSidebar ? 'sidebar-expanded translate-x-0' : 'sidebar-collapsed translate-x-0') : (openSidebar ? 'translate-x-0' : '-translate-x-full')">
+    <aside class="sidebar-gradient fixed inset-y-0 left-0 z-50 transform transition-all duration-300 -translate-x-full md:translate-x-0"
+           :class="isDesktop ? (openSidebar ? 'sidebar-expanded translate-x-0' : 'sidebar-collapsed translate-x-0') : (openSidebar ? 'translate-x-0' : '-translate-x-full')"
+           @click.capture="if (!isDesktop && $event.target.closest('a[href]')) { openSidebar = false; }">
 
         <div class="sidebar-content">
             <div class="sidebar-brand">

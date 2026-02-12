@@ -23,9 +23,20 @@
     }
 </style>
 
-<header class="bg-white shadow-sm sticky top-0 z-50">
+<header class="bg-white shadow-sm sticky top-0 z-50"
+    x-data="{ mobileMenuOpen: false, mobileReservationOpen: false, confirmLogout: false }"
+    @keydown.escape.window="mobileMenuOpen = false; mobileReservationOpen = false; confirmLogout = false">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16 relative">
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center gap-3">
+            <button type="button"
+                    class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 text-ret-dark hover:bg-gray-100 transition"
+                    @click="mobileMenuOpen = true"
+                    aria-label="Open navigation menu"
+                    :aria-expanded="mobileMenuOpen.toString()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
             <img src="{{ asset('images/ret-logo-nav.png') }}" alt="RET Cafeteria Logo" class="h-12 w-auto" />
         </div>
 
@@ -84,7 +95,7 @@
             </div>
             </nav>
 
-        <div class="flex items-center space-x-4 text-sm text-gray-600 font-poppins" x-data="{ confirmLogout: false }">
+        <div class="hidden md:flex items-center space-x-4 text-sm text-gray-600 font-poppins">
             @guest
                 <a href="{{ route('login') }}" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
                     LOGIN
@@ -92,9 +103,9 @@
             @endguest
             @auth
                 <span class="whitespace-nowrap">Hi, {{ explode(' ', Auth::user()->name)[0] }}</span>
-            
+
                 <div class="w-8 h-8 bg-green-600 rounded-full text-white flex items-center justify-center font-medium">
-                    <img src="{{ asset('images/clsu-logo.png') }}" alt="User Profile" class="w-8 h-8 rounded-full" />                
+                    <img src="{{ asset('images/clsu-logo.png') }}" alt="User Profile" class="w-8 h-8 rounded-full" />
                 </div>
 
                 @if(Auth::user()->role == 'customer')
@@ -153,50 +164,159 @@
                     <button type="button" @click="confirmLogout = true" class="text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
                         LOGOUT
                     </button>
-
-                    <div 
-                        x-show="confirmLogout" 
-                        style="display: none;" 
-                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0"
-                        x-transition:enter-end="opacity-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0"
-                    >
-                        <div 
-                            class="bg-white rounded-lg shadow-xl w-96 p-6 mx-4 transform transition-all"
-                            @click.away="confirmLogout = false"
-                        >
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Confirm Logout</h3>
-                            <p class="text-gray-600 mb-6">Are you sure you want to log out?</p>
-                            
-                            <div class="flex justify-end space-x-3">
-                                <button 
-                                    @click="confirmLogout = false" 
-                                    class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200"
-                                >
-                                    Cancel
-                                </button>
-                                
-                                <button 
-                                    @click="document.getElementById('logout-form').submit()" 
-                                    class="px-4 py-2 text-white bg-clsu-green hover:bg-green-700 rounded-lg transition duration-200"
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
-                        @csrf
-                    </form>
                 @endif
             @endauth
         </div>
+
+        <div class="md:hidden flex items-center gap-2">
+            @guest
+                <a href="{{ route('login') }}" class="text-xs text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
+                    LOGIN
+                </a>
+            @endguest
+        </div>
     </div>
+
+    <div class="md:hidden" x-cloak>
+        <div x-show="mobileMenuOpen"
+             class="fixed inset-0 z-[55] bg-black/40"
+             @click="mobileMenuOpen = false"
+             x-transition.opacity></div>
+
+        <aside x-show="mobileMenuOpen"
+               class="fixed inset-y-0 left-0 z-[60] w-72 max-w-[90vw] bg-white border-r border-gray-200 shadow-2xl flex flex-col"
+               x-transition:enter="transition ease-out duration-250"
+               x-transition:enter-start="-translate-x-full"
+               x-transition:enter-end="translate-x-0"
+               x-transition:leave="transition ease-in duration-200"
+               x-transition:leave-start="translate-x-0"
+               x-transition:leave-end="-translate-x-full">
+            <div class="h-16 px-4 border-b border-gray-100 flex items-center justify-between">
+                <img src="{{ asset('images/ret-logo-nav.png') }}" alt="RET Cafeteria Logo" class="h-10 w-auto" />
+                <button type="button"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition"
+                        @click="mobileMenuOpen = false"
+                        aria-label="Close navigation menu">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto px-3 py-3 text-sm font-medium text-gray-700 space-y-1">
+                <a href="{{ url('/') }}" @click="mobileMenuOpen = false"
+                   class="block rounded-lg px-3 py-2 {{ request()->is('/') ? 'bg-green-50 text-ret-green-light' : 'hover:bg-gray-100' }}">
+                    Home
+                </a>
+                <a href="{{ url('/about') }}" @click="mobileMenuOpen = false"
+                   class="block rounded-lg px-3 py-2 {{ request()->is('about') ? 'bg-green-50 text-ret-green-light' : 'hover:bg-gray-100' }}">
+                    About
+                </a>
+                <a href="{{ url('/menu') }}" @click="mobileMenuOpen = false"
+                   class="block rounded-lg px-3 py-2 {{ request()->is('menu') ? 'bg-green-50 text-ret-green-light' : 'hover:bg-gray-100' }}">
+                    Menu
+                </a>
+                <a href="{{ url('/contact') }}" @click="mobileMenuOpen = false"
+                   class="block rounded-lg px-3 py-2 {{ request()->is('contact') ? 'bg-green-50 text-ret-green-light' : 'hover:bg-gray-100' }}">
+                    Contact Us
+                </a>
+
+                <div class="pt-1">
+                    <button type="button"
+                            class="w-full flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-100 {{ request()->is('reservation_form') || request()->is('reservation_form_menu') || request()->is('reservation_details') || request()->is('reservations/*') ? 'text-ret-green-light' : '' }}"
+                            @click="mobileReservationOpen = !mobileReservationOpen"
+                            :aria-expanded="mobileReservationOpen.toString()">
+                        <span>Reservation</span>
+                        <svg class="w-4 h-4 transition-transform duration-200" :class="mobileReservationOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <div x-show="mobileReservationOpen" x-transition class="mt-1 pl-3 space-y-1">
+                        @auth
+                            <a href="{{ route('reservation_form') }}" @click="mobileMenuOpen = false"
+                               class="dropdown-link block rounded-lg px-3 py-2 text-sm {{ request()->routeIs('reservation_form') || request()->routeIs('reservation_form_menu') ? 'bg-green-50 text-ret-green-light active' : 'hover:bg-gray-100 text-gray-700' }}">
+                                Make a Reservation
+                            </a>
+                            <a href="{{ route('reservation_details') }}" @click="mobileMenuOpen = false"
+                               class="dropdown-link block rounded-lg px-3 py-2 text-sm {{ request()->routeIs('reservation_details') || request()->routeIs('reservation_view') ? 'bg-green-50 text-ret-green-light active' : 'hover:bg-gray-100 text-gray-700' }}">
+                                View My Reservations
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" data-login-required="true" @click="mobileMenuOpen = false"
+                               class="dropdown-link block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Make a Reservation
+                            </a>
+                            <a href="{{ route('login') }}" data-login-required="true" @click="mobileMenuOpen = false"
+                               class="dropdown-link block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                View My Reservations
+                            </a>
+                        @endauth
+                    </div>
+                </div>
+            </nav>
+
+            <div class="border-t border-gray-100 p-3">
+                @guest
+                    <a href="{{ route('login') }}"
+                       @click="mobileMenuOpen = false"
+                       class="w-full inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold text-white bg-clsu-green hover:bg-green-700 transition">
+                        Login
+                    </a>
+                @endguest
+
+                @auth
+                    <div class="flex items-center gap-2 mb-3">
+                        <img src="{{ asset('images/clsu-logo.png') }}" alt="User Profile" class="w-8 h-8 rounded-full" />
+                        <div class="text-sm text-gray-700">
+                            Hi, <span class="font-semibold">{{ explode(' ', Auth::user()->name)[0] }}</span>
+                        </div>
+                    </div>
+                    @if(Auth::user()->role == 'customer')
+                        <button type="button"
+                                @click="mobileMenuOpen = false; confirmLogout = true"
+                                class="w-full inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold text-clsu-green border border-green-200 hover:bg-green-50 transition">
+                            Logout
+                        </button>
+                    @endif
+                @endauth
+            </div>
+        </aside>
+    </div>
+
+    @auth
+        @if(Auth::user()->role == 'customer')
+            <div x-show="confirmLogout"
+                 style="display: none;"
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0">
+                <div class="bg-white rounded-lg shadow-xl w-96 p-6 mx-4 transform transition-all"
+                     @click.away="confirmLogout = false">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Confirm Logout</h3>
+                    <p class="text-gray-600 mb-6">Are you sure you want to log out?</p>
+                    <div class="flex justify-end space-x-3">
+                        <button @click="confirmLogout = false"
+                                class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200">
+                            Cancel
+                        </button>
+                        <button @click="document.getElementById('logout-form').submit()"
+                                class="px-4 py-2 text-white bg-clsu-green hover:bg-green-700 rounded-lg transition duration-200">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+                @csrf
+            </form>
+        @endif
+    @endauth
 </header>
 
 @guest

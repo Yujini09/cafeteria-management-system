@@ -371,13 +371,13 @@
                     </svg>
                 </button>
             </div>
-            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
-                    <x-admin.ui.icon name="fa-calendar-check" size="xs" />
-                    Total Reservations: {{ $reservations->total() }}
-                </span>
-            </div>
         </div>
+    </div>
+    <div class="mb-4">
+        <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+            <x-admin.ui.icon name="fa-calendar-check" size="xs" />
+            Total Reservations: {{ $reservations->total() }}
+        </span>
     </div>
 
     <!-- Filter Section -->
@@ -582,7 +582,7 @@
              @click.stop>
             <div class="flex items-center gap-3 px-6 py-4 border-b border-admin-neutral-100">
                 <span class="flex h-10 w-10 items-center justify-center rounded-admin bg-admin-danger-light text-admin-danger">
-                    <x-admin.ui.icon name="fa-exclamation-triangle" style="fas" size="sm" />
+                    <x-admin.ui.icon name="fa-triangle-exclamation" style="fas" size="sm" />
                 </span>
                 <h3 class="text-lg font-semibold text-admin-neutral-900">Confirm Decline</h3>
             </div>

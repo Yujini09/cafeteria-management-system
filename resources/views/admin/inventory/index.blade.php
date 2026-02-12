@@ -54,13 +54,13 @@
                         </svg>
                     </button>
                 </div>
-                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                    <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600 mr-auto">
-                        <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
-                        Total Items: {{ $items->total() }}
-                    </span>
-                </div>
             </div>
+        </div>
+        <div class="mb-4">
+            <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
+                Total Items: {{ $items->total() }}
+            </span>
         </div>
 
         <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
@@ -166,7 +166,7 @@
                                         class="!py-2 !px-3 text-xs"
                                         @click="deletingItem = JSON.parse($el.dataset.item); showDeleteModal = true"
                                         data-item='@json($item)'>
-                                        <x-admin.ui.icon name="fa-trash-alt" style="fas" size="sm" />
+                                        <x-admin.ui.icon name="fa-trash-can" style="fas" size="sm" />
                                         Delete
                                     </x-admin.ui.button.danger>
                                 </div>
@@ -366,7 +366,7 @@
             <div class="flex items-center justify-between gap-4 border-b border-admin-neutral-100 px-6 py-4">
                 <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-admin bg-admin-danger-light text-admin-danger">
-                        <i class="fas fa-exclamation-triangle text-lg"></i>
+                        <i class="fas fa-triangle-exclamation text-lg"></i>
                     </span>
                     <div>
                         <h2 id="delete-inventory-title" class="text-lg font-semibold text-admin-neutral-900">Confirm Deletion</h2>
