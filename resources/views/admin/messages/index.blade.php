@@ -121,7 +121,7 @@
                                         class="!py-2 !px-3 text-xs flex items-center gap-1"
                                         onclick="window.location='{{ route('admin.messages.show', $msg->id) }}'">
                                         {{-- FIXED: Icon --}}
-                                        <i class="fas fa-file-alt text-xs"></i>
+                                        <i class="fas fa-file-lines text-xs"></i>
                                         View
                                     </x-admin.ui.button.secondary>
                                     
@@ -130,7 +130,7 @@
                                         class="!py-2 !px-3 text-xs flex items-center gap-1"
                                         @click="openDeleteConfirmation({{ $msg->id }})">
                                         {{-- FIXED: Icon --}}
-                                        <i class="fas fa-trash-alt text-xs"></i>
+                                        <i class="fas fa-trash-can text-xs"></i>
                                         Delete
                                     </x-admin.ui.button.danger>
                                 </div>
@@ -193,7 +193,7 @@
             <div class="flex items-start justify-between gap-4 border-b border-red-100 bg-red-50 px-6 py-4">
                 <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
-                        <i class="fas fa-exclamation-triangle text-lg"></i>
+                        <i class="fas fa-triangle-exclamation text-lg"></i>
                     </span>
                     <div>
                         <h2 id="delete-message-title" class="text-lg font-semibold text-red-900">Confirm Deletion</h2>
@@ -212,7 +212,7 @@
                 Are you sure you want to delete this message? It will be removed from the inbox.
             </div>
 
-            <form id="delete-form" method="POST" action=""
+            <form id="delete-form" method="POST" action="" data-action-loading
                   data-delete-template="{{ route('admin.messages.delete', 999999) }}"
                   class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
                 @csrf
@@ -220,7 +220,7 @@
                 <x-admin.ui.button.secondary type="button" @click="deleteConfirmationOpen = false; selectedMessageId = null">
                     Cancel
                 </x-admin.ui.button.secondary>
-                <x-admin.ui.button.danger type="submit">
+                <x-admin.ui.button.danger type="submit" data-loading-text="Deleting Message...">
                     Delete
                 </x-admin.ui.button.danger>
             </form>

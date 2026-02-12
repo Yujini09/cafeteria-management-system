@@ -12,3 +12,6 @@ Your original message:
 {{ $original_message }}
 
 If you need further assistance, just reply to this email.
+
+Thanks,
+{{ $app_name }}

@@ -1,4 +1,164 @@
 import './bootstrap';
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+
+const loadingDisableClasses = ['opacity-60', 'cursor-not-allowed'];
+const loadingSpinnerMarkup = '<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+
+const deferSubmitState = (callback) => {
+    if (typeof window.queueMicrotask === 'function') {
+        window.queueMicrotask(callback);
+        return;
+    }
+    Promise.resolve().then(callback);
+};
+
+const markDisabled = (control) => {
+    if (!control || control.dataset.cmsLoadingManaged === 'true') return;
+    control.dataset.cmsLoadingManaged = 'true';
+    control.dataset.cmsWasDisabled = control.disabled ? 'true' : 'false';
+    control.disabled = true;
+    control.classList.add(...loadingDisableClasses);
+    control.setAttribute('aria-disabled', 'true');
+};
+
+const unmarkDisabled = (control) => {
+    if (!control || control.dataset.cmsLoadingManaged !== 'true') return;
+    control.disabled = control.dataset.cmsWasDisabled === 'true';
+    control.classList.remove(...loadingDisableClasses);
+    if (control.dataset.cmsWasDisabled === 'true') {
+        control.setAttribute('aria-disabled', 'true');
+    } else {
+        control.removeAttribute('aria-disabled');
+    }
+    delete control.dataset.cmsLoadingManaged;
+    delete control.dataset.cmsWasDisabled;
+};
+
+const applyLoadingLabel = (control, loadingText) => {
+    if (!control || !loadingText) return;
+    if (control.tagName === 'BUTTON') {
+        if (typeof control.dataset.cmsOriginalHtml === 'undefined') {
+            control.dataset.cmsOriginalHtml = control.innerHTML;
+        }
+        control.innerHTML = `<span class="inline-flex items-center gap-2">${loadingSpinnerMarkup}<span>${loadingText}</span></span>`;
+        return;
+    }
+
+    if (control.tagName === 'INPUT' && (control.type || '').toLowerCase() === 'submit') {
+        if (typeof control.dataset.cmsOriginalValue === 'undefined') {
+            control.dataset.cmsOriginalValue = control.value;
+        }
+        control.value = loadingText;
+    }
+};
+
+const restoreLoadingLabel = (control) => {
+    if (!control) return;
+    if (typeof control.dataset.cmsOriginalHtml !== 'undefined') {
+        control.innerHTML = control.dataset.cmsOriginalHtml;
+        delete control.dataset.cmsOriginalHtml;
+    }
+    if (typeof control.dataset.cmsOriginalValue !== 'undefined') {
+        control.value = control.dataset.cmsOriginalValue;
+        delete control.dataset.cmsOriginalValue;
+    }
+};
+
+const getFormSubmitControls = (form) => {
+    if (!form) return [];
+    return Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+};
+
+const startButtonLoading = (button, fallbackText = null) => {
+    if (!button || button.dataset.cmsLoadingActive === 'true') return false;
+    const loadingText = button.dataset.loadingText || fallbackText || 'Processing...';
+    markDisabled(button);
+    applyLoadingLabel(button, loadingText);
+    button.dataset.cmsLoadingActive = 'true';
+    button.setAttribute('aria-busy', 'true');
+    return true;
+};
+
+const stopButtonLoading = (button) => {
+    if (!button) return;
+    restoreLoadingLabel(button);
+    unmarkDisabled(button);
+    button.removeAttribute('aria-busy');
+    delete button.dataset.cmsLoadingActive;
+};
+
+const startFormLoading = (form, submitter = null, fallbackText = null) => {
+    if (!form) return false;
+    if (form.dataset.cmsSubmitting === 'true') return false;
+    form.dataset.cmsSubmitting = 'true';
+
+    const controls = getFormSubmitControls(form);
+    controls.forEach((control) => markDisabled(control));
+
+    const target = submitter && form.contains(submitter)
+        ? submitter
+        : (controls[0] || null);
+
+    if (target) {
+        const loadingText = target.dataset.loadingText || form.dataset.loadingText || fallbackText || 'Processing...';
+        applyLoadingLabel(target, loadingText);
+        target.dataset.cmsLoadingActive = 'true';
+        target.setAttribute('aria-busy', 'true');
+    }
+
+    return true;
+};
+
+const resetFormLoading = (form) => {
+    if (!form) return;
+    delete form.dataset.cmsSubmitting;
+    getFormSubmitControls(form).forEach((control) => {
+        restoreLoadingLabel(control);
+        unmarkDisabled(control);
+        control.removeAttribute('aria-busy');
+        delete control.dataset.cmsLoadingActive;
+    });
+};
+
+const bindActionLoadingForms = (root = document) => {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    const forms = root.querySelectorAll('form[data-action-loading]');
+    forms.forEach((form) => {
+        if (form.dataset.cmsLoadingBound === 'true') return;
+        form.dataset.cmsLoadingBound = 'true';
+
+        form.addEventListener('submit', (event) => {
+            if (form.dataset.cmsSubmitting === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            const submitter = event.submitter || null;
+            deferSubmitState(() => {
+                if (event.defaultPrevented) return;
+                startFormLoading(form, submitter);
+            });
+        });
+    });
+};
+
+window.cmsActionButtons = {
+    bindForms: bindActionLoadingForms,
+    start: startButtonLoading,
+    stop: stopButtonLoading,
+    startFormSubmit: startFormLoading,
+    resetForm: resetFormLoading,
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    bindActionLoadingForms(document);
+});
+
+document.addEventListener('livewire:navigated', () => {
+    bindActionLoadingForms(document);
+});
 
 // Register all Alpine data components when Alpine initializes
 document.addEventListener('alpine:init', () => {
@@ -92,7 +252,110 @@ document.addEventListener('alpine:init', () => {
                 })
                 .finally(() => {
                     this.loading = false;
+            });
+        }
+    }));
+
+    // Customer payment prompt modal
+    Alpine.data('paymentPrompt', (opts = {}) => ({
+        open: false,
+        loading: true,
+        submitting: false,
+        reservation: null,
+        totalAmount: 0,
+        form: {
+            reference_number: opts.oldReference || '',
+            department_office: opts.oldDepartment || '',
+            payer_name: opts.oldPayer || '',
+            account_code: opts.oldAccountCode || ''
+        },
+        init() {
+            if (window.location.pathname.startsWith('/payments/')) {
+                this.loading = false;
+                return;
+            }
+            this.fetchDueReservation();
+        },
+        get actionUrl() {
+            return this.reservation ? `/payments/${this.reservation.id}` : '#';
+        },
+        get formattedAmount() {
+            const amount = Number(this.totalAmount || 0);
+            return 'PHP ' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        get reservationLabel() {
+            if (!this.reservation) return '';
+            const id = String(this.reservation.id || '').padStart(6, '0');
+            return `${this.reservation.event_name || 'Reservation'} (#${id})`;
+        },
+        get reservationPeriod() {
+            if (!this.reservation) return '';
+            const start = this.reservation.event_date || '';
+            const end = this.reservation.end_date || '';
+            if (start && end && start !== end) return `${start} - ${end}`;
+            return start || end || 'Date not set';
+        },
+        get reservationVenue() {
+            return this.reservation?.venue || 'Venue not specified';
+        },
+        get reservationContact() {
+            return this.reservation?.contact_person || 'Contact not specified';
+        },
+        dismiss() {
+            this.open = false;
+        },
+        submitPayment() {
+            if (this.submitting) return;
+            if (!this.reservation || !this.reservation.id) {
+                return;
+            }
+            const form = this.$refs?.paymentForm;
+            if (!form) return;
+            const action = this.actionUrl;
+            if (!action || action === '#') return;
+            this.submitting = true;
+            form.setAttribute('action', action);
+            form.submit();
+        },
+        async fetchDueReservation() {
+            this.loading = true;
+            try {
+                const res = await fetch('/customer/payment-due', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
                 });
+
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+
+                if (data && data.reservation) {
+                    this.reservation = data.reservation;
+                    this.totalAmount = data.total_amount || 0;
+                    if (!this.form.department_office) {
+                        this.form.department_office = data.reservation.department || '';
+                    }
+                    if (!this.form.payer_name) {
+                        this.form.payer_name = data.reservation.contact_person || '';
+                    }
+                    if (!this.form.account_code) {
+                        this.form.account_code = data.reservation.account_code || '';
+                    }
+                    this.open = true;
+                } else {
+                    this.reservation = null;
+                    this.open = false;
+                }
+            } catch (error) {
+                console.error('Error loading payment prompt:', error);
+                this.reservation = null;
+                this.open = false;
+            } finally {
+                this.loading = false;
+            }
         }
     }));
 
@@ -121,6 +384,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('reservationShow', (opts = {}) => ({
         approveConfirmationOpen: false,
         declineConfirmationOpen: false,
+        approving: false,
         acceptedOpen: false,
         inventoryWarningOpen: false,
         declineOpen: false,
@@ -137,6 +401,7 @@ document.addEventListener('alpine:init', () => {
             this.overlapDate = opts?.overlapDate ?? '';
         },
         openApproveConfirmation() {
+            this.approving = false;
             this.declineConfirmationOpen = false;
             this.approveConfirmationOpen = true;
         },
@@ -144,12 +409,23 @@ document.addEventListener('alpine:init', () => {
             this.approveConfirmationOpen = false;
             this.declineConfirmationOpen = true;
         },
-        async handleApprove() {
+        async handleApprove(event = null) {
+            if (this.approving) return;
+            const triggerButton = event?.currentTarget || event?.target || null;
+            if (window.cmsActionButtons && triggerButton) {
+                const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Approving...');
+                if (!started) return;
+            }
+            this.approving = true;
             this.approveConfirmationOpen = false;
 
             const form = document.getElementById('approveForm');
             if (!form) {
                 console.warn('Approve form not found');
+                this.approving = false;
+                if (window.cmsActionButtons && triggerButton) {
+                    window.cmsActionButtons.stop(triggerButton);
+                }
                 return;
             }
 
@@ -186,6 +462,10 @@ document.addEventListener('alpine:init', () => {
                 if (data && data.sufficient === false) {
                     this.insufficientItems = Array.isArray(data.insufficient_items) ? data.insufficient_items : [];
                     this.inventoryWarningOpen = true;
+                    this.approving = false;
+                    if (window.cmsActionButtons && triggerButton) {
+                        window.cmsActionButtons.stop(triggerButton);
+                    }
                     return;
                 }
 
@@ -195,9 +475,22 @@ document.addEventListener('alpine:init', () => {
                 form.submit();
             }
         },
-        proceedWithApproval() {
+        proceedWithApproval(event = null) {
+            if (this.approving) return;
+            const triggerButton = event?.currentTarget || event?.target || null;
+            if (window.cmsActionButtons && triggerButton) {
+                const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Approving...');
+                if (!started) return;
+            }
+            this.approving = true;
             const form = document.getElementById('approveForm');
-            if (!form) return;
+            if (!form) {
+                this.approving = false;
+                if (window.cmsActionButtons && triggerButton) {
+                    window.cmsActionButtons.stop(triggerButton);
+                }
+                return;
+            }
             const forceInput = form.querySelector('#forceApproveInput');
             if (forceInput) forceInput.value = '1';
             this.inventoryWarningOpen = false;
@@ -235,6 +528,8 @@ document.addEventListener('alpine:init', () => {
       isCreateOpen: false,
       isEditOpen: false,
       isDeleteOpen: false,
+      createSubmitting: false,
+      deleteSubmitting: false,
       currentStep: 1,
       deleteId: null,
       deleteName: '',
@@ -355,6 +650,7 @@ document.addEventListener('alpine:init', () => {
         return errors;
       },
       submitForm() {
+        if (this.createSubmitting) return;
         if (this.currentStep !== 3) {
           alert('Please complete all steps before submitting!');
           return;
@@ -379,6 +675,7 @@ document.addEventListener('alpine:init', () => {
         const form = this.$refs.createForm;
         const formData = new FormData(form);
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        this.createSubmitting = true;
         try {
           const res = await fetch(form.action, {
             method: 'POST',
@@ -391,6 +688,7 @@ document.addEventListener('alpine:init', () => {
             const errorMsg = errorData?.message || errorData?.error || 'Unknown error occurred';
             const validationErrors = errorData?.errors ? Object.values(errorData.errors).flat().join('\n') : '';
             alert('Error creating menu:\n' + errorMsg + (validationErrors ? '\n\n' + validationErrors : ''));
+            this.createSubmitting = false;
             return;
           }
           this.form = { type: this.form.type, meal: this.form.meal, name: '', description: '', items: [], openDropdowns: {}, searchTerms: {} };
@@ -403,6 +701,7 @@ document.addEventListener('alpine:init', () => {
           }, 2000);
         } catch (e) {
           alert('Error creating menu: ' + e.message);
+          this.createSubmitting = false;
         }
       },
       openCreate(type = null, meal = null) {
@@ -412,11 +711,13 @@ document.addEventListener('alpine:init', () => {
         this.form.openDropdowns = {};
         this.form.searchTerms = {};
         this.currentStep = 1;
+        this.createSubmitting = false;
         this.isCreateOpen = true;
       },
       close(){ 
         this.isCreateOpen = false; 
         this.currentStep = 1;
+        this.createSubmitting = false;
       },
       openEdit(id, name, description, type, meal, items = []) {
         this.editForm.id = id;
@@ -439,10 +740,12 @@ document.addEventListener('alpine:init', () => {
         this.isDeleteOpen = false;
         this.deleteId = null;
         this.deleteName = '';
+        this.deleteSubmitting = false;
         document.body.style.overflow = '';
       },
       async confirmDelete() {
-        if (!this.deleteId) return;
+        if (!this.deleteId || this.deleteSubmitting) return;
+        this.deleteSubmitting = true;
         const url = `/admin/menus/${this.deleteId}`;
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         try {
@@ -475,3 +778,5 @@ document.addEventListener('alpine:init', () => {
       }
     }));
 });
+
+Alpine.start();

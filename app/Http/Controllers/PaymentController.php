@@ -44,20 +44,29 @@ class PaymentController extends Controller
             'reference_number' => 'required|string|max:120',
             'department_office' => 'nullable|string|max:120',
             'payer_name' => 'required|string|max:120',
+            'account_code' => 'nullable|string|max:120',
+            'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $reservation->loadMissing(['items.menu', 'user']);
         $amount = $this->calculateReservationTotal($reservation);
+        $receiptPath = null;
+        if ($request->hasFile('receipt')) {
+            $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
+        }
 
-        DB::transaction(function () use ($reservation, $validated, $amount) {
+        DB::transaction(function () use ($reservation, $validated, $amount, $receiptPath) {
             $payment = Payment::create([
                 'reservation_id' => $reservation->id,
                 'user_id' => $reservation->user_id,
                 'reference_number' => $validated['reference_number'],
                 'department_office' => $validated['department_office'] ?? null,
                 'payer_name' => $validated['payer_name'],
+                'account_code' => $validated['account_code'] ?? $reservation->account_code ?? null,
                 'amount' => $amount,
                 'status' => 'submitted',
+                'receipt_path' => $receiptPath,
+                'receipt_uploaded_at' => $receiptPath ? now() : null,
             ]);
 
             $reservation->update([
@@ -78,6 +87,45 @@ class PaymentController extends Controller
         });
 
         return redirect()->route('payments.show', $reservation)->with('success', 'Payment submitted for review.');
+    }
+
+    public function due()
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $yesterday = now()->subDay()->toDateString();
+
+        $reservation = Reservation::query()
+            ->where('user_id', $userId)
+            ->where('status', 'approved')
+            ->where('payment_status', 'pending')
+            ->whereDate(DB::raw('COALESCE(end_date, event_date)'), '<=', $yesterday)
+            ->with(['items.menu', 'user'])
+            ->orderByRaw('COALESCE(end_date, event_date) desc')
+            ->first();
+
+        if (! $reservation) {
+            return response()->json(['reservation' => null]);
+        }
+
+        $amount = $this->calculateReservationTotal($reservation);
+
+        return response()->json([
+            'reservation' => [
+                'id' => $reservation->id,
+                'event_name' => $reservation->event_name,
+                'event_date' => optional($reservation->event_date)->format('M d, Y'),
+                'end_date' => optional($reservation->end_date)->format('M d, Y'),
+                'venue' => $reservation->venue,
+                'contact_person' => $reservation->contact_person ?? optional($reservation->user)->name,
+                'department' => $reservation->department ?? optional($reservation->user)->department,
+                'account_code' => $reservation->account_code ?? null,
+            ],
+            'total_amount' => $amount,
+        ]);
     }
 
     public function index(Request $request)
@@ -190,6 +238,8 @@ class PaymentController extends Controller
 
     private function calculateReservationTotal(Reservation $reservation): float
     {
+        $reservation->loadMissing(['items.menu', 'additionals']);
+
         $total = 0;
         foreach ($reservation->items as $item) {
             $menu = $item->menu;
@@ -205,6 +255,8 @@ class PaymentController extends Controller
             $total += ($item->quantity ?? 0) * $price;
         }
 
-        return (float) $total;
+        $additionalsTotal = $reservation->additionals->sum('price');
+
+        return (float) ($total + $additionalsTotal);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\ReservationItem;
+use App\Models\ReservationAdditional;
 use App\Models\InventoryItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,8 @@ class ReservationController extends Controller
             'user',
             'items.menu.items', // menu items
             'items.menu.items.recipes.inventoryItem', // for inventory checks
-            'payments'
+            'payments',
+            'additionals'
         ]);
         
         return view('admin.reservations.show', ['r' => $reservation]);
@@ -567,6 +569,61 @@ class ReservationController extends Controller
         }
 
         return redirect()->back()->with(['declined' => true, 'success' => 'Reservation declined.']);
+    }
+
+    public function storeAdditional(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status !== 'approved') {
+            return redirect()->back()->with('error', 'Additionals can only be added to approved reservations.');
+        }
+
+        $data = $request->validate([
+            'name' => 'required|string|max:140',
+            'price' => 'required|numeric|min:0|max:999999.99',
+        ]);
+
+        $reservation->additionals()->create([
+            'name' => $data['name'],
+            'price' => $data['price'],
+            'created_by' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Additional item added.');
+    }
+
+    public function updateAdditional(Request $request, Reservation $reservation, ReservationAdditional $additional)
+    {
+        if ($additional->reservation_id !== $reservation->id) {
+            abort(404);
+        }
+
+        if ($reservation->status !== 'approved') {
+            return redirect()->back()->with('error', 'Additionals can only be updated for approved reservations.');
+        }
+
+        $data = $request->validate([
+            'name' => 'required|string|max:140',
+            'price' => 'required|numeric|min:0|max:999999.99',
+        ]);
+
+        $additional->update($data);
+
+        return redirect()->back()->with('success', 'Additional item updated.');
+    }
+
+    public function deleteAdditional(Reservation $reservation, ReservationAdditional $additional)
+    {
+        if ($additional->reservation_id !== $reservation->id) {
+            abort(404);
+        }
+
+        if ($reservation->status !== 'approved') {
+            return redirect()->back()->with('error', 'Additionals can only be removed from approved reservations.');
+        }
+
+        $additional->delete();
+
+        return redirect()->back()->with('success', 'Additional item removed.');
     }
 
     protected function buildInventoryUsage(Reservation $reservation): array

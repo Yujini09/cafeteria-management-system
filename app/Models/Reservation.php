@@ -66,6 +66,11 @@ class Reservation extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function additionals()
+    {
+        return $this->hasMany(ReservationAdditional::class);
+    }
+
     public function getGuestCountAttribute(): int
     {
         $count = $this->guests ?? $this->attendees ?? $this->number_of_persons;

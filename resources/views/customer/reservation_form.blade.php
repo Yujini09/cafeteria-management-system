@@ -138,7 +138,7 @@
             </div>
         </div>
 
-        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10">
+        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10" data-action-loading>
             @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -284,7 +284,7 @@
             </div>
 
             <div class="text-center pt-4">
-                <button type="submit" 
+                <button type="submit" data-loading-text="Saving Reservation Details..."
                     id="menu-selection-btn"
                     class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold">
                     Proceed to Menu Selection
@@ -370,9 +370,16 @@
         return `${y}-${m}-${d}`;
     };
 
+    // Utility function to parse a YYYY-MM-DD string as a local Date (avoids timezone shifts)
+    const parseDateLocal = (dateStr) => {
+        if (!dateStr) return null;
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+
     // Utility function to format date for display
     const formatDateDisplay = (dateStr) => {
-        const date = new Date(dateStr);
+        const date = parseDateLocal(dateStr);
         return date.toLocaleString('en-US', { 
             month: 'short', 
             day: 'numeric', 
@@ -383,8 +390,8 @@
     // Utility function to get all dates between start and end
     const getDatesInRange = (startDate, endDate) => {
         const dates = [];
-        const currentDate = new Date(startDate);
-        const end = new Date(endDate);
+        const currentDate = parseDateLocal(startDate);
+        const end = parseDateLocal(endDate);
         
         while (currentDate <= end) {
             dates.push(formatDate(new Date(currentDate)));
@@ -398,9 +405,9 @@
     const isDateInRange = (dateStr) => {
         if (!selectedStartDate || !selectedEndDate) return false;
         
-        const date = new Date(dateStr);
-        const start = new Date(selectedStartDate);
-        const end = new Date(selectedEndDate);
+        const date = parseDateLocal(dateStr);
+        const start = parseDateLocal(selectedStartDate);
+        const end = parseDateLocal(selectedEndDate);
         
         return date >= start && date <= end;
     };
@@ -424,8 +431,7 @@
         
         calendarDaysEl.innerHTML = '';
         
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = formatDate(new Date());
 
         // Previous month days
         for (let i = firstDayOfMonth; i > 0; i--) {
@@ -451,7 +457,7 @@
                 }
             }
             
-            const isPast = date < today;
+            const isPast = dateStr < todayStr;
             if (isPast) {
                 status = 'other-month'; 
             }
@@ -518,8 +524,8 @@
             selectedDays = [dateStr];
             dayTimes = { [dateStr]: { start_time: '07:00', end_time: '10:00' } };
         } else {
-            const startDate = new Date(selectedStartDate);
-            const endDate = new Date(dateStr);
+            const startDate = parseDateLocal(selectedStartDate);
+            const endDate = parseDateLocal(dateStr);
             
             if (endDate < startDate) {
                 selectedEndDate = selectedStartDate;
@@ -554,9 +560,7 @@
             startDateDisplay.textContent = formatDateDisplay(selectedStartDate);
             endDateDisplay.textContent = formatDateDisplay(selectedEndDate);
             
-            const start = new Date(selectedStartDate);
-            const end = new Date(selectedEndDate);
-            const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            const totalDays = getDatesInRange(selectedStartDate, selectedEndDate).length;
             totalDaysIndicator.textContent = `(${totalDays} day${totalDays > 1 ? 's' : ''})`;
             
             dateRangeDisplay.classList.remove('hidden');
@@ -767,7 +771,7 @@
 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
 
-            const startDateObj = new Date(selectedStartDate);
+            const startDateObj = parseDateLocal(selectedStartDate);
             if (!isNaN(startDateObj.getTime())) {
                  currentDisplayDate = startDateObj;
             }

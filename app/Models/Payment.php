@@ -12,15 +12,19 @@ class Payment extends Model
         'reference_number',
         'department_office',
         'payer_name',
+        'account_code',
         'amount',
         'status',
         'reviewed_by',
         'reviewed_at',
         'notes',
+        'receipt_path',
+        'receipt_uploaded_at',
     ];
 
     protected $casts = [
         'reviewed_at' => 'datetime',
+        'receipt_uploaded_at' => 'datetime',
     ];
 
     public function reservation()

@@ -21,8 +21,8 @@ class ProfileUpdateRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
         ];
 
-        // Only require email validation if the user is not an admin
-        if (!$user || !$user->hasRole('admin')) {
+        // Admin and superadmin emails are immutable from profile settings.
+        if (!$user || !in_array($user->role, ['admin', 'superadmin'], true)) {
             $rules['email'] = [
                 'required',
                 'string',

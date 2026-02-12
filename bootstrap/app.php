@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->alias([
         'role' => \App\Http\Middleware\RoleMiddleware::class, // ✅ keep only this
     ]);
+
+    $middleware->appendToGroup('web', [
+        \App\Http\Middleware\ForcePasswordChange::class,
+    ]);
 })
 
 

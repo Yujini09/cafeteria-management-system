@@ -39,25 +39,25 @@
 .modern-card {
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--neutral-100);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--neutral-200);
+    transition: all 0.25s ease;
     overflow: hidden;
     position: relative;
 }
 
 /* Removed the ::before pseudo-element that created the green line */
 .modern-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
 }
 
 /* Menu Card Styling for Inventory Sections */
 .menu-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: all 0.3s ease;
+    border: 1px solid var(--neutral-200);
+    border-radius: 14px;
+    transition: all 0.25s ease;
     position: relative;
     overflow: hidden;
 }
@@ -68,14 +68,14 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #00462E 0%, #057C3C 100%);
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
 }
 
 .menu-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e0;
+    transform: translateY(-2px);
+    box-shadow: 0 16px 24px -8px rgba(15, 23, 42, 0.18);
+    border-color: var(--neutral-300);
 }
 
 /* 4. Metric Cards with Gradient Backgrounds */
@@ -205,6 +205,15 @@
 
 .animate-float {
     animation: float 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-in,
+    .animate-float {
+        animation: none !important;
+        transform: none !important;
+    }
 }
 
 /* 8. Icon Styles - Modern */

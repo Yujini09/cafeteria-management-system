@@ -12,214 +12,447 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles() !!}
+
+    <script>
+        (function () {
+            try {
+                const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+                const saved = sessionStorage.getItem('sidebarOpen');
+                const isOpen = saved === null ? isDesktop : saved === 'true';
+                document.documentElement.setAttribute('data-sidebar-preinit', isOpen && isDesktop ? 'open' : 'closed');
+            } catch (error) {
+                const fallbackDesktop = window.matchMedia('(min-width: 768px)').matches;
+                document.documentElement.setAttribute('data-sidebar-preinit', fallbackDesktop ? 'open' : 'closed');
+            }
+        })();
+    </script>
     
     <style>
-    @keyframes slide-in-left {
-        0% { transform: translateX(-100%); opacity: 0; }
-        100% { transform: translateX(0); opacity: 1; }
+    :root {
+        --sidebar-expanded-width: 16rem;
+        --sidebar-collapsed-width: 5rem;
     }
-    
+
     .sidebar-gradient {
-        background: linear-gradient(#1F2937 100%);
+        background: #f4f8f6;
+        border-right: 1px solid #d9e4dd;
+        box-shadow: 6px 0 20px rgba(15, 23, 42, 0.06);
+        width: var(--sidebar-expanded-width);
+        overflow-x: hidden;
     }
-    
-    .active-menu-item {
-        background-color: #f5f5f5;
-        color: #FB3E05;
-        border-top-left-radius: 50px;
-        border-bottom-left-radius: 50px;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        margin-right: 0px;
-        margin-left: 10px;
-        position: relative;
-        z-index: 10;
-    }
-    
-    .active-menu-item::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        right: 0;
-        width: 20px;
-        height: 20px;
-        background: transparent;
-        border-bottom-right-radius: 20px;
-        box-shadow: 8px 8px 0 8px #f5f5f5;
-    }
-    
-    .active-menu-item::after {
-        content: '';
-        position: absolute;
-        bottom: -20px;
-        right: 0;
-        width: 20px;
-        height: 20px;
-        background: transparent;
-        border-top-right-radius: 20px;
-        box-shadow: 8px -8px 0 8px #f5f5f5;
-    }
-    
-    .menu-item {
-        margin-bottom: 0.125rem;
-        border-radius: 0px;
-        border-top-right-radius: 0%;
-        border-bottom-right-radius: 0%;
-        font-size: 0.95rem;
-        position: relative;
-    }
-    
-    .menu-item:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
-        padding-left: 2.75rem;
-    }
-    
-    .menu-item:hover i {
-        color: #ffffff !important;
-    }
-    
-    .active-menu-item:hover {
-        background: #f5f5f5 !important;
-        color: #FB3E05 !important;
-        transform: none;
-        padding-left: 2.5rem;
-    }
-    
-    .active-menu-item:hover i {
-        color: #FB3E05 !important;
-    }  
-    
-    .hover-glow:hover {
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    }
-    
+
     .font-poppins { font-family: 'Poppins', sans-serif; }
     .font-fugaz { font-family: 'Fugaz One', cursive; }
     .font-damion { font-family: 'Damion', cursive; }
-    
+
     .sidebar-content {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        padding: 0 0rem 1rem 0rem;
+        padding: 0 0 1rem;
         justify-content: space-between;
     }
-    
+
     .nav-section {
         flex: 0 1 auto;
-    }
-    
-    .logout-section {
-        flex-shrink: 0;
-        padding: 1rem 0rem 0rem 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: 0.5rem;
-        margin-right: 1rem;
-        margin-left: 0;
-    }
-    
-    .section-header {
-        margin-top: 1.5rem;
-        margin-bottom: 0.75rem;
-        font-size: 0.8rem;
+        padding: 0.25rem 0.1rem 0.5rem;
     }
 
-    .logo-section {
-        margin-bottom: 0;
-        margin-right: 1rem;
-        padding: 0.5rem 0.4rem 0.5rem 0.8rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: center;
-        flex-shrink: 0; /* Prevent logo from shrinking */
+    .sidebar-shell {
+        margin: 0.6rem 0.6rem 0;
+        border-radius: 1rem;
+        border: 1px solid #dbe7e0;
+        background: #ffffff;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
+    }
+
+    .sidebar-brand {
+        margin: 0;
+        border-radius: 0;
+        min-height: 4rem;
+        padding: 0 1rem;
+        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 18px rgba(0, 70, 46, 0.2);
+    }
+
+    .sidebar-brand img {
+        width: auto;
+        height: 3rem;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .section-header {
+        margin: 0.95rem 0.8rem 0.45rem;
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #6a7f72;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+
+    .section-header::before {
+        display: none;
+    }
+
+    .menu-item {
+        margin: 0.2rem 0.45rem;
+        border-radius: 0.75rem;
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #2f4b3f;
+        border: 1px solid transparent;
+        position: relative;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .menu-item::after {
+        display: none;
+    }
+
+    .menu-item:hover {
+        color: #1e352b;
+        background: #f1f6f3;
+        border-color: #d6e3dc;
+        transform: none;
+    }
+
+    .active-menu-item {
+        background: #057C3C;
+        border: 1px solid #057C3C;
+        color: #ffffff;
+        box-shadow: none;
+    }
+
+    .active-menu-item::after {
+        opacity: 0;
+    }
+
+    .active-menu-item:hover {
+        transform: none;
+        background: #057C3C;
+        color: #ffffff;
+        border-color: #057C3C;
+    }
+
+    .active-menu-item:hover::after {
+        opacity: 0;
+    }
+
+    .active-menu-item:hover .menu-icon {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.28);
+        color: #ffffff;
+    }
+
+    .menu-icon {
+        width: 1.85rem;
+        height: 1.85rem;
+        border-radius: 0.6rem;
+        display: grid;
+        place-items: center;
+        background: #f7fbf9;
+        border: 1px solid #d7e4dd;
+        color: #2f5846;
+        transition: all 0.2s ease;
+    }
+
+    .menu-item:hover .menu-icon {
+        background: #e8f2ed;
+        color: #00462E;
+        border-color: #c7dbcf;
+    }
+
+    .active-menu-item .menu-icon {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.28);
+        color: #ffffff;
+    }
+
+    .logout-section {
+        flex-shrink: 0;
+        margin: 0.75rem 0.75rem 0;
+        padding-top: 0.8rem;
+        border-top: 1px solid #dbe9e0;
+    }
+
+    .sidebar-collapsed .sidebar-shell {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .sidebar-brand {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+
+    .sidebar-collapsed .sidebar-brand img {
+        height: 2.1rem;
+    }
+
+    .sidebar-collapsed .role-badge {
+        display: none;
+    }
+
+    .sidebar-collapsed .section-header {
+        justify-content: center;
+        margin: 0.9rem 0.35rem 0.4rem;
+        gap: 0;
+        font-size: 0;
+        letter-spacing: 0;
+    }
+
+    .sidebar-collapsed .section-header::before {
+        box-shadow: 0 0 0 2px rgba(5, 124, 60, 0.2);
+    }
+
+    .sidebar-collapsed .menu-item {
+        margin: 0.2rem 0.35rem;
+        justify-content: center;
+        padding-left: 0.55rem;
+        padding-right: 0.55rem;
+    }
+
+    .sidebar-collapsed .menu-item > span:not(.menu-icon) {
+        display: none;
+    }
+
+    .sidebar-collapsed .logout-section {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .logout-section button {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .logout-text {
+        display: none;
     }
 
     /* Custom Scrollbar for Sidebar */
     .sidebar-scroll::-webkit-scrollbar {
-        width: 4px;
+        width: 5px;
     }
     .sidebar-scroll::-webkit-scrollbar-track {
-        background: rgba(255,255,255,0.05);
+        background: #edf4f0;
     }
     .sidebar-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.2);
-        border-radius: 4px;
+        background: #bfd2c5;
+        border-radius: 10px;
     }
     .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-        background: rgba(255,255,255,0.4);
+        background: #9fbba9;
     }
 
-    .mobile-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 40;
-    }
-
-    .mobile-overlay.active { display: block; }
     .sidebar-gradient { z-index: 50; }
 
     @media (max-width: 768px) {
-        .active-menu-item {
-            border-radius: 12px !important;
-            margin-left: 1rem !important;
-            margin-right: 1rem !important;
-        }
-        .active-menu-item::before,
-        .active-menu-item::after {
-            display: none !important;
-        }
         .menu-item {
-            margin-left: 1rem;
-            margin-right: 0rem;
+            margin-left: 0.4rem;
+            margin-right: 0.4rem;
             font-size: 0.85rem;
-            border-radius: 12px;
+            border-radius: 0.8rem;
         }
-        .menu-item:hover { margin-left: 1rem; }
-        .active-menu-item:hover {
-            margin-left: 1rem !important;
-            margin-right: 1rem !important;
+        .sidebar-gradient {
+            border-radius: 0 !important;
         }
-        .sidebar-gradient { border-radius: 0 !important; }
+        .sidebar-shell {
+            border-radius: 0.9rem;
+        }
+        .sidebar-brand {
+            min-height: 3.75rem;
+            padding: 0 0.8rem;
+        }
+        .sidebar-brand img {
+            width: auto;
+            height: 2.35rem;
+        }
     }
 
-    .header-connected {
-        background: linear-gradient(#1F2937 100%);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
+    @media (min-width: 768px) {
+        .sidebar-expanded,
+        html[data-sidebar-preinit='open'] .sidebar-gradient {
+            width: var(--sidebar-expanded-width);
+            transform: translateX(0);
+        }
+
+        .sidebar-collapsed,
+        html[data-sidebar-preinit='closed'] .sidebar-gradient {
+            width: var(--sidebar-collapsed-width);
+            transform: translateX(0);
+        }
+
+        .main-content-wrapper.sidebar-offset,
+        html[data-sidebar-preinit='open'] .main-content-wrapper {
+            margin-left: var(--sidebar-expanded-width);
+            width: calc(100% - var(--sidebar-expanded-width));
+        }
+
+        .main-content-wrapper.sidebar-collapsed-offset,
+        html[data-sidebar-preinit='closed'] .main-content-wrapper {
+            margin-left: var(--sidebar-collapsed-width);
+            width: calc(100% - var(--sidebar-collapsed-width));
+        }
+
+        html[data-sidebar-preinit='closed'] .sidebar-shell {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .sidebar-brand {
+            padding-left: 0.35rem;
+            padding-right: 0.35rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .sidebar-brand img {
+            height: 2.1rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .role-badge {
+            display: none;
+        }
+
+        html[data-sidebar-preinit='closed'] .section-header {
+            justify-content: center;
+            margin: 0.9rem 0.35rem 0.4rem;
+            gap: 0;
+            font-size: 0;
+            letter-spacing: 0;
+        }
+
+        html[data-sidebar-preinit='closed'] .section-header::before {
+            box-shadow: 0 0 0 2px rgba(5, 124, 60, 0.2);
+        }
+
+        html[data-sidebar-preinit='closed'] .menu-item {
+            margin: 0.2rem 0.35rem;
+            justify-content: center;
+            padding-left: 0.55rem;
+            padding-right: 0.55rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .menu-item > span:not(.menu-icon) {
+            display: none;
+        }
+
+        html[data-sidebar-preinit='closed'] .logout-section {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .logout-section button {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .logout-text {
+            display: none;
+        }
     }
 
-    .header-search {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
+    .floating-sidebar-toggle {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 60;
+        width: 2.85rem;
+        height: 2.85rem;
+        border-radius: 0.95rem;
+        border: 1px solid #0b6d41;
+        background: linear-gradient(135deg, #057C3C 0%, #00462E 100%);
+        color: #ffffff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 12px 24px rgba(0, 70, 46, 0.3);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .header-search::placeholder { color: rgba(255, 255, 255, 0.7); }
-    .header-search:focus {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-    }
-
-    .header-button {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        transition: all 0.3s ease;
-    }
-    .header-button:hover {
-        background: rgba(255, 255, 255, 0.2);
+    .floating-sidebar-toggle:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 15px 28px rgba(0, 70, 46, 0.34);
     }
+
+    .floating-notification-shell {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 65;
+    }
+
+    .floating-notification-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.85rem;
+        height: 2.85rem;
+        padding: 0;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #057C3C 0%, #00462E 100%);
+        color: #ffffff;
+        box-shadow: 0 12px 24px rgba(0, 70, 46, 0.3);
+        line-height: 1;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .floating-notification-button:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(135deg, #06984a 0%, #005838 100%);
+        box-shadow: 0 15px 28px rgba(0, 70, 46, 0.34);
+    }
+
+    .floating-notification-button:focus-visible {
+        outline: 2px solid rgba(5, 124, 60, 0.35);
+        outline-offset: 3px;
+        border-radius: 9999px;
+    }
+
+    .floating-notification-button .notification-bell {
+        font-size: 1.3rem;
+    }
+
+    .notification-dropdown {
+        border: 1px solid #cfe5d8;
+        box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+    }
+
+    @media (max-width: 768px) {
+        .floating-sidebar-toggle {
+            top: 0.85rem;
+            left: 0.85rem;
+            width: 2.7rem;
+            height: 2.7rem;
+        }
+        .floating-notification-shell {
+            top: 0.85rem;
+            right: 0.85rem;
+        }
+
+        .floating-notification-button {
+            width: 2.7rem;
+            height: 2.7rem;
+        }
+
+        .floating-notification-button .notification-bell {
+            font-size: 1.2rem;
+        }
+    }
+
     .header-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .header-glass {
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+    body.overflow-hidden .floating-sidebar-toggle,
+    body.overflow-hidden .floating-notification-button {
+        filter: blur(2px);
+        opacity: 0.55;
+        pointer-events: none;
     }
     .main-content-wrapper {
         width: 100%;
@@ -227,18 +460,32 @@
         transition: margin-left 0.3s ease, width 0.3s ease;
     }
 
-    @media (min-width: 768px) {
-        .main-content-wrapper {
-            margin-left: 16rem;
-            width: calc(100% - 16rem);
-        }
-    }
     </style>
 </head>
 
 <body class="font-poppins antialiased text-sm"
-      x-data="{ openSidebar: false, confirmLogout: false }"
-      x-init="openSidebar = sessionStorage.getItem('sidebarOpen') === 'true';
+      x-data="{
+          confirmLogout: false,
+          isDesktop: window.matchMedia('(min-width: 768px)').matches,
+          openSidebar: (() => {
+              try {
+                  const desktop = window.matchMedia('(min-width: 768px)').matches;
+                  const saved = sessionStorage.getItem('sidebarOpen');
+                  return saved === null ? desktop : saved === 'true';
+              } catch (error) {
+                  return window.matchMedia('(min-width: 768px)').matches;
+              }
+          })()
+      }"
+      x-init="const mediaQuery = window.matchMedia('(min-width: 768px)');
+              const syncViewportState = () => { isDesktop = mediaQuery.matches; };
+              syncViewportState();
+              if (typeof mediaQuery.addEventListener === 'function') {
+                  mediaQuery.addEventListener('change', syncViewportState);
+              } else {
+                  mediaQuery.addListener(syncViewportState);
+              }
+              requestAnimationFrame(() => document.documentElement.removeAttribute('data-sidebar-preinit'));
               $watch('openSidebar', value => sessionStorage.setItem('sidebarOpen', value ? 'true' : 'false'));
               const scrollKey = 'sidebarScrollTop';
               const sidebarScroll = $refs.sidebarScroll;
@@ -249,238 +496,213 @@
                       sessionStorage.setItem(scrollKey, sidebarScroll.scrollTop);
                   }, { passive: true });
               }"
-      :class="{ 'overflow-hidden': openSidebar || confirmLogout }"
+      :class="{ 'overflow-hidden': confirmLogout }"
       @keydown.escape.window="openSidebar = false; confirmLogout = false">
 
 <div class="min-h-screen flex">
 
-    <div class="mobile-overlay md:hidden"
-         :class="{ 'active': openSidebar }"
-         @click="openSidebar = false"
-         x-show="openSidebar"
-         x-transition.opacity
-         x-cloak>
-    </div>
-
-    <aside class="sidebar-gradient text-white w-64 fixed inset-y-0 left-0 z-50 transform md:translate-x-0 transition-all duration-300 backdrop-blur-md"
-           :class="openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
-           x-cloak>
+    <aside class="sidebar-gradient fixed inset-y-0 left-0 z-50 transform transition-all duration-300 -translate-x-full md:translate-x-0"
+           :class="isDesktop ? (openSidebar ? 'sidebar-expanded translate-x-0' : 'sidebar-collapsed translate-x-0') : (openSidebar ? 'translate-x-0' : '-translate-x-full')"
+           @click.capture="if (!isDesktop && $event.target.closest('a[href]')) { openSidebar = false; }">
 
         <div class="sidebar-content">
-            <div class="flex-1 overflow-y-auto sidebar-scroll" x-ref="sidebarScroll">
-                <div class="logo-section flex items-center justify-center border-b border-white/10">
-                    <img src="{{ asset('images/ret-logoo.png') }}" 
-                         alt="RET Cafeteria Logo" 
-                         class="h-14 w-auto">
-                </div>
+            <div class="sidebar-brand">
+                <img src="{{ asset('images/ret-logoo.png') }}" alt="RET Cafeteria Logo">
+            </div>
 
-                <nav class="nav-section">
-                    <div class="section-header text-xs px-6 py-1 font-semibold text-white/70 uppercase tracking-wider">
+            <div class="sidebar-shell flex-1 overflow-hidden">
+                <div class="h-full overflow-y-auto sidebar-scroll" x-ref="sidebarScroll">
+                    <div class="role-badge mx-3 mt-3 mb-1 rounded-lg border border-[#d0e2d7] bg-[#f4faf6] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[#6a7f72]">
+                        Role:
+                        <span class="text-[#057C3C] font-semibold">{{ ucfirst(Auth::user()->role) }}</span>
+                    </div>
+
+                    <nav class="nav-section">
+                        <div class="section-header">
                             Management
                         </div>
 
-                    @if(Auth::user()->role === 'superadmin')
-                        <a href="{{ route('superadmin.users') }}"
+                        @if(Auth::user()->role === 'superadmin')
+                            <a href="{{ route('superadmin.users') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('superadmin.users') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="far fa-user"></i>
+                                </span>
+                                <span>Manage Users</span>
+                            </a>
+                        @endif
+
+                        @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
+                            <a href="{{ route('admin.dashboard') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.dashboard') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </span>
+                                <span>Dashboard</span>
+                            </a>
+
+                            <a href="{{ route('admin.reservations') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.reservations') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="far fa-calendar-check"></i>
+                                </span>
+                                <span>Reservations</span>
+                            </a>
+
+                            <a href="{{ route('admin.payments.index') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.payments.*') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </span>
+                                <span>Payments</span>
+                            </a>
+
+                            <a href="{{ route('admin.reports.index') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.reports.index') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="fas fa-chart-pie"></i>
+                                </span>
+                                <span>Reports</span>
+                            </a>
+
+                            <a href="{{ route('admin.inventory.index') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.inventory.index') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="fas fa-boxes-stacked"></i>
+                                </span>
+                                <span>Inventory</span>
+                            </a>
+
+                            <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="fas fa-utensils"></i>
+                                </span>
+                                <span>Manage Menus</span>
+                            </a>
+
+                            <a href="{{ route('admin.menus.prices') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.menus.prices') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="fas fa-peso-sign"></i>
+                                </span>
+                                <span>Manage Prices</span>
+                            </a>
+
+                            <a href="{{ route('admin.calendar') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.calendar') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="far fa-calendar-days"></i>
+                                </span>
+                                <span>Calendar</span>
+                            </a>
+
+                            <a href="{{ route('admin.messages.index') }}"
+                               wire:navigate
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.messages.*') ? 'active-menu-item' : '' }}">
+                                <span class="menu-icon">
+                                    <i class="far fa-envelope"></i>
+                                </span>
+                                <span>Messages</span>
+                            </a>
+                        @endif
+
+                        <div class="section-header">
+                            Settings
+                        </div>
+
+                        <a href="{{ route('profile.edit') }}"
                            wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('superadmin.users') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-user {{ request()->routeIs('superadmin.users') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>                  
-                            Manage Users
-                        </a>
-                    @endif
-
-                    @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
-                        
-                        <a href="{{ route('admin.dashboard') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.dashboard') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-chart-line {{ request()->routeIs('admin.dashboard') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
+                           class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('profile.edit') ? 'active-menu-item' : '' }}">
+                            <span class="menu-icon">
+                                <i class="fas fa-gear"></i>
                             </span>
-                            Dashboard
+                            <span>Account Settings</span>
                         </a>
-
-                        <a href="{{ route('admin.reservations') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reservations') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-calendar-check {{ request()->routeIs('admin.reservations') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Reservations
-                        </a>
-
-                        <a href="{{ route('admin.payments.index') }}"
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.payments.*') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-file-invoice-dollar {{ request()->routeIs('admin.payments.*') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Payments
-                        </a>
-
-                        <a href="{{ route('admin.reports.index') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.reports.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-chart-pie {{ request()->routeIs('admin.reports.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Reports
-                        </a>
-
-                        <a href="{{ route('admin.inventory.index') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.inventory.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-boxes-stacked {{ request()->routeIs('admin.inventory.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Inventory
-                        </a>
-
-                        <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-utensils {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Manage Menus
-                        </a>
-
-                        <a href="{{ route('admin.menus.prices') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.menus.prices') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="fas fa-peso-sign {{ request()->routeIs('admin.menus.prices') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Manage Prices
-                        </a>
-
-                        <a href="{{ route('admin.calendar') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.calendar') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-calendar-days {{ request()->routeIs('admin.calendar') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Calendar
-                        </a>
-
-                        <a href="{{ route('admin.messages.index') }}"
-                           wire:navigate
-                           class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('admin.messages.*') ? 'active-menu-item' : '' }}"
-                           @click="openSidebar = false">
-                            <span class="flex items-center justify-center w-5 h-5 mr-3">
-                                <i class="far fa-envelope {{ request()->routeIs('admin.messages.*') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                            </span>
-                            Messages
-                        </a>
-                    @endif
-
-                    <div class="section-header text-xs px-6 font-semibold text-white/70 uppercase tracking-wider">
-                        Settings
-                    </div>
-
-                    <a href="{{ route('profile.edit') }}"
-                       wire:navigate
-                       class="menu-item flex items-center px-10 py-2 transition-all duration-300 ease-in-out font-medium {{ request()->routeIs('profile.edit') ? 'active-menu-item' : '' }}"
-                       @click="openSidebar = false">
-                        <span class="flex items-center justify-center w-5 h-5 mr-3">
-                            <i class="fas fa-gear {{ request()->routeIs('profile.edit') ? 'text-[#FB3E05]' : 'text-white' }}"></i>
-                        </span>
-                        Account Settings
-                    </a>
-                </nav>
+                    </nav>
+                </div>
             </div>
 
             <div class="logout-section">
                 <button @click="confirmLogout = true"
-                        class="w-full flex items-center justify-center gap-2 bg-white/20 text-white hover:bg-red-500/90 hover-glow transition-all duration-300 rounded-full px-4 py-2.5 font-semibold shadow-md">
+                        class="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-white bg-[#dc2626] border border-[#b91c1c] shadow-sm hover:bg-[#b91c1c] hover:border-[#991b1b] transition-all duration-200">
                     <i class="fas fa-right-from-bracket"></i>
-                    Logout
+                    <span class="logout-text">Logout</span>
                 </button>
             </div>
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col main-content-wrapper">
-        <header class="header-connected header-glass px-4 sm:px-6 py-3 fixed top-0 left-0 right-0 md:left-64 z-30 transition-all duration-300">
-            <div class="flex items-center justify-between gap-3 sm:gap-4">
-                <div class="flex items-center gap-4">
-                    <button @click="openSidebar = !openSidebar"
-                            class="md:hidden p-2 rounded-lg header-button header-transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                    <div class="hidden md:block">
-                        <h1 class="text-lg font-semibold text-white">@yield('page-title', 'Dashboard')</h1>
-                    </div>
-                </div>
+    <button type="button"
+            @click="openSidebar = !openSidebar"
+            class="floating-sidebar-toggle"
+            :aria-label="openSidebar ? 'Close sidebar' : 'Open sidebar'"
+            :title="openSidebar ? 'Close sidebar' : 'Open sidebar'">
+        <i class="fas text-base" :class="openSidebar ? 'fa-xmark' : 'fa-bars'"></i>
+    </button>
 
-                <div class="flex items-center justify-end gap-3 sm:gap-4">
-                    <div class="relative" x-data="notificationsPanel()" x-init="init()">
-                        <button @click="open = !open"
-                                :aria-expanded="open.toString()"
-                                class="header-button p-2 rounded-full header-transition relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
-                            </svg>
-                            <span x-show="unreadCount > 0"
-                                  x-text="unreadCount > 99 ? '99+' : unreadCount"
-                                  class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[0.65rem] font-semibold flex items-center justify-center shadow"
-                                  x-cloak></span>
-                        </button>
-                        <div x-show="open"
-                             @click.outside="open = false"
-                             x-transition.opacity.scale.90
-                             class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white border border-gray-200 rounded-lg shadow-xl z-50 header-transition"
-                             x-cloak>
-                            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-                                <span class="font-semibold text-gray-800">Notifications</span>
-                                <button type="button" class="text-xs text-gray-500 hover:text-gray-700" @click="markAllRead" x-show="unreadCount > 0">
-                                    Mark all read
+    <div class="floating-notification-shell" x-data="notificationsPanel()" x-init="init()">
+        <button @click="open = !open"
+                :aria-expanded="open.toString()"
+                class="floating-notification-button header-transition relative"
+                aria-label="Toggle notifications">
+            <i class="fa-regular fa-bell notification-bell" aria-hidden="true"></i>
+            <span x-show="unreadCount > 0"
+                  x-text="unreadCount > 99 ? '99+' : unreadCount"
+                  class="absolute -top-1 -right-2 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#FB3E05] text-white text-[0.65rem] font-semibold flex items-center justify-center shadow"
+                  x-cloak></span>
+        </button>
+        <div x-show="open"
+             @click.outside="open = false"
+             x-transition.opacity.scale.90
+             class="notification-dropdown absolute right-0 mt-2 w-80 max-w-[90vw] bg-white rounded-lg z-50 header-transition"
+             x-cloak>
+            <div class="p-4 border-b border-[#d8e9df] flex items-center justify-between">
+                <span class="font-semibold text-[#184c35]">Notifications</span>
+                <button type="button" class="text-xs text-[#2d7853] hover:text-[#00462E]" @click="markAllRead" x-show="unreadCount > 0">
+                    Mark all read
+                </button>
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+                <template x-if="loading">
+                    <li class="px-4 py-3 text-[#4a6d5a]">Loading notifications...</li>
+                </template>
+                <template x-if="!loading && items.length === 0">
+                    <li class="px-4 py-3 text-[#4a6d5a]">No new notifications</li>
+                </template>
+                <template x-for="item in items" :key="item.id">
+                    <li class="px-4 py-3 border-b border-[#edf4ef] last:border-b-0 hover:bg-[#f4faf6] transition-colors">
+                        <div class="flex items-start gap-3">
+                            <span class="mt-2 w-2 h-2 rounded-full"
+                                  :class="item.read ? 'bg-gray-300' : 'bg-[#FB3E05]'"></span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-[#163f2d]" x-text="item.actor"></p>
+                                <p class="text-sm text-[#3f624f]" x-text="item.description"></p>
+                                <p class="text-xs text-[#6f8f7e] mt-1" x-text="item.time"></p>
+                                <button type="button"
+                                        class="mt-2 text-xs text-[#057C3C] hover:text-[#00462E]"
+                                        @click="toggleRead(item.id)">
+                                    <span x-text="item.read ? 'Mark as unread' : 'Mark as read'"></span>
                                 </button>
                             </div>
-                            <ul class="max-h-72 overflow-y-auto">
-                                <template x-if="loading">
-                                    <li class="px-4 py-3 text-gray-600">Loading notifications...</li>
-                                </template>
-                                <template x-if="!loading && items.length === 0">
-                                    <li class="px-4 py-3 text-gray-600">No new notifications</li>
-                                </template>
-                                <template x-for="item in items" :key="item.id">
-                                    <li class="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                        <div class="flex items-start gap-3">
-                                            <span class="mt-2 w-2 h-2 rounded-full"
-                                                  :class="item.read ? 'bg-gray-300' : 'bg-blue-500'"></span>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-medium text-gray-900" x-text="item.actor"></p>
-                                                <p class="text-sm text-gray-600" x-text="item.description"></p>
-                                                <p class="text-xs text-gray-400 mt-1" x-text="item.time"></p>
-                                                <button type="button"
-                                                        class="mt-2 text-xs text-blue-600 hover:text-blue-800"
-                                                        @click="toggleRead(item.id)">
-                                                    <span x-text="item.read ? 'Mark as unread' : 'Mark as read'"></span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </template>
-                            </ul>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </header>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
 
-        <main class="admin-shell p-4 sm:p-6 overflow-y-auto flex-1 mt-24 sm:mt-16 bg-gray-100">
+    <div class="flex-1 flex flex-col main-content-wrapper" :class="isDesktop ? (openSidebar ? 'sidebar-offset' : 'sidebar-collapsed-offset') : ''">
+        <main class="admin-shell admin-surface p-4 sm:p-6 overflow-y-auto flex-1 pt-20">
             @yield('content')
         </main>
     </div>

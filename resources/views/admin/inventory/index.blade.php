@@ -54,13 +54,13 @@
                         </svg>
                     </button>
                 </div>
-                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                    <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600 mr-auto">
-                        <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
-                        Total Items: {{ $items->total() }}
-                    </span>
-                </div>
             </div>
+        </div>
+        <div class="mb-4">
+            <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
+                Total Items: {{ $items->total() }}
+            </span>
         </div>
 
         <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
@@ -166,7 +166,7 @@
                                         class="!py-2 !px-3 text-xs"
                                         @click="deletingItem = JSON.parse($el.dataset.item); showDeleteModal = true"
                                         data-item='@json($item)'>
-                                        <x-admin.ui.icon name="fa-trash-alt" style="fas" size="sm" />
+                                        <x-admin.ui.icon name="fa-trash-can" style="fas" size="sm" />
                                         Delete
                                     </x-admin.ui.button.danger>
                                 </div>
@@ -257,7 +257,7 @@
                     <x-admin.ui.button.secondary type="button" @click="showCreateModal = false">
                         Cancel
                     </x-admin.ui.button.secondary>
-                    <x-admin.ui.button.primary type="submit">
+                    <x-admin.ui.button.primary type="submit" data-loading-text="Saving Item...">
                         Save Item
                     </x-admin.ui.button.primary>
                 </div>
@@ -326,7 +326,7 @@
                     <x-admin.ui.button.secondary type="button" @click="showEditModal = false; editingItem = null">
                         Cancel
                     </x-admin.ui.button.secondary>
-                    <x-admin.ui.button.primary type="submit">
+                    <x-admin.ui.button.primary type="submit" data-loading-text="Updating Item...">
                         Update Item
                     </x-admin.ui.button.primary>
                 </div>
@@ -366,7 +366,7 @@
             <div class="flex items-center justify-between gap-4 border-b border-admin-neutral-100 px-6 py-4">
                 <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-admin bg-admin-danger-light text-admin-danger">
-                        <i class="fas fa-exclamation-triangle text-lg"></i>
+                        <i class="fas fa-triangle-exclamation text-lg"></i>
                     </span>
                     <div>
                         <h2 id="delete-inventory-title" class="text-lg font-semibold text-admin-neutral-900">Confirm Deletion</h2>
@@ -394,7 +394,7 @@
                 <x-admin.ui.button.secondary type="button" @click="showDeleteModal = false; deletingItem = null">
                     Cancel
                 </x-admin.ui.button.secondary>
-                <x-admin.ui.button.danger type="submit">
+                <x-admin.ui.button.danger type="submit" data-loading-text="Deleting Item...">
                     Delete
                 </x-admin.ui.button.danger>
             </form>
@@ -457,10 +457,28 @@ document.addEventListener('livewire:navigated', function() {
         }
     }
 
+    function startLoading(form, event, fallbackText) {
+        if (!window.cmsActionButtons || typeof window.cmsActionButtons.startFormSubmit !== 'function') {
+            return true;
+        }
+        return window.cmsActionButtons.startFormSubmit(form, event ? event.submitter : null, fallbackText);
+    }
+
+    function stopLoading(form) {
+        if (!window.cmsActionButtons || typeof window.cmsActionButtons.resetForm !== 'function') {
+            return;
+        }
+        window.cmsActionButtons.resetForm(form);
+    }
+
     // Create
     const createForm = document.getElementById('createInventoryForm');
     if (createForm) {
         createForm.addEventListener('submit', async function(e) {
+            if (!startLoading(createForm, e, 'Saving Item...')) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const result = await submitForm(createForm);
             if (result !== null) {
@@ -468,6 +486,8 @@ document.addEventListener('livewire:navigated', function() {
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-create-success' }));
                 setTimeout(function(){ location.reload(); }, 900);
+            } else {
+                stopLoading(createForm);
             }
         });
     }
@@ -476,12 +496,18 @@ document.addEventListener('livewire:navigated', function() {
     const editForm = document.getElementById('editInventoryForm');
     if (editForm) {
         editForm.addEventListener('submit', async function(e) {
+            if (!startLoading(editForm, e, 'Updating Item...')) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const result = await submitForm(editForm);
             if (result !== null) {
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-update-success' }));
                 setTimeout(function(){ location.reload(); }, 700);
+            } else {
+                stopLoading(editForm);
             }
         });
     }
@@ -490,6 +516,10 @@ document.addEventListener('livewire:navigated', function() {
     const deleteForm = document.getElementById('deleteInventoryForm');
     if (deleteForm) {
         deleteForm.addEventListener('submit', async function(e) {
+            if (!startLoading(deleteForm, e, 'Deleting Item...')) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const result = await submitForm(deleteForm);
             if (result !== null) {
@@ -515,8 +545,11 @@ document.addEventListener('livewire:navigated', function() {
                     }
                 }
 
+                stopLoading(deleteForm);
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-delete-success' }));
+            } else {
+                stopLoading(deleteForm);
             }
         });
     }

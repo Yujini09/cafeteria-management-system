@@ -581,7 +581,7 @@
                             <button type="button" id="back-button" class="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 shadow-lg font-semibold">
                                 Back
                             </button>
-                            <button type="button" id="confirm-button" class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold flex items-center">
+                            <button type="button" id="confirm-button" data-loading-text="Submitting..." class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold flex items-center">
                                 Confirm
                             </button>
                         </div>
@@ -802,7 +802,7 @@
             <button type="button" onclick="closeConfirmationModal()" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition duration-150 font-medium">
                 Cancel
             </button>
-            <button type="button" onclick="submitReservation()" class="px-6 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 font-medium">
+            <button type="button" id="submit-reservation-button" data-loading-text="Submitting Reservation..." onclick="submitReservation(this)" class="px-6 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 font-medium">
                 Confirm Reservation
             </button>
         </div>
@@ -864,12 +864,19 @@
         modal.style.display = 'none';
     }
 
-    function submitReservation() {
+    function submitReservation(triggerButton = null) {
+        if (triggerButton && window.cmsActionButtons) {
+            const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Submitting Reservation...');
+            if (!started) return;
+        }
+
+        const confirmButton = document.getElementById('confirm-button');
+        if (confirmButton && window.cmsActionButtons) {
+            window.cmsActionButtons.start(confirmButton, confirmButton.dataset.loadingText || 'Submitting...');
+        }
+
         // Close confirmation modal first
         closeConfirmationModal();
-        
-        // Show loading state
-        const confirmButton = document.getElementById('confirm-button');
         
         // Actually submit the form
         document.getElementById('reservation-form').submit();

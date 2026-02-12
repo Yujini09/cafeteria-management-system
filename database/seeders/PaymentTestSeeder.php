@@ -75,14 +75,49 @@ class PaymentTestSeeder extends Seeder
             ]);
         }
 
+        $finishedUnpaidReservation = Reservation::updateOrCreate(
+            [
+                'user_id' => $customer->id,
+                'event_name' => 'Payment Test - Finished Unpaid Reservation 2',
+            ],
+            [
+                'event_date' => Carbon::today()->subDays(6)->toDateString(),
+                'end_date' => Carbon::today()->subDays(5)->toDateString(),
+                'event_time' => '10:00',
+                'number_of_persons' => 30,
+                'status' => 'approved',
+                'payment_status' => 'pending',
+                'payment_requested_at' => null,
+                'payment_last_reminder_at' => null,
+                'payment_reminder_count' => 0,
+                'contact_person' => $customer->name,
+                'department' => $customer->department ?? 'CLSU',
+                'address' => 'CLSU Main Campus',
+                'email' => $customerEmail,
+                'contact_number' => $customer->contact_number ?? $customer->contact_no,
+                'venue' => 'Conference Hall',
+                'special_requests' => 'Seeder: additional finished unpaid reservation.',
+            ]
+        );
+
+        if (! $finishedUnpaidReservation->items()->exists()) {
+            ReservationItem::create([
+                'reservation_id' => $finishedUnpaidReservation->id,
+                'menu_id' => $menu->id,
+                'quantity' => 30,
+                'day_number' => 1,
+                'meal_time' => 'lunch',
+            ]);
+        }
+
         $reviewReservation = Reservation::updateOrCreate(
             [
                 'user_id' => $customer->id,
                 'event_name' => 'Payment Test - Under Review',
             ],
             [
-                'event_date' => Carbon::today()->addDays(3)->toDateString(),
-                'end_date' => Carbon::today()->addDays(3)->toDateString(),
+                'event_date' => Carbon::today()->subDays(5)->toDateString(),
+                'end_date' => Carbon::today()->subDays(4)->toDateString(),
                 'event_time' => '12:00',
                 'number_of_persons' => 25,
                 'status' => 'approved',

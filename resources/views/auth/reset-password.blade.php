@@ -26,7 +26,7 @@
                 </x-success-modal>
 
                 @if(session('status') !== $passwordResetStatus)
-                    <form method="POST" action="{{ route('password.store') }}" class="space-y-4">
+                    <form method="POST" action="{{ route('password.store') }}" class="space-y-4" data-action-loading>
                         @csrf
 
                         <input type="hidden" name="token" value="{{ $request->route('token') }}">
@@ -81,7 +81,7 @@
                         </div>
 
                         <div class="flex items-center justify-end">
-                            <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300">
+                            <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300" data-loading-text="Resetting Password...">
                                 {{ __('Reset Password') }}
                             </x-primary-button>
                         </div>

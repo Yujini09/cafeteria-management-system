@@ -33,7 +33,7 @@
 
                 <x-auth-session-status class="mb-6 bg-orange-100 text-orange-800 p-3 rounded-lg border border-orange-300" :status="session('status')" />
 
-                <form method="POST" action="{{ route('password.email') }}" class="space-y-6" x-data="{ sending: false }" @submit="if (sending) { $event.preventDefault(); return; } sending = true">
+                <form method="POST" action="{{ route('password.email') }}" class="space-y-6" x-data="{ sending: false }" @submit="if (sending) { $event.preventDefault(); return; } sending = true" data-action-loading>
                     @csrf
 
                     <div class="relative">
@@ -51,7 +51,7 @@
 
                     <div class="flex items-center justify-end mt-6">
                         {{-- Button styled to use primary orange accent --}}
-                        <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-[1.02]"
+                        <x-primary-button class="w-full justify-center bg-orange-500 hover:bg-orange-600 focus:ring-orange-500 h-12 text-lg font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-[1.02]" data-loading-text="Sending Reset Link..."
                             x-bind:disabled="sending"
                             x-bind:class="sending ? 'opacity-70 cursor-not-allowed hover:scale-100' : ''">
                             <span x-text="sending ? 'Email is currently sending...' : 'Email Password Reset Link'">Email Password Reset Link</span>

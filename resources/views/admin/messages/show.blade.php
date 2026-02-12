@@ -17,6 +17,7 @@
     $mailtoLink = "mailto:" . $message->email . "?subject=" . rawurlencode($subject) . "&body=" . rawurlencode($body);
 @endphp
 
+<div class="admin-page-shell p-6 max-w-full md:max-w-none md:ml-0 md:mr-0">
 <div class="max-w-4xl mx-auto space-y-6">
 
     <x-success-modal name="message-show-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
@@ -31,25 +32,25 @@
         </x-slot>
     </x-admin.ui.modal>
     
-    <a href="{{ route('admin.messages.index') }}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-green-600 transition-colors">
+    <a href="{{ route('admin.messages.index') }}" class="inline-flex items-center text-sm font-medium text-admin-neutral-500 hover:text-admin-primary transition-colors">
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
         Back to Inbox
     </a>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 overflow-hidden">
         
-        <div class="bg-gray-50/50 p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="bg-admin-neutral-50 p-6 border-b border-admin-neutral-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center text-green-700 font-bold text-lg">
+                <div class="w-12 h-12 rounded-full bg-admin-primary-light flex items-center justify-center text-admin-primary font-bold text-lg">
                     {{ substr($message->name, 0, 1) }}
                 </div>
                 
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">{{ $message->name }}</h1>
-                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                        <a href="{{ $mailtoLink }}" class="hover:text-green-600 hover:underline transition-colors">
+                    <h1 class="text-xl font-bold text-admin-neutral-900">{{ $message->name }}</h1>
+                    <div class="flex items-center gap-2 text-sm text-admin-neutral-500">
+                        <a href="{{ $mailtoLink }}" class="hover:text-admin-primary hover:underline transition-colors">
                             {{ $message->email }}
                         </a>
                         <span>&bull;</span>
@@ -60,17 +61,17 @@
 
             <div class="flex items-center gap-3">
                 <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'message-reply' }))"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all text-sm font-medium flex items-center gap-2 shadow-sm">
+                        class="px-4 py-2 bg-white border border-admin-neutral-200 text-admin-neutral-700 rounded-admin hover:bg-admin-neutral-50 hover:border-admin-neutral-300 transition-all text-sm font-medium flex items-center gap-2 shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7l-5 5 5 5M2 12h11a6 6 0 016 6v1"></path>
                     </svg>
                     Reply
                 </button>
                 
-                <form action="{{ route('admin.messages.delete', $message->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this message?');">
+                <form action="{{ route('admin.messages.delete', $message->id) }}" method="POST" data-action-loading onsubmit="return confirm('Are you sure you want to permanently delete this message?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 border border-transparent rounded-lg hover:bg-red-100 transition-all text-sm font-medium flex items-center gap-2">
+                    <button type="submit" data-loading-text="Deleting Message..." class="px-4 py-2 bg-admin-danger-light text-admin-danger border border-transparent rounded-admin hover:bg-red-100 transition-all text-sm font-medium flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
@@ -81,12 +82,13 @@
         </div>
 
         <div class="p-8">
-            <div class="prose max-w-none text-gray-800 leading-relaxed whitespace-pre-wrap font-medium">
+            <div class="prose max-w-none text-admin-neutral-800 leading-relaxed whitespace-pre-wrap font-medium">
 {{ $message->message }}
             </div>
         </div>
     </div>
 
+</div>
 </div>
 
 <x-admin.ui.modal name="message-reply" title="Reply to {{ $message->name }}" variant="info" maxWidth="lg">

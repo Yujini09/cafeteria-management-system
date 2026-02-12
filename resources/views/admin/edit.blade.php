@@ -18,6 +18,12 @@
         </div>
     </div>
 
+    @if($user->must_change_password)
+        <div class="mb-4 rounded-admin border border-amber-200 bg-admin-warning-light px-4 py-3 text-sm text-admin-warning">
+            Your account requires a password change. Please update your password to continue using the system.
+        </div>
+    @endif
+
     {{-- Success modals: use unified admin modal styles for consistency --}}
     <x-success-modal name="password-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">Password successfully changed.</p>
@@ -64,18 +70,18 @@
 
     {{-- Profile Settings Modal --}}
     <x-admin.ui.modal name="profile-settings" title="Profile Settings" variant="info" maxWidth="md">
-        <form method="POST" action="{{ route('profile.update') }}" class="space-y-4">
+        <form method="POST" action="{{ route('profile.update') }}" class="space-y-4" data-action-loading>
             @csrf
             @method('patch')
 
             <x-admin.forms.input name="name" label="Full Name" :value="old('name', $user->name)" required />
 
-            @if($user->hasRole('admin'))
+            @if(in_array($user->role, ['admin', 'superadmin'], true))
                 <x-admin.forms.input
                     name="email"
                     label="Personal Email"
                     :value="old('email', $user->email)"
-                    helper="Contact superadmin to change email address."
+                    helper="Email address cannot be changed for admin and superadmin accounts."
                     disabled
                     readonly
                     class="bg-admin-neutral-100 text-admin-neutral-500 cursor-not-allowed"
@@ -86,14 +92,14 @@
 
             <div class="flex justify-end gap-3">
                 <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.primary type="submit">Update Profile</x-admin.ui.button.primary>
+                <x-admin.ui.button.primary type="submit" data-loading-text="Saving Settings...">Update Profile</x-admin.ui.button.primary>
             </div>
         </form>
     </x-admin.ui.modal>
 
     {{-- Change Password Modal --}}
     <x-admin.ui.modal name="change-password" title="Change Password" variant="info" maxWidth="md">
-        <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
+        <form method="POST" action="{{ route('password.update') }}" class="space-y-4" data-action-loading>
             @csrf
             @method('put')
 
@@ -103,7 +109,7 @@
 
             <div class="flex justify-end gap-3">
                 <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.primary type="submit">Update Password</x-admin.ui.button.primary>
+                <x-admin.ui.button.primary type="submit" data-loading-text="Saving Settings...">Update Password</x-admin.ui.button.primary>
             </div>
         </form>
     </x-admin.ui.modal>
@@ -128,6 +134,15 @@
 </script>
 @endif
 @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
+<script>
+    document.addEventListener('livewire:navigated', function () {
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'change-password' }));
+        });
+    });
+</script>
+@endif
+@if($user->must_change_password)
 <script>
     document.addEventListener('livewire:navigated', function () {
         requestAnimationFrame(() => {

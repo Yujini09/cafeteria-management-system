@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Reservation Details - CLSU RET Cafeteria')
 
@@ -83,6 +83,11 @@
         color: #065f46;
         border: 1px solid #a7f3d0;
     }
+    .payment-na {
+        background-color: #e5e7eb;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
 @endsection
 
 @section('content')
@@ -130,10 +135,11 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reservation ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Details</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu Items</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date &amp; Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meal Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Menu Type</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Persons</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -174,7 +180,7 @@
                                                 }
                                             }
                                         @endphp
-                                        ₱{{ number_format($finalTotal, 2) }}
+                                        &#8369;{{ number_format($finalTotal, 2) }}
                                     </td>
 
                                     <td class="py-6 whitespace-nowrap text-center">
@@ -182,25 +188,13 @@
                                     </td>
 
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @switch($reservation->status)
-                                            @case('approved')
-                                                <span class="status-label status-approved">Approved</span>
-                                                @break
-                                            @case('declined')
-                                                <span class="status-label status-declined">Declined</span>
-                                                @break
-                                            @case('cancelled')
-                                                <span class="status-label status-cancelled">Cancelled</span>
-                                                @break
-                                            @default
-                                                <span class="status-label status-pending">Pending</span>
-                                        @endswitch
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
                                         @php
-                                            $paymentStatus = $reservation->payment_status ?? 'pending';
+                                            $paymentStatus = $reservation->payment_status;
+                                            $isPaymentApplicable = $reservation->status === 'approved';
                                         @endphp
-                                        @if($paymentStatus === 'paid')
+                                        @if(!$isPaymentApplicable)
+                                            <span class="payment-label payment-na">N/A</span>
+                                        @elseif($paymentStatus === 'paid')
                                             <span class="payment-label payment-paid">Paid</span>
                                         @elseif($paymentStatus === 'under_review')
                                             <span class="payment-label payment-under_review">Under Review</span>
@@ -249,10 +243,10 @@
                                             @endif
                                             
                                             @if(in_array($reservation->status, ['pending']))
-                                                <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
+                                                <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" class="inline" data-action-loading onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" 
+                                                    <button type="submit" data-loading-text="Cancelling Reservation..."
                                                             class="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 text-xs font-semibold">
                                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -323,35 +317,6 @@
         }
     });
 
-        // Helper function to format time (remove seconds)
-    function formatTimeDisplay($timeString) {
-        if (empty($timeString)) {
-            return '';
-        }
-        
-        // If it's already in HH:MM format, return as-is
-        if (preg_match('/^\d{1,2}:\d{2}$/', $timeString)) {
-            return $timeString;
-        }
-        
-        // If it has seconds, remove them
-        if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $timeString)) {
-            return substr($timeString, 0, 5);
-        }
-        
-        // If it's a time range like "08:00-10:00", handle it
-        if (strpos($timeString, '-') !== false) {
-            $parts = explode('-', $timeString);
-            $formattedParts = array_map(function($part) {
-                $trimmed = trim($part);
-                return preg_replace('/:\d{2}$/', '', $trimmed);
-            }, $parts);
-            return implode(' - ', $formattedParts);
-        }
-        
-        // Default: just remove seconds if they exist
-        return preg_replace('/:\d{2}$/', '', $timeString);
-    }
 
     </script>
 

@@ -29,6 +29,7 @@ class PasswordController extends Controller
 
         if ($user !== null) {
             $user->password = Hash::make($data['password']);
+            $user->must_change_password = false;
             $user->save();
 
             // Audit: record password update
