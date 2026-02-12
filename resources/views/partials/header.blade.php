@@ -36,26 +36,49 @@
             <a href="{{ url('/contact') }}" class="nav-link hover:text-ret-green-light py-1 {{ request()->is('contact') ? 'active' : 'text-gray-600' }}">Contact Us</a>
 
             <div class="relative group flex items-center">
-                <a 
-                    href="#" 
-                    class="nav-link text-gray-600 hover:text-ret-green-light flex items-center cursor-pointer py-1 {{ request()->is('reservation_form') || request()->is('reservation_form_menu') || request()->is('reservation_details') || request()->is('reservations/*') ? 'active' : '' }}"
-                >
-                    Reservation
-                    <svg class="w-4 h-4 ml-1 transform transition duration-300 group-hover:rotate-180" 
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </a>
+                @guest
+                    <a
+                        href="{{ route('login') }}"
+                        data-login-required="true"
+                        class="nav-link text-gray-600 hover:text-ret-green-light flex items-center cursor-pointer py-1"
+                    >
+                        Reservation
+                        <svg class="w-4 h-4 ml-1 transform transition duration-300 group-hover:rotate-180"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </a>
+                @else
+                    <a
+                        href="#"
+                        class="nav-link text-gray-600 hover:text-ret-green-light flex items-center cursor-pointer py-1 {{ request()->is('reservation_form') || request()->is('reservation_form_menu') || request()->is('reservation_details') || request()->is('reservations/*') ? 'active' : '' }}"
+                    >
+                        Reservation
+                        <svg class="w-4 h-4 ml-1 transform transition duration-300 group-hover:rotate-180"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </a>
+                @endguest
 
                 <div class="absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 
                             opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 transform z-50">
                     <div class="py-1">
-                        <a href="{{ route('reservation_form') }}" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150 {{ request()->routeIs('reservation_form') || request()->routeIs('reservation_form_menu') ? 'active' : '' }}">
-                            Make a Reservation
-                        </a>
-                        <a href="{{ route('reservation_details') }}" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150 {{ request()->routeIs('reservation_details') || request()->routeIs('reservation_view') ? 'active' : '' }}">
-                            View My Reservations
-                        </a>
+                        @auth
+                            <a href="{{ route('reservation_form') }}" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150 {{ request()->routeIs('reservation_form') || request()->routeIs('reservation_form_menu') ? 'active' : '' }}">
+                                Make a Reservation
+                            </a>
+                            <a href="{{ route('reservation_details') }}" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150 {{ request()->routeIs('reservation_details') || request()->routeIs('reservation_view') ? 'active' : '' }}">
+                                View My Reservations
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" data-login-required="true" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150">
+                                Make a Reservation
+                            </a>
+                            <a href="{{ route('login') }}" data-login-required="true" class="dropdown-link block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-ret-green-light transition duration-150">
+                                View My Reservations
+                            </a>
+                        @endauth
                     </div>
                 </div>
             </div>
@@ -175,6 +198,73 @@
         </div>
     </div>
 </header>
+
+@guest
+<div id="login-required-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-xl bg-white shadow-2xl border border-gray-100 p-6">
+        <h3 class="text-xl font-bold text-gray-900">Login Required</h3>
+        <p class="mt-2 text-sm text-gray-600">
+            You are required to log in first before making a reservation.
+        </p>
+        <div class="mt-6 flex justify-end gap-3">
+            <button type="button"
+                id="close-login-required-modal"
+                class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-200">
+                Cancel
+            </button>
+            <a href="{{ route('login') }}"
+                class="px-4 py-2 text-white bg-clsu-green hover:bg-green-700 rounded-lg transition duration-200">
+                Proceed logging in
+            </a>
+        </div>
+    </div>
+</div>
+@endguest
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginRequiredModal = document.getElementById('login-required-modal');
+    const loginRequiredTriggers = document.querySelectorAll('[data-login-required="true"]');
+    const closeLoginRequiredModalButton = document.getElementById('close-login-required-modal');
+
+    if (!loginRequiredModal || loginRequiredTriggers.length === 0) {
+        return;
+    }
+
+    function openLoginRequiredModal(event) {
+        event.preventDefault();
+        loginRequiredModal.classList.remove('hidden');
+        loginRequiredModal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeLoginRequiredModal() {
+        loginRequiredModal.classList.add('hidden');
+        loginRequiredModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    loginRequiredTriggers.forEach(trigger => {
+        trigger.addEventListener('click', openLoginRequiredModal);
+    });
+
+    if (closeLoginRequiredModalButton) {
+        closeLoginRequiredModalButton.addEventListener('click', closeLoginRequiredModal);
+    }
+
+    loginRequiredModal.addEventListener('click', function(event) {
+        if (event.target === loginRequiredModal) {
+            closeLoginRequiredModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && !loginRequiredModal.classList.contains('hidden')) {
+            closeLoginRequiredModal();
+        }
+    });
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

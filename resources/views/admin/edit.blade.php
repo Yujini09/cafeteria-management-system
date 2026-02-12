@@ -70,7 +70,7 @@
 
     {{-- Profile Settings Modal --}}
     <x-admin.ui.modal name="profile-settings" title="Profile Settings" variant="info" maxWidth="md">
-        <form method="POST" action="{{ route('profile.update') }}" class="space-y-4">
+        <form method="POST" action="{{ route('profile.update') }}" class="space-y-4" data-action-loading>
             @csrf
             @method('patch')
 
@@ -92,14 +92,14 @@
 
             <div class="flex justify-end gap-3">
                 <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.primary type="submit">Update Profile</x-admin.ui.button.primary>
+                <x-admin.ui.button.primary type="submit" data-loading-text="Saving Settings...">Update Profile</x-admin.ui.button.primary>
             </div>
         </form>
     </x-admin.ui.modal>
 
     {{-- Change Password Modal --}}
     <x-admin.ui.modal name="change-password" title="Change Password" variant="info" maxWidth="md">
-        <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
+        <form method="POST" action="{{ route('password.update') }}" class="space-y-4" data-action-loading>
             @csrf
             @method('put')
 
@@ -109,7 +109,7 @@
 
             <div class="flex justify-end gap-3">
                 <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.primary type="submit">Update Password</x-admin.ui.button.primary>
+                <x-admin.ui.button.primary type="submit" data-loading-text="Saving Settings...">Update Password</x-admin.ui.button.primary>
             </div>
         </form>
     </x-admin.ui.modal>

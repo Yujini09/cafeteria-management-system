@@ -144,7 +144,7 @@
                         </div>
 
                         <div>
-                            <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-200 text-white" id="registerBtn">
+                            <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-200 text-white" id="registerBtn" data-loading-text="Creating Account...">
                                 {{ __('Register') }}
                             </x-primary-button>
                         </div>
@@ -226,11 +226,18 @@
 
             const formData = new FormData(this);
             const registerBtn = document.getElementById('registerBtn');
+            if (!registerBtn) return;
+            const loadingHelper = window.cmsActionButtons || null;
             const originalText = registerBtn.innerHTML;
 
-            // Disable button and show loading
-            registerBtn.disabled = true;
-            registerBtn.innerHTML = 'Creating Account...';
+            if (loadingHelper) {
+                const started = loadingHelper.start(registerBtn, registerBtn.dataset.loadingText || 'Creating Account...');
+                if (!started) return;
+            } else {
+                // Fallback if shared helper is unavailable.
+                registerBtn.disabled = true;
+                registerBtn.innerHTML = registerBtn.dataset.loadingText || 'Creating Account...';
+            }
 
             fetch(this.action, {
                 method: 'POST',
@@ -261,14 +268,14 @@
                     if (data.errors) {
                         let errorHtml = '<ul class="text-left space-y-2">';
                         for (let field in data.errors) {
-                            errorHtml += <li class="flex items-start"><span class="text-admin-danger mr-2">•</span><span>${data.errors[field][0]}</span></li>;
+                            errorHtml += `<li class="flex items-start"><span class="text-admin-danger mr-2">&bull;</span><span>${data.errors[field][0]}</span></li>`;
                         }
                         errorHtml += '</ul>';
                         document.getElementById('errorModalTitle').textContent = 'Registration Error';
                         document.getElementById('errorModalContent').innerHTML = errorHtml;
                     } else {
                         document.getElementById('errorModalTitle').textContent = 'Registration Failed';
-                        document.getElementById('errorModalContent').innerHTML = <p>${data.message || 'Registration failed. Please try again.'}</p>;
+                        document.getElementById('errorModalContent').innerHTML = `<p>${data.message || 'Registration failed. Please try again.'}</p>`;
                     }
                     document.getElementById('errorModal').classList.remove('hidden');
                 }
@@ -281,8 +288,12 @@
             })
             .finally(() => {
                 // Re-enable button
-                registerBtn.disabled = false;
-                registerBtn.innerHTML = originalText;
+                if (loadingHelper) {
+                    loadingHelper.stop(registerBtn);
+                } else {
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = originalText;
+                }
             });
         });
 

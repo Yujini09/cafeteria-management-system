@@ -530,11 +530,11 @@
                         </a>
 
                         {{-- CANCEL RESERVATION BUTTON --}}
-                        <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" 
+                        <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" data-action-loading
                               onsubmit="return confirm('Are you sure you want to cancel this reservation?')" class="w-full sm:w-auto">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" class="inline-flex items-center justify-center px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 font-semibold shadow-sm w-full sm:w-auto">
+                            <button type="submit" data-loading-text="Cancelling Reservation..." class="inline-flex items-center justify-center px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 font-semibold shadow-sm w-full sm:w-auto">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>

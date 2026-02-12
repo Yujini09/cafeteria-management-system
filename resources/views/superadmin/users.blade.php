@@ -161,7 +161,7 @@
 @endif
 
 <x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
-    <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm">
+    <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm" data-action-loading>
         @csrf
         <input type="hidden" name="form_context" value="add_admin">
         <div class="space-y-4">
@@ -179,7 +179,7 @@
 </x-admin.ui.modal>
 
 <x-admin.ui.modal name="editUser" title="Edit Admin" variant="confirmation" maxWidth="md">
-    <form id="editUserForm" method="POST">
+    <form id="editUserForm" method="POST" data-action-loading>
         @csrf
         @method('PUT')
         <input type="hidden" name="form_context" value="edit_admin">
@@ -211,7 +211,7 @@
     </p>
     <x-slot:footer>
         <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.danger type="button" onclick="confirmDelete()">Delete</x-admin.ui.button.danger>
+        <x-admin.ui.button.danger type="button" onclick="confirmDelete(this)" data-loading-text="Deleting User...">Delete</x-admin.ui.button.danger>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -221,7 +221,7 @@
     </p>
     <x-slot:footer>
         <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'createAdminConfirm')">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" onclick="submitAddAdminForm()">Create Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.primary type="button" onclick="submitAddAdminForm(this)" data-loading-text="Creating Admin...">Create Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -229,7 +229,7 @@
     <p class="text-admin-neutral-600 text-sm">Are you sure you want to save the changes to this admin user?</p>
     <x-slot:footer>
         <x-admin.ui.button.secondary type="button" @click="$dispatch('close-admin-modal', 'updateAdminConfirm')">Cancel</x-admin.ui.button.secondary>
-        <x-admin.ui.button.primary type="button" onclick="submitEditUserForm()">Update Admin</x-admin.ui.button.primary>
+        <x-admin.ui.button.primary type="button" onclick="submitEditUserForm(this)" data-loading-text="Updating Admin...">Update Admin</x-admin.ui.button.primary>
     </x-slot:footer>
 </x-admin.ui.modal>
 
@@ -268,9 +268,18 @@ function openEditModal(id, name, email) {
     window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
 }
 
-function submitAddAdminForm() {
+function submitAddAdminForm(triggerButton = null) {
     const form = document.getElementById('addAdminForm');
     if (!form) return;
+
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+        return;
+    }
+
+    if (triggerButton && window.cmsActionButtons) {
+        const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Creating Admin...');
+        if (!started) return;
+    }
 
     window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'createAdminConfirm' }));
 
@@ -281,9 +290,18 @@ function submitAddAdminForm() {
     }
 }
 
-function submitEditUserForm() {
+function submitEditUserForm(triggerButton = null) {
     const form = document.getElementById('editUserForm');
     if (!form) return;
+
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+        return;
+    }
+
+    if (triggerButton && window.cmsActionButtons) {
+        const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Updating Admin...');
+        if (!started) return;
+    }
 
     window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'updateAdminConfirm' }));
 
@@ -302,8 +320,12 @@ function openDeleteModal(userId, userName) {
     window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'deleteConfirm' }));
 }
 
-function confirmDelete() {
+function confirmDelete(triggerButton = null) {
     if (deleteUserId) {
+        if (triggerButton && window.cmsActionButtons) {
+            const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Deleting User...');
+            if (!started) return;
+        }
         document.getElementById('deleteForm' + deleteUserId).submit();
     }
 }

@@ -517,7 +517,7 @@
                 </p>
 
                 @if($r->status === 'approved')
-                    <form method="POST" action="{{ route('admin.reservations.additionals.store', $r) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-6">
+                    <form method="POST" action="{{ route('admin.reservations.additionals.store', $r) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-6" data-action-loading>
                         @csrf
                         <div class="sm:col-span-4">
                             <label for="additional_name" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Additional Name</label>
@@ -541,7 +541,7 @@
                         </div>
                         <div class="sm:col-span-6 flex flex-wrap justify-end gap-2">
                             <x-admin.ui.button.secondary type="reset">Clear</x-admin.ui.button.secondary>
-                            <x-admin.ui.button.primary type="submit">Add Additional</x-admin.ui.button.primary>
+                            <x-admin.ui.button.primary type="submit" data-loading-text="Adding Additional...">Add Additional</x-admin.ui.button.primary>
                         </div>
                     </form>
                 @endif
@@ -555,7 +555,7 @@
                         @foreach($r->additionals as $additional)
                             <div class="rounded-xl border border-gray-200 bg-white p-3">
                                 <form method="POST" action="{{ route('admin.reservations.additionals.update', [$r, $additional]) }}"
-                                      class="grid grid-cols-1 sm:grid-cols-8 gap-3 items-end">
+                                      class="grid grid-cols-1 sm:grid-cols-8 gap-3 items-end" data-action-loading>
                                     @csrf
                                     @method('PATCH')
                                     <div class="sm:col-span-4">
@@ -574,10 +574,10 @@
                                     </div>
                                     <div class="sm:col-span-2 flex gap-2 justify-end">
                                         @if($r->status === 'approved')
-                                            <x-admin.ui.button.secondary type="submit">Update</x-admin.ui.button.secondary>
+                                            <x-admin.ui.button.secondary type="submit" data-loading-text="Updating Additional...">Update</x-admin.ui.button.secondary>
                                             <button type="button"
                                                     class="px-4 py-2 rounded-admin text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 transition"
-                                                    onclick="document.getElementById('deleteAdditional{{ $additional->id }}').submit()">
+                                                    onclick="if (window.cmsActionButtons && !window.cmsActionButtons.start(this, 'Deleting...')) { return; } document.getElementById('deleteAdditional{{ $additional->id }}').submit()">
                                                 Delete
                                             </button>
                                         @else
@@ -736,7 +736,15 @@
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to approve this reservation?</p>
             <div class="flex justify-center gap-3">
                 <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="approveConfirmationOpen=false">Cancel</button>
-                <button type="button" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium" @click="handleApprove()">Yes, Approve</button>
+                <button type="button"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium"
+                        data-loading-text="Approving..."
+                        :disabled="approving"
+                        :class="{ 'opacity-60 cursor-not-allowed': approving }"
+                        @click="handleApprove($event)">
+                    <span x-show="!approving">Yes, Approve</span>
+                    <span x-show="approving">Approving...</span>
+                </button>
             </div>
         </div>
     </div>
@@ -875,8 +883,14 @@
 
             <div class="flex justify-end gap-3 pt-4">
                 <button type="button" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="inventoryWarningOpen = false">Cancel</button>
-                <button type="button" @click="proceedWithApproval()" class="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 font-medium">
-                    Proceed Anyway
+                <button type="button"
+                        @click="proceedWithApproval($event)"
+                        class="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 font-medium"
+                        data-loading-text="Approving..."
+                        :disabled="approving"
+                        :class="{ 'opacity-60 cursor-not-allowed': approving }">
+                    <span x-show="!approving">Proceed Anyway</span>
+                    <span x-show="approving">Approving...</span>
                 </button>
             </div>
         </div>
@@ -896,7 +910,7 @@
             <h3 class="text-lg font-semibold mb-3">Decline Reservation</h3>
             <p class="text-sm text-gray-600 mb-6">Please provide a reason. The customer will receive this via email and SMS.</p>
 
-            <form method="POST" action="{{ route('admin.reservations.decline', $r) }}" class="space-y-4">
+            <form method="POST" action="{{ route('admin.reservations.decline', $r) }}" class="space-y-4" data-action-loading>
                 @csrf @method('PATCH')
                 <div class="space-y-2">
                     <label for="reason" class="block text-sm font-medium text-gray-700">Reason for declining</label>
@@ -906,7 +920,7 @@
 
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="declineOpen = false">Cancel</button>
-                    <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium">Submit</button>
+                    <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium" data-loading-text="Rejecting...">Submit</button>
                 </div>
             </form>
         </div>

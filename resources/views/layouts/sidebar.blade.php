@@ -12,8 +12,27 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles() !!}
+
+    <script>
+        (function () {
+            try {
+                const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+                const saved = sessionStorage.getItem('sidebarOpen');
+                const isOpen = saved === null ? isDesktop : saved === 'true';
+                document.documentElement.setAttribute('data-sidebar-preinit', isOpen && isDesktop ? 'open' : 'closed');
+            } catch (error) {
+                const fallbackDesktop = window.matchMedia('(min-width: 768px)').matches;
+                document.documentElement.setAttribute('data-sidebar-preinit', fallbackDesktop ? 'open' : 'closed');
+            }
+        })();
+    </script>
     
     <style>
+    :root {
+        --sidebar-expanded-width: 16rem;
+        --sidebar-collapsed-width: 5rem;
+    }
+
     .sidebar-gradient {
         background:
             radial-gradient(130% 70% at -8% -2%, rgba(5, 124, 60, 0.08) 0%, rgba(5, 124, 60, 0) 62%),
@@ -21,6 +40,8 @@
             linear-gradient(180deg, #f8fcfa 0%, #f0f7f3 55%, #ecf4ef 100%);
         border-right: 1px solid #d9e7de;
         box-shadow: 10px 0 30px rgba(15, 23, 42, 0.08);
+        width: var(--sidebar-expanded-width);
+        overflow-x: hidden;
     }
 
     .font-poppins { font-family: 'Poppins', sans-serif; }
@@ -146,7 +167,19 @@
 
     .active-menu-item:hover {
         transform: none;
-        background: linear-gradient(135deg, #004e33 0%, #068548 100%);
+        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
+        color: #ffffff;
+        border-color: #0b6d41;
+    }
+
+    .active-menu-item:hover::after {
+        opacity: 0;
+    }
+
+    .active-menu-item:hover .menu-icon {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.28);
+        color: #ffffff;
     }
 
     .menu-icon {
@@ -178,6 +211,61 @@
         margin: 0.75rem 0.75rem 0;
         padding-top: 0.8rem;
         border-top: 1px solid #dbe9e0;
+    }
+
+    .sidebar-collapsed .sidebar-shell {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .sidebar-brand {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+
+    .sidebar-collapsed .sidebar-brand img {
+        height: 2.1rem;
+    }
+
+    .sidebar-collapsed .role-badge {
+        display: none;
+    }
+
+    .sidebar-collapsed .section-header {
+        justify-content: center;
+        margin: 0.9rem 0.35rem 0.4rem;
+        gap: 0;
+        font-size: 0;
+        letter-spacing: 0;
+    }
+
+    .sidebar-collapsed .section-header::before {
+        box-shadow: 0 0 0 2px rgba(5, 124, 60, 0.2);
+    }
+
+    .sidebar-collapsed .menu-item {
+        margin: 0.2rem 0.35rem;
+        justify-content: center;
+        padding-left: 0.55rem;
+        padding-right: 0.55rem;
+    }
+
+    .sidebar-collapsed .menu-item > span:not(.menu-icon) {
+        display: none;
+    }
+
+    .sidebar-collapsed .logout-section {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .logout-section button {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .logout-text {
+        display: none;
     }
 
     /* Custom Scrollbar for Sidebar */
@@ -221,8 +309,83 @@
     }
 
     @media (min-width: 768px) {
-        .sidebar-gradient {
-            width: 16rem;
+        .sidebar-expanded,
+        html[data-sidebar-preinit='open'] .sidebar-gradient {
+            width: var(--sidebar-expanded-width);
+            transform: translateX(0);
+        }
+
+        .sidebar-collapsed,
+        html[data-sidebar-preinit='closed'] .sidebar-gradient {
+            width: var(--sidebar-collapsed-width);
+            transform: translateX(0);
+        }
+
+        .main-content-wrapper.sidebar-offset,
+        html[data-sidebar-preinit='open'] .main-content-wrapper {
+            margin-left: var(--sidebar-expanded-width);
+            width: calc(100% - var(--sidebar-expanded-width));
+        }
+
+        .main-content-wrapper.sidebar-collapsed-offset,
+        html[data-sidebar-preinit='closed'] .main-content-wrapper {
+            margin-left: var(--sidebar-collapsed-width);
+            width: calc(100% - var(--sidebar-collapsed-width));
+        }
+
+        html[data-sidebar-preinit='closed'] .sidebar-shell {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .sidebar-brand {
+            padding-left: 0.35rem;
+            padding-right: 0.35rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .sidebar-brand img {
+            height: 2.1rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .role-badge {
+            display: none;
+        }
+
+        html[data-sidebar-preinit='closed'] .section-header {
+            justify-content: center;
+            margin: 0.9rem 0.35rem 0.4rem;
+            gap: 0;
+            font-size: 0;
+            letter-spacing: 0;
+        }
+
+        html[data-sidebar-preinit='closed'] .section-header::before {
+            box-shadow: 0 0 0 2px rgba(5, 124, 60, 0.2);
+        }
+
+        html[data-sidebar-preinit='closed'] .menu-item {
+            margin: 0.2rem 0.35rem;
+            justify-content: center;
+            padding-left: 0.55rem;
+            padding-right: 0.55rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .menu-item > span:not(.menu-icon) {
+            display: none;
+        }
+
+        html[data-sidebar-preinit='closed'] .logout-section {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .logout-section button {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        html[data-sidebar-preinit='closed'] .logout-text {
+            display: none;
         }
     }
 
@@ -255,23 +418,35 @@
     }
 
     .floating-notification-button {
-        width: 3rem;
-        height: 3rem;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(135deg, #FB3E05 0%, #e23b07 55%, #bb2c07 100%);
-        border: 1px solid #a82405;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.85rem;
+        height: 2.85rem;
+        padding: 0;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #057C3C 0%, #00462E 100%);
         color: #ffffff;
-        box-shadow: 0 14px 28px rgba(187, 44, 7, 0.42);
-    }
-    .floating-notification-button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 16px 30px rgba(187, 44, 7, 0.48);
+        box-shadow: 0 12px 24px rgba(0, 70, 46, 0.3);
+        line-height: 1;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
-    .floating-notification-button svg {
-        width: 1.3rem;
-        height: 1.3rem;
+    .floating-notification-button:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(135deg, #06984a 0%, #005838 100%);
+        box-shadow: 0 15px 28px rgba(0, 70, 46, 0.34);
+    }
+
+    .floating-notification-button:focus-visible {
+        outline: 2px solid rgba(5, 124, 60, 0.35);
+        outline-offset: 3px;
+        border-radius: 9999px;
+    }
+
+    .floating-notification-button .notification-bell {
+        font-size: 1.3rem;
     }
 
     .notification-dropdown {
@@ -290,9 +465,14 @@
             top: 0.85rem;
             right: 0.85rem;
         }
+
         .floating-notification-button {
-            width: 2.8rem;
-            height: 2.8rem;
+            width: 2.7rem;
+            height: 2.7rem;
+        }
+
+        .floating-notification-button .notification-bell {
+            font-size: 1.2rem;
         }
     }
 
@@ -303,12 +483,6 @@
         transition: margin-left 0.3s ease, width 0.3s ease;
     }
 
-    @media (min-width: 768px) {
-        .main-content-wrapper.sidebar-offset {
-            margin-left: 16rem;
-            width: calc(100% - 16rem);
-        }
-    }
     </style>
 </head>
 
@@ -334,6 +508,7 @@
               } else {
                   mediaQuery.addListener(syncViewportState);
               }
+              requestAnimationFrame(() => document.documentElement.removeAttribute('data-sidebar-preinit'));
               $watch('openSidebar', value => sessionStorage.setItem('sidebarOpen', value ? 'true' : 'false'));
               const scrollKey = 'sidebarScrollTop';
               const sidebarScroll = $refs.sidebarScroll;
@@ -349,8 +524,8 @@
 
 <div class="min-h-screen flex">
 
-    <aside class="sidebar-gradient w-64 fixed inset-y-0 left-0 z-50 transform transition-all duration-300"
-           :class="openSidebar ? 'translate-x-0' : '-translate-x-full'">
+    <aside class="sidebar-gradient fixed inset-y-0 left-0 z-50 transform transition-all duration-300"
+           :class="isDesktop ? (openSidebar ? 'sidebar-expanded translate-x-0' : 'sidebar-collapsed translate-x-0') : (openSidebar ? 'translate-x-0' : '-translate-x-full')">
 
         <div class="sidebar-content">
             <div class="sidebar-brand">
@@ -359,7 +534,7 @@
 
             <div class="sidebar-shell flex-1 overflow-hidden">
                 <div class="h-full overflow-y-auto sidebar-scroll" x-ref="sidebarScroll">
-                    <div class="mx-3 mt-3 mb-1 rounded-lg border border-[#d0e2d7] bg-[#f4faf6] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[#6a7f72]">
+                    <div class="role-badge mx-3 mt-3 mb-1 rounded-lg border border-[#d0e2d7] bg-[#f4faf6] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[#6a7f72]">
                         Role:
                         <span class="text-[#057C3C] font-semibold">{{ ucfirst(Auth::user()->role) }}</span>
                     </div>
@@ -400,6 +575,7 @@
                             </a>
 
                             <a href="{{ route('admin.payments.index') }}"
+                               wire:navigate
                                class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.payments.*') ? 'active-menu-item' : '' }}">
                                 <span class="menu-icon">
                                     <i class="fas fa-file-invoice-dollar"></i>
@@ -482,7 +658,7 @@
                 <button @click="confirmLogout = true"
                         class="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-white bg-[#dc2626] border border-[#b91c1c] shadow-sm hover:bg-[#b91c1c] hover:border-[#991b1b] transition-all duration-200">
                     <i class="fas fa-right-from-bracket"></i>
-                    Logout
+                    <span class="logout-text">Logout</span>
                 </button>
             </div>
         </div>
@@ -499,13 +675,12 @@
     <div class="floating-notification-shell" x-data="notificationsPanel()" x-init="init()">
         <button @click="open = !open"
                 :aria-expanded="open.toString()"
-                class="floating-notification-button p-0 rounded-xl header-transition relative">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
-            </svg>
+                class="floating-notification-button header-transition relative"
+                aria-label="Toggle notifications">
+            <i class="fa-regular fa-bell notification-bell" aria-hidden="true"></i>
             <span x-show="unreadCount > 0"
                   x-text="unreadCount > 99 ? '99+' : unreadCount"
-                  class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[0.65rem] font-semibold flex items-center justify-center shadow"
+                  class="absolute -top-1 -right-2 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#FB3E05] text-white text-[0.65rem] font-semibold flex items-center justify-center shadow"
                   x-cloak></span>
         </button>
         <div x-show="open"
@@ -548,7 +723,7 @@
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col main-content-wrapper" :class="{ 'sidebar-offset': openSidebar && isDesktop }">
+    <div class="flex-1 flex flex-col main-content-wrapper" :class="isDesktop ? (openSidebar ? 'sidebar-offset' : 'sidebar-collapsed-offset') : ''">
         <main class="admin-shell admin-surface p-4 sm:p-6 overflow-y-auto flex-1 pt-20">
             @yield('content')
         </main>

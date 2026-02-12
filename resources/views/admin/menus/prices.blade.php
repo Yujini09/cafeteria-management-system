@@ -102,7 +102,7 @@
     </div>
 
     <!-- Price Form -->
-    <form method="POST" action="{{ route('admin.menus.prices.update') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.menus.prices.update') }}" class="space-y-6" data-action-loading>
         @csrf
 
         <div class="overflow-x-auto">
@@ -163,7 +163,7 @@
                 </svg>
                 Cancel
             </a>
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-primary" data-loading-text="Updating Prices...">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>

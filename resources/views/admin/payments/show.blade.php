@@ -346,17 +346,17 @@
                 </div>
                 @if($payment->status === 'submitted')
                     <div class="space-y-3">
-                        <form method="POST" action="{{ route('admin.payments.approve', $payment) }}">
+                        <form method="POST" action="{{ route('admin.payments.approve', $payment) }}" data-action-loading>
                             @csrf
                             @method('PATCH')
-                            <button type="submit" class="action-btn action-btn-approve w-full justify-center">
+                            <button type="submit" class="action-btn action-btn-approve w-full justify-center" data-loading-text="Approving Payment...">
                                 <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                                 Approve Payment
                             </button>
                         </form>
-                        <form method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-3">
+                        <form method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-3" data-action-loading>
                             @csrf
                             @method('PATCH')
                             <div>
@@ -365,7 +365,7 @@
                                           class="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-red-500"
                                           placeholder="Add a short reason"></textarea>
                             </div>
-                            <button type="submit" class="action-btn action-btn-decline w-full justify-center">
+                            <button type="submit" class="action-btn action-btn-decline w-full justify-center" data-loading-text="Rejecting Payment...">
                                 <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>

@@ -138,7 +138,7 @@
             </div>
         </div>
 
-        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10">
+        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10" data-action-loading>
             @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -284,7 +284,7 @@
             </div>
 
             <div class="text-center pt-4">
-                <button type="submit" 
+                <button type="submit" data-loading-text="Saving Reservation Details..."
                     id="menu-selection-btn"
                     class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold">
                     Proceed to Menu Selection

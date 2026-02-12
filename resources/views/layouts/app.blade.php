@@ -163,8 +163,11 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
                                     <a :href="actionUrl" class="text-xs text-gray-500 hover:text-gray-700">Open full payment page</a>
                                     <button type="submit"
+                                            :disabled="submitting"
+                                            :class="{ 'opacity-60 cursor-not-allowed': submitting }"
                                             class="inline-flex items-center justify-center px-5 py-2.5 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition font-semibold text-sm">
-                                        Submit for Review
+                                        <span x-show="!submitting">Submit for Review</span>
+                                        <span x-show="submitting">Submitting...</span>
                                     </button>
                                 </div>
                             </form>

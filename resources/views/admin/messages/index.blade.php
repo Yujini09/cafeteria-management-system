@@ -212,7 +212,7 @@
                 Are you sure you want to delete this message? It will be removed from the inbox.
             </div>
 
-            <form id="delete-form" method="POST" action=""
+            <form id="delete-form" method="POST" action="" data-action-loading
                   data-delete-template="{{ route('admin.messages.delete', 999999) }}"
                   class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-red-100 bg-red-50/60">
                 @csrf
@@ -220,7 +220,7 @@
                 <x-admin.ui.button.secondary type="button" @click="deleteConfirmationOpen = false; selectedMessageId = null">
                     Cancel
                 </x-admin.ui.button.secondary>
-                <x-admin.ui.button.danger type="submit">
+                <x-admin.ui.button.danger type="submit" data-loading-text="Deleting Message...">
                     Delete
                 </x-admin.ui.button.danger>
             </form>

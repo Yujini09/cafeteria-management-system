@@ -73,7 +73,7 @@
                         <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
                     </x-success-modal>
 
-                    <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-6">
+                    <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-6" data-action-loading>
                         @csrf
                         <input type="hidden" name="redirect" value="{{ request('redirect') ?? session('login_redirect') }}">
                         
@@ -125,7 +125,7 @@
 
                         {{-- Login Button (Orange remains the CTA color for max contrast) --}}
                         <div>
-                            <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-200 text-white">
+                            <x-primary-button data-loading-text="Logging In..." class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-200 text-white">
                                 {{ __('Login') }}
                             </x-primary-button>
                         </div>
@@ -207,7 +207,7 @@
                                 </div>
                             @endif
 
-                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4" x-data="{ sending: false }" @submit="if (sending) { $event.preventDefault(); return; } sending = true">
+                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4" x-data="{ sending: false }" @submit="if (sending) { $event.preventDefault(); return; } sending = true" data-action-loading>
                                 @csrf
 
                                 <div class="relative">
@@ -228,7 +228,7 @@
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300"
+                                    <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300" data-loading-text="Sending Reset Link..."
                                         x-bind:disabled="sending"
                                         x-bind:class="sending ? 'opacity-70 cursor-not-allowed' : ''">
                                         <span x-text="sending ? 'Email is currently sending...' : 'Email Password Reset Link'">Email Password Reset Link</span>

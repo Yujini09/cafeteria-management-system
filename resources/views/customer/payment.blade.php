@@ -77,7 +77,7 @@
                     Payment can be submitted after the reservation is approved.
                 </div>
             @else
-                <form method="POST" action="{{ route('payments.store', $reservation->id) }}" enctype="multipart/form-data" class="space-y-5">
+                <form method="POST" action="{{ route('payments.store', $reservation->id) }}" enctype="multipart/form-data" class="space-y-5" data-action-loading>
                     @csrf
 
                     <div>
@@ -133,7 +133,7 @@
 
                     <div class="flex items-center justify-between gap-4 pt-2">
                         <a href="{{ route('reservation.view', $reservation->id) }}" class="text-sm text-gray-600 hover:text-gray-800">Back to reservation</a>
-                        <button type="submit"
+                        <button type="submit" data-loading-text="Submitting Payment..."
                                 class="inline-flex items-center px-6 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition font-semibold">
                             Submit for Review
                         </button>

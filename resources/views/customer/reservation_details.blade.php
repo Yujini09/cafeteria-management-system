@@ -243,10 +243,10 @@
                                             @endif
                                             
                                             @if(in_array($reservation->status, ['pending']))
-                                                <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
+                                                <form action="{{ route('reservation.cancel', $reservation->id) }}" method="POST" class="inline" data-action-loading onsubmit="return confirm('Are you sure you want to cancel this reservation?')">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" 
+                                                    <button type="submit" data-loading-text="Cancelling Reservation..."
                                                             class="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 text-xs font-semibold">
                                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

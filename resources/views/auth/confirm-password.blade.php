@@ -16,7 +16,7 @@
                     {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
                 </div>
 
-                <form method="POST" action="{{ route('password.confirm') }}" class="space-y-6">
+                <form method="POST" action="{{ route('password.confirm') }}" class="space-y-6" data-action-loading>
                     @csrf
 
                     <!-- Password -->
@@ -35,7 +35,7 @@
                     </div>
 
                     <div class="flex justify-end mt-6 transform transition-transform duration-300 hover:scale-105">
-                        <x-primary-button class="w-full bg-gradient-to-r from-clsu-green to-ret-green-light hover:from-ret-green-light hover:to-clsu-green text-white font-poppins font-semibold py-3 shadow-lg">
+                        <x-primary-button class="w-full bg-gradient-to-r from-clsu-green to-ret-green-light hover:from-ret-green-light hover:to-clsu-green text-white font-poppins font-semibold py-3 shadow-lg" data-loading-text="Confirming...">
                             {{ __('Confirm') }}
                         </x-primary-button>
                     </div>

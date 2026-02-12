@@ -698,18 +698,21 @@
 
             <button type="button" 
                     @click="currentStep === 3 ? submitForm() : nextStep()" 
-                    :disabled="!canProceed()"
+                    :disabled="createSubmitting || !canProceed()"
                     :class="[
                       'px-6 py-2 rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm',
-                      canProceed()
+                      createSubmitting
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : (canProceed()
                         ? 'primary-gradient text-white'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        )
                     ]">
               <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentStep === 3" d="M5 13l4 4L19 7"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentStep < 3" d="M9 5l7 7-7 7"></path>
               </svg>
-              <span x-text="currentStep === 3 ? 'Create Menu' : 'Next'"></span>
+              <span x-text="currentStep === 3 ? (createSubmitting ? 'Creating...' : 'Create Menu') : 'Next'"></span>
             </button>
           </div>
         </div>
@@ -749,7 +752,7 @@
         </div>
 
         <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <form method="POST" action="" x-ref="editForm" class="space-y-4">
+          <form method="POST" action="" x-ref="editForm" class="space-y-4" data-action-loading>
             @csrf @method('PATCH')
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -897,7 +900,7 @@
               <button type="button" @click="closeEdit()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm text-sm">
                 Cancel
               </button>
-              <button type="submit" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
+              <button type="submit" data-loading-text="Updating Menu..." class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
@@ -977,8 +980,11 @@
           </button>
 
           <button type="submit"
+                  :disabled="deleteSubmitting"
+                  :class="{ 'opacity-60 cursor-not-allowed': deleteSubmitting }"
                   class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-medium shadow-sm text-sm">
-            Delete Menu
+            <span x-show="!deleteSubmitting">Delete Menu</span>
+            <span x-show="deleteSubmitting">Deleting...</span>
           </button>
         </form>
       </div>

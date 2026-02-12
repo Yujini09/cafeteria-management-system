@@ -257,7 +257,7 @@
                     <x-admin.ui.button.secondary type="button" @click="showCreateModal = false">
                         Cancel
                     </x-admin.ui.button.secondary>
-                    <x-admin.ui.button.primary type="submit">
+                    <x-admin.ui.button.primary type="submit" data-loading-text="Saving Item...">
                         Save Item
                     </x-admin.ui.button.primary>
                 </div>
@@ -326,7 +326,7 @@
                     <x-admin.ui.button.secondary type="button" @click="showEditModal = false; editingItem = null">
                         Cancel
                     </x-admin.ui.button.secondary>
-                    <x-admin.ui.button.primary type="submit">
+                    <x-admin.ui.button.primary type="submit" data-loading-text="Updating Item...">
                         Update Item
                     </x-admin.ui.button.primary>
                 </div>
@@ -394,7 +394,7 @@
                 <x-admin.ui.button.secondary type="button" @click="showDeleteModal = false; deletingItem = null">
                     Cancel
                 </x-admin.ui.button.secondary>
-                <x-admin.ui.button.danger type="submit">
+                <x-admin.ui.button.danger type="submit" data-loading-text="Deleting Item...">
                     Delete
                 </x-admin.ui.button.danger>
             </form>
@@ -457,10 +457,28 @@ document.addEventListener('livewire:navigated', function() {
         }
     }
 
+    function startLoading(form, event, fallbackText) {
+        if (!window.cmsActionButtons || typeof window.cmsActionButtons.startFormSubmit !== 'function') {
+            return true;
+        }
+        return window.cmsActionButtons.startFormSubmit(form, event ? event.submitter : null, fallbackText);
+    }
+
+    function stopLoading(form) {
+        if (!window.cmsActionButtons || typeof window.cmsActionButtons.resetForm !== 'function') {
+            return;
+        }
+        window.cmsActionButtons.resetForm(form);
+    }
+
     // Create
     const createForm = document.getElementById('createInventoryForm');
     if (createForm) {
         createForm.addEventListener('submit', async function(e) {
+            if (!startLoading(createForm, e, 'Saving Item...')) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const result = await submitForm(createForm);
             if (result !== null) {
@@ -468,6 +486,8 @@ document.addEventListener('livewire:navigated', function() {
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-create-success' }));
                 setTimeout(function(){ location.reload(); }, 900);
+            } else {
+                stopLoading(createForm);
             }
         });
     }
@@ -476,12 +496,18 @@ document.addEventListener('livewire:navigated', function() {
     const editForm = document.getElementById('editInventoryForm');
     if (editForm) {
         editForm.addEventListener('submit', async function(e) {
+            if (!startLoading(editForm, e, 'Updating Item...')) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const result = await submitForm(editForm);
             if (result !== null) {
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-update-success' }));
                 setTimeout(function(){ location.reload(); }, 700);
+            } else {
+                stopLoading(editForm);
             }
         });
     }
@@ -490,6 +516,10 @@ document.addEventListener('livewire:navigated', function() {
     const deleteForm = document.getElementById('deleteInventoryForm');
     if (deleteForm) {
         deleteForm.addEventListener('submit', async function(e) {
+            if (!startLoading(deleteForm, e, 'Deleting Item...')) {
+                e.preventDefault();
+                return;
+            }
             e.preventDefault();
             const result = await submitForm(deleteForm);
             if (result !== null) {
@@ -515,8 +545,11 @@ document.addEventListener('livewire:navigated', function() {
                     }
                 }
 
+                stopLoading(deleteForm);
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-delete-success' }));
+            } else {
+                stopLoading(deleteForm);
             }
         });
     }
