@@ -186,7 +186,16 @@
         <input type="hidden" name="edit_user_id" id="editUserId" value="{{ old('edit_user_id') }}">
         <div class="space-y-4">
             <x-admin.forms.input name="name" id="editName" label="Full Name" required />
-            <x-admin.forms.input name="email" id="editEmail" label="Email Address" type="email" required />
+            <x-admin.forms.input
+                name="email"
+                id="editEmail"
+                label="Email Address"
+                type="email"
+                helper="Admin email address cannot be changed."
+                disabled
+                readonly
+                class="bg-admin-neutral-100 text-admin-neutral-500 cursor-not-allowed"
+            />
         </div>
     </form>
     <x-slot:footer>
@@ -468,13 +477,14 @@ function initUsersPage() {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));
     }
 
+    const openEditAdmin = @json(old('form_context') === 'edit_admin');
+    const editUserId = @json(old('edit_user_id'));
     const openAddAdmin = @json(old('form_context') === 'add_admin');
-    if (openAddAdmin) {
+    const hasAddAdminErrors = @json($errors->has('name') || $errors->has('email'));
+    if (openAddAdmin || (!openEditAdmin && hasAddAdminErrors)) {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'addAdmin' }));
     }
 
-    const openEditAdmin = @json(old('form_context') === 'edit_admin');
-    const editUserId = @json(old('edit_user_id'));
     if (openEditAdmin && editUserId) {
         const editForm = document.getElementById('editUserForm');
         if (editForm) {

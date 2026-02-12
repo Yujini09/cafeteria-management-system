@@ -36,7 +36,9 @@ class SuperAdminController extends Controller
     {
         $data = $request->validate([
             'name'     => ['required','string','max:255'],
-            'email'    => ['required','email','unique:users,email'],
+            'email'    => ['required', 'string', 'lowercase', 'max:255', 'email:rfc,dns', 'unique:users,email'],
+        ], [
+            'email.email' => 'Please enter a valid email address with an active email domain.',
         ]);
 
         if (!Schema::hasColumn('users', 'must_change_password')) {
@@ -128,10 +130,11 @@ class SuperAdminController extends Controller
 
         $data = $request->validate([
             'name'  => ['required','string','max:255'],
-            'email' => ['required','email','unique:users,email,' . $user->id],
         ]);
 
-        $user->update($data);
+        $user->update([
+            'name' => $data['name'],
+        ]);
 
         AuditTrail::create([
             'user_id'     => Auth::id(),

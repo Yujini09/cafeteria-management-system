@@ -76,12 +76,12 @@
 
             <x-admin.forms.input name="name" label="Full Name" :value="old('name', $user->name)" required />
 
-            @if($user->hasRole('admin'))
+            @if(in_array($user->role, ['admin', 'superadmin'], true))
                 <x-admin.forms.input
                     name="email"
                     label="Personal Email"
                     :value="old('email', $user->email)"
-                    helper="Contact superadmin to change email address."
+                    helper="Email address cannot be changed for admin and superadmin accounts."
                     disabled
                     readonly
                     class="bg-admin-neutral-100 text-admin-neutral-500 cursor-not-allowed"
