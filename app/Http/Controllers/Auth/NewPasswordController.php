@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditTrail;
 use App\Models\User;
+use App\Support\AuditDictionary;
 use App\Support\PasswordRules;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
@@ -47,6 +49,13 @@ class NewPasswordController extends Controller
                     'remember_token' => Str::random(60),
                     'must_change_password' => false,
                 ])->save();
+
+                AuditTrail::record(
+                    $user->id,
+                    AuditDictionary::COMPLETED_PASSWORD_RESET,
+                    AuditDictionary::MODULE_AUTH,
+                    'completed password reset'
+                );
 
                 event(new PasswordReset($user));
             }

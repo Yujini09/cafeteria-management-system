@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\AuditTrail;
 use App\Models\Notification;
+use App\Support\AuditDictionary;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -82,12 +83,12 @@ class SuperAdminController extends Controller
 
                 $this->sendAdminCredentialsEmail($user, $temporaryPassword);
 
-                AuditTrail::create([
-                    'user_id'     => Auth::id(),
-                    'action'      => 'Created Admin',
-                    'module'      => 'users',
-                    'description' => 'created an admin',
-                ]);
+                AuditTrail::record(
+                    Auth::id(),
+                    AuditDictionary::CREATED_ADMIN_USER,
+                    AuditDictionary::MODULE_USERS,
+                    "created admin user {$user->name} ({$user->email})"
+                );
             });
         } catch (QueryException $e) {
             Log::warning('Admin account creation failed due to database error.', [
@@ -448,12 +449,12 @@ class SuperAdminController extends Controller
             'name' => $data['name'],
         ]);
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Updated Admin',
-            'module'      => 'users',
-            'description' => 'updated an admin',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_ADMIN_USER,
+            AuditDictionary::MODULE_USERS,
+            "updated admin user {$user->name} ({$user->email})"
+        );
 
         return redirect()->route('superadmin.users')->with('success', 'Admin updated successfully.');
     }
@@ -462,12 +463,12 @@ class SuperAdminController extends Controller
     {
         $user->delete();
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Deleted User',
-            'module'      => 'users',
-            'description' => 'deleted a user',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::DELETED_USER,
+            AuditDictionary::MODULE_USERS,
+            "deleted user {$user->name} ({$user->email})"
+        );
 
         return back()->with('success', 'User deleted successfully.');
     }
@@ -475,12 +476,12 @@ class SuperAdminController extends Controller
     public function audit(User $user): View
     {
         if (Auth::check()) {
-            AuditTrail::create([
-                'user_id' => Auth::id(),
-                'action' => 'Viewed Audit Trail',
-                'module' => 'audit',
-                'description' => "viewed audit trail for {$user->name} ({$user->email})",
-            ]);
+            AuditTrail::record(
+                Auth::id(),
+                AuditDictionary::VIEWED_USER_AUDIT_TRAIL,
+                AuditDictionary::MODULE_USERS,
+                "viewed audit trail for {$user->name} ({$user->email})"
+            );
         }
 
         $audits = AuditTrail::where('user_id', $user->id)->latest()->get();

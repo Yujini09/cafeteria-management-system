@@ -9,6 +9,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
 
 class InventoryItemController extends Controller
@@ -53,12 +54,12 @@ class InventoryItemController extends Controller
 
         $item = InventoryItem::create($data);
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Added Inventory Item',
-            'module'      => 'inventory',
-            'description' => 'added an inventory item',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::ADDED_INVENTORY_ITEM,
+            AuditDictionary::MODULE_INVENTORY,
+            "added inventory item {$item->name}"
+        );
 
         // Create notification for admins/superadmin about inventory item addition
         $this->createAdminNotification('inventory_item_added', 'inventory', 'A new inventory item has been added by ' . Auth::user()?->name ?? 'Unknown', [
@@ -98,12 +99,12 @@ class InventoryItemController extends Controller
         $oldQty = $inventory->qty;
         $inventory->update($data);
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Updated Inventory Item',
-            'module'      => 'inventory',
-            'description' => 'updated an inventory item',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_INVENTORY_ITEM,
+            AuditDictionary::MODULE_INVENTORY,
+            "updated inventory item {$inventory->name}"
+        );
 
         // Create notification for admins/superadmin about inventory item update
         $this->createAdminNotification('inventory_item_updated', 'inventory', 'An inventory item has been updated by ' . Auth::user()?->name ?? 'Unknown', [
@@ -155,12 +156,12 @@ class InventoryItemController extends Controller
         $itemName = $inventory->name;
         $inventory->delete();
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Deleted Inventory Item',
-            'module'      => 'inventory',
-            'description' => 'deleted an inventory item',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::DELETED_INVENTORY_ITEM,
+            AuditDictionary::MODULE_INVENTORY,
+            "deleted inventory item {$itemName}"
+        );
 
         // Create notification for admins/superadmin about inventory item deletion
         $this->createAdminNotification('inventory_item_deleted', 'inventory', 'An inventory item has been deleted by ' . Auth::user()?->name ?? 'Unknown', [

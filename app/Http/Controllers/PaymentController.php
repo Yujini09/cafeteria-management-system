@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditTrail;
 use App\Models\Payment;
 use App\Models\Reservation;
+use App\Support\AuditDictionary;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,11 +53,12 @@ class PaymentController extends Controller
         $reservation->loadMissing(['items.menu', 'user']);
         $amount = $this->calculateReservationTotal($reservation);
         $receiptPath = null;
+        $paymentId = null;
         if ($request->hasFile('receipt')) {
             $receiptPath = $request->file('receipt')->store('payment-receipts', 'public');
         }
 
-        DB::transaction(function () use ($reservation, $validated, $amount, $receiptPath) {
+        DB::transaction(function () use ($reservation, $validated, $amount, $receiptPath, &$paymentId) {
             $payment = Payment::create([
                 'reservation_id' => $reservation->id,
                 'user_id' => $reservation->user_id,
@@ -68,6 +71,7 @@ class PaymentController extends Controller
                 'receipt_path' => $receiptPath,
                 'receipt_uploaded_at' => $receiptPath ? now() : null,
             ]);
+            $paymentId = $payment->id;
 
             $reservation->update([
                 'payment_status' => 'under_review',
@@ -85,6 +89,13 @@ class PaymentController extends Controller
                 ]
             );
         });
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::SUBMITTED_PAYMENT,
+            AuditDictionary::MODULE_PAYMENTS,
+            "submitted payment #{$paymentId} for reservation #{$reservation->id}"
+        );
 
         return redirect()->route('payments.show', $reservation)->with('success', 'Payment submitted for review.');
     }
@@ -185,6 +196,13 @@ class PaymentController extends Controller
             ]
         );
 
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::APPROVED_PAYMENT,
+            AuditDictionary::MODULE_PAYMENTS,
+            "approved payment #{$payment->id} for reservation #{$reservation->id}"
+        );
+
         return redirect()->route('admin.payments.show', $payment)->with('success', 'Payment approved.');
     }
 
@@ -231,6 +249,13 @@ class PaymentController extends Controller
                 'url' => route('payments.show', $reservation->id),
                 'link_label' => 'Pay Now',
             ]
+        );
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::REJECTED_PAYMENT,
+            AuditDictionary::MODULE_PAYMENTS,
+            "rejected payment #{$payment->id} for reservation #{$reservation->id}"
         );
 
         return redirect()->route('admin.payments.show', $payment)->with('success', 'Payment rejected.');

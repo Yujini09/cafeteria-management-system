@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditTrail;
 use Illuminate\Http\Request;
 use App\Models\ContactMessage; 
 use App\Models\User;
+use App\Support\AuditDictionary;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +24,15 @@ class ContactController extends Controller
         ]);
 
         // Save to Database
-        ContactMessage::create($validated);
+        $contactMessage = ContactMessage::create($validated);
+
+        // Contact form can be submitted by guests; only log when user is authenticated.
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::SUBMITTED_MESSAGE,
+            AuditDictionary::MODULE_MESSAGES,
+            "submitted message #{$contactMessage->id}"
+        );
 
         // Send Email to all admins/superadmins (if mail is configured)
         $recipients = User::whereIn('role', ['admin', 'superadmin'])
@@ -61,7 +72,7 @@ class ContactController extends Controller
                 $mailData,
                 function ($message) use ($validated, $primaryRecipient, $bccRecipients) {
                 $message->to($primaryRecipient)
-                    ->subject('New Contact Message from ' . $validated['name'])
+                    ->subject('New Message from ' . $validated['name'])
                     ->replyTo($validated['email'], $validated['name']);
 
                 if ($bccRecipients->isNotEmpty()) {

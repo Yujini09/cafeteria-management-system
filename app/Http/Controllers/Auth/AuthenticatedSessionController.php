@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use App\Models\AuditTrail;
 use App\Models\Payment;
+use App\Support\AuditDictionary;
 use App\Services\NotificationService;
 
 class AuthenticatedSessionController extends Controller
@@ -48,12 +49,12 @@ class AuthenticatedSessionController extends Controller
         Session::regenerate();
 
         // ✅ Log login action
-        AuditTrail::create([
-            'user_id' => Auth::id(),
-            'action'  => 'Logged in',
-            'module'  => 'auth',
-            'description' => 'logged in',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::LOGGED_IN,
+            AuditDictionary::MODULE_AUTH,
+            'logged in with email/password'
+        );
 
         $redirect = $this->normalizeRedirect($request->input('redirect') ?? $request->session()->pull('login_redirect'));
         if ($redirect) {
@@ -89,12 +90,12 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         // ✅ Log logout action before session ends
-        AuditTrail::create([
-            'user_id' => Auth::id(),
-            'action'  => 'Logged out',
-            'module'  => 'auth',
-            'description' => 'logged out',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::LOGGED_OUT,
+            AuditDictionary::MODULE_AUTH,
+            'logged out'
+        );
 
         Auth::guard('web')->logout();
 

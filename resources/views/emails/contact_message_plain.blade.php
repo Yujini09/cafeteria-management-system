@@ -1,5 +1,5 @@
 {{ $app_name }}
-New contact message received
+New message received
 
 From: {{ $name }}
 Email: {{ $email }}

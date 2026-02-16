@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,13 +38,21 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_PROFILE,
+            AuditDictionary::MODULE_PROFILE,
+            'updated profile information'
+        );
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -70,6 +80,13 @@ class ProfileController extends Controller
         $request->user()->update([
             'password' => Hash::make($validated['password']),
         ]);
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_PASSWORD,
+            AuditDictionary::MODULE_PROFILE,
+            'updated account password'
+        );
 
         return Redirect::route('profile.edit')->with('status', 'password-updated');
     }
@@ -110,6 +127,13 @@ class ProfileController extends Controller
             $path = $request->file('avatar')->store('avatars', 'public');
             $user->avatar = $path;
             $user->save();
+
+            AuditTrail::record(
+                Auth::id(),
+                AuditDictionary::UPDATED_AVATAR,
+                AuditDictionary::MODULE_PROFILE,
+                'updated profile avatar'
+            );
         }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');

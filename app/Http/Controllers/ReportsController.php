@@ -14,6 +14,7 @@ use App\Exports\ReservationReportExport;
 use App\Exports\CrmReportExport;
 use Carbon\Carbon;
 use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
 
 class ReportsController extends Controller
@@ -36,12 +37,12 @@ class ReportsController extends Controller
         $endDate = Carbon::parse($request->end_date)->endOfDay();
 
         // Log report generation
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Generated Report',
-            'module'      => 'reports',
-            'description' => 'generated a report',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::GENERATED_REPORT,
+            AuditDictionary::MODULE_REPORTS,
+            "generated {$reportType} report"
+        );
 
         // Create notification for admins/superadmin about report generation
         $this->createAdminNotification('report_generated', 'reports', ucfirst($reportType) . ' report has been generated', [
@@ -448,12 +449,12 @@ class ReportsController extends Controller
         }
 
         // Log PDF export
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Exported Report PDF',
-            'module'      => 'reports',
-            'description' => 'exported a report PDF',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_REPORT_PDF,
+            AuditDictionary::MODULE_REPORTS,
+            "exported {$reportType} report as PDF"
+        );
 
         $pdf = Pdf::loadView('admin.reports.pdf', $viewData)
             ->setPaper('a4', 'landscape');
@@ -476,12 +477,12 @@ class ReportsController extends Controller
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.xlsx';
 
         // Log Excel export
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Exported Report Excel',
-            'module'      => 'reports',
-            'description' => 'exported a report Excel',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_REPORT_EXCEL,
+            AuditDictionary::MODULE_REPORTS,
+            "exported {$reportType} report as Excel"
+        );
 
         switch ($reportType) {
             case 'reservation':

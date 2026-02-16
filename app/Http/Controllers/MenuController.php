@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -256,12 +257,12 @@ class MenuController extends Controller
 
             $menu = Menu::create($payload);
 
-            AuditTrail::create([
-                'user_id'     => Auth::id(),
-                'action'      => 'Created Menu',
-                'module'      => 'menus',
-                'description' => 'created a menu',
-            ]);
+            AuditTrail::record(
+                Auth::id(),
+                AuditDictionary::CREATED_MENU,
+                AuditDictionary::MODULE_MENUS,
+                "created menu {$menu->name}"
+            );
 
             $items = $data['items'] ?? [];
             if (!empty($items) && is_array($items)) {
@@ -386,12 +387,12 @@ class MenuController extends Controller
 
         $menu->update($payload);
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Updated Menu',
-            'module'      => 'menus',
-            'description' => 'edited a menu',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_MENU,
+            AuditDictionary::MODULE_MENUS,
+            "updated menu {$menu->name}"
+        );
 
         $menu->items()->delete();
         if ($request->has('items') && is_array($request->items)) {
@@ -437,12 +438,12 @@ class MenuController extends Controller
         $menuName = $menu->name;
         $menu->delete();
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Deleted Menu',
-            'module'      => 'menus',
-            'description' => 'deleted a menu',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::DELETED_MENU,
+            AuditDictionary::MODULE_MENUS,
+            "deleted menu {$menuName}"
+        );
 
         // Create notification for admins/superadmin about menu deletion
         $this->createAdminNotification('menu_deleted', 'menus', 'A menu has been deleted by ' . Auth::user()?->name ?? 'Unknown', [
@@ -509,12 +510,12 @@ class MenuController extends Controller
             }
         }
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Updated Menu Prices',
-            'module'      => 'menus',
-            'description' => 'updated menu prices',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_MENU_PRICES,
+            AuditDictionary::MODULE_MENUS,
+            'updated menu prices'
+        );
 
         // Create notification for admins/superadmin about price changes
         $this->createAdminNotification('menu_prices_modified', 'menus', 'Menu prices have been updated by ' . Auth::user()?->name ?? 'Unknown', [

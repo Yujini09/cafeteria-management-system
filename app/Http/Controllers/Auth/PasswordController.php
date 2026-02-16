@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\RedirectResponse;
 use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use App\Support\PasswordRules;
 use App\Http\Controllers\Controller;
 
@@ -32,13 +33,12 @@ class PasswordController extends Controller
             $user->must_change_password = false;
             $user->save();
 
-            // Audit: record password update
-            AuditTrail::create([
-                'user_id' => $user->id,
-                'action' => 'Updated password',
-                'module' => 'users',
-                'description' => 'updated password',
-            ]);
+            AuditTrail::record(
+                $user->id,
+                AuditDictionary::UPDATED_PASSWORD,
+                AuditDictionary::MODULE_PROFILE,
+                'updated account password'
+            );
         }
 
         return redirect()->route('profile.edit')->with('status', 'password-updated');

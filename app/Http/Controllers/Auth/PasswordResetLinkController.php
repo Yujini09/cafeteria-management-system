@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditTrail;
+use App\Models\User;
+use App\Support\AuditDictionary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -52,6 +55,14 @@ class PasswordResetLinkController extends Controller
         );
 
         if ($status === Password::RESET_LINK_SENT) {
+            $user = User::where('email', (string) $request->input('email'))->first();
+            AuditTrail::record(
+                $user?->id,
+                AuditDictionary::REQUESTED_PASSWORD_RESET,
+                AuditDictionary::MODULE_AUTH,
+                'requested password reset link'
+            );
+
             RateLimiter::hit($throttleKey, self::RESET_LINK_THROTTLE_SECONDS);
 
             return back()->with('status', __($status))->with('forgot', true);

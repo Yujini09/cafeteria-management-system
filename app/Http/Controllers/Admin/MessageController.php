@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditTrail;
 use App\Models\ContactMessage;
+use App\Support\AuditDictionary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +22,14 @@ class MessageController extends Controller
     public function show(ContactMessage $message)
     {
         $message->update(['is_read' => true]);
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::VIEWED_MESSAGE,
+            AuditDictionary::MODULE_MESSAGES,
+            "viewed message #{$message->id}"
+        );
+
         return view('admin.messages.show', compact('message'));
     }
 
@@ -62,12 +72,28 @@ class MessageController extends Controller
             return back()->withInput()->with('message_error', 'Failed to send reply. Please try again.');
         }
 
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::REPLIED_TO_MESSAGE,
+            AuditDictionary::MODULE_MESSAGES,
+            "replied to message #{$message->id}"
+        );
+
         return back()->with('message_success', 'Reply sent to ' . $message->email . '.');
     }
 
     public function destroy(ContactMessage $message)
     {
+        $messageId = $message->id;
         $message->delete();
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::DELETED_MESSAGE,
+            AuditDictionary::MODULE_MESSAGES,
+            "deleted message #{$messageId}"
+        );
+
         return back()->with('message_success', 'Message deleted successfully.');
     }
 }

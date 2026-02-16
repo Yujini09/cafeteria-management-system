@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Notification as NotificationFacade;
 use App\Notifications\ReservationStatusChanged;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use App\Services\NotificationService;
 use Carbon\Carbon;
 
@@ -160,6 +161,9 @@ class ReservationController extends Controller
     public function store(Request $request)
     {
         $reservationData = session('reservation_data', []);
+        $editingReservationId = session('editing_reservation_id');
+        $isEditing = !empty($editingReservationId);
+        $savedReservationId = null;
         
         // Validate items
         $validated = $request->validate([
@@ -191,11 +195,11 @@ class ReservationController extends Controller
             if (isset($firstDay['start_time'])) $eventTime = $firstDay['start_time'];
         }
 
-        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $totalPersons, $validated) {
+        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $totalPersons, $validated, $isEditing, $editingReservationId, &$savedReservationId) {
             
             // CHECK IF EDITING OR CREATING
-            if (session('editing_reservation_id')) {
-                $reservation = Reservation::find(session('editing_reservation_id'));
+            if ($isEditing) {
+                $reservation = Reservation::find($editingReservationId);
                 if (!$reservation) {
                     abort(404, 'Reservation to edit not found.');
                 }
@@ -267,12 +271,22 @@ class ReservationController extends Controller
             
             // Set ID for receipt redirect
             session(['receipt_reservation_id' => $reservation->id]);
+            $savedReservationId = $reservation->id;
         });
+
+        if ($savedReservationId) {
+            AuditTrail::record(
+                Auth::id(),
+                $isEditing ? AuditDictionary::UPDATED_RESERVATION : AuditDictionary::CREATED_RESERVATION,
+                AuditDictionary::MODULE_RESERVATIONS,
+                ($isEditing ? 'updated' : 'created') . " reservation #{$savedReservationId}"
+            );
+        }
 
         // Clear session data
         session()->forget(['reservation_data', 'editing_reservation_id']);
 
-        $message = session('editing_reservation_id') ? 'Reservation updated successfully!' : 'Reservation placed successfully!';
+        $message = $isEditing ? 'Reservation updated successfully!' : 'Reservation placed successfully!';
         
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => $message, 'redirect_url' => route('reservation_details')]);
@@ -504,12 +518,12 @@ class ReservationController extends Controller
             ]);
         });
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Approved Reservation',
-            'module'      => 'reservations',
-            'description' => 'approved reservation #' . $reservation->id,
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::APPROVED_RESERVATION,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "approved reservation #{$reservation->id}"
+        );
 
         $user = $reservation->user;
         if ($user) {
@@ -545,12 +559,12 @@ class ReservationController extends Controller
             'decline_reason' => $data['reason'],
         ]);
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Declined Reservation',
-            'module'      => 'reservations',
-            'description' => 'declined reservation #' . $reservation->id,
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::DECLINED_RESERVATION,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "declined reservation #{$reservation->id}"
+        );
 
         $user = $reservation->user;
         if ($user) {
@@ -582,11 +596,18 @@ class ReservationController extends Controller
             'price' => 'required|numeric|min:0|max:999999.99',
         ]);
 
-        $reservation->additionals()->create([
+        $additional = $reservation->additionals()->create([
             'name' => $data['name'],
             'price' => $data['price'],
             'created_by' => Auth::id(),
         ]);
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::ADDED_ADDITIONAL_CHARGE,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "added additional charge #{$additional->id} to reservation #{$reservation->id}"
+        );
 
         return redirect()->back()->with('success', 'Additional item added.');
     }
@@ -608,6 +629,13 @@ class ReservationController extends Controller
 
         $additional->update($data);
 
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPDATED_ADDITIONAL_CHARGE,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "updated additional charge #{$additional->id} for reservation #{$reservation->id}"
+        );
+
         return redirect()->back()->with('success', 'Additional item updated.');
     }
 
@@ -621,7 +649,15 @@ class ReservationController extends Controller
             return redirect()->back()->with('error', 'Additionals can only be removed from approved reservations.');
         }
 
+        $additionalId = $additional->id;
         $additional->delete();
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::DELETED_ADDITIONAL_CHARGE,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "deleted additional charge #{$additionalId} from reservation #{$reservation->id}"
+        );
 
         return redirect()->back()->with('success', 'Additional item removed.');
     }
@@ -687,12 +723,12 @@ class ReservationController extends Controller
         $reservation->status = 'cancelled';
         $reservation->save();
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Cancelled Order',
-            'module'      => 'reservations',
-            'description' => 'cancelled reservation #' . $reservation->id,
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::CANCELLED_RESERVATION,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "cancelled reservation #{$reservation->id}"
+        );
 
         $this->createAdminNotification('order_cancelled', 'reservations', "Reservation #{$reservation->id} cancelled by customer", [
             'reservation_id' => $reservation->id,

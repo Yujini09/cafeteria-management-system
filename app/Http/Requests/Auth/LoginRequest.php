@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\AuditTrail;
+use App\Models\User;
+use App\Support\AuditDictionary;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -45,6 +48,7 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            $this->logFailedLoginAttempt();
             RateLimiter::hit($this->throttleKey(), self::THROTTLE_SECONDS);
 
             if (RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
@@ -70,6 +74,26 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    private function logFailedLoginAttempt(): void
+    {
+        $email = (string) $this->input('email');
+        if ($email === '') {
+            return;
+        }
+
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            return;
+        }
+
+        AuditTrail::record(
+            $user->id,
+            AuditDictionary::FAILED_LOGIN,
+            AuditDictionary::MODULE_AUTH,
+            'failed login attempt'
+        );
     }
 
     /**

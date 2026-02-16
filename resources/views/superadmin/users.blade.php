@@ -328,7 +328,7 @@
                 <div class="relative flex-1">
                     <input type="search"
                            id="activitiesSearchInput"
-                           placeholder="Search user, action, module, description..."
+                           placeholder="Search user, action, description..."
                            class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                            aria-label="Search recent activities">
                     <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -345,9 +345,6 @@
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                    <select id="activitiesModuleFilter" class="admin-select min-w-[11rem]" data-admin-select="true" aria-label="Filter activities by module">
-                        <option value="">All Modules</option>
-                    </select>
                     <select id="activitiesActionFilter" class="admin-select min-w-[11rem]" data-admin-select="true" aria-label="Filter activities by action">
                         <option value="">All Actions</option>
                     </select>
@@ -357,10 +354,9 @@
         </div>
 
         <div id="activitiesTableContainer" class="flex-1 min-h-0 overflow-auto rounded-admin border border-admin-neutral-200 bg-white">
-            <table class="w-full min-w-[70rem] border-collapse text-sm table-fixed">
+            <table class="w-full min-w-[64rem] border-collapse text-sm table-fixed">
                 <colgroup>
                     <col class="w-56">
-                    <col class="w-40">
                     <col class="w-40">
                     <col class="w-[15rem]">
                     <col class="w-60">
@@ -369,7 +365,6 @@
                     <tr>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">User</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Action</th>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Module</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Description</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                             <button type="button" class="inline-flex items-center gap-1.5 hover:text-admin-neutral-900 transition-colors duration-admin" onclick="sortBy('created_at')">
@@ -381,7 +376,7 @@
                 </thead>
                 <tbody id="activitiesTableBody">
                     <tr>
-                        <td colspan="5" class="py-10 text-center text-admin-neutral-500">Loading activities...</td>
+                        <td colspan="4" class="py-10 text-center text-admin-neutral-500">Loading activities...</td>
                     </tr>
                 </tbody>
             </table>
@@ -1281,7 +1276,7 @@ function setActivitiesLoadingState() {
 
     tbody.innerHTML = `
         <tr>
-            <td colspan="5" class="py-12 px-4 text-center text-admin-neutral-500">
+            <td colspan="4" class="py-12 px-4 text-center text-admin-neutral-500">
                 <div class="inline-flex items-center gap-2">
                     <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
                     <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
@@ -1300,7 +1295,7 @@ function setActivitiesErrorState() {
 
     tbody.innerHTML = `
         <tr>
-            <td colspan="5" class="py-12 px-4 text-center">
+            <td colspan="4" class="py-12 px-4 text-center">
                 <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-admin-danger-light text-admin-danger">
                     <i class="fas fa-triangle-exclamation text-base" aria-hidden="true"></i>
                 </div>
@@ -1313,14 +1308,6 @@ function setActivitiesErrorState() {
 }
 
 function populateActivitiesFilterOptions() {
-    const moduleValues = Array.from(
-        new Set(
-            allAudits
-                .map((audit) => activityText(audit.module))
-                .filter((value) => value.length > 0)
-        )
-    ).sort((a, b) => a.localeCompare(b));
-
     const actionValues = Array.from(
         new Set(
             allAudits
@@ -1329,7 +1316,6 @@ function populateActivitiesFilterOptions() {
         )
     ).sort((a, b) => a.localeCompare(b));
 
-    setActivitiesSelectOptions(document.getElementById('activitiesModuleFilter'), moduleValues, 'All Modules');
     setActivitiesSelectOptions(document.getElementById('activitiesActionFilter'), actionValues, 'All Actions');
 }
 
@@ -1366,13 +1352,12 @@ function renderActivitiesTable(audits) {
     if (totalItems === 0) {
         const hasFilters = Boolean(
             activityText(document.getElementById('activitiesSearchInput')?.value).length ||
-            activityText(document.getElementById('activitiesModuleFilter')?.value).length ||
             activityText(document.getElementById('activitiesActionFilter')?.value).length
         );
 
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="py-12 px-4 text-center">
+                <td colspan="4" class="py-12 px-4 text-center">
                     <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-admin-neutral-100 text-admin-neutral-400">
                         <i class="fas ${hasFilters ? 'fa-filter' : 'fa-clock-rotate-left'} text-base" aria-hidden="true"></i>
                     </div>
@@ -1397,7 +1382,6 @@ function renderActivitiesTable(audits) {
     pagedAudits.forEach((audit) => {
         const userName = activityText(audit.user && audit.user.name ? audit.user.name : 'System') || 'System';
         const action = activityText(audit.action) || 'N/A';
-        const moduleName = activityText(audit.module) || 'General';
         const description = activityText(audit.description) || 'No description provided.';
         const dateInfo = formatActivityDate(audit.created_at);
         const actionBadgeClass = getActionBadgeClass(action);
@@ -1410,11 +1394,6 @@ function renderActivitiesTable(audits) {
                 <td class="py-3 px-4 align-top whitespace-nowrap overflow-hidden text-ellipsis">
                     <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold truncate ${actionBadgeClass}">
                         ${escapeHtml(action)}
-                    </span>
-                </td>
-                <td class="py-3 px-4 align-top whitespace-nowrap overflow-hidden text-ellipsis">
-                    <span class="inline-flex max-w-full items-center rounded-full border border-admin-neutral-200 bg-admin-primary-light px-2.5 py-1 text-xs font-semibold text-admin-primary truncate">
-                        ${escapeHtml(moduleName)}
                     </span>
                 </td>
                 <td class="py-3 px-4 align-top">
@@ -1433,27 +1412,23 @@ function renderActivitiesTable(audits) {
 
 function applyActivitiesFilters(resetPage = false) {
     const searchInput = document.getElementById('activitiesSearchInput');
-    const moduleFilter = document.getElementById('activitiesModuleFilter');
     const actionFilter = document.getElementById('activitiesActionFilter');
     const clearButton = document.getElementById('activitiesClearSearch');
 
     const query = activityText(searchInput?.value).toLowerCase();
-    const moduleValue = activityText(moduleFilter?.value);
     const actionValue = activityText(actionFilter?.value);
 
     filteredAudits = allAudits.filter((audit) => {
         const userName = activityText(audit.user && audit.user.name ? audit.user.name : 'System');
         const action = activityText(audit.action);
-        const moduleName = activityText(audit.module);
         const description = activityText(audit.description);
         const dateText = audit.created_at ? new Date(audit.created_at).toLocaleString() : '';
 
-        const haystack = `${userName} ${action} ${moduleName} ${description} ${dateText}`.toLowerCase();
+        const haystack = `${userName} ${action} ${description} ${dateText}`.toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
-        const matchesModule = !moduleValue || moduleName === moduleValue;
         const matchesAction = !actionValue || action === actionValue;
 
-        return matchesQuery && matchesModule && matchesAction;
+        return matchesQuery && matchesAction;
     });
 
     if (resetPage) {
@@ -1498,7 +1473,6 @@ async function loadActivities() {
 
 function initActivitiesControls() {
     const searchInput = document.getElementById('activitiesSearchInput');
-    const moduleFilter = document.getElementById('activitiesModuleFilter');
     const actionFilter = document.getElementById('activitiesActionFilter');
     const clearButton = document.getElementById('activitiesClearSearch');
     const resetButton = document.getElementById('activitiesResetFilters');
@@ -1506,11 +1480,6 @@ function initActivitiesControls() {
     if (searchInput && !searchInput.dataset.bound) {
         searchInput.addEventListener('input', () => applyActivitiesFilters(true));
         searchInput.dataset.bound = 'true';
-    }
-
-    if (moduleFilter && !moduleFilter.dataset.bound) {
-        moduleFilter.addEventListener('change', () => applyActivitiesFilters(true));
-        moduleFilter.dataset.bound = 'true';
     }
 
     if (actionFilter && !actionFilter.dataset.bound) {
@@ -1532,9 +1501,6 @@ function initActivitiesControls() {
         resetButton.addEventListener('click', () => {
             if (searchInput) {
                 searchInput.value = '';
-            }
-            if (moduleFilter) {
-                moduleFilter.value = '';
             }
             if (actionFilter) {
                 actionFilter.value = '';

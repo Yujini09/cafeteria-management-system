@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use App\Models\AuditTrail;
+use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
 
 class RecipeController extends Controller
@@ -33,17 +34,24 @@ class RecipeController extends Controller
             return back()->with('error', 'Inventory item not found.');
         }
 
-        $menuItem->recipes()->updateOrCreate(
+        $recipe = $menuItem->recipes()->updateOrCreate(
             ['inventory_item_id' => $data['inventory_item_id']],
             ['quantity_needed'   => $data['quantity_needed'], 'unit' => $inventoryItem->unit ?? null]
         );
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Added/Updated Recipe Ingredient',
-            'module'      => 'recipes',
-            'description' => 'added/updated a recipe ingredient',
-        ]);
+        $recipeAction = $recipe->wasRecentlyCreated
+            ? AuditDictionary::ADDED_RECIPE_INGREDIENT
+            : AuditDictionary::UPDATED_RECIPE_INGREDIENT;
+        $recipeDescription = $recipe->wasRecentlyCreated
+            ? "added recipe ingredient {$inventoryItem->name} for menu item {$menuItem->name}"
+            : "updated recipe ingredient {$inventoryItem->name} for menu item {$menuItem->name}";
+
+        AuditTrail::record(
+            Auth::id(),
+            $recipeAction,
+            AuditDictionary::MODULE_RECIPES,
+            $recipeDescription
+        );
 
         // Create notification for admins/superadmin about recipe ingredient addition/update
         $this->createAdminNotification('recipe_ingredient_added_updated', 'recipes', 'A recipe ingredient has been added/updated by ' . (Auth::user()?->name ?? 'System'), [
@@ -66,12 +74,12 @@ class RecipeController extends Controller
 
         $recipe->delete();
 
-        AuditTrail::create([
-            'user_id'     => Auth::id(),
-            'action'      => 'Removed Recipe Ingredient',
-            'module'      => 'recipes',
-            'description' => 'removed a recipe ingredient',
-        ]);
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::REMOVED_RECIPE_INGREDIENT,
+            AuditDictionary::MODULE_RECIPES,
+            "removed recipe ingredient {$ingredientName} from menu item {$menuItemName}"
+        );
 
         // Create notification for admins/superadmin about recipe ingredient removal
         $this->createAdminNotification('recipe_ingredient_removed', 'recipes', 'A recipe ingredient has been removed by ' . Auth::user()?->name ?? 'System', [
