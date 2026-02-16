@@ -34,7 +34,7 @@
                     <p class="text-gray-600">We're here to help! Send us your questions or concerns.</p>
                 </div>
 
-                <form id="contactForm" method="POST" action="{{ route('contact.send') }}" onsubmit="handleContactFormSubmit(event)" class="space-y-6 flex-grow">
+                <form id="contactForm" method="POST" action="{{ route('contact.send') }}" class="space-y-6 flex-grow">
                     @csrf
                     
                     <!-- Name and Email in responsive grid -->
@@ -258,6 +258,10 @@
     </div>
 </section>
 
+<x-success-modal name="contact-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+    <p id="contactSuccessMessage" class="text-sm text-gray-600">{{ session('contact_success', 'Message sent successfully! We\'ll get back to you soon.') }}</p>
+</x-success-modal>
+
 <!-- FAQ Section -->
 <section class="py-16 bg-gradient-to-br from-green-50 to-blue-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -332,12 +336,6 @@
     }
     
     /* Message box styling */
-    #messageBox.success {
-        background-color: #f0fdf4;
-        border-color: #bbf7d0;
-        color: #166534;
-    }
-    
     #messageBox.error {
         background-color: #fef2f2;
         border-color: #fecaca;
@@ -356,6 +354,22 @@
 <script>
     // Character counter for message textarea
     document.addEventListener('DOMContentLoaded', function() {
+        const flashedSuccessMessage = @json(session('contact_success'));
+        const flashedErrorMessage = @json(session('contact_error'));
+
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm && contactForm.dataset.ajaxBound !== 'true') {
+            contactForm.dataset.ajaxBound = 'true';
+            contactForm.addEventListener('submit', handleContactFormSubmit);
+        }
+
+        if (flashedSuccessMessage) {
+            showSuccessModal(flashedSuccessMessage);
+        }
+        if (flashedErrorMessage) {
+            showErrorMessage(flashedErrorMessage);
+        }
+
         const messageField = document.getElementById('message');
         if (messageField) {
             messageField.addEventListener('input', function(e) {
@@ -389,10 +403,20 @@
 
     // Form submission handler
     function handleContactFormSubmit(event) {
-        event.preventDefault();
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
+
+        const form = event?.target || document.getElementById('contactForm');
+        if (!form) {
+            return;
+        }
         
         // Show loading state
         const button = document.getElementById('contactSubmitButton');
+        if (!button) {
+            return;
+        }
         const originalText = button.innerHTML;
         button.innerHTML = `
             <svg class="animate-spin w-5 h-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
@@ -404,7 +428,6 @@
         button.disabled = true;
         
         // Submit the form
-        const form = event.target;
         const formData = new FormData(form);
         
         fetch(form.action, {
@@ -418,18 +441,18 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showMessage(data.message || 'Message sent successfully! We\'ll get back to you soon.', 'success');
+                showSuccessModal(data.message || 'Message sent successfully! We\'ll get back to you soon.');
                 form.reset();
                 
                 // Reset character counter
                 document.getElementById('charCounter').textContent = '0 characters';
                 document.getElementById('charCounter').classList.remove('text-green-500', 'text-red-500');
             } else {
-                showMessage(data.message || 'Error sending message. Please try again.', 'error');
+                showErrorMessage(data.message || 'Error sending message. Please try again.');
             }
         })
         .catch(error => {
-            showMessage('Error sending message. Please try again.', 'error');
+            showErrorMessage('Error sending message. Please try again.');
         })
         .finally(() => {
             // Reset button
@@ -438,10 +461,24 @@
         });
     }
 
-    function showMessage(text, type) {
+    function showSuccessModal(text) {
+        const successMessage = document.getElementById('contactSuccessMessage');
+        if (successMessage) {
+            successMessage.textContent = text;
+        }
+
+        const messageBox = document.getElementById('messageBox');
+        if (messageBox) {
+            messageBox.classList.add('hidden');
+        }
+
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'contact-success' }));
+    }
+
+    function showErrorMessage(text) {
         const messageBox = document.getElementById('messageBox');
         messageBox.textContent = text;
-        messageBox.className = `p-4 rounded-lg text-sm font-medium border ${type === 'success' ? 'success' : 'error'}`;
+        messageBox.className = 'p-4 rounded-lg text-sm font-medium border error';
         messageBox.classList.remove('hidden');
         
         // Auto-hide after 5 seconds

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ContactMessage; // <--- This import is critical
+use App\Models\ContactMessage; 
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +12,8 @@ class ContactController extends Controller
 {
     public function send(Request $request)
     {
+        $expectsJson = $request->expectsJson() || $request->wantsJson() || $request->ajax();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -29,10 +31,16 @@ class ContactController extends Controller
             ->values();
 
         if ($recipients->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No admin recipients configured. Your message was saved, but we could not notify the team.'
-            ], 500);
+            $errorMessage = 'No admin recipients configured. Your message was saved, but we could not notify the team.';
+
+            if ($expectsJson) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+
+            return redirect()->route('contact')->with('contact_error', $errorMessage);
         }
 
         $primaryRecipient = $recipients->first();
@@ -69,15 +77,27 @@ class ContactController extends Controller
         }
 
         if (!$emailSent) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your message was saved, but we could not send the notification email. Please try again later.'
-            ], 500);
+            $errorMessage = 'Your message was saved, but we could not send the notification email. Please try again later.';
+
+            if ($expectsJson) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+
+            return redirect()->route('contact')->with('contact_error', $errorMessage);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Email has been sent.'
-        ]);
+        $successMessage = 'Email has been sent.';
+
+        if ($expectsJson) {
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage
+            ]);
+        }
+
+        return redirect()->route('contact')->with('contact_success', $successMessage);
     }
 }
