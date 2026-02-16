@@ -1,4 +1,3 @@
-{{-- resources/views/admin/reservations/show.blade.php --}}
 @extends('layouts.sidebar')
 @section('page-title','Reservation #'.$r->id)
 
@@ -14,7 +13,6 @@
     transition: all 0.25s ease;
     position: relative;
 }
-
 
 /* Action Buttons */
 .action-btn {
@@ -72,20 +70,9 @@
 }
 
 /* Icon Sizes */
-.icon-sm {
-    width: 14px;
-    height: 14px;
-}
-
-.icon-md {
-    width: 16px;
-    height: 16px;
-}
-
-.icon-lg {
-    width: 20px;
-    height: 20px;
-}
+.icon-sm { width: 14px; height: 14px; }
+.icon-md { width: 16px; height: 16px; }
+.icon-lg { width: 20px; height: 20px; }
 
 /* Modal Styles */
 .modern-modal {
@@ -135,7 +122,6 @@
     border-top: 1px solid var(--neutral-200);
 }
 
-
 [x-cloak] { display: none !important; }
 </style>
 
@@ -160,10 +146,10 @@
     <div class="page-header">
         <div class="header-content">
             <a href="{{ route('admin.reservations') }}" class="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-        </a>
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
             <div class="header-icon">
                 <svg class="icon-lg text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -194,7 +180,6 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Event Details -->
         <div class="lg:col-span-2 space-y-6">
             <div class="info-card">
                 <div class="info-card-header">
@@ -203,190 +188,122 @@
                     </svg>
                     <h2 class="info-card-title">Event Details</h2>
                 </div>
-<dl class="space-y-6 ">
-    <div>
-<div class="info-label">EVENT INFORMATION</div>
-<div class="space-y-4 mt-3 grid grid-cols-1 md:grid-cols-2 text-sm">
-    <!-- Left Column -->
-    <div class="space-y-4">
-        <!-- Event Name -->
-        <div>
-            <dt class="text-gray-500 font-medium">Event Name:</dt>
-            <dd class="mt-1 font-semibold text-gray-900">{{ $r->event_name ?? '—' }}</dd>
-        </div>
-        
-        <!-- Date & Time -->
-        <div>
-            <dt class="text-gray-500 font-medium">Date & Time:</dt>
-            <dd class="mt-1 text-gray-900">
-                @php
-                    $startDate = \Carbon\Carbon::parse($r->event_date);
-                    $endDate = $r->end_date ? \Carbon\Carbon::parse($r->end_date) : $startDate;
-                    
-                    // Get day_times - already cast to array by Laravel
-                    $dayTimes = $r->day_times ?? [];
-                    
-                    $days = $startDate->diffInDays($endDate) + 1;
-                    
-                    // Helper function to format time
-                    function formatTimeForDisplay($timeString) {
-                        if (empty($timeString) || trim($timeString) === '') {
-                            return '';
-                        }
-                        
-                        // Remove any extra spaces
-                        $timeString = trim($timeString);
-                        
-                        // If it already looks like a time (contains : and AM/PM)
-                        if (preg_match('/\d{1,2}:\d{2}\s*(AM|PM|am|pm)/i', $timeString)) {
-                            // Convert to proper case
-                            $timeString = strtoupper($timeString);
-                            return $timeString;
-                        }
-                        
-                        // Try to parse common time formats
-                        $timeFormats = [
-                            'H:i',      // 24-hour: 14:30
-                            'H:i:s',    // 24-hour with seconds: 14:30:00
-                            'g:i A',    // 12-hour: 2:30 PM
-                            'g:i:s A',  // 12-hour with seconds: 2:30:00 PM
-                            'g:i a',    // 12-hour lowercase: 2:30 pm
-                        ];
-                        
-                        foreach ($timeFormats as $format) {
-                            try {
-                                $time = \Carbon\Carbon::createFromFormat($format, $timeString);
-                                return $time->format('g:iA'); // Convert to 2:30PM format
-                            } catch (\Exception $e) {
-                                continue;
-                            }
-                        }
-                        
-                        // If all parsing fails, return as-is
-                        return $timeString;
-                    }
-                    
-                    // Generate date range
-                    $dateRange = [];
-                    for ($i = 0; $i < $days; $i++) {
-                        $currentDate = $startDate->copy()->addDays($i);
-                        $dateKey = $currentDate->format('Y-m-d');
-                        $dateRange[$dateKey] = $currentDate;
-                    }
-                @endphp
-                
-                <div class="reservation-period">
-                    <!-- Summary Line -->
-                    <div class="period-summary mb-2 font-medium text-gray-900">
-                        @if($days > 1)
-                            {{ $startDate->format('M d') }} - {{ $endDate->format('M d, Y') }} ({{ $days }} days)
-                        @else
-                            {{ $startDate->format('M d, Y') }}
-                        @endif
-                    </div>
-                    
-                    <!-- Detailed Date-Time List -->
-                    <div class="datetime-display space-y-1">
-                        @foreach($dateRange as $dateKey => $currentDate)
-                            @php
-                                $formattedDate = $currentDate->format('M d, Y');
-                                $startTime = '';
-                                $endTime = '';
+                <dl class="space-y-6 ">
+                    <div>
+                        <div class="info-label">EVENT INFORMATION</div>
+                        <div class="space-y-4 mt-3 grid grid-cols-1 md:grid-cols-2 text-sm">
+                            <div class="space-y-4">
+                                <div>
+                                    <dt class="text-gray-500 font-medium">Event Name:</dt>
+                                    <dd class="mt-1 font-semibold text-gray-900">{{ $r->event_name ?? '—' }}</dd>
+                                </div>
                                 
-                                // Check if we have time data for this date
-                                if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
-                                    $timeData = $dayTimes[$dateKey];
-                                    
-                                    if (is_array($timeData)) {
-                                        // Array structure
-                                        $startTime = $timeData['start_time'] ?? $timeData['start'] ?? $timeData['time_start'] ?? '';
-                                        $endTime = $timeData['end_time'] ?? $timeData['end'] ?? $timeData['time_end'] ?? '';
-                                    } elseif (is_string($timeData)) {
-                                        // String like "9:00 AM - 5:00 PM"
-                                        $parts = explode(' - ', $timeData);
-                                        if (count($parts) >= 2) {
-                                            $startTime = trim($parts[0]);
-                                            $endTime = trim($parts[1]);
-                                        } elseif (count($parts) == 1) {
-                                            $startTime = trim($parts[0]);
-                                        }
-                                    }
-                                } elseif (is_string($dayTimes) && $days == 1) {
-                                    // Single string for single day
-                                    $parts = explode(' - ', $dayTimes);
-                                    if (count($parts) >= 2) {
-                                        $startTime = trim($parts[0]);
-                                        $endTime = trim($parts[1]);
-                                    } elseif (count($parts) == 1) {
-                                        $startTime = trim($parts[0]);
-                                    }
-                                }
-                                
-                                // Also check event_time for single day
-                                if (empty($startTime) && $days == 1 && !empty($r->event_time)) {
-                                    $parts = explode(' - ', $r->event_time);
-                                    if (count($parts) >= 2) {
-                                        $startTime = trim($parts[0]);
-                                        $endTime = trim($parts[1]);
-                                    } elseif (count($parts) == 1) {
-                                        $startTime = trim($parts[0]);
-                                    }
-                                }
-                                
-                                $formattedStartTime = formatTimeForDisplay($startTime);
-                                $formattedEndTime = formatTimeForDisplay($endTime);
-                                
-                                $hasStartTime = !empty($formattedStartTime);
-                                $hasEndTime = !empty($formattedEndTime);
-                            @endphp
-                            
-                            <div class="datetime-item flex items-start">
-                                <span class="date font-medium text-gray-700 min-w-[120px]">{{ $formattedDate }}</span>
-                                <span class="time ml-2">
-                                    @if($hasStartTime && $hasEndTime)
-                                        {{ $formattedStartTime }} - {{ $formattedEndTime }}
-                                    @elseif($hasStartTime)
-                                        {{ $formattedStartTime }}
-                                    @else
-                                        <span class="text-gray-400">No time specified</span>
-                                    @endif
-                                </span>
+                                <div>
+                                    <dt class="text-gray-500 font-medium">Date & Time:</dt>
+                                    <dd class="mt-1 text-gray-900">
+                                        @php
+                                            $startDate = \Carbon\Carbon::parse($r->event_date);
+                                            $endDate = $r->end_date ? \Carbon\Carbon::parse($r->end_date) : $startDate;
+                                            $dayTimes = $r->day_times ?? [];
+                                            $days = $startDate->diffInDays($endDate) + 1;
+                                            
+                                            // Helper function logic kept same as previous fix
+                                            function formatTimeForDisplay($timeString) {
+                                                if (empty($timeString) || trim($timeString) === '') return '';
+                                                $timeString = trim($timeString);
+                                                if (preg_match('/\d{1,2}:\d{2}\s*(AM|PM|am|pm)/i', $timeString)) return strtoupper($timeString);
+                                                try {
+                                                    return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:iA');
+                                                } catch (\Exception $e) { return $timeString; }
+                                            }
+                                            
+                                            $dateRange = [];
+                                            for ($i = 0; $i < $days; $i++) {
+                                                $currentDate = $startDate->copy()->addDays($i);
+                                                $dateKey = $currentDate->format('Y-m-d');
+                                                $dateRange[$dateKey] = $currentDate;
+                                            }
+                                        @endphp
+                                        
+                                        <div class="reservation-period">
+                                            <div class="period-summary mb-2 font-medium text-gray-900">
+                                                @if($days > 1)
+                                                    {{ $startDate->format('M d') }} - {{ $endDate->format('M d, Y') }} ({{ $days }} days)
+                                                @else
+                                                    {{ $startDate->format('M d, Y') }}
+                                                @endif
+                                            </div>
+                                            
+                                            <div class="datetime-display space-y-1">
+                                                @foreach($dateRange as $dateKey => $currentDate)
+                                                    @php
+                                                        $formattedDate = $currentDate->format('M d, Y');
+                                                        $startTime = '';
+                                                        $endTime = '';
+                                                        
+                                                        // Same time extraction logic
+                                                        if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
+                                                            $timeData = $dayTimes[$dateKey];
+                                                            if (is_array($timeData)) {
+                                                                $startTime = $timeData['start_time'] ?? $timeData['start'] ?? '';
+                                                                $endTime = $timeData['end_time'] ?? $timeData['end'] ?? '';
+                                                            } elseif (is_string($timeData)) {
+                                                                $parts = explode(' - ', $timeData);
+                                                                $startTime = trim($parts[0] ?? '');
+                                                                $endTime = trim($parts[1] ?? '');
+                                                            }
+                                                        } elseif (is_string($dayTimes) && $days == 1) {
+                                                            $parts = explode(' - ', $dayTimes);
+                                                            $startTime = trim($parts[0] ?? '');
+                                                            $endTime = trim($parts[1] ?? '');
+                                                        }
+                                                        
+                                                        if (empty($startTime) && $days == 1 && !empty($r->event_time)) {
+                                                            $parts = explode(' - ', $r->event_time);
+                                                            $startTime = trim($parts[0] ?? '');
+                                                            $endTime = trim($parts[1] ?? '');
+                                                        }
+                                                        
+                                                        $formattedStartTime = formatTimeForDisplay($startTime);
+                                                        $formattedEndTime = formatTimeForDisplay($endTime);
+                                                    @endphp
+                                                    
+                                                    <div class="datetime-item flex items-start">
+                                                        <span class="date font-medium text-gray-700 min-w-[120px]">{{ $formattedDate }}</span>
+                                                        <span class="time ml-2">
+                                                            @if(!empty($formattedStartTime))
+                                                                {{ $formattedStartTime }} {{ !empty($formattedEndTime) ? '- ' . $formattedEndTime : '' }}
+                                                            @else
+                                                                <span class="text-gray-400">No time specified</span>
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </dd>
+                                </div>
                             </div>
-                        @endforeach
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <dt class="text-gray-500 font-medium">Number of Persons:</dt>
+                                    <dd class="mt-1 font-bold text-xl text-green-600">{{ $r->number_of_persons ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-gray-500 font-medium">Venue:</dt>
+                                    <dd class="mt-1 font-semibold text-gray-900">{{ $r->venue ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-gray-500 font-medium">Special Requests:</dt>
+                                    <dd class="mt-1 text-gray-900">{{ $r->special_requests ?? 'None' }}</dd>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </dd>
-        </div>
-    </div>
-    
-    <!-- Right Column -->
-    <div class="space-y-4">
-        <!-- Number of Persons -->
-        <div>
-            <dt class="text-gray-500 font-medium">Number of Persons:</dt>
-            <dd class="mt-1 font-bold text-xl text-green-600">{{ $r->number_of_persons ?? '—' }}</dd>
-        </div>
-        
-        <!-- Venue -->
-        <div>
-            <dt class="text-gray-500 font-medium">Venue:</dt>
-            <dd class="mt-1 font-semibold text-gray-900">{{ $r->venue ?? '—' }}</dd>
-        </div>
-        
-        <!-- Special Requests -->
-        <div>
-            <dt class="text-gray-500 font-medium">Special Requests:</dt>
-            <dd class="mt-1 text-gray-900">
-                {{ $r->special_requests ?? 'None' }}
-            </dd>
-        </div>
-    </div>
-</div>
-    </div>
-</dl>
+                </dl>
             </div>
 
-            <!-- Menus Ordered -->
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -396,7 +313,6 @@
                 </div>
                 
                 @php
-                    // Group items by day
                     $groupedItems = [];
                     foreach ($r->items as $item) {
                         $dayNumber = $item->day_number ?? 1;
@@ -407,7 +323,6 @@
                     }
                     ksort($groupedItems);
                     
-                    // Calculate total amount
                     $totalAmount = 0;
                 @endphp
                 
@@ -425,26 +340,33 @@
                                 </h3>
                             </div>
                             
-                            <table class="modern-table">
+                            <table class="modern-table w-full text-left border-collapse">
                                 <thead>
-                                    <tr>
-                                        <th>Menu Item</th>
-                                        <th>Meal</th>
-                                        <th>Quantity</th>
-                                        <th>Price</th>
-                                        <th>Total</th>
+                                    <tr class="text-sm text-gray-500 border-b border-gray-100">
+                                        <th class="pb-2">Menu Item</th>
+                                        <th class="pb-2">Meal</th>
+                                        <th class="pb-2">Quantity</th>
+                                        <th class="pb-2">Price</th>
+                                        <th class="pb-2 text-right">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($dayItems as $item)
                                         @if($item->menu)
                                             @php
-                                                $price = $item->menu->price ?? 150;
+                                                // Ensure price is grabbed correctly. 
+                                                // Priority: Item Price (if saved) -> Menu Price -> Default
+                                                $price = $item->price ?? $item->menu->price ?? 150; 
+                                                // Fallback if database has 0
+                                                if($price <= 0) {
+                                                    $price = ($item->menu->type == 'special' ? 200 : 150);
+                                                }
+                                                
                                                 $itemTotal = $item->quantity * $price;
                                                 $totalAmount += $itemTotal;
                                             @endphp
-                                            <tr>
-                                                <td>
+                                            <tr class="border-b border-gray-50 last:border-0">
+                                                <td class="py-2">
                                                     <div class="font-medium text-gray-900">{{ $item->menu->name }}</div>
                                                     @if($item->menu->items && $item->menu->items->count() > 0)
                                                         <div class="text-xs text-gray-600 mt-1">
@@ -456,10 +378,10 @@
                                                         </div>
                                                     @endif
                                                 </td>
-                                                <td class="capitalize">{{ str_replace('_', ' ', $item->meal_time) }}</td>
-                                                <td class="font-bold">{{ $item->quantity }}</td>
-                                                <td>₱{{ number_format($price, 2) }}</td>
-                                                <td class="font-bold text-green-600">₱{{ number_format($itemTotal, 2) }}</td>
+                                                <td class="capitalize py-2">{{ str_replace('_', ' ', $item->meal_time) }}</td>
+                                                <td class="font-bold py-2">{{ $item->quantity }}</td>
+                                                <td class="py-2">₱{{ number_format($price, 2) }}</td>
+                                                <td class="font-bold text-green-600 text-right py-2">₱{{ number_format($itemTotal, 2) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -492,16 +414,12 @@
                     </div>
                 @else
                     <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                        </svg>
                         <p>No menus selected for this reservation.</p>
                     </div>
                 @endif
             </div>
         </div>
 
-        <!-- Sidebar -->
         <div class="space-y-6">
             <!-- Additionals -->
             <div class="info-card">
@@ -641,7 +559,6 @@
             </div>
 
             @if($r->status !== 'approved' && $r->status !== 'declined')
-            <!-- Actions -->
             <div class="info-card" id="decline">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -671,7 +588,6 @@
             @endif
 
             @if($r->status === 'declined' && !empty($r->decline_reason))
-            <!-- Decline Reason -->
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -683,7 +599,6 @@
             </div>
             @endif
             
-            <!-- Reservation Info -->
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -721,16 +636,12 @@
         </div>
     </div>
 
-    {{-- Approve Confirmation Modal --}}
+    {{-- Confirmation Modals (Same logic as before, kept clean) --}}
     <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
-             x-transition.scale.90
-             @click.stop>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10" x-transition.scale.90 @click.stop>
             <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <h3 class="text-lg font-semibold mb-2">Confirm Approval</h3>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to approve this reservation?</p>
@@ -749,22 +660,17 @@
         </div>
     </div>
 
-    {{-- Decline Confirmation Modal --}}
     <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="declineConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
-             x-transition.scale.90
-             @click.stop>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10" x-transition.scale.90 @click.stop>
             <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
+                <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
             </div>
             <h3 class="text-lg font-semibold mb-2">Confirm Decline</h3>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to decline this reservation?</p>
             <div class="flex justify-center gap-3">
-                <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="declineConfirmationOpen = false">Cancel</button>
-                <button type="button" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium" @click="openDeclineForm()">Yes, Decline</button>
+                <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium" @click="declineConfirmationOpen = false">Cancel</button>
+                <button type="button" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium" @click="openDeclineForm()">Yes, Decline</button>
             </div>
         </div>
     </div>
@@ -899,13 +805,9 @@
     {{-- Decline Form Modal --}}
     <div x-cloak x-show="declineOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="declineOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-lg relative z-10"
-             x-transition.scale.90
-             @click.stop>
-            <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200" @click="declineOpen = false">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10" x-transition.scale.90 @click.stop>
+            <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-20" @click="declineOpen = false">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             <h3 class="text-lg font-semibold mb-3">Decline Reservation</h3>
             <p class="text-sm text-gray-600 mb-6">Please provide a reason. The customer will receive this via email and SMS.</p>
@@ -914,10 +816,9 @@
                 @csrf @method('PATCH')
                 <div class="space-y-2">
                     <label for="reason" class="block text-sm font-medium text-gray-700">Reason for declining</label>
-                    <textarea name="reason" id="reason" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 resize-none" placeholder="Please provide a detailed reason for declining this reservation..."></textarea>
+                    <textarea name="reason" id="reason" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" placeholder="Detailed reason..."></textarea>
                     @error('reason') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
-
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="declineOpen = false">Cancel</button>
                     <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium" data-loading-text="Rejecting...">Submit</button>

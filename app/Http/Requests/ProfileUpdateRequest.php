@@ -19,6 +19,9 @@ class ProfileUpdateRequest extends FormRequest
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'], 
+            'address' => ['nullable', 'string', 'max:500'],
+            'birth_date' => ['nullable', 'date', 'before:today'],
         ];
 
         // Admin and superadmin emails are immutable from profile settings.
