@@ -29,7 +29,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',   // ✅ your manual role column
         'google_id',
         'must_change_password',
-        'birth_date', // ✅ Added
         'avatar',     // ✅ Added
     ];
 
@@ -42,7 +41,6 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'must_change_password' => 'boolean',
-        'birth_date' => 'date', // ✅ Cast birth_date so it formats correctly
     ];
     /**
      * MUTATOR: This magic function runs automatically.

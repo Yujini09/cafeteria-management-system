@@ -8,7 +8,7 @@
         'special'  => ['breakfast' => 170, 'am_snacks' => 100, 'lunch' => 350, 'pm_snacks' => 150, 'dinner' => 350],
     ];
     $type = $type ?? request('type', 'standard');
-    $meal = $meal ?? request('meal', 'breakfast');
+    $meal = $meal ?? request('meal', 'all');
 @endphp
 
 <style>
@@ -177,7 +177,7 @@
   {{-- Type Tabs --}}
   <div class="flex gap-2 flex-wrap mt-6">
     @foreach($types as $key => $label)
-      <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>$meal]) }}"
+      <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
          wire:navigate
          class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
         {{ $label }}
@@ -248,7 +248,7 @@
         <div class="flex items-start justify-between mb-3">
           <div class="flex-1">
             <div class="meal-badge">{{ strtoupper(str_replace('_',' ', $menu->meal_time)) }}</div>
-            <h2 class="font-semibold text-gray-900 mb-1 text-lg">Menu {{ $menu->id }}</h2>
+            <h2 class="font-semibold text-gray-900 mb-1 text-lg">{{ $menu->name ?: ('Menu #' . $menu->id) }}</h2>
             @if(!empty($menu->description))
               <p class="text-gray-600 mt-2 leading-relaxed text-sm">{{ $menu->description }}</p>
             @endif
@@ -271,7 +271,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
               </svg>
             </button>
-            <button type="button" @click='openDelete({{ $menu->id }}, @json("Menu ".$menu->id))'
+            <button type="button" @click='openDelete({{ $menu->id }}, @json($menu->name ?: ("Menu #".$menu->id)))'
                     class="p-1 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors duration-200">
               <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -445,12 +445,6 @@
                     <option value="dinner">Dinner</option>
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label class="form-label">Display Name (Optional)</label>
-                <input name="name" class="form-input" placeholder="e.g., Breakfast Menu" x-model="form.name">
-                <p class="text-xs text-gray-500 mt-1">If left empty, the menu will be named automatically as "Menu #X"</p>
               </div>
 
               <div>
@@ -779,7 +773,7 @@
             <div>
               <label class="form-label">Display Name (Optional)</label>
               <input name="name" class="form-input" placeholder="e.g., Breakfast Menu" x-model="editForm.name">
-              <p class="text-xs text-gray-500 mt-1">If left empty, the menu will be named automatically as "Menu #X"</p>
+              <p class="text-xs text-gray-500 mt-1">Leave blank to keep the current menu name.</p>
             </div>
 
             <div>

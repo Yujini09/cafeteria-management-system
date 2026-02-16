@@ -622,12 +622,18 @@ class ReservationController extends Controller
             return redirect()->back()->with('error', 'Additionals can only be updated for approved reservations.');
         }
 
+        // Price is immutable after creation.
+        if ($request->has('price') && (float) $request->input('price') !== (float) $additional->price) {
+            return redirect()->back()->with('error', 'Additional price is locked after creation and cannot be changed.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:140',
-            'price' => 'required|numeric|min:0|max:999999.99',
         ]);
 
-        $additional->update($data);
+        $additional->update([
+            'name' => $data['name'],
+        ]);
 
         AuditTrail::record(
             Auth::id(),

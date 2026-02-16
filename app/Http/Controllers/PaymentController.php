@@ -213,7 +213,7 @@ class PaymentController extends Controller
         }
 
         $data = $request->validate([
-            'notes' => 'nullable|string|max:1000',
+            'notes' => 'required|string|max:1000',
         ]);
 
         DB::transaction(function () use ($payment, $data) {

@@ -152,6 +152,14 @@
     color: var(--primary);
 }
 
+/* Modal Styles */
+.modern-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--neutral-200);
+}
+
 .icon-sm { width: 14px; height: 14px; }
 .icon-md { width: 16px; height: 16px; }
 .icon-lg { width: 20px; height: 20px; }
@@ -178,9 +186,16 @@
 @endphp
 
 <div class="admin-page-shell modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
-     x-data="{ approvedOpen: @js($showPaymentApproved), rejectedOpen: @js($showPaymentRejected), receiptPreviewOpen: false }"
-     x-effect="document.body.classList.toggle('overflow-hidden', approvedOpen || rejectedOpen || receiptPreviewOpen)"
-     @keydown.escape.window="approvedOpen = false; rejectedOpen = false; receiptPreviewOpen = false">
+     x-data="{
+        approvedOpen: @js($showPaymentApproved),
+        rejectedOpen: @js($showPaymentRejected),
+        receiptPreviewOpen: false,
+        approveConfirmationOpen: false,
+        rejectConfirmationOpen: false,
+        rejectReasonOpen: @js($errors->has('notes'))
+     }"
+     x-effect="document.body.classList.toggle('overflow-hidden', approvedOpen || rejectedOpen || receiptPreviewOpen || approveConfirmationOpen || rejectConfirmationOpen || rejectReasonOpen)"
+     @keydown.escape.window="approvedOpen = false; rejectedOpen = false; receiptPreviewOpen = false; approveConfirmationOpen = false; rejectConfirmationOpen = false; rejectReasonOpen = false">
     <div class="page-header">
         <div class="header-content">
             <a href="{{ route('admin.payments.index') }}" class="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200">
@@ -368,32 +383,22 @@
                 </div>
                 @if($payment->status === 'submitted')
                     <div class="space-y-3">
-                        <form method="POST" action="{{ route('admin.payments.approve', $payment) }}" data-action-loading>
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="action-btn action-btn-approve w-full justify-center" data-loading-text="Approving Payment...">
-                                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                Approve Payment
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-3" data-action-loading>
-                            @csrf
-                            @method('PATCH')
-                            <div>
-                                <label for="notes" class="block text-sm font-semibold text-gray-700">Rejection Notes (optional)</label>
-                                <textarea id="notes" name="notes" rows="3"
-                                          class="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-red-500"
-                                          placeholder="Add a short reason"></textarea>
-                            </div>
-                            <button type="submit" class="action-btn action-btn-decline w-full justify-center" data-loading-text="Rejecting Payment...">
-                                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                                Reject Payment
-                            </button>
-                        </form>
+                        <button type="button"
+                                class="action-btn action-btn-approve w-full justify-center"
+                                @click="rejectConfirmationOpen = false; rejectReasonOpen = false; approveConfirmationOpen = true">
+                            <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Approve Payment
+                        </button>
+                        <button type="button"
+                                class="action-btn action-btn-decline w-full justify-center"
+                                @click="approveConfirmationOpen = false; rejectReasonOpen = false; rejectConfirmationOpen = true">
+                            <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Reject Payment
+                        </button>
                     </div>
                 @else
                     <p class="text-sm text-gray-700">This payment has already been reviewed.</p>
@@ -438,6 +443,102 @@
                      alt="Payment receipt full preview"
                      class="block w-full max-h-[85vh] object-contain bg-white">
             </div>
+        </div>
+    </div>
+    @endif
+
+    @if($payment->status === 'submitted')
+    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="approveConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10" x-transition.scale.90 @click.stop>
+            <div class="flex items-center justify-center mb-4">
+                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Confirm Approval</h3>
+            <p class="text-sm text-gray-600 mb-4">Are you sure you want to approve this payment?</p>
+            <div class="flex justify-center gap-3">
+                <button type="button"
+                        class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium"
+                        @click="approveConfirmationOpen = false">
+                    Cancel
+                </button>
+                <form id="approvePaymentForm" method="POST" action="{{ route('admin.payments.approve', $payment) }}" data-action-loading>
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit"
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium"
+                            data-loading-text="Approving Payment...">
+                        Yes, Approve
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div x-cloak x-show="rejectConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="rejectConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10" x-transition.scale.90 @click.stop>
+            <div class="flex items-center justify-center mb-4">
+                <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Confirm Rejection</h3>
+            <p class="text-sm text-gray-600 mb-4">Are you sure you want to reject this payment?</p>
+            <div class="flex justify-center gap-3">
+                <button type="button"
+                        class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                        @click="rejectConfirmationOpen = false">
+                    Cancel
+                </button>
+                <button type="button"
+                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                        @click="rejectConfirmationOpen = false; rejectReasonOpen = true">
+                    Yes, Reject
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-cloak x-show="rejectReasonOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div @click="rejectReasonOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10" x-transition.scale.90 @click.stop>
+            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-20" @click="rejectReasonOpen = false">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <h3 class="text-lg font-semibold mb-3">Reject Payment</h3>
+            <p class="text-sm text-gray-600 mb-6">Please provide a reason. The customer will receive this via email.</p>
+
+            <form id="rejectPaymentForm" method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-4" data-action-loading>
+                @csrf
+                @method('PATCH')
+                <div class="space-y-2">
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Reason for rejecting</label>
+                    <textarea name="notes"
+                              id="notes"
+                              rows="4"
+                              required
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                              placeholder="Detailed reason...">{{ old('notes') }}</textarea>
+                    @error('notes') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button"
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium"
+                            @click="rejectReasonOpen = false">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+                            data-loading-text="Rejecting Payment...">
+                        Submit
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     @endif

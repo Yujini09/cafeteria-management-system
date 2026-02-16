@@ -35,9 +35,9 @@ class MenuController extends Controller
 
     public function index(Request $request): View
     {
-        // Defaults: standard + breakfast
+        // Defaults: standard + all meals
         $type = $request->query('type', 'standard');
-        $meal = $request->query('meal', 'breakfast');
+        $meal = $request->query('meal', 'all');
 
         // Sanitize type (only allow our keys)
         if (!array_key_exists($type, self::TYPES)) {
@@ -45,7 +45,7 @@ class MenuController extends Controller
         }
         // Sanitize meal: allow 'all' or a valid key
         if ($meal !== 'all' && !array_key_exists($meal, self::MEALS)) {
-            $meal = 'breakfast';
+            $meal = 'all';
         }
 
         // Base query with relations
@@ -110,10 +110,10 @@ class MenuController extends Controller
     public function create(Request $request): View
     {
         $type = $request->query('type', 'standard');
-        $meal = $request->query('meal', 'breakfast');
+        $meal = $request->query('meal', 'all');
 
         if (!array_key_exists($type, self::TYPES)) $type = 'standard';
-        if (!array_key_exists($meal, self::MEALS)) $meal = 'breakfast';
+        if ($meal !== 'all' && !array_key_exists($meal, self::MEALS)) $meal = 'all';
 
         $has = [
             'type'        => Schema::hasColumn('menus', 'type'),
@@ -146,42 +146,33 @@ class MenuController extends Controller
     }
 
     /**
-     * Generate the next default menu name
-     * Finds all menus with "Menu #X" format and returns "Menu #(highest+1)"
-     * 
+     * Generate the next default menu name.
+     * Numbering is scoped by menu type (standard/special) when type is available.
+     *
+     * @param string|null $type Menu type to scope numbering to
      * @return string The next auto-generated menu name
      */
-    private function getNextDefaultMenuName(): string
+    private function getNextDefaultMenuName(?string $type = null): string
     {
-        // Get all menus with names matching "Menu #X" format
-        $menus = Menu::query()
-            ->where('name', 'like', 'Menu #%')
-            ->pluck('name')
-            ->all();
-
-        if (empty($menus)) {
-            return 'Menu #1';
+        // Get menus with names matching "Menu #X", scoped by type when available.
+        $query = Menu::query()->where('name', 'like', 'Menu #%');
+        if (Schema::hasColumn('menus', 'type') && !empty($type)) {
+            $query->where('type', $type);
         }
+        $menus = $query->pluck('name')->all();
 
-        // Extract numbers from menu names
-        $numbers = [];
+        // Extract the highest number from menu names
+        $maxNumber = 0;
         foreach ($menus as $name) {
             if (preg_match('/^Menu #(\d+)$/', $name, $matches)) {
-                $numbers[] = (int) $matches[1];
+                $current = (int) $matches[1];
+                if ($current > $maxNumber) {
+                    $maxNumber = $current;
+                }
             }
         }
 
-        if (empty($numbers)) {
-            return 'Menu #1';
-        }
-
-        // Find the smallest missing positive integer (reuses gaps after deletions)
-        $used = array_flip(array_unique($numbers));
-        $candidate = 1;
-        while (isset($used[$candidate])) {
-            $candidate++;
-        }
-        return 'Menu #' . $candidate;
+        return 'Menu #' . ($maxNumber + 1);
     }
 
     private function assertNoDuplicateIngredients(array $items): void
@@ -246,13 +237,14 @@ class MenuController extends Controller
             }
 
             $payload = [];
-            foreach (['type','meal_time','name','description','price'] as $f) {
+            foreach (['type','meal_time','description','price'] as $f) {
                 if (isset($data[$f])) $payload[$f] = $data[$f];
             }
 
-            // Auto-generate menu name if not provided
-            if (empty($payload['name'])) {
-                $payload['name'] = $this->getNextDefaultMenuName();
+            // Always auto-generate menu name on create, scoped by type.
+            if ($hasName) {
+                $menuType = $hasType ? ($data['type'] ?? 'standard') : null;
+                $payload['name'] = $this->getNextDefaultMenuName($menuType);
             }
 
             $menu = Menu::create($payload);
@@ -376,13 +368,14 @@ class MenuController extends Controller
         }
 
         $payload = [];
-        foreach (['type','meal_time','name','description','price'] as $f) {
+        foreach (['type','meal_time','description','price'] as $f) {
             if (isset($data[$f])) $payload[$f] = $data[$f];
         }
-
-        // Auto-generate menu name if not provided (for updates too)
-        if (empty($payload['name'])) {
-            $payload['name'] = $this->getNextDefaultMenuName();
+        if ($hasName && array_key_exists('name', $data)) {
+            $name = is_string($data['name']) ? trim($data['name']) : '';
+            if ($name !== '') {
+                $payload['name'] = $name;
+            }
         }
 
         $menu->update($payload);

@@ -108,7 +108,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Reports
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
-        Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
+        Route::match(['get', 'post'], '/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
         Route::post('/reports/export/pdf', [ReportsController::class, 'exportPdf'])->name('reports.export.pdf');
         Route::post('/reports/export/excel', [ReportsController::class, 'exportExcel'])->name('reports.export.excel');
 
