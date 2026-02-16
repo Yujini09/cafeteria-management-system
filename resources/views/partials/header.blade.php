@@ -4,9 +4,7 @@
     .dropdown-item:hover { background-color: #f0fdf4; color: #15803d; }
 </style>
 
-<header class="bg-white shadow-sm sticky top-0 z-50"
-    x-data="{ mobileMenuOpen: false, mobileReservationOpen: false, confirmLogout: false }"
-    @keydown.escape.window="mobileMenuOpen = false; mobileReservationOpen = false; confirmLogout = false">
+<header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16 relative">
         <div class="flex items-center space-x-4">
             <a href="{{ url('/') }}">
@@ -93,14 +91,6 @@
                     </div>
                 </div>
             @endauth
-        </div>
-
-        <div class="md:hidden flex items-center gap-2">
-            @guest
-                <a href="{{ route('login') }}" class="text-xs text-clsu-green hover:text-green-700 font-bold transition-colors duration-200 whitespace-nowrap">
-                    LOGIN
-                </a>
-            @endguest
         </div>
     </div>
 </header>
