@@ -47,6 +47,12 @@
 
 /* Meal Time Badge */
 .meal-time-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    line-height: 1.2;
+    min-width: 96px;
     padding: 0.5rem 0.75rem;
     background: var(--neutral-50);
     border: 1px solid var(--neutral-200);
@@ -54,6 +60,26 @@
     font-weight: 600;
     color: var(--neutral-800);
     text-transform: capitalize;
+}
+
+.prices-table {
+    table-layout: fixed;
+}
+
+.prices-table td {
+    vertical-align: middle;
+}
+
+.prices-table th:first-child,
+.prices-table td:first-child {
+    width: 22%;
+}
+
+.prices-table th:nth-child(2),
+.prices-table td:nth-child(2),
+.prices-table th:nth-child(3),
+.prices-table td:nth-child(3) {
+    width: 39%;
 }
 
 /* Highlight Animation */
@@ -106,7 +132,7 @@
         @csrf
 
         <div class="overflow-x-auto">
-            <table class="modern-table min-w-[520px]">
+            <table class="modern-table prices-table min-w-[620px]">
                 <thead>
                     <tr>
                         <th>Meal Time</th>
