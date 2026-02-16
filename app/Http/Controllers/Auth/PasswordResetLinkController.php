@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class PasswordResetLinkController extends Controller
 {
+    private const RESET_LINK_MAX_ATTEMPTS = 1;
+    private const RESET_LINK_THROTTLE_SECONDS = 180;
+
     /**
      * Display the password reset link request view.
      */
@@ -28,6 +33,17 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
+        $throttleKey = $this->throttleKey($request);
+
+        if (RateLimiter::tooManyAttempts($throttleKey, self::RESET_LINK_MAX_ATTEMPTS)) {
+            $retryAfter = max(1, RateLimiter::availableIn($throttleKey));
+
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => __('passwords.throttled')], 'passwordReset')
+                ->with('forgot', true)
+                ->with('password_reset_retry_after', $retryAfter);
+        }
+
         // We will send the password reset link to this user. Once we have attempted
         // to send the link, we will examine the response then see the message we
         // need to show to the user. Finally, we'll send out a proper response.
@@ -35,9 +51,32 @@ class PasswordResetLinkController extends Controller
             $request->only('email')
         );
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))->with('forgot', true)
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)], 'passwordReset');
+        if ($status === Password::RESET_LINK_SENT) {
+            RateLimiter::hit($throttleKey, self::RESET_LINK_THROTTLE_SECONDS);
+
+            return back()->with('status', __($status))->with('forgot', true);
+        }
+
+        if ($status === Password::RESET_THROTTLED) {
+            $retryAfter = max(1, RateLimiter::availableIn($throttleKey));
+
+            if ($retryAfter <= 0) {
+                $retryAfter = self::RESET_LINK_THROTTLE_SECONDS;
+            }
+
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => __('passwords.throttled')], 'passwordReset')
+                ->with('forgot', true)
+                ->with('password_reset_retry_after', $retryAfter);
+        }
+
+        return back()->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)], 'passwordReset')
+            ->with('forgot', true);
+    }
+
+    private function throttleKey(Request $request): string
+    {
+        return Str::transliterate(Str::lower((string) $request->input('email').'|'.$request->ip()));
     }
 }

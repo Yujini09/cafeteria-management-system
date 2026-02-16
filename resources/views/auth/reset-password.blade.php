@@ -8,24 +8,24 @@
             <div class="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-ret-dark/10 blur-3xl"></div>
         </div>
 
-        <div class="relative w-full max-w-md overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin-modal z-10">
-            <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 bg-admin-neutral-50 px-6 py-4">
-                <div>
-                    <h2 class="text-lg font-semibold text-admin-neutral-900">Reset Password</h2>
-                    <p class="text-xs text-admin-neutral-600 mt-1">Create your new password.</p>
+        <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm">
+            <p class="text-sm text-admin-neutral-600">Password reset successfully. Redirecting to login...</p>
+        </x-success-modal>
+
+        @if(session('status') !== $passwordResetStatus)
+            <div class="relative w-full max-w-md overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin-modal z-10">
+                <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 bg-admin-neutral-50 px-6 py-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-admin-neutral-900">Reset Password</h2>
+                        <p class="text-xs text-admin-neutral-600 mt-1">Create your new password.</p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="px-6 py-5">
-                <div class="mb-4 text-sm text-admin-neutral-600 bg-admin-neutral-50 p-3 rounded-admin border border-admin-neutral-200 border-l-4 border-l-admin-primary">
-                    Enter and confirm your new password to continue.
-                </div>
+                <div class="px-6 py-5">
+                    <div class="mb-4 text-sm text-admin-neutral-600 bg-admin-neutral-50 p-3 rounded-admin border border-admin-neutral-200 border-l-4 border-l-admin-primary">
+                        Enter and confirm your new password to continue.
+                    </div>
 
-                <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm">
-                    <p class="text-sm text-admin-neutral-600">Password reset successfully. Redirecting to login...</p>
-                </x-success-modal>
-
-                @if(session('status') !== $passwordResetStatus)
                     <form method="POST" action="{{ route('password.store') }}" class="space-y-4" data-action-loading>
                         @csrf
 
@@ -86,15 +86,9 @@
                             </x-primary-button>
                         </div>
                     </form>
-                @endif
-
-                <div class="mt-4 flex justify-center text-sm">
-                    <a href="{{ route('login') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
-                        Back to login
-                    </a>
                 </div>
             </div>
-        </div>
+        @endif
     </div>
 
     @if(session('status') === $passwordResetStatus)
@@ -102,6 +96,9 @@
         window.addEventListener('load', function () {
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'password-reset-success' }));
+                setTimeout(() => {
+                    window.location.href = "{{ route('login') }}";
+                }, 2200);
             }, 50);
         });
     </script>

@@ -184,31 +184,61 @@
 
                             @php
                                 $emailError = $errors->passwordReset->first('email');
-                                $isThrottled = false;
+                                $retryAfterSeconds = (int) session('password_reset_retry_after', 0);
+                                $isThrottled = $retryAfterSeconds > 0;
+
+                                // Backward-compatible fallback if throttle state came only as an error string.
                                 foreach (['passwords.throttled', 'throttled', 'too many', 'wait before retrying', 'please wait'] as $needle) {
-                                    if ($emailError && stripos($emailError, $needle) !== false) {
+                                    if (!$isThrottled && $emailError && stripos($emailError, $needle) !== false) {
                                         $isThrottled = true;
                                         break;
                                     }
                                 }
-                                $throttleSeconds = (int) config('auth.passwords.users.throttle');
-                                $throttleMinutes = $throttleSeconds > 0 ? (int) ceil($throttleSeconds / 60) : null;
+
+                                if ($isThrottled && $retryAfterSeconds <= 0) {
+                                    $configuredThrottle = (int) config('auth.passwords.users.throttle');
+                                    $retryAfterSeconds = $configuredThrottle > 0 ? $configuredThrottle : 180;
+                                }
                             @endphp
 
-                            @if($emailError && $isThrottled)
-                                <div class="mb-4 text-sm text-admin-danger bg-admin-danger-light p-3 rounded-admin border border-admin-danger/20">
-                                    You just have a recent reset request. Please wait
-                                    @if($throttleMinutes)
-                                        {{ $throttleMinutes }} minute{{ $throttleMinutes === 1 ? '' : 's' }}
-                                    @else
-                                        a few minutes
-                                    @endif
-                                    and try again.
-                                </div>
-                            @endif
-
-                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4" x-data="{ sending: false }" @submit="if (sending) { $event.preventDefault(); return; } sending = true" data-action-loading>
+                            <form method="POST" action="{{ route('password.email') }}" class="space-y-4"
+                                x-data="{
+                                    sending: false,
+                                    throttleSeconds: {{ $isThrottled ? $retryAfterSeconds : 0 }},
+                                    throttleTimer: null,
+                                    formatThrottle(value) {
+                                        const minutes = Math.floor(value / 60);
+                                        const seconds = value % 60;
+                                        return minutes + ':' + String(seconds).padStart(2, '0');
+                                    },
+                                    get throttleLabel() {
+                                        return this.formatThrottle(this.throttleSeconds);
+                                    },
+                                    get throttleActive() {
+                                        return this.throttleSeconds > 0;
+                                    },
+                                    init() {
+                                        if (!this.throttleActive) return;
+                                        this.throttleTimer = setInterval(() => {
+                                            if (this.throttleSeconds > 0) {
+                                                this.throttleSeconds--;
+                                            }
+                                            if (this.throttleSeconds <= 0 && this.throttleTimer) {
+                                                clearInterval(this.throttleTimer);
+                                                this.throttleTimer = null;
+                                            }
+                                        }, 1000);
+                                    }
+                                }"
+                                @submit="if (sending || throttleActive) { $event.preventDefault(); return; } sending = true"
+                                data-action-loading>
                                 @csrf
+
+                                @if($emailError && $isThrottled)
+                                    <div class="text-sm text-admin-danger bg-admin-danger-light p-3 rounded-admin border border-admin-danger/20" x-show="throttleActive">
+                                        Please wait before requesting another reset link.
+                                    </div>
+                                @endif
 
                                 <div class="relative">
                                     <x-input-label for="forgot_email" :value="__('Email')" class="text-admin-neutral-700 font-medium mb-2" />
@@ -224,14 +254,16 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
                                         </svg>
                                     </div>
-                                    <x-input-error :messages="$errors->passwordReset->get('email')" class="mt-2 !text-admin-danger" />
+                                    @if(!$isThrottled)
+                                        <x-input-error :messages="$errors->passwordReset->get('email')" class="mt-2 !text-admin-danger" />
+                                    @endif
                                 </div>
 
                                 <div class="flex items-center justify-end">
                                     <x-primary-button class="w-full justify-center !rounded-admin bg-admin-primary hover:bg-admin-primary-hover focus:ring-admin-primary h-12 text-base font-semibold shadow-admin transition duration-300" data-loading-text="Sending Reset Link..."
-                                        x-bind:disabled="sending"
-                                        x-bind:class="sending ? 'opacity-70 cursor-not-allowed' : ''">
-                                        <span x-text="sending ? 'Email is currently sending...' : 'Email Password Reset Link'">Email Password Reset Link</span>
+                                        x-bind:disabled="sending || throttleActive"
+                                        x-bind:class="(sending || throttleActive) ? 'opacity-70 cursor-not-allowed' : ''">
+                                        <span x-text="sending ? 'Email is currently sending...' : (throttleActive ? 'Try again in ' + throttleLabel : 'Email Password Reset Link')">Email Password Reset Link</span>
                                     </x-primary-button>
                                 </div>
                             </form>
