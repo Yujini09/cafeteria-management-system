@@ -17,6 +17,7 @@ $maxWidthClass = match($maxWidth) {
 };
 @endphp
 
+<div x-data="{}" style="display: contents;">
 <template x-teleport="body">
 <div
     x-data="{ show: false, closeTimer: null }"
@@ -96,3 +97,4 @@ $maxWidthClass = match($maxWidth) {
     </div>
 </div>
 </template>
+</div>

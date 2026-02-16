@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerHomeController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\{
@@ -186,3 +187,4 @@ Route::middleware(['auth'])->group(function () {
     // 7. Route for cancelling a reservation
     Route::patch('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');
 }); // THIS LINE CLOSES THE auth() GROUP
+
