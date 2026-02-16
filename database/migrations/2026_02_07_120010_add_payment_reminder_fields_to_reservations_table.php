@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::table('reservations', function (Blueprint $table) {
             if (!Schema::hasColumn('reservations', 'payment_requested_at')) {
-                $table->timestamp('payment_requested_at')->nullable()->after('payment_status');
-            }
+                // We remove 'after' because payment_status doesn't exist yet
+                $table->timestamp('payment_requested_at')->nullable();            }
             if (!Schema::hasColumn('reservations', 'payment_last_reminder_at')) {
                 $table->timestamp('payment_last_reminder_at')->nullable()->after('payment_requested_at');
             }

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Profile - CLSU RET Cafeteria')
+@section('title', 'My Profile - CLSU RET Cafeteria')
 
 @section('styles')
     .bg-clsu-green { background-color: #057C3C; }
@@ -20,10 +20,6 @@
     .nav-tab-btn.active { background-color: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
     .nav-tab-btn:not(.active):hover { background-color: #f9fafb; color: #374151; }
     
-    input:disabled, textarea:disabled {
-        background-color: #f9fafb; color: #6b7280; cursor: not-allowed; border-color: #e5e7eb;
-    }
-
     [x-cloak] { display: none !important; }
 @endsection
 
@@ -124,6 +120,8 @@
 
                     <div x-show="activeTab === 'profile'" x-transition.opacity.duration.300ms>
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                            
+                            {{-- HEADER --}}
                             <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div><h3 class="text-xl font-bold text-gray-900 flex items-center gap-2"><i class="fa-regular fa-address-card text-clsu-green"></i> Personal Information</h3><p class="text-gray-500 text-sm mt-1">View and manage your personal details.</p></div>
                                 <div>
@@ -185,16 +183,82 @@
 
                     <div x-show="activeTab === 'security'" x-cloak x-transition.opacity.duration.300ms>
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div class="p-6 border-b border-gray-100"><h3 class="text-lg font-bold text-gray-900">Change Password</h3><p class="text-gray-500 text-sm mt-1">Ensure your account is secure with a strong password.</p></div>
+                            <div class="p-6 border-b border-gray-100">
+                                <h3 class="text-lg font-bold text-gray-900">Change Password</h3>
+                                <p class="text-gray-500 text-sm mt-1">Ensure your account is secure with a strong password.</p>
+                            </div>
+
                             <form method="post" action="{{ route('password.update') }}" class="p-6 md:p-8 space-y-6">
                                 @csrf
                                 @method('put')
+
                                 <div class="space-y-6 max-w-lg">
-                                    <div><label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label><input type="password" name="current_password" autocomplete="current-password" required class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all"></div>
-                                    <div><label class="block text-sm font-semibold text-gray-700 mb-2">New Password</label><input type="password" name="password" autocomplete="new-password" required class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all"></div>
-                                    <div><label class="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label><input type="password" name="password_confirmation" autocomplete="new-password" required class="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all"></div>
+                                    <div x-data="{ show: false }">
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                                        <div class="relative">
+                                            <input :type="show ? 'text' : 'password'" name="current_password" autocomplete="current-password" required 
+                                                class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all">
+                                            
+                                            <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1">
+                                                <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        @if($errors->updatePassword->has('current_password'))
+                                            <p class="text-red-500 text-xs mt-1">{{ $errors->updatePassword->first('current_password') }}</p>
+                                        @endif
+                                    </div>
+
+                                    <div x-data="{ show: false }">
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                                        <div class="relative">
+                                            <input :type="show ? 'text' : 'password'" name="password" id="new_password" autocomplete="new-password" required 
+                                                class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all"
+                                                onkeyup="checkPasswordStrength(this.value)">
+                                            
+                                            <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1">
+                                                <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        @if($errors->updatePassword->has('password'))
+                                            <p class="text-red-500 text-xs mt-1">{{ $errors->updatePassword->first('password') }}</p>
+                                        @endif
+
+                                        {{-- Visual Strength Bar --}}
+                                        <div class="flex gap-1.5 h-1.5 mt-3 px-1">
+                                            <div id="bar-1" class="flex-1 rounded-full bg-gray-100 transition-colors duration-300"></div>
+                                            <div id="bar-2" class="flex-1 rounded-full bg-gray-100 transition-colors duration-300"></div>
+                                            <div id="bar-3" class="flex-1 rounded-full bg-gray-100 transition-colors duration-300"></div>
+                                            <div id="bar-4" class="flex-1 rounded-full bg-gray-100 transition-colors duration-300"></div>
+                                        </div>
+
+                                        {{-- Requirement Tags --}}
+                                        <div class="flex flex-wrap gap-2 pt-1">
+                                            <span id="req-len" class="text-[9px] font-bold uppercase px-2 py-1 rounded-md border border-gray-200 text-gray-400 bg-gray-50 transition-all">8+ Char</span>
+                                            <span id="req-up" class="text-[9px] font-bold uppercase px-2 py-1 rounded-md border border-gray-200 text-gray-400 bg-gray-50 transition-all">Uppercase</span>
+                                            <span id="req-num" class="text-[9px] font-bold uppercase px-2 py-1 rounded-md border border-gray-200 text-gray-400 bg-gray-50 transition-all">Number</span>
+                                            <span id="req-spec" class="text-[9px] font-bold uppercase px-2 py-1 rounded-md border border-gray-200 text-gray-400 bg-gray-50 transition-all">Symbol</span>
+                                        </div>
+                                    </div>
+
+                                    <div x-data="{ show: false }">
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                                        <div class="relative">
+                                            <input :type="show ? 'text' : 'password'" name="password_confirmation" autocomplete="new-password" required 
+                                                class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all">
+                                            
+                                            <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1">
+                                                <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        @if($errors->updatePassword->has('password_confirmation'))
+                                            <p class="text-red-500 text-xs mt-1">{{ $errors->updatePassword->first('password_confirmation') }}</p>
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="pt-6 border-t border-gray-100 flex justify-end"><button type="submit" class="px-8 py-3 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-700 shadow-lg shadow-gray-500/20 transition-all">Update Password</button></div>
+
+                                <div class="pt-6 border-t border-gray-100 flex justify-end">
+                                    <button type="submit" class="px-8 py-3 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-700 shadow-lg shadow-gray-500/20 transition-all">Update Password</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -228,7 +292,7 @@
         const selectedDate = new Date(input.value);
         const today = new Date();
         const minAgeDate = new Date();
-        minAgeDate.setFullYear(today.getFullYear() - 18); // STRICT 18 YEARS OLD CHECK
+        minAgeDate.setFullYear(today.getFullYear() - 18);
 
         const errorMsg = document.getElementById('dob-error');
         const saveBtn = document.getElementById('save-btn');
@@ -245,6 +309,39 @@
             input.classList.add('border-gray-300');
             saveBtn.disabled = false;
             saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    function checkPasswordStrength(password) {
+        const requirements = {
+            len: password.length >= 8,
+            up: /[A-Z]/.test(password),
+            num: /[0-9]/.test(password),
+            spec: /[^A-Za-z0-9]/.test(password)
+        };
+
+        updateTagUI('req-len', requirements.len);
+        updateTagUI('req-up', requirements.up);
+        updateTagUI('req-num', requirements.num);
+        updateTagUI('req-spec', requirements.spec);
+
+        let score = Object.values(requirements).filter(Boolean).length;
+        const colors = ['#f3f4f6', '#ef4444', '#f59e0b', '#10b981', '#059669'];
+        
+        for(let i = 1; i <= 4; i++) {
+            const bar = document.getElementById('bar-' + i);
+            bar.style.backgroundColor = (i <= score) ? colors[score] : '#f3f4f6';
+        }
+    }
+
+    function updateTagUI(id, isValid) {
+        const el = document.getElementById(id);
+        if (isValid) {
+            el.classList.remove('text-gray-400', 'border-gray-200', 'bg-gray-50');
+            el.classList.add('text-green-700', 'border-green-200', 'bg-green-50');
+        } else {
+            el.classList.add('text-gray-400', 'border-gray-200', 'bg-gray-50');
+            el.classList.remove('text-green-700', 'border-green-200', 'bg-green-50');
         }
     }
 </script>
