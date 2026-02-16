@@ -1,4 +1,3 @@
-```html
 @extends('layouts.app')
 
 @section('title', 'Reservation Details - CLSU RET Cafeteria')

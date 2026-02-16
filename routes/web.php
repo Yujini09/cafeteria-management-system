@@ -166,4 +166,12 @@ Route::middleware(['auth'])->group(function () {
 
     // [FIXED] 8. Edit Reservation Route - Removed "action:" to fix "Route not defined" error
     Route::get('/reservations/{reservation}/edit', [ReservationController::class, 'edit'])->name('reservation.edit');
+
+    Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update'); // Optional: Add logic in controller if implementing avatar upload
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+    });
 });

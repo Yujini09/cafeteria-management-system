@@ -24,9 +24,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'address',
         'contact_no',
+        'phone',      // Add this so the fill() method accepts the form input name
         'department',
         'role',   // ✅ your manual role column
         'google_id',
+        'birth_date', // ✅ Added
+        'avatar',     // ✅ Added
     ];
 
 
@@ -37,7 +40,24 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birth_date' => 'date', // ✅ Cast birth_date so it formats correctly
     ];
+    /**
+     * MUTATOR: This magic function runs automatically.
+     * When the controller tries to save 'phone', this puts the data into 'contact_no'.
+     */
+    public function setPhoneAttribute($value)
+    {
+        $this->attributes['contact_no'] = $value;
+    }
+
+    /**
+     * ACCESSOR: When you call $user->phone, it reads from contact_no.
+     */
+    public function getPhoneAttribute()
+    {
+        return $this->attributes['contact_no'];
+    }
 
     /**
      * Simple replacement for Spatie hasRole() when the package is not installed.
