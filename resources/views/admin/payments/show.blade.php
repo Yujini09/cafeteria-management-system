@@ -170,12 +170,17 @@
         'rejected' => 'status-rejected',
         default => 'status-submitted'
     };
+    $receiptPath = $payment->receipt_path;
+    $receiptUrl = $receiptPath ? \Illuminate\Support\Facades\Storage::url($receiptPath) : null;
+    $receiptExt = $receiptPath ? strtolower(pathinfo($receiptPath, PATHINFO_EXTENSION)) : '';
+    $receiptIsImage = in_array($receiptExt, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true);
+    $receiptIsPdf = $receiptExt === 'pdf';
 @endphp
 
 <div class="admin-page-shell modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
-     x-data="{ approvedOpen: @js($showPaymentApproved), rejectedOpen: @js($showPaymentRejected) }"
-     x-effect="document.body.classList.toggle('overflow-hidden', approvedOpen || rejectedOpen)"
-     @keydown.escape.window="approvedOpen = false; rejectedOpen = false">
+     x-data="{ approvedOpen: @js($showPaymentApproved), rejectedOpen: @js($showPaymentRejected), receiptPreviewOpen: false }"
+     x-effect="document.body.classList.toggle('overflow-hidden', approvedOpen || rejectedOpen || receiptPreviewOpen)"
+     @keydown.escape.window="approvedOpen = false; rejectedOpen = false; receiptPreviewOpen = false">
     <div class="page-header">
         <div class="header-content">
             <a href="{{ route('admin.payments.index') }}" class="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200">
@@ -233,10 +238,21 @@
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Receipt:</dt>
                         <dd class="text-gray-900">
-                            @if($payment->receipt_path)
-                                <a href="{{ \Illuminate\Support\Facades\Storage::url($payment->receipt_path) }}"
-                                   target="_blank"
-                                   class="text-admin-primary hover:text-admin-primary-hover text-sm font-medium">View</a>
+                            @if($receiptUrl)
+                                @if($receiptIsImage)
+                                    <button type="button"
+                                            class="text-admin-primary hover:text-admin-primary-hover text-sm font-medium"
+                                            @click="receiptPreviewOpen = true">
+                                        View
+                                    </button>
+                                @else
+                                    <a href="{{ $receiptUrl }}"
+                                       target="_blank"
+                                       rel="noopener"
+                                       class="text-admin-primary hover:text-admin-primary-hover text-sm font-medium">
+                                        View
+                                    </a>
+                                @endif
                             @else
                                 —
                             @endif
@@ -284,14 +300,6 @@
         </div>
 
         <div class="space-y-6">
-            @php
-                $receiptPath = $payment->receipt_path;
-                $receiptUrl = $receiptPath ? \Illuminate\Support\Facades\Storage::url($receiptPath) : null;
-                $receiptExt = $receiptPath ? strtolower(pathinfo($receiptPath, PATHINFO_EXTENSION)) : '';
-                $receiptIsImage = in_array($receiptExt, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true);
-                $receiptIsPdf = $receiptExt === 'pdf';
-            @endphp
-
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,9 +311,9 @@
                 @if($receiptUrl)
                     <div class="receipt-preview">
                         @if($receiptIsImage)
-                            <a href="{{ $receiptUrl }}" target="_blank" rel="noopener">
+                            <button type="button" class="block w-full text-left" @click="receiptPreviewOpen = true" aria-label="Open receipt image preview">
                                 <img src="{{ $receiptUrl }}" alt="Payment receipt preview">
-                            </a>
+                            </button>
                         @elseif($receiptIsPdf)
                             <div class="receipt-preview-body">
                                 <div class="receipt-preview-meta">PDF Receipt</div>
@@ -326,10 +334,24 @@
                             <span class="receipt-pill">
                                 {{ strtoupper($receiptExt ?: 'FILE') }}
                             </span>
-                            <a href="{{ $receiptUrl }}" target="_blank" rel="noopener"
-                               class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold">
-                                Open Receipt
-                            </a>
+                            @if($receiptIsImage)
+                                <div class="flex items-center gap-3">
+                                    <button type="button"
+                                            class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold"
+                                            @click="receiptPreviewOpen = true">
+                                        Open Receipt
+                                    </button>
+                                    <a href="{{ $receiptUrl }}" target="_blank" rel="noopener"
+                                       class="text-admin-primary hover:text-admin-primary-hover text-xs font-medium">
+                                        New Tab
+                                    </a>
+                                </div>
+                            @else
+                                <a href="{{ $receiptUrl }}" target="_blank" rel="noopener"
+                                   class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold">
+                                    Open Receipt
+                                </a>
+                            @endif
                         </div>
                     </div>
                 @else
@@ -398,6 +420,28 @@
             </div>
         </div>
     </div>
+
+    @if($receiptUrl && $receiptIsImage)
+    <div x-cloak x-show="receiptPreviewOpen" x-transition.opacity class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div @click="receiptPreviewOpen = false" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        <div class="relative z-10 w-full max-w-5xl" @click.stop>
+            <button type="button"
+                    class="absolute -top-4 right-0 md:-top-5 rounded-full bg-white/95 p-2 text-gray-700 shadow-md hover:bg-white"
+                    @click="receiptPreviewOpen = false"
+                    aria-label="Close receipt image preview">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="overflow-hidden rounded-xl border border-white/30 bg-white shadow-2xl">
+                <img src="{{ $receiptUrl }}"
+                     alt="Payment receipt full preview"
+                     class="block w-full max-h-[85vh] object-contain bg-white">
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Payment Approved popup (unified modal style) --}}
     <div x-cloak x-show="approvedOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div @click="approvedOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>

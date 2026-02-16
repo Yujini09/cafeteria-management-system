@@ -23,18 +23,21 @@
     background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
 }
 
-/* Right-aligned columns */
-.modern-table th:nth-child(3),
-.modern-table th:nth-child(4),
-.modern-table th:nth-child(5) {
-    text-align: right;
+/* Keep all table headers/cells left-aligned for consistent layout */
+.modern-table th,
+.modern-table td {
+    text-align: left;
 }
 
-/* Right-aligned columns */
-.modern-table td:nth-child(3),
-.modern-table td:nth-child(4),
-.modern-table td:nth-child(5) {
-    text-align: right;
+/* Add a little visual gap between Status and Payment columns */
+.modern-table th.column-status,
+.modern-table td.column-status {
+    padding-right: 1rem;
+}
+
+.modern-table th.column-payment,
+.modern-table td.column-payment {
+    padding-right: 5rem;
 }
 
 /* Status Badges - Same size as role badges in manage users */
@@ -270,7 +273,11 @@
 }
 
 .column-status {
-    width: 120px;
+    width: 112px;
+}
+
+.column-payment {
+    width: 168px;
 }
 
 .column-email {
@@ -409,19 +416,20 @@
             <colgroup>
                 <col class="w-14">
                 <col class="w-64">
-                <col class="w-40">
-                <col class="w-64">
+                <col class="w-28">
+                <col class="w-44">
+                <col class="w-48">
                 <col class="w-48">
                 <col class="w-48">
             </colgroup>
             <thead>
                 <tr>
-                    <th class="column-id">ID</th>
-                    <th class="column-customer">Customer</th>
-                    <th class="column-status">Status</th>
-                    <th class="column-payment">Payment</th>
-                    <th class="column-email hidden md:table-cell">Email</th>
-                    <th class="column-date hidden lg:table-cell">
+                    <th class="column-id text-left">ID</th>
+                    <th class="column-customer text-left">Customer</th>
+                    <th class="column-status text-left">Status</th>
+                    <th class="column-payment text-left">Payment</th>
+                    <th class="column-email hidden md:table-cell text-left">Email</th>
+                    <th class="column-date hidden lg:table-cell text-left">
                         @php
                             $nextCreatedSort = $createdSort === 'asc' ? 'desc' : 'asc';
                             $createdSortIcon = $createdSort === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down';
@@ -433,7 +441,7 @@
                             <x-admin.ui.icon name="{{ $createdSortIcon }}" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
                         </a>
                     </th>
-                    <th class="column-actions">Actions</th>
+                    <th class="column-actions text-left">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -480,7 +488,7 @@
                             <div class="font-semibold text-admin-neutral-900">{{ $customerName }}</div>
                             <div class="text-xs text-admin-neutral-500 md:hidden">{{ $r->department ?? '—' }}</div>
                         </td>
-                        <td>
+                        <td class="column-status">
                             <span class="status-badge {{ $statusClass }} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide">
                                 <x-admin.ui.icon name="{{ $statusIcon }}" style="fas" size="sm" />
                                 {{ $statusLabel }}
