@@ -37,6 +37,7 @@
 
 .modern-table th.column-payment,
 .modern-table td.column-payment {
+    padding-left: 4rem;
     padding-right: 5rem;
 }
 

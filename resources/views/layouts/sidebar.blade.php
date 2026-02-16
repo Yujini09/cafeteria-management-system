@@ -18,8 +18,8 @@
             try {
                 const isDesktop = window.matchMedia('(min-width: 768px)').matches;
                 const saved = sessionStorage.getItem('sidebarOpen');
-                const isOpen = saved === null ? isDesktop : saved === 'true';
-                document.documentElement.setAttribute('data-sidebar-preinit', isOpen && isDesktop ? 'open' : 'closed');
+                const isOpen = isDesktop && (saved === null ? true : saved === 'true');
+                document.documentElement.setAttribute('data-sidebar-preinit', isOpen ? 'open' : 'closed');
             } catch (error) {
                 const fallbackDesktop = window.matchMedia('(min-width: 768px)').matches;
                 document.documentElement.setAttribute('data-sidebar-preinit', fallbackDesktop ? 'open' : 'closed');
@@ -471,14 +471,23 @@
               try {
                   const desktop = window.matchMedia('(min-width: 768px)').matches;
                   const saved = sessionStorage.getItem('sidebarOpen');
-                  return saved === null ? desktop : saved === 'true';
+                  if (!desktop) return false;
+                  return saved === null ? true : saved === 'true';
               } catch (error) {
                   return window.matchMedia('(min-width: 768px)').matches;
               }
           })()
       }"
       x-init="const mediaQuery = window.matchMedia('(min-width: 768px)');
-              const syncViewportState = () => { isDesktop = mediaQuery.matches; };
+              const syncViewportState = () => {
+                  isDesktop = mediaQuery.matches;
+                  if (!isDesktop) {
+                      openSidebar = false;
+                      return;
+                  }
+                  const saved = sessionStorage.getItem('sidebarOpen');
+                  openSidebar = saved === null ? true : saved === 'true';
+              };
               syncViewportState();
               if (typeof mediaQuery.addEventListener === 'function') {
                   mediaQuery.addEventListener('change', syncViewportState);
@@ -486,7 +495,11 @@
                   mediaQuery.addListener(syncViewportState);
               }
               requestAnimationFrame(() => document.documentElement.removeAttribute('data-sidebar-preinit'));
-              $watch('openSidebar', value => sessionStorage.setItem('sidebarOpen', value ? 'true' : 'false'));
+              $watch('openSidebar', value => {
+                  if (isDesktop) {
+                      sessionStorage.setItem('sidebarOpen', value ? 'true' : 'false');
+                  }
+              });
               const scrollKey = 'sidebarScrollTop';
               const sidebarScroll = $refs.sidebarScroll;
               if (sidebarScroll) {
@@ -545,7 +558,7 @@
 
                             <a href="{{ route('admin.reservations') }}"
                                wire:navigate
-                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.reservations') ? 'active-menu-item' : '' }}">
+                               class="menu-item flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ease-out {{ request()->routeIs('admin.reservations*') ? 'active-menu-item' : '' }}">
                                 <span class="menu-icon">
                                     <i class="far fa-calendar-check"></i>
                                 </span>

@@ -140,7 +140,6 @@
                                     <div><label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Full Name</label><p class="text-gray-900 font-medium text-lg border-b border-gray-100 pb-2">{{ $user->name }}</p></div>
                                     <div><label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email Address</label><p class="text-gray-900 font-medium text-lg border-b border-gray-100 pb-2">{{ $user->email }}</p></div>
                                     <div><label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Phone Number</label><p class="text-gray-900 font-medium text-lg border-b border-gray-100 pb-2">{{ $user->phone ?? 'Not Set' }}</p></div>
-                                    <div><label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Date of Birth</label><p class="text-gray-900 font-medium text-lg border-b border-gray-100 pb-2">{{ $user->birth_date ? \Carbon\Carbon::parse($user->birth_date)->format('F d, Y') : 'Not Set' }}</p></div>
                                     <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Complete Address</label><p class="text-gray-900 font-medium text-base border-b border-gray-100 pb-2">{{ $user->address ?? 'Not Set' }}</p></div>
                                 </div>
                             </div>
@@ -162,11 +161,6 @@
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
                                         <div class="relative"><i class="fa-solid fa-phone absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"></i><input type="text" name="phone" id="phone" value="{{ old('phone', $user->phone) }}" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all" placeholder="09xxxxxxxxx" maxlength="11" oninput="validatePhone(this)"></div>
                                         <p id="phone-error" class="text-red-500 text-xs mt-1 hidden">Please enter a valid 11-digit number starting with 09.</p>
-                                    </div>
-                                    <div class="col-span-1">
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
-                                        <div class="relative"><i class="fa-regular fa-calendar absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"></i><input type="date" name="birth_date" id="birth_date" value="{{ old('birth_date', $user->birth_date) }}" max="{{ date('Y-m-d', strtotime('-18 years')) }}" onchange="validateBirthday(this)" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all text-gray-700"></div>
-                                        <p id="dob-error" class="text-red-500 text-xs mt-1 hidden">You must be at least 18 years old.</p>
                                     </div>
                                     <div class="col-span-1 md:col-span-2">
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">Complete Address</label>
@@ -274,30 +268,6 @@
         const errorMsg = document.getElementById('phone-error');
         const saveBtn = document.getElementById('save-btn');
         if (input.value.length > 0 && (!input.value.startsWith('09') || input.value.length !== 11)) {
-            errorMsg.classList.remove('hidden');
-            input.classList.add('border-red-500');
-            input.classList.remove('border-gray-300');
-            saveBtn.disabled = true;
-            saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        } else {
-            errorMsg.classList.add('hidden');
-            input.classList.remove('border-red-500');
-            input.classList.add('border-gray-300');
-            saveBtn.disabled = false;
-            saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
-
-    function validateBirthday(input) {
-        const selectedDate = new Date(input.value);
-        const today = new Date();
-        const minAgeDate = new Date();
-        minAgeDate.setFullYear(today.getFullYear() - 18);
-
-        const errorMsg = document.getElementById('dob-error');
-        const saveBtn = document.getElementById('save-btn');
-
-        if (selectedDate > minAgeDate) {
             errorMsg.classList.remove('hidden');
             input.classList.add('border-red-500');
             input.classList.remove('border-gray-300');

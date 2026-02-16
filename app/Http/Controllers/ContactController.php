@@ -100,7 +100,7 @@ class ContactController extends Controller
             return redirect()->route('contact')->with('contact_error', $errorMessage);
         }
 
-        $successMessage = 'Email has been sent.';
+        $successMessage = 'Your message has been sent and the admins have been notified.';
 
         if ($expectsJson) {
             return response()->json([

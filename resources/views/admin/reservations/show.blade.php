@@ -458,51 +458,34 @@
                             @enderror
                         </div>
                         <div class="sm:col-span-6 flex flex-wrap justify-end gap-2">
-                            <x-admin.ui.button.secondary type="reset">Clear</x-admin.ui.button.secondary>
-                            <x-admin.ui.button.primary type="submit" data-loading-text="Adding Additional...">Add Additional</x-admin.ui.button.primary>
+                            <x-admin.ui.button.secondary type="reset" class="w-full sm:w-auto">Clear</x-admin.ui.button.secondary>
+                            <x-admin.ui.button.primary type="submit" data-loading-text="Adding Additional..." class="w-full sm:w-auto">Add</x-admin.ui.button.primary>
                         </div>
                     </form>
                 @endif
 
                 @if($r->additionals && $r->additionals->count() > 0)
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="additionals-pill">Additionals Total</span>
-                        <span class="text-sm font-semibold text-green-700">₱{{ number_format($additionalsTotal, 2) }}</span>
-                    </div>
                     <div class="space-y-3">
                         @foreach($r->additionals as $additional)
                             <div class="rounded-xl border border-gray-200 bg-white p-3">
-                                <form method="POST" action="{{ route('admin.reservations.additionals.update', [$r, $additional]) }}"
-                                      class="grid grid-cols-1 sm:grid-cols-8 gap-3 items-end" data-action-loading>
-                                    @csrf
-                                    @method('PATCH')
-                                    <div class="sm:col-span-4">
-                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Name</label>
-                                        <input type="text" name="name" class="additionals-input"
-                                               value="{{ old('name', $additional->name) }}" required>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 break-words">{{ $additional->name }}</p>
+                                        <p class="text-xs text-gray-600 mt-1">&#8369;{{ number_format((float) $additional->price, 2) }}</p>
                                     </div>
-                                    <div class="sm:col-span-2">
-                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Price</label>
-                                        <div class="relative">
-                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₱</span>
-                                            <input type="number" name="price" step="0.01" min="0"
-                                                   class="additionals-input pl-7 text-right"
-                                                   value="{{ old('price', $additional->price) }}" required>
-                                        </div>
-                                    </div>
-                                    <div class="sm:col-span-2 flex gap-2 justify-end">
-                                        @if($r->status === 'approved')
-                                            <x-admin.ui.button.secondary type="submit" data-loading-text="Updating Additional...">Update</x-admin.ui.button.secondary>
-                                            <button type="button"
-                                                    class="px-4 py-2 rounded-admin text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 transition"
-                                                    onclick="if (window.cmsActionButtons && !window.cmsActionButtons.start(this, 'Deleting...')) { return; } document.getElementById('deleteAdditional{{ $additional->id }}').submit()">
-                                                Delete
-                                            </button>
-                                        @else
-                                            <span class="text-xs text-gray-500">Locked</span>
-                                        @endif
-                                    </div>
-                                </form>
+
+                                    @if($r->status === 'approved')
+                                        <button type="button"
+                                                class="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-200"
+                                                title="Delete additional"
+                                                aria-label="Delete additional {{ $additional->name }}"
+                                                onclick="if (window.cmsActionButtons && !window.cmsActionButtons.start(this, 'Deleting...')) { return; } document.getElementById('deleteAdditional{{ $additional->id }}').submit()">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    @endif
+                                </div>
                                 <form id="deleteAdditional{{ $additional->id }}" method="POST"
                                       action="{{ route('admin.reservations.additionals.destroy', [$r, $additional]) }}" class="hidden">
                                     @csrf
@@ -510,6 +493,10 @@
                                 </form>
                             </div>
                         @endforeach
+                    </div>
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
+                        <span class="additionals-pill">Additionals Total</span>
+                        <span class="text-sm font-semibold text-green-700">&#8369;{{ number_format($additionalsTotal, 2) }}</span>
                     </div>
                 @else
                     <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
@@ -829,6 +816,3 @@
 </div>
 
 @endsection
-
-
-

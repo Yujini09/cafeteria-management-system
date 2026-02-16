@@ -175,7 +175,7 @@
                 <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report</option>
                 <option value="sales" {{ old('report_type') == 'sales' ? 'selected' : '' }}>Cafeteria Sales Report</option>
                 <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>Inventory Usage Report</option>
-                <option value="crm" {{ old('report_type') == 'crm' ? 'selected' : '' }}>CRM Report</option>
+                <option value="crm" {{ old('report_type') == 'crm' ? 'selected' : '' }}>Customer Relationship Management Report</option>
             </select>
             @error('report_type')
                 <p class="error-message">{{ $message }}</p>
@@ -259,6 +259,13 @@
 </div>
 
 <script>
+function formatLocalDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function setDateRange(range) {
     const today = new Date();
     let startDate, endDate;
@@ -269,8 +276,10 @@ function setDateRange(range) {
             break;
         case 'week':
             // Monday of current week
+            const dayOfWeek = today.getDay();
+            const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
             const monday = new Date(today);
-            monday.setDate(today.getDate() - today.getDay() + 1);
+            monday.setDate(today.getDate() + diffToMonday);
             startDate = monday;
             // Sunday of current week
             const sunday = new Date(monday);
@@ -287,8 +296,8 @@ function setDateRange(range) {
             break;
     }
 
-    document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
-    document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+    document.getElementById('start_date').value = formatLocalDate(startDate);
+    document.getElementById('end_date').value = formatLocalDate(endDate);
 }
 </script>
 @endsection

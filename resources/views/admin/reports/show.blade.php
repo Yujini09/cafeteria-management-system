@@ -1,9 +1,15 @@
 @extends('layouts.sidebar')
 
+@section('page-title', 'Reports')
 
 @section('content')
+@php
+    $kpiCards = $kpiCards ?? [];
+    $charts = $charts ?? [];
+    $insights = $insights ?? [];
+@endphp
+
 <style>
-/* Modern Card Styles */
 .modern-card {
     background: white;
     border-radius: 16px;
@@ -12,13 +18,28 @@
     overflow: hidden;
 }
 
-/* Summary Cards */
 .summary-card {
-    background: white;
     border-radius: 12px;
     border: 1px solid var(--neutral-200);
-    padding: 1.5rem;
+    padding: 0.9rem 1rem;
     transition: all 0.2s ease;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.75rem;
+}
+
+.summary-content {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
 }
 
 .summary-card:hover {
@@ -26,49 +47,184 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
-.summary-card-primary {
+.kpi-primary {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: white;
 }
 
-.summary-card-success {
+.kpi-success {
     background: linear-gradient(135deg, #059669 0%, #10b981 100%);
     color: white;
 }
 
+.kpi-warning {
+    background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+    color: white;
+}
+
+.kpi-neutral {
+    background: linear-gradient(135deg, #374151 0%, #6b7280 100%);
+    color: white;
+}
+
 .summary-icon {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.summary-metric {
+    min-width: 0;
 }
 
 .summary-value {
-    font-size: 2rem;
+    font-size: 1.3rem;
     font-weight: 800;
-    margin: 0.5rem 0;
+    margin: 0;
+    line-height: 1.1;
 }
 
 .summary-label {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     opacity: 0.9;
     margin: 0;
+    line-height: 1.2;
 }
 
-
-/* Text Truncate */
-.text-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
+.summary-delta {
+    font-size: 0.72rem;
+    margin-top: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 600;
 }
 
-/* Compact Table Styles */
+.summary-delta.positive {
+    color: #14532d;
+    background: rgba(34, 197, 94, 0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+}
+
+.summary-delta.negative {
+    color: #7f1d1d;
+    background: rgba(248, 113, 113, 0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+}
+
+.summary-delta.neutral {
+    color: #1f2937;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+}
+
+.chart-card {
+    background: white;
+    border: 1px solid var(--neutral-200);
+    border-radius: 14px;
+    padding: 0.75rem;
+}
+
+.chart-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neutral-800);
+    margin-bottom: 0.55rem;
+}
+
+.chart-canvas-wrap {
+    position: relative;
+    height: 210px;
+}
+
+.insight-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.insight-list li {
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    background: var(--neutral-50);
+    color: var(--neutral-700);
+    font-size: 0.78rem;
+    line-height: 1.25;
+}
+
+.table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 0.8rem;
+}
+
+.table-search {
+    width: min(100%, 260px);
+    border: 1px solid var(--neutral-300);
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.82rem;
+}
+
+.table-search:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
+}
+
+.export-dropdown {
+    position: relative;
+}
+
+.export-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.4rem);
+    min-width: 170px;
+    border: 1px solid var(--neutral-200);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+    padding: 0.35rem;
+    z-index: 20;
+}
+
+.export-menu[hidden] {
+    display: none;
+}
+
+.export-menu-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.55rem 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--neutral-700);
+    cursor: pointer;
+    text-align: left;
+}
+
+.export-menu-item:hover {
+    background: var(--neutral-50);
+}
+
 .compact-table {
     font-size: 0.8rem;
 }
@@ -82,19 +238,29 @@
     font-size: 0.7rem;
 }
 
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 
 <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
-    <!-- Header -->
-        <div class="page-header">
-            <div class="header-content">
-                <a href="{{ route('admin.reports.index') }}" 
-                   class=" w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200"
-                   title="Back to Reports">
+    <div class="page-header">
+        <div class="header-content">
+            <a href="{{ route('admin.reports.index') }}"
+               class="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200"
+               title="Back to Reports">
                 <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
-                </a>
+            </a>
             <div class="header-icon">
                 <i class="fas fa-chart-bar text-white"></i>
             </div>
@@ -103,7 +269,7 @@
                     @if(isset($reportType))
                         @switch($reportType)
                             @case('reservation')
-                                Reservation Report
+                                Reservations Report
                                 @break
                             @case('sales')
                                 Cafeteria Sales Report
@@ -112,13 +278,13 @@
                                 Inventory Usage Report
                                 @break
                             @case('crm')
-                                CRM Report
+                                Customer Relationship Management Report
                                 @break
                             @default
                                 Report
                         @endswitch
                     @else
-                        Sales Report
+                        Report
                     @endif
                 </h1>
                 <p class="header-subtitle">
@@ -127,62 +293,115 @@
             </div>
         </div>
         <div class="header-actions">
-            <form action="{{ route('admin.reports.export.pdf') }}" method="POST" class="inline">
-                @csrf
-                @if(isset($reportType))
-                    <input type="hidden" name="report_type" value="{{ $reportType }}">
-                @endif
-                <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
-                <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
-                <button type="submit" class="btn-secondary">
-                    <i class="fas fa-file-pdf mr-2"></i>
-                    Export PDF
+            <div class="export-dropdown" id="reportExportDropdown">
+                <button type="button" id="reportExportToggle" class="btn-primary" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-file-export mr-2"></i>
+                    Export
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
                 </button>
-            </form>
-            <form action="{{ route('admin.reports.export.excel') }}" method="POST" class="inline">
-                @csrf
-                @if(isset($reportType))
-                    <input type="hidden" name="report_type" value="{{ $reportType }}">
-                @endif
-                <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
-                <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-file-excel mr-2"></i>
-                    Export Excel
-                </button>
-            </form>
+
+                <div id="reportExportMenu" class="export-menu" hidden>
+                    <form action="{{ route('admin.reports.export.pdf') }}" method="POST">
+                        @csrf
+                        @if(isset($reportType))
+                            <input type="hidden" name="report_type" value="{{ $reportType }}">
+                        @endif
+                        <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
+                        <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
+                        <button type="submit" class="export-menu-item">
+                            <i class="fas fa-file-pdf text-red-600"></i>
+                            PDF
+                        </button>
+                    </form>
+
+                    <form action="{{ route('admin.reports.export.excel') }}" method="POST">
+                        @csrf
+                        @if(isset($reportType))
+                            <input type="hidden" name="report_type" value="{{ $reportType }}">
+                        @endif
+                        <input type="hidden" name="start_date" value="{{ $startDate->format('Y-m-d') }}">
+                        <input type="hidden" name="end_date" value="{{ $endDate->format('Y-m-d') }}">
+                        <button type="submit" class="export-menu-item">
+                            <i class="fas fa-file-excel text-green-600"></i>
+                            Excel
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    @if(isset($reportType) && $reportType == 'sales')
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="summary-card summary-card-primary">
-            <div class="summary-icon">
-                <i class="fas fa-users text-white"></i>
-            </div>
-            <div class="summary-value">{{ $totalReservations }}</div>
-            <p class="summary-label">Total Reservations</p>
-        </div>
+    @if(!empty($kpiCards))
+        <div class="kpi-grid mb-8">
+            @foreach($kpiCards as $card)
+                <div class="summary-card {{ $card['tone'] ?? 'kpi-neutral' }}">
+                    <div class="summary-content">
+                        <div class="summary-icon">
+                            <i class="{{ $card['icon'] ?? 'fas fa-chart-line' }}"></i>
+                        </div>
+                        <div class="summary-metric">
+                            <div class="summary-value">{{ $card['value'] ?? 'N/A' }}</div>
+                            <p class="summary-label">{{ $card['label'] ?? 'Metric' }}</p>
+                        </div>
+                    </div>
 
-        <div class="summary-card summary-card-success">
-            <div class="summary-icon">
-                <i class="fas fa-money-bill-wave text-white"></i>
-            </div>
-            <div class="summary-value">₱{{ number_format($totalRevenue, 2) }}</div>
-            <p class="summary-label">Total Sales</p>
+                    @if(isset($card['delta']) && $card['delta'] !== null)
+                        @php
+                            $deltaClass = $card['delta'] > 0 ? 'positive' : ($card['delta'] < 0 ? 'negative' : 'neutral');
+                            $deltaSign = $card['delta'] > 0 ? '+' : '';
+                        @endphp
+                        <span class="summary-delta {{ $deltaClass }}">
+                            {{ $deltaSign }}{{ number_format($card['delta'], 1) }}%
+                        </span>
+                    @endif
+                </div>
+            @endforeach
         </div>
-    </div>
     @endif
 
-    <!-- Detailed Report Section -->
+    @if(!empty($charts))
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-8">
+            <div class="chart-card">
+                <h3 class="chart-title">{{ $charts['trend']['label'] ?? 'Trend' }}</h3>
+                <div class="chart-canvas-wrap">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">{{ $charts['breakdown']['label'] ?? 'Breakdown' }}</h3>
+                <div class="chart-canvas-wrap">
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">{{ $charts['topContributors']['label'] ?? 'Top Contributors' }}</h3>
+                <div class="chart-canvas-wrap">
+                    <canvas id="topContributorsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">Key Insights</h3>
+                <ul class="insight-list">
+                    @forelse($insights as $insight)
+                        <li>{{ $insight }}</li>
+                    @empty
+                        <li>No insights available for this period.</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <div class="mt-8">
         <div class="mb-6">
             <h2 class="section-title">
                 @if(isset($reportType))
                     @switch($reportType)
                         @case('reservation')
-                            Detailed Reservation Report
+                            Detailed Reservations Report
                             @break
                         @case('sales')
                             Detailed Sales Report
@@ -191,15 +410,22 @@
                             Detailed Inventory Usage Report
                             @break
                         @case('crm')
-                            Detailed CRM Report
+                            Detailed Customer Relationship Management Report
                             @break
                         @default
                             Detailed Report
                     @endswitch
                 @else
-                    Detailed Sales Report
+                    Detailed Report
                 @endif
             </h2>
+        </div>
+
+        <div class="table-toolbar">
+            <input id="reportTableSearch"
+                   type="search"
+                   class="table-search"
+                   placeholder="Search table rows...">
         </div>
 
         <div class="overflow-auto modern-scrollbar">
@@ -213,7 +439,7 @@
                         <p class="text-sm text-gray-500">Try selecting a different date range</p>
                     </div>
                 @else
-                    <table class="modern-table compact-table">
+                    <table id="reportTable" class="modern-table compact-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -242,9 +468,9 @@
                                 </td>
                                 <td class="text-gray-600">{{ $reservation['number_of_persons'] }}</td>
                                 <td>
-                                    <span class="status-badge 
-                                        @if($reservation['status'] == 'approved') status-approved
-                                        @elseif($reservation['status'] == 'pending') status-pending
+                                    <span class="status-badge
+                                        @if(strtolower($reservation['status']) == 'approved') status-approved
+                                        @elseif(strtolower($reservation['status']) == 'pending') status-pending
                                         @else status-declined @endif">
                                         {{ $reservation['status'] }}
                                     </span>
@@ -254,6 +480,11 @@
                             @endforeach
                         </tbody>
                     </table>
+                    @if(method_exists($reservationData, 'hasPages') && $reservationData->hasPages())
+                        <div class="mt-6">
+                            {{ $reservationData->links('components.pagination') }}
+                        </div>
+                    @endif
                 @endif
             @elseif(isset($reportType) && $reportType == 'inventory')
                 @if($inventoryData->isEmpty())
@@ -265,7 +496,7 @@
                         <p class="text-sm text-gray-500">Try selecting a different date range</p>
                     </div>
                 @else
-                    <table class="modern-table compact-table">
+                    <table id="reportTable" class="modern-table compact-table">
                         <thead>
                             <tr>
                                 <th>Inventory Item</th>
@@ -287,6 +518,11 @@
                             @endforeach
                         </tbody>
                     </table>
+                    @if(method_exists($inventoryData, 'hasPages') && $inventoryData->hasPages())
+                        <div class="mt-6">
+                            {{ $inventoryData->links('components.pagination') }}
+                        </div>
+                    @endif
                 @endif
             @elseif(isset($reportType) && $reportType == 'crm')
                 @if($crmData->isEmpty())
@@ -294,11 +530,11 @@
                         <div class="empty-state-icon">
                             <i class="fas fa-chart-bar text-gray-400"></i>
                         </div>
-                        <p class="text-lg font-semibold text-gray-900 mb-2">No CRM data found</p>
+                        <p class="text-lg font-semibold text-gray-900 mb-2">No customer relationship management data found</p>
                         <p class="text-sm text-gray-500">Try selecting a different date range</p>
                     </div>
                 @else
-                    <table class="modern-table compact-table">
+                    <table id="reportTable" class="modern-table compact-table">
                         <thead>
                             <tr>
                                 <th>Customer</th>
@@ -320,12 +556,17 @@
                                 </td>
                                 <td class="font-medium text-gray-900">{{ $customer['total_reservations'] }}</td>
                                 <td class="text-gray-600">{{ $customer['approved_reservations'] }}</td>
-                                <td class="font-medium text-gray-900">₱{{ number_format($customer['total_spent'], 2) }}</td>
+                                <td class="font-medium text-gray-900">PHP {{ number_format($customer['total_spent'], 2) }}</td>
                                 <td class="text-gray-600">{{ $customer['last_reservation'] }}</td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    @if(method_exists($crmData, 'hasPages') && $crmData->hasPages())
+                        <div class="mt-6">
+                            {{ $crmData->links('components.pagination') }}
+                        </div>
+                    @endif
                 @endif
             @else
                 @if($salesData->isEmpty())
@@ -337,13 +578,13 @@
                         <p class="text-sm text-gray-500">Try selecting a different date range</p>
                     </div>
                 @else
-                    <table class="modern-table compact-table">
+                    <table id="reportTable" class="modern-table compact-table">
                         <thead>
                             <tr>
                                 <th style="width: 120px;">Reservation</th>
                                 <th style="width: 200px;">Event Details</th>
                                 <th style="width: 300px;">Menu Items</th>
-                                <th style="width: 100px;">Total</th>
+                                <th style="width: 120px;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -371,8 +612,8 @@
                                             </div>
                                             <div class="text-gray-500 text-xs mt-1">({{ $item['type'] }} - {{ $item['meal_time'] }})</div>
                                             <div class="mt-1 text-gray-600 text-xs">
-                                                Qty: {{ $item['quantity'] }} × ₱{{ number_format($item['unit_price'], 2) }} = 
-                                                <span class="font-semibold text-green-600">₱{{ number_format($item['total'], 2) }}</span>
+                                                Qty: {{ $item['quantity'] }} x PHP {{ number_format($item['unit_price'], 2) }} =
+                                                <span class="font-semibold text-green-600">PHP {{ number_format($item['total'], 2) }}</span>
                                             </div>
                                         </div>
                                         @endforeach
@@ -380,16 +621,151 @@
                                 </td>
                                 <td>
                                     <div class="text-lg font-bold text-green-600">
-                                        ₱{{ number_format($reservation['reservation_total'], 2) }}
+                                        PHP {{ number_format($reservation['reservation_total'], 2) }}
                                     </div>
                                 </td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    @if(method_exists($salesData, 'hasPages') && $salesData->hasPages())
+                        <div class="mt-6">
+                            {{ $salesData->links('components.pagination') }}
+                        </div>
+                    @endif
                 @endif
             @endif
         </div>
     </div>
 </div>
+
+@if(!empty($charts))
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endif
+<script>
+(function () {
+    const searchInput = document.getElementById('reportTableSearch');
+    const reportTable = document.getElementById('reportTable');
+
+    if (searchInput && reportTable) {
+        searchInput.addEventListener('input', function () {
+            const query = searchInput.value.trim().toLowerCase();
+            reportTable.querySelectorAll('tbody tr').forEach(function (row) {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    }
+
+    const exportToggle = document.getElementById('reportExportToggle');
+    const exportMenu = document.getElementById('reportExportMenu');
+    const exportDropdown = document.getElementById('reportExportDropdown');
+
+    if (exportToggle && exportMenu && exportDropdown) {
+        exportToggle.addEventListener('click', function () {
+            const isHidden = exportMenu.hasAttribute('hidden');
+            if (isHidden) {
+                exportMenu.removeAttribute('hidden');
+                exportToggle.setAttribute('aria-expanded', 'true');
+            } else {
+                exportMenu.setAttribute('hidden', '');
+                exportToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!exportDropdown.contains(event.target)) {
+                exportMenu.setAttribute('hidden', '');
+                exportToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                exportMenu.setAttribute('hidden', '');
+                exportToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    const charts = @json($charts ?? []);
+    if (!window.Chart || !charts || Object.keys(charts).length === 0) {
+        return;
+    }
+
+    const palette = ['#00462E', '#0EA5E9', '#F97316', '#7C3AED', '#22C55E', '#EAB308', '#EF4444', '#14B8A6'];
+
+    function createDataset(config, index) {
+        const type = config.type || 'bar';
+        const values = Array.isArray(config.values) ? config.values : [];
+        const color = palette[index % palette.length];
+
+        if (type === 'doughnut' || type === 'pie') {
+            const colors = values.map(function (_, i) {
+                return palette[i % palette.length];
+            });
+            return {
+                label: config.label || '',
+                data: values,
+                backgroundColor: colors,
+                borderColor: '#ffffff',
+                borderWidth: 2
+            };
+        }
+
+        return {
+            label: config.label || '',
+            data: values,
+            borderColor: color,
+            backgroundColor: type === 'line' ? 'rgba(0, 70, 46, 0.16)' : color,
+            borderWidth: 2,
+            tension: type === 'line' ? 0.28 : 0,
+            fill: type === 'line'
+        };
+    }
+
+    function renderChart(canvasId, config, index) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !config || !Array.isArray(config.labels) || config.labels.length === 0) {
+            return;
+        }
+
+        const type = config.type || 'bar';
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                }
+            }
+        };
+
+        if (type !== 'doughnut' && type !== 'pie') {
+            options.scales = {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            };
+        }
+
+        new Chart(canvas, {
+            type: type,
+            data: {
+                labels: config.labels,
+                datasets: [createDataset(config, index)]
+            },
+            options: options
+        });
+    }
+
+    renderChart('trendChart', charts.trend, 0);
+    renderChart('breakdownChart', charts.breakdown, 1);
+    renderChart('topContributorsChart', charts.topContributors, 2);
+})();
+</script>
 @endsection

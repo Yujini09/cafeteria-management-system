@@ -2,472 +2,1476 @@
 
 namespace Database\Seeders;
 
+use App\Models\MenuPrice;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 
 class MenusAndItemsSqlSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::unprepared(<<<'SQL'
-START TRANSACTION;
+        if (!Schema::hasTable('menus') || !Schema::hasTable('menu_items')) {
+            $this->command?->warn('Skipping MenusAndItemsSqlSeeder: menus/menu_items table is missing.');
+            return;
+        }
 
-SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE menus;
-TRUNCATE menu_items;
-SET FOREIGN_KEY_CHECKS = 1;
+        $menuColumns = $this->getMenuColumns();
+        $menuItemColumns = $this->getMenuItemColumns();
+        $this->assertRequiredColumns($menuColumns, $menuItemColumns);
 
-/* =========================
-   1) BREAKFAST
-   ========================= */
--- Standard ₱150/head
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Standard Menu 1', 'standard', '', 'breakfast', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Longanisa w/ Slice Tomato','food',NOW(),NOW()),
-(@m,'Fried Egg Sunny Side Up','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+        $priceMap = $this->resolvePriceMap();
+        $sequenceByType = ['standard' => 0, 'special' => 0];
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Standard Menu 2', 'standard', '', 'breakfast', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Pork Embutido','food',NOW(),NOW()),
-(@m,'Onion Omelet','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+        DB::transaction(function () use ($menuColumns, $menuItemColumns, $priceMap, &$sequenceByType): void {
+            DB::table('menu_items')->delete();
+            DB::table('menus')->delete();
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Standard Menu 3', 'standard', '', 'breakfast', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Luncheon Meat','food',NOW(),NOW()),
-(@m,'Dilis w/ Chopped Tomato','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+            foreach ($this->menuDefinitions() as $mealTime => $menusByType) {
+                foreach ($menusByType as $type => $menus) {
+                    foreach ($menus as $items) {
+                        $sequenceByType[$type]++;
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Standard Menu 4', 'standard', '', 'breakfast', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Pork Tapa w/ Tomato','food',NOW(),NOW()),
-(@m,'Salted Egg','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+                        $menuId = DB::table('menus')->insertGetId(
+                            $this->buildMenuPayload(
+                                $menuColumns,
+                                $type,
+                                $mealTime,
+                                $sequenceByType[$type],
+                                (float) ($priceMap[$type][$mealTime] ?? 0)
+                            )
+                        );
 
--- Special ₱170/head
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Special Menu 1', 'special', '', 'breakfast', 170.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Fruit in Season','dessert',NOW(),NOW()),
-(@m,'Longanisa w/ Slice Tomato','food',NOW(),NOW()),
-(@m,'Boneless Daing na Bangus','food',NOW(),NOW()),
-(@m,'Mushroom Omelet','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+                        $this->insertMenuItems($menuItemColumns, $menuId, $items);
+                    }
+                }
+            }
+        });
+    }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Special Menu 2', 'special', '', 'breakfast', 170.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Fruit in Season','dessert',NOW(),NOW()),
-(@m,'Pork Omelet w/ Catsup','food',NOW(),NOW()),
-(@m,'Fried Eggplant','food',NOW(),NOW()),
-(@m,'Toasted Bread w/ Jam&Butter','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+    private function getMenuColumns(): array
+    {
+        return [
+            'name' => Schema::hasColumn('menus', 'name'),
+            'type' => Schema::hasColumn('menus', 'type'),
+            'meal_time' => Schema::hasColumn('menus', 'meal_time'),
+            'price' => Schema::hasColumn('menus', 'price'),
+            'description' => Schema::hasColumn('menus', 'description'),
+            'created_at' => Schema::hasColumn('menus', 'created_at'),
+            'updated_at' => Schema::hasColumn('menus', 'updated_at'),
+        ];
+    }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Special Menu 3', 'special', '', 'breakfast', 170.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Fruit in Season','dessert',NOW(),NOW()),
-(@m,'Chicken Embutido','food',NOW(),NOW()),
-(@m,'Fried Sausage','food',NOW(),NOW()),
-(@m,'Fried Egg Sunny Side Up','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+    private function getMenuItemColumns(): array
+    {
+        return [
+            'menu_id' => Schema::hasColumn('menu_items', 'menu_id'),
+            'name' => Schema::hasColumn('menu_items', 'name'),
+            'type' => Schema::hasColumn('menu_items', 'type'),
+            'created_at' => Schema::hasColumn('menu_items', 'created_at'),
+            'updated_at' => Schema::hasColumn('menu_items', 'updated_at'),
+        ];
+    }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Special Menu 4', 'special', '', 'breakfast', 170.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (menu_id, name, type, created_at, updated_at) VALUES
-(@m,'Nilagang Saba','dessert',NOW(),NOW()),
-(@m,'Pork Tapa w/ Tomato','food',NOW(),NOW()),
-(@m,'Salted Egg','food',NOW(),NOW()),
-(@m,'Daing Dilis','food',NOW(),NOW()),
-(@m,'Rice','food',NOW(),NOW()),
-(@m,'Tea/Coffee','drink',NOW(),NOW()),
-(@m,'Bottled Water','drink',NOW(),NOW());
+    private function assertRequiredColumns(array $menuColumns, array $menuItemColumns): void
+    {
+        $missing = [];
 
-/* =========================
-   2) A.M. SNACKS
-   ========================= */
--- Standard ₱100/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Standard • Day 1', 'standard', '', 'am_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Ham & Cheese Sandwich','food',NOW(),NOW()),
-(NULL,@m,'Buko w/ Gulaman','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+        foreach (['name', 'type', 'meal_time'] as $column) {
+            if (empty($menuColumns[$column])) {
+                $missing[] = "menus.$column";
+            }
+        }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Standard • Day 2', 'standard', '', 'am_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Pimiento Sandwich','food',NOW(),NOW()),
-(NULL,@m,'Buko w/ Gulaman','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+        foreach (['menu_id', 'name'] as $column) {
+            if (empty($menuItemColumns[$column])) {
+                $missing[] = "menu_items.$column";
+            }
+        }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Standard • Day 3', 'standard', '', 'am_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Chicken Sandwich','food',NOW(),NOW()),
-(NULL,@m,'P/A Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+        if (!empty($missing)) {
+            throw new RuntimeException('Cannot seed menus: missing required columns: ' . implode(', ', $missing));
+        }
+    }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Standard • Day 4', 'standard', '', 'am_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Cheese Burger','food',NOW(),NOW()),
-(NULL,@m,'Iced Tea w/ Tanglad','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+    private function buildMenuPayload(array $menuColumns, string $type, string $mealTime, int $menuNumber, float $price): array
+    {
+        $payload = [];
+        $now = now();
 
--- Special ₱150/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Special • Day 1', 'special', '', 'am_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Lomi','food',NOW(),NOW()),
-(NULL,@m,'Puto Cheese','food',NOW(),NOW()),
-(NULL,@m,'Orange Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+        if ($menuColumns['name']) {
+            $payload['name'] = 'Menu #' . $menuNumber;
+        }
+        if ($menuColumns['type']) {
+            $payload['type'] = $type;
+        }
+        if ($menuColumns['meal_time']) {
+            $payload['meal_time'] = $mealTime;
+        }
+        if ($menuColumns['price']) {
+            $payload['price'] = $price;
+        }
+        if ($menuColumns['description']) {
+            $payload['description'] = null;
+        }
+        if ($menuColumns['created_at']) {
+            $payload['created_at'] = $now;
+        }
+        if ($menuColumns['updated_at']) {
+            $payload['updated_at'] = $now;
+        }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Special • Day 2', 'special', '', 'am_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Bihon Guisado','food',NOW(),NOW()),
-(NULL,@m,'Kutsinta w/ Latik','food',NOW(),NOW()),
-(NULL,@m,'Buko Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+        return $payload;
+    }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Special • Day 3', 'special', '', 'am_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Spaghetti w/ Meat Balls','food',NOW(),NOW()),
-(NULL,@m,'P/A Orange Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+    private function insertMenuItems(array $menuItemColumns, int $menuId, array $items): void
+    {
+        if (empty($items)) {
+            return;
+        }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('A.M. Snacks • Special • Day 4', 'special', '', 'am_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Carbonara w/ Chicken Fillet','food',NOW(),NOW()),
-(NULL,@m,'4 Season Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
+        $now = now();
+        $rows = [];
 
-/* =========================
-   3) LUNCH
-   ========================= */
--- Standard ₱300/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Standard • Day 1', 'standard', '', 'lunch', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Chickenn Soup','food',NOW(),NOW()),
-(NULL,@m,'Pork Karekare w/ Binagoongan','food',NOW(),NOW()),
-(NULL,@m,'Lumpia Frito','food',NOW(),NOW()),
-(NULL,@m,'Bolabola w/ P/A Sauce','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Molded Gulaman','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+        foreach ($items as $item) {
+            $row = [];
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Standard • Day 2', 'standard', '', 'lunch', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Crab & Corn Soup','food',NOW(),NOW()),
-(NULL,@m,'Pork w/ Mushroom','food',NOW(),NOW()),
-(NULL,@m,'Chinese Veg. w/ Quail Egg','food',NOW(),NOW()),
-(NULL,@m,'Fish Fillet w/ Sweet Chilli Sauce','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit in Season','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+            if ($menuItemColumns['menu_id']) {
+                $row['menu_id'] = $menuId;
+            }
+            if ($menuItemColumns['name']) {
+                $row['name'] = (string) ($item['name'] ?? 'Unnamed Item');
+            }
+            if ($menuItemColumns['type']) {
+                $row['type'] = (string) ($item['type'] ?? 'food');
+            }
+            if ($menuItemColumns['created_at']) {
+                $row['created_at'] = $now;
+            }
+            if ($menuItemColumns['updated_at']) {
+                $row['updated_at'] = $now;
+            }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Standard • Day 3', 'standard', '', 'lunch', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Onion Soup','food',NOW(),NOW()),
-(NULL,@m,'Cordon Bleu w/Creamy Mushroom-Sauce','food',NOW(),NOW()),
-(NULL,@m,'Pork Bistick','food',NOW(),NOW()),
-(NULL,@m,'Toge Guisado','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit in Season','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+            $rows[] = $row;
+        }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Standard • Day 4', 'standard', '', 'lunch', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Corn Soup','food',NOW(),NOW()),
-(NULL,@m,'Pork Sarciado','food',NOW(),NOW()),
-(NULL,@m,'Gising-gising','food',NOW(),NOW()),
-(NULL,@m,'Fish Bolabola','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit in Season','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+        if (!empty($rows)) {
+            DB::table('menu_items')->insert($rows);
+        }
+    }
 
--- Special ₱350/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Special • Day 1', 'special', '', 'lunch', 350.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Egg Drop Soup','food',NOW(),NOW()),
-(NULL,@m,'Pork Caldereta','food',NOW(),NOW()),
-(NULL,@m,'Chinese Vegetables','food',NOW(),NOW()),
-(NULL,@m,'Sweet and Sour Fish','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Leche Flan','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+    private function resolvePriceMap(): array
+    {
+        $defaults = [
+            'standard' => ['breakfast' => 150, 'am_snacks' => 150, 'lunch' => 300, 'pm_snacks' => 100, 'dinner' => 300],
+            'special' => ['breakfast' => 170, 'am_snacks' => 100, 'lunch' => 350, 'pm_snacks' => 150, 'dinner' => 350],
+        ];
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Special • Day 2', 'special', '', 'lunch', 350.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Crab & Corn Soup','food',NOW(),NOW()),
-(NULL,@m,'Steamed Veg. w/Butter Garlic Sauce','food',NOW(),NOW()),
-(NULL,@m,'Chicken Pork Adobo w/Coco Cream','food',NOW(),NOW()),
-(NULL,@m,'Fish Escabeche','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit Salad','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+        if (!Schema::hasTable('menu_prices')) {
+            return $defaults;
+        }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Special • Day 3', 'special', '', 'lunch', 350.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Sinigang na Hipon','food',NOW(),NOW()),
-(NULL,@m,'Fried Chicken','food',NOW(),NOW()),
-(NULL,@m,'Gising-gising','food',NOW(),NOW()),
-(NULL,@m,'Slice Fruits','dessert',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
+        try {
+            return MenuPrice::getPriceMap();
+        } catch (\Throwable $e) {
+            return $defaults;
+        }
+    }
 
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Lunch • Special • Day 4', 'special', '', 'lunch', 350.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Bolabola Fish w/ Misua','food',NOW(),NOW()),
-(NULL,@m,'Pork Karekare','food',NOW(),NOW()),
-(NULL,@m,'Lumpia Shanghai','food',NOW(),NOW()),
-(NULL,@m,'Breaded Chicken w/ P/A Sauce','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit Cocktail','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-/* =========================
-   4) P.M. SNACKS
-   ========================= */
--- Standard ₱100/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Standard • Day 1', 'standard', '', 'pm_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,"Cheese Burger Sandwich",'food',NOW(),NOW()),
-(NULL,@m,"Sago't Gulaman",'drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Standard • Day 2', 'standard', '', 'pm_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Chicken Sandwich','food',NOW(),NOW()),
-(NULL,@m,'P/A Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Standard • Day 3', 'standard', '', 'pm_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Tuna Sandwich','food',NOW(),NOW()),
-(NULL,@m,'Iced Tea','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Standard • Day 4', 'standard', '', 'pm_snacks', 100.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Cheese Pimiento Sandwich','food',NOW(),NOW()),
-(NULL,@m,'Black Gulaman','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
--- Special ₱150/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Special • Day 1', 'special', '', 'pm_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Carbonara','food',NOW(),NOW()),
-(NULL,@m,'Toasted Bread','food',NOW(),NOW()),
-(NULL,@m,'4 Season Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Special • Day 2', 'special', '', 'pm_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Sotanghon Guisado','food',NOW(),NOW()),
-(NULL,@m,'Maja','food',NOW(),NOW()),
-(NULL,@m,'Iced Tea w/ Lemon','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Special • Day 3', 'special', '', 'pm_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Bihon Guisado','food',NOW(),NOW()),
-(NULL,@m,'Kutsinta w/ Latik','food',NOW(),NOW()),
-(NULL,@m,"Sago't Gulaman",'drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('P.M. Snacks • Special • Day 4', 'special', '', 'pm_snacks', 150.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Spaghetti','food',NOW(),NOW()),
-(NULL,@m,'Garlic Bread','food',NOW(),NOW()),
-(NULL,@m,'P/A Juice','drink',NOW(),NOW()),
-(NULL,@m,'Tea/Coffee','drink',NOW(),NOW()),
-(NULL,@m,'Distilled Water','drink',NOW(),NOW());
-
-/* =========================
-   5) DINNER
-   ========================= */
--- Standard ₱300/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Standard • Day 1', 'standard', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Egg Drop Soup','food',NOW(),NOW()),
-(NULL,@m,'Mushroom Cabbage w/ Pork Balls','food',NOW(),NOW()),
-(NULL,@m,'Chicken Caldereta','food',NOW(),NOW()),
-(NULL,@m,'Fried Tilapia','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Banana','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Standard • Day 2', 'standard', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Bolabola w/ Misua','food',NOW(),NOW()),
-(NULL,@m,'Breaded Pork','food',NOW(),NOW()),
-(NULL,@m,'Bean w/ Ham Strips','food',NOW(),NOW()),
-(NULL,@m,'Fried Bangus','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit in Season','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Standard • Day 3', 'standard', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Batchoy w/ Meat','food',NOW(),NOW()),
-(NULL,@m,'Pinakbet','food',NOW(),NOW()),
-(NULL,@m,'Fried Hito','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Leche Flan','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Standard • Day 4', 'standard', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Chicken Tinola','food',NOW(),NOW()),
-(NULL,@m,'Inihaw na Tilapia','food',NOW(),NOW()),
-(NULL,@m,'Lagalaga Veg. w/ Buro','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit Salad','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
--- Special ₱300/head (Day 1..4)
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Special • Day 1', 'special', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Chicken Swam','food',NOW(),NOW()),
-(NULL,@m,'Broiled Fish w/ Mango Salad','food',NOW(),NOW()),
-(NULL,@m,'Lechon Kawali w/ Sauce','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Lagalaga Veg. Delight w/ Buro','food',NOW(),NOW()),
-(NULL,@m,'Banana','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Special • Day 2', 'special', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Sinampalukang Manok','food',NOW(),NOW()),
-(NULL,@m,'Pork Sisig','food',NOW(),NOW()),
-(NULL,@m,'Pinakbet','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Fruit in Season','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Special • Day 3', 'special', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Batchoy Soup','food',NOW(),NOW()),
-(NULL,@m,'Fried Tilapia w/ Mango Sisig','food',NOW(),NOW()),
-(NULL,@m,'Broiled Eggplant w/ Binagoongan','food',NOW(),NOW()),
-(NULL,@m,'Chicken Barbeque','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Buko Pandan','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-INSERT INTO menus (name, type, description, meal_time, price, created_at, updated_at)
-VALUES ('Dinner • Special • Day 4', 'special', '', 'dinner', 300.00, NOW(), NOW());
-SET @m := LAST_INSERT_ID();
-INSERT INTO menu_items (id,menu_id,name,type,created_at,updated_at) VALUES
-(NULL,@m,'Tinolang Manok','food',NOW(),NOW()),
-(NULL,@m,'Pork Asado Chinese Style','food',NOW(),NOW()),
-(NULL,@m,'Relleno Bangus','food',NOW(),NOW()),
-(NULL,@m,'Rice','food',NOW(),NOW()),
-(NULL,@m,'Sweetened Banana','dessert',NOW(),NOW()),
-(NULL,@m,'Bottled Water','drink',NOW(),NOW());
-
-COMMIT;
-SQL);
+    private function menuDefinitions(): array
+    {
+        return array (
+  'breakfast' => 
+  array (
+    'standard' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Longanisa w/ Slice Tomato',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Fried Egg Sunny Side Up',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Pork Embutido',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Onion Omelet',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Luncheon Meat',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Dilis w/ Chopped Tomato',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Pork Tapa w/ Tomato',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Salted Egg',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+    'special' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        1 => 
+        array (
+          'name' => 'Longanisa w/ Slice Tomato',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Boneless Daing na Bangus',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Mushroom Omelet',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Omelet w/ Catsup',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Fried Eggplant',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Toasted Bread w/ Jam&Butter',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        1 => 
+        array (
+          'name' => 'Chicken Embutido',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Fried Sausage',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Fried Egg Sunny Side Up',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Nilagang Saba',
+          'type' => 'dessert',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Tapa w/ Tomato',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Salted Egg',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Daing Dilis',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+  ),
+  'am_snacks' => 
+  array (
+    'standard' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Ham & Cheese Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Buko w/ Gulaman',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Pimiento Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Buko w/ Gulaman',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Chicken Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'P/A Juice',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Cheese Burger',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Iced Tea w/ Tanglad',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+    'special' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Lomi',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Puto Cheese',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Orange Juice',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Bihon Guisado',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Kutsinta w/ Latik',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Buko Juice',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Spaghetti w/ Meat Balls',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'P/A Orange Juice',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Carbonara w/ Chicken Fillet',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => '4 Season Juice',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+  ),
+  'lunch' => 
+  array (
+    'standard' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Chickenn Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Karekare w/ Binagoongan',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Lumpia Frito',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Bolabola w/ P/A Sauce',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Molded Gulaman',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Crab & Corn Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork w/ Mushroom',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Chinese Veg. w/ Quail Egg',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Fish Fillet w/ Sweet Chilli Sauce',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Onion Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Cordon Bleu w/Creamy Mushroom-Sauce',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Pork Bistick',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Toge Guisado',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Corn Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Sarciado',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Gising-gising',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Fish Bolabola',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+    'special' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Egg Drop Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Caldereta',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Chinese Vegetables',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Sweet and Sour Fish',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Leche Flan',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Crab & Corn Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Steamed Veg. w/Butter Garlic Sauce',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Chicken Pork Adobo w/Coco Cream',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Fish Escabeche',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Fruit Salad',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Sinigang na Hipon',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Fried Chicken',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Gising-gising',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Slice Fruits',
+          'type' => 'dessert',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Bolabola Fish w/ Misua',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Karekare',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Lumpia Shanghai',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Breaded Chicken w/ P/A Sauce',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Fruit Cocktail',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+  ),
+  'pm_snacks' => 
+  array (
+    'standard' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Cheese Burger Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Sago\'t Gulaman',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Chicken Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'P/A Juice',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Tuna Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Iced Tea',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Cheese Pimiento Sandwich',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Black Gulaman',
+          'type' => 'drink',
+        ),
+        2 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+    'special' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Carbonara',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Toasted Bread',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => '4 Season Juice',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Sotanghon Guisado',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Maja',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Iced Tea w/ Lemon',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Bihon Guisado',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Kutsinta w/ Latik',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Sago\'t Gulaman',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Spaghetti',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Garlic Bread',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'P/A Juice',
+          'type' => 'drink',
+        ),
+        3 => 
+        array (
+          'name' => 'Tea/Coffee',
+          'type' => 'drink',
+        ),
+        4 => 
+        array (
+          'name' => 'Distilled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+  ),
+  'dinner' => 
+  array (
+    'standard' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Egg Drop Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Mushroom Cabbage w/ Pork Balls',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Chicken Caldereta',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Fried Tilapia',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Banana',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Bolabola w/ Misua',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Breaded Pork',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Bean w/ Ham Strips',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Fried Bangus',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Batchoy w/ Meat',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pinakbet',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Fried Hito',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Leche Flan',
+          'type' => 'dessert',
+        ),
+        5 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Chicken Tinola',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Inihaw na Tilapia',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Lagalaga Veg. w/ Buro',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Fruit Salad',
+          'type' => 'dessert',
+        ),
+        5 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+    'special' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Chicken Swam',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Broiled Fish w/ Mango Salad',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Lechon Kawali w/ Sauce',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Lagalaga Veg. Delight w/ Buro',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Banana',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Sinampalukang Manok',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Sisig',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Pinakbet',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Fruit in Season',
+          'type' => 'dessert',
+        ),
+        5 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Batchoy Soup',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Fried Tilapia w/ Mango Sisig',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Broiled Eggplant w/ Binagoongan',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Chicken Barbeque',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        5 => 
+        array (
+          'name' => 'Buko Pandan',
+          'type' => 'dessert',
+        ),
+        6 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 
+        array (
+          'name' => 'Tinolang Manok',
+          'type' => 'food',
+        ),
+        1 => 
+        array (
+          'name' => 'Pork Asado Chinese Style',
+          'type' => 'food',
+        ),
+        2 => 
+        array (
+          'name' => 'Relleno Bangus',
+          'type' => 'food',
+        ),
+        3 => 
+        array (
+          'name' => 'Rice',
+          'type' => 'food',
+        ),
+        4 => 
+        array (
+          'name' => 'Sweetened Banana',
+          'type' => 'dessert',
+        ),
+        5 => 
+        array (
+          'name' => 'Bottled Water',
+          'type' => 'drink',
+        ),
+      ),
+    ),
+  ),
+);
     }
 }

@@ -259,7 +259,7 @@
 </section>
 
 <x-success-modal name="contact-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
-    <p id="contactSuccessMessage" class="text-sm text-gray-600">{{ session('contact_success', 'Message sent successfully! We\'ll get back to you soon.') }}</p>
+    <p id="contactSuccessMessage" class="text-sm text-gray-600">{{ session('contact_success', 'Your message has been sent and the admins have been notified.') }}</p>
 </x-success-modal>
 
 <!-- FAQ Section -->
@@ -441,7 +441,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showSuccessModal(data.message || 'Message sent successfully! We\'ll get back to you soon.');
+                showSuccessModal(data.message || 'Your message has been sent and the admins have been notified.');
                 form.reset();
                 
                 // Reset character counter

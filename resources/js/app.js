@@ -541,7 +541,6 @@ document.addEventListener('alpine:init', () => {
       form: {
         type:  opts.defaultType || 'standard',
         meal:  opts.defaultMeal || 'breakfast',
-        name:  '',
         description: '',
         items: [],
         openDropdowns: new Proxy({}, {
@@ -691,7 +690,7 @@ document.addEventListener('alpine:init', () => {
             this.createSubmitting = false;
             return;
           }
-          this.form = { type: this.form.type, meal: this.form.meal, name: '', description: '', items: [], openDropdowns: {}, searchTerms: {} };
+          this.form = { type: this.form.type, meal: this.form.meal, description: '', items: [], openDropdowns: {}, searchTerms: {} };
           this.currentStep = 1;
           this.isCreateOpen = false;
           window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-create-success', bubbles: true, composed: true }));
