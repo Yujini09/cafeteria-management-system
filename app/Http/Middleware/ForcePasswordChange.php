@@ -23,6 +23,7 @@ class ForcePasswordChange
                 'profile.update',
                 'profile.destroy',
                 'password.update',
+                'password.check-current',
                 'password.confirm',
                 'logout',
             ];
@@ -31,7 +32,7 @@ class ForcePasswordChange
                 return $next($request);
             }
 
-            if ($request->is('profile') || $request->is('password')) {
+            if ($request->is('profile') || $request->is('password') || $request->is('password/*')) {
                 return $next($request);
             }
 

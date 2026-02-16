@@ -17,13 +17,24 @@
     ]) !!}
 @else
     @php
-        $hasError = $errors->has($name);
+        $passwordBag = $errors->hasBag('updatePassword') ? $errors->getBag('updatePassword') : null;
+        $errorMessages = $errors->get($name);
+        if (empty($errorMessages) && $passwordBag) {
+            $errorMessages = $passwordBag->get($name);
+        }
+        $hasError = !empty($errorMessages);
+
         $confirmedError = null;
         if (str_ends_with($name, '_confirmation')) {
             $baseName = \Illuminate\Support\Str::beforeLast($name, '_confirmation');
-            $confirmedError = collect($errors->get($baseName))
+            $baseMessages = $errors->get($baseName);
+            if (empty($baseMessages) && $passwordBag) {
+                $baseMessages = $passwordBag->get($baseName);
+            }
+            $confirmedError = collect($baseMessages)
                 ->first(fn ($message) => \Illuminate\Support\Str::contains(strtolower($message), 'confirmation'));
         }
+
         $inputClass = 'w-full rounded-admin border px-admin-input py-2.5 pr-12 text-sm
             transition-colors duration-admin focus:outline-none focus:ring-2
             ' . ($hasError
@@ -58,9 +69,9 @@
         @if($helper && !$hasError)
             <p class="text-xs text-admin-neutral-500">{{ $helper }}</p>
         @endif
-        @error($name)
-            <p class="text-sm text-red-600">{{ $message }}</p>
-        @enderror
+        @if($hasError)
+            <p class="text-sm text-red-600">{{ $errorMessages[0] }}</p>
+        @endif
         @if(!$hasError && $confirmedError)
             <p class="text-sm text-red-600">{{ $confirmedError }}</p>
         @endif

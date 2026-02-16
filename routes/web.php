@@ -197,4 +197,5 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update'); // Optional: Add logic in controller if implementing avatar upload
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+    Route::post('/password/check-current', [ProfileController::class, 'checkCurrentPassword'])->name('password.check-current');
     });

@@ -103,13 +103,14 @@
             @csrf
             @method('put')
 
-            <x-admin.forms.password name="current_password" label="Current Password" required />
+            <x-admin.forms.password name="current_password" label="Current Password" required data-current-password-input="true" />
+            <p data-current-password-feedback class="hidden text-sm text-red-600"></p>
             <x-admin.forms.password name="password" label="New Password" :showRequirements="true" required />
             <x-admin.forms.password name="password_confirmation" label="Confirm New Password" required />
 
             <div class="flex justify-end gap-3">
                 <x-admin.ui.button.secondary type="button" @click="show = false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.primary type="submit" data-loading-text="Saving Settings...">Update Password</x-admin.ui.button.primary>
+                <x-admin.ui.button.primary type="submit" data-loading-text="Saving Settings..." data-password-submit="true">Update Password</x-admin.ui.button.primary>
             </div>
         </form>
     </x-admin.ui.modal>
@@ -133,7 +134,18 @@
     });
 </script>
 @endif
-@if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'))
+@php
+    $updatePasswordBag = $errors->hasBag('updatePassword') ? $errors->getBag('updatePassword') : null;
+    $hasPasswordErrors = $errors->has('current_password')
+        || $errors->has('password')
+        || $errors->has('password_confirmation')
+        || ($updatePasswordBag && (
+            $updatePasswordBag->has('current_password')
+            || $updatePasswordBag->has('password')
+            || $updatePasswordBag->has('password_confirmation')
+        ));
+@endphp
+@if($hasPasswordErrors)
 <script>
     document.addEventListener('livewire:navigated', function () {
         requestAnimationFrame(() => {
@@ -151,4 +163,132 @@
     });
 </script>
 @endif
+<script>
+    (function () {
+        const initCurrentPasswordValidation = () => {
+            const form = document.querySelector('form[action="{{ route('password.update') }}"]');
+            if (!form || form.dataset.currentPasswordValidationBound === 'true') {
+                return;
+            }
+
+            const input = form.querySelector('input[name="current_password"][data-current-password-input="true"]');
+            const feedback = form.querySelector('[data-current-password-feedback]');
+            if (!input || !feedback) {
+                return;
+            }
+
+            form.dataset.currentPasswordValidationBound = 'true';
+
+            const submitButton = form.querySelector('[data-password-submit="true"]');
+            const checkUrl = "{{ route('password.check-current') }}";
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            let debounceTimer = null;
+            let activeRequest = null;
+            let isInvalid = false;
+
+            const setInvalidState = (invalid, message = '') => {
+                isInvalid = invalid;
+                feedback.textContent = message;
+                feedback.classList.toggle('hidden', !invalid);
+
+                input.classList.toggle('border-red-500', invalid);
+                input.classList.toggle('focus:border-red-500', invalid);
+                input.classList.toggle('focus:ring-red-500/20', invalid);
+
+                if (submitButton) {
+                    submitButton.disabled = invalid;
+                    submitButton.classList.toggle('opacity-60', invalid);
+                    submitButton.classList.toggle('cursor-not-allowed', invalid);
+                    submitButton.setAttribute('aria-disabled', invalid ? 'true' : 'false');
+                }
+            };
+
+            const runCheck = () => {
+                const value = input.value.trim();
+
+                if (activeRequest) {
+                    activeRequest.abort();
+                    activeRequest = null;
+                }
+
+                if (value.length === 0) {
+                    setInvalidState(false, '');
+                    return;
+                }
+
+                activeRequest = new AbortController();
+                const checkedValue = value;
+
+                fetch(checkUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ current_password: checkedValue }),
+                    signal: activeRequest.signal,
+                })
+                    .then(async (response) => {
+                        let data = {};
+                        try {
+                            data = await response.json();
+                        } catch (error) {
+                            data = {};
+                        }
+
+                        if (!response.ok) {
+                            return {
+                                valid: false,
+                                message: 'Unable to validate current password right now.',
+                            };
+                        }
+
+                        return data;
+                    })
+                    .then((data) => {
+                        if (input.value.trim() !== checkedValue) {
+                            return;
+                        }
+
+                        const valid = Boolean(data && data.valid);
+                        const message = valid
+                            ? ''
+                            : (data && data.message ? data.message : 'The current password is incorrect.');
+                        setInvalidState(!valid, message);
+                    })
+                    .catch((error) => {
+                        if (error.name === 'AbortError') {
+                            return;
+                        }
+                        setInvalidState(false, '');
+                    });
+            };
+
+            input.addEventListener('input', () => {
+                if (isInvalid) {
+                    setInvalidState(false, '');
+                }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(runCheck, 350);
+            });
+
+            input.addEventListener('blur', runCheck);
+
+            form.addEventListener('submit', (event) => {
+                if (isInvalid) {
+                    event.preventDefault();
+                    input.focus();
+                }
+            });
+        };
+
+        initCurrentPasswordValidation();
+        document.addEventListener('DOMContentLoaded', initCurrentPasswordValidation);
+        document.addEventListener('livewire:navigated', initCurrentPasswordValidation);
+    })();
+</script>
 @endsection

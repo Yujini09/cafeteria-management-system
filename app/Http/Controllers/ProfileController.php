@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -71,6 +72,24 @@ class ProfileController extends Controller
         ]);
 
         return Redirect::route('profile.edit')->with('status', 'password-updated');
+    }
+
+    /**
+     * Real-time validation for current password (admin/superadmin settings modal).
+     */
+    public function checkCurrentPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+        $isValid = $user !== null && Hash::check((string) $request->input('current_password'), (string) $user->password);
+
+        return response()->json([
+            'valid' => $isValid,
+            'message' => $isValid ? null : 'The current password is incorrect.',
+        ]);
     }
 
     /**
