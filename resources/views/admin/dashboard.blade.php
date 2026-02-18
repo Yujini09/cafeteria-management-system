@@ -3,439 +3,212 @@
 
 @section('content')
 <style>
-/* 1. Modern Color Palette */
-:root {
-    --primary: #00462E;
-    --primary-light: #057C3C;
-    --accent: #FF6B35;
-    --accent-light: #FF8E53;
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-}
-
-/* 2. Glassmorphism Effects */
-.glass-card {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-}
-
-.glass-header {
-    background: linear-gradient(135deg, rgba(0, 70, 46, 0.9) 0%, rgba(5, 124, 60, 0.9) 100%);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* 3. Modern Card Styles - Removed green top line */
-.modern-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-    border: 1px solid var(--neutral-200);
-    transition: all 0.25s ease;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Removed the ::before pseudo-element that created the green line */
-.modern-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
-}
-
-/* Menu Card Styling for Inventory Sections */
-.menu-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid var(--neutral-200);
-    border-radius: 14px;
-    transition: all 0.25s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.menu-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
-}
-
-.menu-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 24px -8px rgba(15, 23, 42, 0.18);
-    border-color: var(--neutral-300);
-}
-
-/* 4. Metric Cards with Gradient Backgrounds */
-.metric-card-primary {
-    background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.metric-card-primary::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 120px;
-    height: 120px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-}
-
-.metric-card-warning {
-    background: linear-gradient(135deg, #EA580C 0%, #FB923C 100%);
-    color: white;
-}
-
-.metric-card-accent {
-    background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%);
-    color: white;
-}
-
-/* 5. Status Elements - Modern Design */
-.status-chip {
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.status-chip::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-}
-
-.status-critical {
-    background: rgba(220, 38, 38, 0.1);
-    color: #DC2626;
-}
-
-.status-warning {
-    background: rgba(217, 119, 6, 0.1);
-    color: #D97706;
-}
-
-.status-low {
-    background: rgba(234, 88, 12, 0.1);
-    color: #EA580C;
-}
-
-.status-good {
-    background: rgba(5, 124, 60, 0.1);
-    color: #057C3C;
-}
-
-/* 6. Typography - Modern Scale */
-.metric-value {
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.5px;
-}
-
-.section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--neutral-900);
-    letter-spacing: -0.2px;
-}
-
-/* 7. Animation Keyframes */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
+    /* 1. Color Variables */
+    :root {
+        --primary: #00462E;
+        --primary-light: #057C3C;
+        --neutral-50: #fafafa;
+        --neutral-100: #f5f5f5;
+        --neutral-200: #e5e5e5;
+        --neutral-400: #a3a3a3;
+        --neutral-500: #737373;
+        --neutral-600: #525252;
+        --neutral-700: #404040;
+        --neutral-900: #171717;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+
+    /* 2. Glassmorphism Effects */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
     }
-}
 
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
+    /* 3. Modern Card Styles */
+    .modern-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        border: 1px solid var(--neutral-100);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        position: relative;
     }
-    to {
-        opacity: 1;
-        transform: translateX(0);
+
+    .modern-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
     }
-}
 
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
+    /* Menu Card Styling for Inventory Sections */
+    .menu-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid var(--neutral-200);
+        border-radius: 14px;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+        height: 100%; /* Ensure full height in grid */
     }
-    50% {
-        transform: translateY(-5px);
+
+    .menu-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
     }
-}
 
-.animate-fade-in {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.animate-slide-in {
-    animation: slideInLeft 0.5s ease-out;
-}
-
-.animate-float {
-    animation: float 3s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .animate-fade-in,
-    .animate-slide-in,
-    .animate-float {
-        animation: none !important;
-        transform: none !important;
+    .menu-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 24px -8px rgba(15, 23, 42, 0.18);
     }
-}
 
-/* 8. Icon Styles - Modern */
-.metric-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-}
+    /* 4. Metric Cards */
+    .metric-card-primary {
+        background: linear-gradient(135deg, #00462E 0%, #057C3C 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
 
-/* 9. Inventory Items - Modern List */
-.inventory-item-modern {
-    padding: 0.875rem;
-    border-radius: 12px;
-    border: 1px solid var(--neutral-100);
-    margin-bottom: 0.5rem;
-    transition: all 0.2s ease;
-    background: white;
-}
+    .metric-card-primary::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
 
-.inventory-item-modern:hover {
-    border-color: var(--neutral-200);
-    background: var(--neutral-50);
-    transform: translateX(4px);
-}
+    .metric-card-warning {
+        background: linear-gradient(135deg, #EA580C 0%, #FB923C 100%);
+        color: white;
+    }
 
-/* 10. Table Styles - Modern */
-.modern-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.875rem;
-}
+    .metric-card-accent {
+        background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%);
+        color: white;
+    }
 
-.modern-table th {
-    background: var(--neutral-50);
-    font-weight: 600;
-    color: var(--neutral-700);
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--neutral-200);
-    font-size: 0.75rem;
-    position: sticky;
-    top: 0;
-}
+    /* 5. Status Chips */
+    .status-chip {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
 
-.modern-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--neutral-100);
-    transition: background-color 0.2s ease;
-}
+    .status-chip::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
 
-.modern-table tr:last-child td {
-    border-bottom: none;
-}
+    .status-critical { background: rgba(220, 38, 38, 0.1); color: #DC2626; }
+    .status-warning { background: rgba(217, 119, 6, 0.1); color: #D97706; }
+    .status-low { background: rgba(234, 88, 12, 0.1); color: #EA580C; }
+    .status-good { background: rgba(5, 124, 60, 0.1); color: #057C3C; }
 
-.modern-table tr:hover td {
-    background: var(--neutral-50);
-}
+    /* 6. Typography */
+    .metric-value { font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
+    .section-title { font-size: 1.1rem; font-weight: 700; color: var(--neutral-900); letter-spacing: -0.2px; }
 
-/* 11. Custom Scrollbar - Modern */
-.modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+    /* 7. Animations */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-.modern-scrollbar::-webkit-scrollbar-track {
-    background: var(--neutral-100);
-    border-radius: 10px;
-}
+    .animate-fade-in { animation: fadeInUp 0.6s ease-out; }
+    .animate-slide-in { animation: slideInLeft 0.5s ease-out; }
+    .animate-float { animation: float 3s ease-in-out infinite; }
 
-.modern-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 10px;
-}
+    /* 8. Icons & Lists */
+    .metric-icon {
+        width: 48px; height: 48px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+    }
 
-.modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-light);
-}
+    .inventory-item-modern {
+        padding: 0.875rem;
+        border-radius: 12px;
+        border: 1px solid var(--neutral-100);
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    .inventory-item-modern:hover {
+        border-color: var(--neutral-200);
+        background: var(--neutral-50);
+        transform: translateX(4px);
+    }
 
-/* 12. Empty State Styles */
-.empty-state {
-    padding: 2rem 1rem;
-    text-align: center;
-    color: var(--neutral-400);
-}
+    /* 9. Tables */
+    .modern-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
+    .modern-table th {
+        background: var(--neutral-50); font-weight: 600; color: var(--neutral-700);
+        padding: 1rem; text-align: left; border-bottom: 1px solid var(--neutral-200);
+        font-size: 0.75rem;
+    }
+    .modern-table td { padding: 1rem; border-bottom: 1px solid var(--neutral-100); }
+    .modern-table tr:hover td { background: var(--neutral-50); }
 
-.empty-state-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 1rem;
-    background: var(--neutral-100);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    /* 10. Scrollbar */
+    .modern-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .modern-scrollbar::-webkit-scrollbar-track { background: var(--neutral-100); border-radius: 10px; }
+    .modern-scrollbar::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
 
-/* 13. Greeting Section - Modern with Updated Date Design */
-.greeting-section {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border-radius: 20px;
-    position: relative;
-    overflow: hidden;
-}
+    /* 11. Empty State */
+    .empty-state { padding: 2rem 1rem; text-align: center; color: var(--neutral-400); }
+    .empty-state-icon {
+        width: 64px; height: 64px; margin: 0 auto 1rem; background: var(--neutral-100);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
 
-.greeting-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-}
+    /* 12. Greeting */
+    .greeting-section {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border-radius: 20px; position: relative; overflow: hidden;
+    }
+    .greeting-section::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    }
+    .greeting-content { position: relative; z-index: 2; }
+    .date-badge {
+        background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px;
+        padding: 0.75rem 1rem; text-align: center; min-width: 140px;
+    }
+    .date-day { font-size: 0.75rem; font-weight: 600; color: white; text-transform: uppercase; }
+    .date-full { font-size: 0.875rem; font-weight: 700; color: white; }
 
-.greeting-content {
-    position: relative;
-    z-index: 2;
-}
+    /* 13. Progress Dots */
+    .progress-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.5rem; }
+    .progress-critical { background: #DC2626; }
+    .progress-warning { background: #D97706; }
 
-/* Updated Date Design */
-.date-badge {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    text-align: center;
-    min-width: 140px;
-}
-
-.date-day {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.date-full {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: white;
-    letter-spacing: -0.2px;
-}
-
-/* 14. Progress Indicators */
-.progress-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 0.5rem;
-}
-
-.progress-critical { background: #DC2626; }
-.progress-warning { background: #D97706; }
-.progress-low { background: #EA580C; }
-.progress-good { background: #057C3C; }
-
-/* 15. Days Left Status */
-.days-left-chip {
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.days-left-chip::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-}
-
-/* 16. Font Size Consistency */
-.greeting-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-}
-
-.greeting-message {
-    font-size: 0.875rem;
-}
-
-.metric-label {
-    font-size: 0.875rem;
-}
-
-.metric-helper {
-    font-size: 0.75rem;
-}
-
-.inventory-item-name {
-    font-size: 0.875rem;
-}
-
-.inventory-item-detail {
-    font-size: 0.75rem;
-}
-
-.table-data {
-    font-size: 0.875rem;
-}
-
-.empty-state-text {
-    font-size: 0.875rem;
-}
+    /* 14. Days Left Chip */
+    .days-left-chip {
+        padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+        text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.25rem;
+    }
+    .days-left-chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 </style>
 
 @php
@@ -455,17 +228,16 @@
     }
 @endphp
 
-<div class="admin-page-shell w-full min-h-screen overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
+<div class="admin-page-dashboard w-full overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
     
-    <!-- Modern Greeting Section with Updated Date Design -->
     <div class="greeting-section text-white p-6 animate-fade-in">
         <div class="greeting-content">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="text-3xl animate-float">{{ $icon }}</div>
                     <div>
-                        <h1 class="greeting-title mb-1">{{ $greeting }}, {{ explode(' ', Auth::user()->name)[0] }}</h1>
-                        <p class="greeting-message text-green-100 opacity-90">{{ $message }}</p>
+                        <h1 class="text-2xl font-bold mb-1">{{ $greeting }}, {{ explode(' ', Auth::user()->name)[0] }}</h1>
+                        <p class="text-green-100 opacity-90 text-sm">{{ $message }}</p>
                     </div>
                 </div>
                 <div class="text-left sm:text-right">
@@ -478,171 +250,156 @@
         </div>
     </div>
 
-    <!-- Key Metrics - Modern Cards (No green top line on hover) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <!-- Total Reservations -->
         <div class="modern-card metric-card-primary p-6 animate-fade-in">
             <div class="flex items-center justify-between">
                 <div>
                     <div class="metric-value text-white">{{ $totalReservations }}</div>
-                    <p class="metric-label text-green-100 font-medium mt-2">Total Reservations</p>
+                    <p class="text-green-100 font-medium mt-2 text-sm">Total Reservations</p>
                 </div>
                 <div class="metric-icon">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
+                    <i class="far fa-calendar-check text-white text-xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-green-100 metric-helper">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
+            <div class="mt-4 flex items-center text-green-100 text-xs">
+                <i class="fas fa-history mr-1"></i>
                 <span>All time bookings</span>
             </div>
         </div>
 
-        <!-- Pending Reservations -->
         <div class="modern-card metric-card-warning p-6 animate-fade-in" style="animation-delay: 0.1s">
             <div class="flex items-center justify-between">
                 <div>
                     <div class="metric-value text-white">{{ $pendingReservations }}</div>
-                    <p class="metric-label text-orange-100 font-medium mt-2">Pending Reservations</p>
+                    <p class="text-orange-100 font-medium mt-2 text-sm">Pending Reservations</p>
                 </div>
                 <div class="metric-icon">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                    <i class="far fa-clock text-white text-xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-orange-100 metric-helper">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <div class="mt-4 flex items-center text-orange-100 text-xs">
+                <i class="fas fa-exclamation-circle mr-1"></i>
                 <span>Awaiting confirmation</span>
             </div>
         </div>
 
-        <!-- Menus Sold -->
         <div class="modern-card metric-card-accent p-6 animate-fade-in" style="animation-delay: 0.2s">
             <div class="flex items-center justify-between">
                 <div>
                     <div class="metric-value text-white">{{ $menusSold }}</div>
-                    <p class="metric-label text-orange-100 font-medium mt-2">Menus Sold</p>
+                    <p class="text-orange-100 font-medium mt-2 text-sm">Menus Sold</p>
                 </div>
                 <div class="metric-icon">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
+                    <i class="fas fa-utensils text-white text-xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-orange-100 metric-helper">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <div class="mt-4 flex items-center text-orange-100 text-xs">
+                <i class="fas fa-chart-line mr-1"></i>
                 <span>Today's sales</span>
             </div>
         </div>
     </div>
 
-    <!-- Inventory Status -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Low Stock Items -->
+        
         <div class="menu-card animate-slide-in">
             <div class="p-6 border-b border-neutral-100">
                 <div class="flex items-center justify-between">
                     <h3 class="section-title">Low Stock Items</h3>
-                    <span class="status-chip status-warning">{{ count($lowStocks) }} items</span>
+                    <span class="status-chip status-warning">{{ $lowStocks->count() }} items</span>
                 </div>
-                <p class="text-neutral-500 metric-helper mt-1">Items that need restocking soon</p>
+                <p class="text-neutral-500 text-xs mt-1">Items running low (1-5 units left)</p>
             </div>
             <div class="p-6">
                 <div class="space-y-3">
-                    @forelse($lowStocks as $item)
+                    @forelse($lowStocks->take(5) as $item)
                     <div class="inventory-item-modern">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <span class="progress-dot progress-warning"></span>
                                 <div>
-                                    <span class="font-semibold text-neutral-900 inventory-item-name block">{{ $item->name }}</span>
-                                    <span class="text-neutral-500 inventory-item-detail">{{ $item->qty }} {{ $item->unit }} remaining</span>
+                                    <span class="font-semibold text-neutral-900 text-sm block">{{ $item->name }}</span>
+                                    <span class="text-neutral-500 text-xs">{{ $item->qty }} {{ $item->unit }} remaining</span>
                                 </div>
                             </div>
-                            <span class="text-orange-700 font-semibold inventory-item-name">Low</span>
+                            <span class="text-orange-700 font-semibold text-xs">Low</span>
                         </div>
                     </div>
                     @empty
                     <div class="empty-state">
                         <div class="empty-state-icon">
-                            <svg class="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <i class="fas fa-check text-neutral-400"></i>
                         </div>
-                        <p class="empty-state-text">All items are well stocked</p>
+                        <p class="text-neutral-500 text-sm">All items are well stocked</p>
                     </div>
                     @endforelse
                 </div>
-                @if(count($lowStocks) > 0)
-                <div class="mt-4 text-center">
-                    <a href="{{ route('admin.inventory.index') }}" class="text-primary hover:text-primary-light font-medium metric-helper transition-colors duration-200 inline-flex items-center">
-                        Manage Inventory
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
+
+                @if($lowStocks->count() > 5)
+                <div class="mt-4 text-center border-t pt-4">
+                    <a href="{{ route('admin.inventory.index') }}" class="text-primary hover:text-primary-light font-medium text-xs transition-colors duration-200 inline-flex items-center">
+                        View All {{ $lowStocks->count() }} Items
+                        <i class="fas fa-arrow-right ml-1"></i>
                     </a>
                 </div>
                 @endif
             </div>
         </div>
 
-        <!-- Out of Stock Items -->
         <div class="menu-card animate-slide-in" style="animation-delay: 0.1s">
             <div class="p-6 border-b border-neutral-100">
                 <div class="flex items-center justify-between">
                     <h3 class="section-title">Out of Stock</h3>
-                    <span class="status-chip status-critical">{{ count($outOfStocks) }} items</span>
+                    <span class="status-chip status-critical">{{ $outOfStocks->count() }} items</span>
                 </div>
-                <p class="text-neutral-500 metric-helper mt-1">Items that need immediate attention</p>
+                <p class="text-neutral-500 text-xs mt-1">Items that need immediate attention</p>
             </div>
             <div class="p-6">
                 <div class="space-y-3">
-                    @forelse($outOfStocks as $item)
+                    @forelse($outOfStocks->take(5) as $item)
                     <div class="inventory-item-modern">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <span class="progress-dot progress-critical"></span>
                                 <div>
-                                    <span class="font-semibold text-neutral-900 inventory-item-name block">{{ $item->name }}</span>
-                                    <span class="text-neutral-500 inventory-item-detail">Restock needed</span>
+                                    <span class="font-semibold text-neutral-900 text-sm block">{{ $item->name }}</span>
+                                    <span class="text-neutral-500 text-xs">Restock needed</span>
                                 </div>
                             </div>
-                            <span class="text-red-700 font-semibold inventory-item-name">Out of stock</span>
+                            <span class="text-red-700 font-semibold text-xs">Out of stock</span>
                         </div>
                     </div>
                     @empty
                     <div class="empty-state">
                         <div class="empty-state-icon">
-                            <svg class="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <i class="fas fa-check text-neutral-400"></i>
                         </div>
-                        <p class="empty-state-text">All items are available</p>
+                        <p class="text-neutral-500 text-sm">All items are available</p>
                     </div>
                     @endforelse
                 </div>
+
+                @if($outOfStocks->count() > 5)
+                <div class="mt-4 text-center border-t pt-4">
+                    <a href="{{ route('admin.inventory.index') }}" class="text-primary hover:text-primary-light font-medium text-xs transition-colors duration-200 inline-flex items-center">
+                        Manage All {{ $outOfStocks->count() }} Items
+                        <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+                @endif
             </div>
         </div>
     </div>
 
-    <!-- Expiring Items -->
     <div class="menu-card animate-fade-in">
         <div class="p-6 border-b border-neutral-100">
             <div class="flex items-center justify-between">
                 <h3 class="section-title">Items Expiring Soon</h3>
-                <span class="status-chip status-warning">{{ count($expiringSoon) }} items</span>
+                <span class="status-chip status-critical">{{ $expiringSoon->count() }} items</span>
             </div>
-            <p class="text-neutral-500 metric-helper mt-1">Monitor items approaching expiration</p>
+            <p class="text-neutral-500 text-xs mt-1">Monitor items approaching expiration</p>
         </div>
-        <div class="overflow-auto max-h-80 modern-scrollbar">
+        <div class="overflow-auto modern-scrollbar max-h-96">
             <table class="modern-table">
                 <thead>
                     <tr>
@@ -653,11 +410,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($expiringSoon as $item)
+                    @forelse($expiringSoon->take(5) as $item)
                     <tr>
-                        <td class="font-semibold text-neutral-900 table-data">{{ $item->name }}</td>
-                        <td class="text-neutral-600 table-data">{{ $item->qty }} {{ $item->unit }}</td>
-                        <td class="font-medium text-neutral-900 table-data">
+                        <td class="font-semibold text-neutral-900 text-sm">{{ $item->name }}</td>
+                        <td class="text-neutral-600 text-sm">{{ $item->qty }} {{ $item->unit }}</td>
+                        <td class="font-medium text-neutral-900 text-sm">
                             {{ \Carbon\Carbon::parse($item->expiry_date)->format('M j, Y') }}
                         </td>
                         <td>
@@ -675,11 +432,9 @@
                         <td colspan="4" class="text-center py-8">
                             <div class="empty-state">
                                 <div class="empty-state-icon">
-                                    <svg class="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
+                                    <i class="fas fa-check text-neutral-400"></i>
                                 </div>
-                                <p class="empty-state-text">No items expiring soon</p>
+                                <p class="text-neutral-500 text-sm">No items expiring soon</p>
                             </div>
                         </td>
                     </tr>
@@ -687,6 +442,16 @@
                 </tbody>
             </table>
         </div>
+
+        @if($expiringSoon->count() > 5)
+        <div class="p-4 text-center border-t">
+            <a href="{{ route('admin.inventory.index') }}" class="text-primary hover:text-primary-light font-medium text-xs transition-colors duration-200 inline-flex items-center">
+                View All {{ $expiringSoon->count() }} Expiring Items
+                <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        @endif
     </div>
+
 </div>
 @endsection

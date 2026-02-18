@@ -50,6 +50,16 @@
         box-shadow: var(--admin-shadow-soft);
     }
 
+    .admin-page-dashboard {
+        width: 100%;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        min-height: calc(100vh - 6rem);
+        background: var(--neutral-100);
+        box-shadow: var(--admin-shadow-soft);
+    }
+
     @media (min-width: 640px) {
         .admin-page-shell {
             min-height: calc(100vh - 4rem);
