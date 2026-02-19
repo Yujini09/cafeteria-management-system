@@ -417,7 +417,6 @@ document.addEventListener('alpine:init', () => {
                 if (!started) return;
             }
             this.approving = true;
-            this.approveConfirmationOpen = false;
 
             const form = document.getElementById('approveForm');
             if (!form) {
@@ -461,6 +460,7 @@ document.addEventListener('alpine:init', () => {
                 const data = await res.json();
                 if (data && data.sufficient === false) {
                     this.insufficientItems = Array.isArray(data.insufficient_items) ? data.insufficient_items : [];
+                    this.approveConfirmationOpen = false;
                     this.inventoryWarningOpen = true;
                     this.approving = false;
                     if (window.cmsActionButtons && triggerButton) {
@@ -493,12 +493,11 @@ document.addEventListener('alpine:init', () => {
             }
             const forceInput = form.querySelector('#forceApproveInput');
             if (forceInput) forceInput.value = '1';
-            this.inventoryWarningOpen = false;
             form.submit();
         },
         openDeclineForm() {
-            this.declineConfirmationOpen = false;
             this.declineOpen = true;
+            this.declineConfirmationOpen = false;
         },
         openDeclineFromOverlap() {
             this.overlapWarningOpen = false;

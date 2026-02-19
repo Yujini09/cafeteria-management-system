@@ -541,7 +541,7 @@ class ReservationController extends Controller
             );
         }
 
-        return redirect()->back()->with(['accepted' => true, 'success' => 'Reservation approved.']);
+        return redirect()->back()->with(['accepted' => true]);
     }
 
     public function decline(Request $request, Reservation $reservation)

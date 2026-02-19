@@ -154,7 +154,7 @@
                                         <div class="relative"><i class="fa-regular fa-user absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"></i><input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all bg-white"></div>
                                     </div>
                                     <div class="col-span-1">
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address <span class="text-xs text-red-500 font-normal ml-1">(Locked)</span></label>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                                         <div class="relative"><i class="fa-regular fa-envelope absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"></i><input type="email" name="email" value="{{ $user->email }}" readonly class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed"><i class="fa-solid fa-lock absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i></div>
                                     </div>
                                     <div class="col-span-1">

@@ -268,6 +268,10 @@
     width: 150px;
 }
 
+.column-department {
+    width: 180px;
+}
+
 .column-status {
     width: 112px;
 }
@@ -373,6 +377,7 @@
             <colgroup>
                 <col class="w-14">
                 <col class="w-64">
+                <col class="w-56">
                 <col class="w-28">
                 <col class="w-44">
                 <col class="w-48">
@@ -383,6 +388,7 @@
                 <tr>
                     <th class="column-id text-left">ID</th>
                     <th class="column-customer text-left">Customer</th>
+                    <th class="column-department text-left">Office/Department</th>
                     <th class="column-status text-left">Status</th>
                     <th class="column-payment text-left">Payment</th>
                     <th class="column-email text-left">Email</th>
@@ -427,6 +433,13 @@
                         // Get customer name from contact_person field
                         $customerName = $r->contact_person ?? optional($r->user)->name ?? '—';
                         
+                        $department = $r->department ?? optional($r->user)->department ?? 'N/A';
+                        if ($department !== 'N/A' && strlen($department) > 15) {
+                            $shortDepartment = substr($department, 0, 15) . '...';
+                        } else {
+                            $shortDepartment = $department;
+                        }
+
                         // Get email from reservation or user
                         $email = $r->email ?? optional($r->user)->email ?? '—';
                         if ($email !== '—' && strlen($email) > 15) {
@@ -443,7 +456,11 @@
                         </td>
                         <td>
                             <div class="font-semibold text-admin-neutral-900">{{ $customerName }}</div>
-                            <div class="text-xs text-admin-neutral-500 md:hidden">{{ $r->department ?? '—' }}</div>
+                        </td>
+                        <td class="column-department text-admin-neutral-600">
+                            <span class="short-email" title="{{ $department }}">
+                                {{ $shortDepartment }}
+                            </span>
                         </td>
                         <td class="column-status">
                             <span class="status-badge {{ $statusClass }} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide">
@@ -500,7 +517,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="8">
                             <div class="empty-state">
                                 <div class="empty-state-icon">
                                     <svg class="w-8 h-8 text-admin-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
