@@ -132,6 +132,11 @@
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1);
 }
 
+/* Header Styles */
+.page-header {
+    flex-wrap: wrap;
+}
+
 /* Filter Section */
 .filter-section {
     background: var(--neutral-50);
@@ -288,6 +293,43 @@
     width: 200px;
 }
 
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-content {
+        width: 100%;
+    }
+    
+    .modern-table th:nth-child(4),
+    .modern-table td:nth-child(4),
+    .modern-table th:nth-child(5),
+    .modern-table td:nth-child(5) {
+        display: none;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* Menu Card Styling for Inventory Sections */
 
 
@@ -301,6 +343,8 @@
 }
 
 [x-cloak] { display: none !important; }
+</style>
+
 </style>
 
 <div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
@@ -318,12 +362,12 @@
                 <p class="header-subtitle">Manage and review all reservation requests</p>
             </div>
         </div>
-        <div class="header-actions w-full md:w-auto flex flex-col items-end">
+        <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
             <div class="relative w-full sm:w-64 md:w-72">
                 <input type="search"
                        id="searchInput"
                        placeholder="Search reservations..."
-                       class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                       class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                        oninput="filterTable(this.value)"
                        aria-label="Search reservations">
                 <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -385,8 +429,8 @@
                     <th class="column-customer text-left">Customer</th>
                     <th class="column-status text-left">Status</th>
                     <th class="column-payment text-left">Payment</th>
-                    <th class="column-email text-left">Email</th>
-                    <th class="column-date text-left">
+                    <th class="column-email hidden md:table-cell text-left">Email</th>
+                    <th class="column-date hidden lg:table-cell text-left">
                         @php
                             $nextCreatedSort = $createdSort === 'asc' ? 'desc' : 'asc';
                             $createdSortIcon = $createdSort === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down';
@@ -463,12 +507,12 @@
                             @endphp
                             <span class="status-badge {{ $paymentClass }}">{{ $paymentLabel }}</span>
                         </td>
-                        <td class="column-email text-gray-600">
+                        <td class="column-email hidden md:table-cell text-gray-600">
                             <span class="short-email" title="{{ $email }}">
                                 {{ $shortEmail }}
                             </span>
                         </td>
-                        <td class="text-admin-neutral-600 whitespace-nowrap">
+                        <td class="hidden lg:table-cell text-admin-neutral-600 whitespace-nowrap">
                             {{ $r->created_at->format('M d, Y H:i') }}
                         </td>
                         <td class="whitespace-nowrap">
