@@ -30,9 +30,8 @@ class AuthenticatedSessionController extends Controller
                 return redirect($redirect);
             }
 
-            if (Auth::user()->role === 'superadmin') return redirect()->route('superadmin.users');
-            if (Auth::user()->role === 'admin')      return redirect()->route('admin.dashboard');
-            if (Auth::user()->role === 'customer')   return redirect()->route('customer.homepage');
+            if (in_array(Auth::user()->role, ['admin', 'superadmin'], true)) return redirect()->route('admin.dashboard');
+            if (Auth::user()->role === 'customer') return redirect()->route('customer.homepage');
 
             // No valid role? Force logout to avoid 403 loop
             Auth::logout();
@@ -80,8 +79,7 @@ class AuthenticatedSessionController extends Controller
             }
         }
 
-        if (Auth::user()->role === 'superadmin') return redirect()->route('superadmin.users');
-        if (Auth::user()->role === 'admin')      return redirect()->route('admin.dashboard');
+        if (in_array(Auth::user()->role, ['admin', 'superadmin'], true)) return redirect()->route('admin.dashboard');
 
         return redirect()->route('customer.homepage');
     }

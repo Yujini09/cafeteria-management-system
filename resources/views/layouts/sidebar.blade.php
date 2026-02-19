@@ -69,6 +69,12 @@
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.02);
         }
 
+        body.sidebar-modal-active .sidebar {
+            filter: blur(2.5px);
+            pointer-events: none;
+            user-select: none;
+        }
+
         .sidebar.close {
             width: var(--sidebar-collapsed-width);
         }
@@ -216,6 +222,33 @@
             box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
         }
 
+        .menu-dropdown-toggle {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .menu-caret {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--header-text);
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .menu-link:hover .menu-caret {
+            color: var(--text-hover);
+        }
+
+        .menu-link.active .menu-caret {
+            color: var(--active-text);
+        }
+
+        .menu-caret-open {
+            transform: rotate(180deg);
+        }
+
         .sidebar.close .menu-link.active {
             display: flex;
             align-items: center;
@@ -261,10 +294,81 @@
             font-size: 0.85rem;
         }
 
+        .submenu-list {
+            list-style: none;
+            padding: 0 0 0 1.2rem;
+            margin: 0.15rem 0 0.25rem 0;
+        }
+
+        .submenu-list .menu-link {
+            padding: 0.3rem 0.4rem;
+        }
+
+        .submenu-list .menu-icon {
+            height: 28px;
+            min-width: 28px;
+            width: 28px;
+            margin-right: 0.5rem;
+        }
+
+        .message-count-badge {
+            margin-left: auto;
+            min-width: 1.2rem;
+            height: 1.2rem;
+            padding: 0 0.35rem;
+            border-radius: 9999px;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .inventory-warning-badge {
+            margin-left: auto;
+            min-width: 1.2rem;
+            height: 1.2rem;
+            padding: 0 0.35rem;
+            border-radius: 9999px;
+            background: #f59e0b;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
         .sidebar.close .link-text {
             opacity: 0;
             pointer-events: none;
             display: none;
+        }
+
+        .sidebar.close .submenu-list {
+            display: none !important;
+        }
+
+        .sidebar.close .menu-caret {
+            display: none;
+        }
+
+        .sidebar.close .message-count-badge,
+        .sidebar.close .inventory-warning-badge {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            margin-left: 0;
+            min-width: 1rem;
+            height: 1rem;
+            padding: 0 0.2rem;
+            font-size: 0.6rem;
         }
 
         /* Collapsed State + Hover: Floating tooltip */
@@ -412,24 +516,117 @@
             width: 2.5rem;
             height: 2.5rem;
             border-radius: 50%;
+            border: 2px solid #ffffff;
             background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
             color: #ffffff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
+
+        .mobile-sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 130;
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 0;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            color: #ffffff;
+            background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
+            box-shadow: 0 8px 20px rgba(0, 70, 46, 0.25);
+        }
+
+        .mobile-sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(1px);
+        }
+
+        @media (max-width: 767.98px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                transform: translateX(calc(-100% - 8px));
+                z-index: 120;
+                box-shadow: none;
+            }
+
+            .sidebar.close {
+                width: var(--sidebar-width);
+                transform: translateX(calc(-100% - 8px));
+            }
+
+            .sidebar:not(.close) {
+                transform: translateX(0);
+                box-shadow: 8px 0 24px rgba(15, 23, 42, 0.2);
+            }
+
+            .home-section,
+            .sidebar.close ~ .home-section {
+                left: 0;
+                width: 100%;
+            }
+
+            .admin-shell {
+                padding: 1rem;
+            }
+
+            .mobile-sidebar-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .mobile-sidebar-overlay {
+                display: block;
+            }
+        }
     </style>
 </head>
+
+@php
+    $menusAndPricingActive = (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') || request()->routeIs('admin.menus.prices');
+@endphp
 
 <body class="font-poppins antialiased text-sm"
       x-data="{
           confirmLogout: false,
           isDesktop: window.matchMedia('(min-width: 768px)').matches,
-          openSidebar: sessionStorage.getItem('sidebarOpen') === 'false' ? false : true
+          openSidebar: window.matchMedia('(min-width: 768px)').matches,
+          menusPricingOpen: {{ $menusAndPricingActive ? 'true' : 'false' }}
       }"
       x-init="
-          $watch('openSidebar', value => {
-              sessionStorage.setItem('sidebarOpen', value);
-          });
-      ">
+          const mq = window.matchMedia('(min-width: 768px)');
+          const syncSidebarWithViewport = (event) => {
+              isDesktop = event.matches;
+              openSidebar = event.matches;
+          };
+          if (mq.addEventListener) {
+              mq.addEventListener('change', syncSidebarWithViewport);
+          } else {
+              mq.addListener(syncSidebarWithViewport);
+          }
+      "
+      x-on:keydown.escape.window="if (!isDesktop && openSidebar) openSidebar = false">
+
+    <button type="button"
+            class="mobile-sidebar-toggle"
+            x-show="!isDesktop && !openSidebar"
+            @click="openSidebar = true"
+            aria-label="Open sidebar"
+            x-cloak>
+        <i class="fas fa-bars" aria-hidden="true"></i>
+    </button>
+
+    <div class="mobile-sidebar-overlay"
+         x-show="!isDesktop && openSidebar"
+         @click="openSidebar = false"
+         x-transition.opacity
+         x-cloak></div>
 
     <aside class="sidebar" :class="!openSidebar ? 'close' : ''">
         <div class="sidebar-brand">
@@ -437,10 +634,16 @@
             <i class="fas fa-bars" id="sidebar-toggle-btn" @click="openSidebar = !openSidebar"></i>
         </div>
         
-        <div class="sidebar-menu">
+        <div class="sidebar-menu" @click="if (!isDesktop && $event.target.closest('.menu-link')) { openSidebar = false; }">
             <ul class="menu-list">
-                <li class="section-header">Management</li>
-
+                @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
+                <li class="menu-list-item">
+                    <a href="{{ route('admin.dashboard') }}" wire:navigate
+                       class="menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-chart-line"></i></span>
+                        <span class="link-text">Dashboard</span>
+                    </a>
+                </li>
                 @if(Auth::user()->role === 'superadmin')
                 <li class="menu-list-item">
                     <a href="{{ route('superadmin.users') }}" wire:navigate
@@ -450,15 +653,6 @@
                     </a>
                 </li>
                 @endif
-
-                @if(Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')
-                <li class="menu-list-item">
-                    <a href="{{ route('admin.dashboard') }}" wire:navigate
-                       class="menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-chart-line"></i></span>
-                        <span class="link-text">Dashboard</span>
-                    </a>
-                </li>
                 <li class="menu-list-item">
                     <a href="{{ route('admin.reservations') }}" wire:navigate
                        class="menu-link {{ request()->routeIs('admin.reservations*') ? 'active' : '' }}">
@@ -474,17 +668,67 @@
                     </a>
                 </li>
                 <li class="menu-list-item">
-                    <a href="{{ route('admin.reports.index') }}" wire:navigate
-                       class="menu-link {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-chart-pie"></i></span>
-                        <span class="link-text">Reports</span>
-                    </a>
-                </li>
-                <li class="menu-list-item">
                     <a href="{{ route('admin.inventory.index') }}" wire:navigate
                        class="menu-link {{ request()->routeIs('admin.inventory.index') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="fas fa-boxes-stacked"></i></span>
                         <span class="link-text">Inventory</span>
+                        @if(($sidebarInventoryWarningCount ?? 0) > 0)
+                        <span class="inventory-warning-badge" aria-label="{{ $sidebarInventoryWarningCount }} inventory warnings">
+                            {{ $sidebarInventoryWarningCount > 99 ? '99+' : $sidebarInventoryWarningCount }}
+                        </span>
+                        @endif
+                    </a>
+                </li>
+                <li class="menu-list-item" x-show="openSidebar" x-cloak>
+                    <button type="button"
+                            @click.stop="menusPricingOpen = !menusPricingOpen"
+                            :aria-expanded="menusPricingOpen.toString()"
+                            class="menu-link menu-dropdown-toggle {{ $menusAndPricingActive ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-utensils"></i></span>
+                        <span class="link-text">Menus &amp; Pricing</span>
+                        <span class="menu-caret" :class="menusPricingOpen ? 'menu-caret-open' : ''">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </button>
+                    <ul x-show="menusPricingOpen"
+                        x-cloak
+                        x-transition.opacity.duration.150ms
+                        class="submenu-list">
+                        <li class="menu-list-item">
+                            <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}" wire:navigate
+                               class="menu-link {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active' : '' }}">
+                                <span class="menu-icon"><i class="fas fa-utensils"></i></span>
+                                <span class="link-text">Manage Menus</span>
+                            </a>
+                        </li>
+                        <li class="menu-list-item">
+                            <a href="{{ route('admin.menus.prices') }}" wire:navigate
+                               class="menu-link {{ request()->routeIs('admin.menus.prices') ? 'active' : '' }}">
+                                <span class="menu-icon"><i class="fas fa-peso-sign"></i></span>
+                                <span class="link-text">Prices</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-list-item" x-show="!openSidebar" x-cloak>
+                    <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}" wire:navigate
+                       class="menu-link {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-utensils"></i></span>
+                        <span class="link-text">Manage Menus</span>
+                    </a>
+                </li>
+                <li class="menu-list-item" x-show="!openSidebar" x-cloak>
+                    <a href="{{ route('admin.menus.prices') }}" wire:navigate
+                       class="menu-link {{ request()->routeIs('admin.menus.prices') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-peso-sign"></i></span>
+                        <span class="link-text">Prices</span>
+                    </a>
+                </li>
+                <li class="menu-list-item">
+                    <a href="{{ route('admin.reports.index') }}" wire:navigate
+                       class="menu-link {{ request()->routeIs('admin.reports.index') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-chart-pie"></i></span>
+                        <span class="link-text">Reports</span>
                     </a>
                 </li>
                 <li class="menu-list-item">
@@ -499,32 +743,14 @@
                        class="menu-link {{ request()->routeIs('admin.messages.*') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="far fa-envelope"></i></span>
                         <span class="link-text">Messages</span>
-                    </a>
-                </li>                
-                <li class="menu-list-item">
-                    <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}" wire:navigate
-                       class="menu-link {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-utensils"></i></span>
-                        <span class="link-text">Manage Menus</span>
-                    </a>
-                </li>
-                <li class="menu-list-item">
-                    <a href="{{ route('admin.menus.prices') }}" wire:navigate
-                       class="menu-link {{ request()->routeIs('admin.menus.prices') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-peso-sign"></i></span>
-                        <span class="link-text">Manage Prices</span>
+                        @if(($sidebarUnreadMessagesCount ?? 0) > 0)
+                        <span class="message-count-badge" aria-label="{{ $sidebarUnreadMessagesCount }} unread messages">
+                            {{ $sidebarUnreadMessagesCount > 99 ? '99+' : $sidebarUnreadMessagesCount }}
+                        </span>
+                        @endif
                     </a>
                 </li>
                 @endif
-
-                <li class="section-header" style="margin-top: 0.5rem">Settings</li>
-                <li class="menu-list-item">
-                    <a href="{{ route('profile.edit') }}" wire:navigate
-                       class="menu-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-gear"></i></span>
-                        <span class="link-text">Account Settings</span>
-                    </a>
-                </li>
             </ul>
         </div>
 
@@ -663,6 +889,61 @@
         const sidebarWidth = 72;
         tooltip.style.left = (sidebarWidth + 10) + 'px';
         tooltip.style.top = (rect.top + (rect.height / 2) - 10) + 'px';
+    }
+
+    let sidebarModalBlurObserver = null;
+
+    function isElementVisible(el) {
+        if (!el || el.hidden) return false;
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+    }
+
+    function elementLooksLikeModalOverlay(el) {
+        if (!el) return false;
+        if (el.classList.contains('reservation-modal-overlay')) return true;
+        if (!(el.classList.contains('fixed') && el.classList.contains('inset-0'))) return false;
+
+        const className = typeof el.className === 'string' ? el.className : '';
+        return className.includes('backdrop-blur')
+            || className.includes('justify-center')
+            || className.includes('z-')
+            || Boolean(el.querySelector('[aria-modal="true"]'));
+    }
+
+    function syncSidebarModalBlurState() {
+        const overlays = document.querySelectorAll('.fixed.inset-0, .reservation-modal-overlay');
+        const hasVisibleModal = Array.from(overlays).some((el) => {
+            if (!elementLooksLikeModalOverlay(el)) return false;
+            return isElementVisible(el);
+        });
+
+        document.body.classList.toggle('sidebar-modal-active', hasVisibleModal);
+    }
+
+    function initSidebarModalBlurSync() {
+        if (!document.body) return;
+
+        if (!sidebarModalBlurObserver) {
+            sidebarModalBlurObserver = new MutationObserver(() => {
+                syncSidebarModalBlurState();
+            });
+
+            sidebarModalBlurObserver.observe(document.body, {
+                subtree: true,
+                childList: true,
+                attributes: true,
+                attributeFilter: ['class', 'style', 'hidden', 'open', 'aria-hidden']
+            });
+
+            ['open-admin-modal', 'close-admin-modal', 'admin-modal-visibility'].forEach((eventName) => {
+                window.addEventListener(eventName, syncSidebarModalBlurState);
+            });
+        }
+
+        syncSidebarModalBlurState();
     }
 
     function notificationsPanel() {
@@ -874,6 +1155,7 @@
     document.addEventListener('livewire:navigated', () => {
         enhanceAdminSelects(document);
         positionTooltips();
+        initSidebarModalBlurSync();
         
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
@@ -905,6 +1187,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         positionTooltips();
+        initSidebarModalBlurSync();
     });
 
     window.addEventListener('resize', function() {

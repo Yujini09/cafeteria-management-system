@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\InventoryItem;
-use App\Models\ContactMessage; // [1] Add this import
+use App\Models\ContactMessage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -14,14 +14,14 @@ class AdminDashboardController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth','role:admin']); // This will now allow superadmin too due to middleware change
+        $this->middleware(['auth','role:admin']);
     }
 
     public function index(): View
     {
         $totalReservations = Reservation::count();
         $pendingReservations = Reservation::where('status', 'pending')->count();
-        $menusSold = ReservationItem::sum('quantity');
+        $menusSold = ReservationItem::count();
         $lowStocks = InventoryItem::where('qty', '>', 0)
             ->where('qty', '<=', 5)
             ->get();
@@ -42,7 +42,7 @@ class AdminDashboardController extends Controller
             'lowStocks',
             'outOfStocks',
             'expiringSoon',
-            'unreadCount' // [3] Pass the variable to the view
+            'unreadCount'
         ));
     }
 }

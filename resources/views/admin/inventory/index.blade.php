@@ -107,50 +107,50 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th class="w-14">#</th>
-                        <th class="whitespace-nowrap">
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14 whitespace-nowrap overflow-hidden text-ellipsis">#</th>
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                             <a href="?sort=name" class="hover:text-admin-neutral-700 transition-colors duration-200">Item Name</a>
                         </th>
-                        <th class="whitespace-nowrap">
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                             <a href="?sort=qty" class="hover:text-admin-neutral-700 transition-colors duration-200">Quantity</a>
                         </th>
-                        <th class="whitespace-nowrap">Unit</th>
-                        <th class="whitespace-nowrap">
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Unit</th>
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
                             <a href="?sort=expiry_date" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
                         </th>
-                        <th class="whitespace-nowrap">Category</th>
-                        <th class="hidden md:table-cell whitespace-nowrap">Last Updated</th>
-                        <th class="whitespace-nowrap">Actions</th>
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Category</th>
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide hidden md:table-cell whitespace-nowrap overflow-hidden text-ellipsis">Last Updated</th>
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($items as $item)
                         <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
-                            <td class="text-admin-neutral-500 font-semibold">
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-500 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">
                                 {{ ($items->firstItem() ?? 0) + $loop->index }}
                             </td>
 
-                            <td class="font-semibold text-admin-neutral-900">
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 font-semibold text-admin-neutral-900 whitespace-nowrap overflow-hidden text-ellipsis">
                                 {{ $item->name }}
                             </td>
 
-                            <td>
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">
                                 @php
                                     $qtyClass = $item->qty <= 5 ? 'status-critical' : ($item->qty <= 10 ? 'status-warning' : 'status-good');
                                 @endphp
-                                <span class="status-badge {{ $qtyClass }} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide">
+                                <span class="status-badge {{ $qtyClass }} inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide">
                                     {{ $item->qty }}
                                 </span>
                             </td>
 
-                            <td class="text-admin-neutral-600">{{ $item->unit }}</td>
-                            <td class="text-admin-neutral-600 whitespace-nowrap">{{ $item->expiry_date ?? 'N/A' }}</td>
-                            <td class="text-admin-neutral-600">{{ $item->category }}</td>
-                            <td class="text-admin-neutral-600 hidden md:table-cell whitespace-nowrap">{{ $item->updated_at->diffForHumans() }}</td>
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->unit }}</td>
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->expiry_date ?? 'N/A' }}</td>
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->category }}</td>
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 hidden md:table-cell whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->updated_at->diffForHumans() }}</td>
 
-                            <td class="whitespace-nowrap">
-                                <div class="flex flex-wrap gap-2">
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">
+                                <div class="flex items-center gap-2 flex-nowrap">
                                     <x-admin.ui.button.secondary
                                         type="button"
                                         class="!py-2 !px-3 text-xs"

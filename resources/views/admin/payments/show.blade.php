@@ -350,17 +350,11 @@
                                 {{ strtoupper($receiptExt ?: 'FILE') }}
                             </span>
                             @if($receiptIsImage)
-                                <div class="flex items-center gap-3">
-                                    <button type="button"
-                                            class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold"
-                                            @click="receiptPreviewOpen = true">
-                                        Open Receipt
-                                    </button>
-                                    <a href="{{ $receiptUrl }}" target="_blank" rel="noopener"
-                                       class="text-admin-primary hover:text-admin-primary-hover text-xs font-medium">
-                                        New Tab
-                                    </a>
-                                </div>
+                                <button type="button"
+                                        class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold"
+                                        @click="receiptPreviewOpen = true">
+                                    Open Receipt
+                                </button>
                             @else
                                 <a href="{{ $receiptUrl }}" target="_blank" rel="noopener"
                                    class="text-admin-primary hover:text-admin-primary-hover text-sm font-semibold">
@@ -427,7 +421,7 @@
     </div>
 
     @if($receiptUrl && $receiptIsImage)
-    <div x-cloak x-show="receiptPreviewOpen" x-transition.opacity class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div x-cloak x-show="receiptPreviewOpen" x-transition.opacity class="fixed inset-0 z-[220] flex items-center justify-center p-4">
         <div @click="receiptPreviewOpen = false" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
         <div class="relative z-10 w-full max-w-5xl" @click.stop>
             <button type="button"

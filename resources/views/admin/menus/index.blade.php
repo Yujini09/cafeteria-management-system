@@ -162,27 +162,29 @@
           </svg>
         </button>
       </div>
-      <div class="flex flex-wrap gap-3 w-full sm:w-auto sm:justify-end">
-        <button type="button" @click="openCreate()"
-                class="primary-gradient hover:shadow-xl text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-lg flex items-center transform hover:scale-105">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Add Menu
-        </button>
-      </div>
     </div>
   </div>
 
   {{-- Type Tabs --}}
-  <div class="flex gap-2 flex-wrap mt-6">
-    @foreach($types as $key => $label)
-      <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
-         wire:navigate
-         class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
-        {{ $label }}
-      </a>
-    @endforeach
+  <div class="mt-6 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2 overflow-x-auto min-w-0 flex-1 whitespace-nowrap">
+      @foreach($types as $key => $label)
+        <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
+           wire:navigate
+           class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
+          {{ $label }}
+        </a>
+      @endforeach
+    </div>
+    <div class="shrink-0 flex justify-end">
+      <button type="button" @click="openCreate()"
+              class="primary-gradient hover:shadow-xl text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium transition-all duration-300 shadow-lg flex items-center transform hover:scale-105">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add Menu
+      </button>
+    </div>
   </div>
 
   {{-- Meal Filter and Fixed Price Row --}}

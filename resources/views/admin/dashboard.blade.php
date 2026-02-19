@@ -44,7 +44,7 @@
 
     /* Menu Card Styling for Inventory Sections */
     .menu-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        background: #ffffff;
         border: 1px solid var(--neutral-200);
         border-radius: 14px;
         transition: all 0.25s ease;
@@ -228,7 +228,7 @@
     }
 @endphp
 
-<div class="admin-page-dashboard w-full overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
+<div class="w-full overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
     
     <div class="greeting-section text-white p-6 animate-fade-in">
         <div class="greeting-content">
@@ -295,7 +295,7 @@
             </div>
             <div class="mt-4 flex items-center text-orange-100 text-xs">
                 <i class="fas fa-chart-line mr-1"></i>
-                <span>Today's sales</span>
+                <span>Total menu selections</span>
             </div>
         </div>
     </div>
