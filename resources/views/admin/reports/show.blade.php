@@ -423,7 +423,9 @@
 
         <div class="table-toolbar">
             <input id="reportTableSearch"
-                   type="search"
+                   type="text"
+                   inputmode="search"
+                   autocomplete="off"
                    class="table-search"
                    placeholder="Search table rows...">
         </div>

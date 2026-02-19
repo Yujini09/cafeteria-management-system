@@ -300,11 +300,9 @@ class SuperAdminController extends Controller
                 fclose($socket);
 
                 if (in_array($probeRcptCode, [250, 251], true)) {
-                    return [
-                        'ok' => false,
-                        'message' => 'Could not verify this email account in real time. Please use an address you can confirm and try again.',
-                        'error_code' => 'email_check_unavailable',
-                    ];
+                    return $this->unavailableRealtimeEmailVerificationResult(
+                        'Could not verify this email account in real time. Please use an address you can confirm and try again.'
+                    );
                 }
 
                 return [
@@ -319,9 +317,24 @@ class SuperAdminController extends Controller
             fclose($socket);
         }
 
+        return $this->unavailableRealtimeEmailVerificationResult(
+            'Could not verify this email account in real time. Please try again.'
+        );
+    }
+
+    private function unavailableRealtimeEmailVerificationResult(string $productionMessage): array
+    {
+        if (app()->environment('local')) {
+            return [
+                'ok' => true,
+                'message' => 'Realtime email verification is unavailable in local mode. Continuing with email send validation.',
+                'error_code' => null,
+            ];
+        }
+
         return [
             'ok' => false,
-            'message' => 'Could not verify this email account in real time. Please try again.',
+            'message' => $productionMessage,
             'error_code' => 'email_check_unavailable',
         ];
     }
@@ -471,21 +484,6 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', 'User deleted successfully.');
-    }
-
-    public function audit(User $user): View
-    {
-        if (Auth::check()) {
-            AuditTrail::record(
-                Auth::id(),
-                AuditDictionary::VIEWED_USER_AUDIT_TRAIL,
-                AuditDictionary::MODULE_USERS,
-                "viewed audit trail for {$user->name} ({$user->email})"
-            );
-        }
-
-        $audits = AuditTrail::where('user_id', $user->id)->latest()->get();
-        return view('superadmin.audit', compact('user','audits'));
     }
 
     public function recentAudits()

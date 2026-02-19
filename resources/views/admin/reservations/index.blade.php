@@ -328,7 +328,9 @@
         </div>
         <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
             <div class="relative w-full sm:w-64 md:w-72">
-                <input type="search"
+                <input type="text"
+                       inputmode="search"
+                       autocomplete="off"
                        id="searchInput"
                        placeholder="Search reservations..."
                        class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"

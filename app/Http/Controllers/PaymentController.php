@@ -155,7 +155,7 @@ class PaymentController extends Controller
 
     public function showAdmin(Payment $payment)
     {
-        $payment->loadMissing(['reservation.user']);
+        $payment->loadMissing(['reservation.user', 'reviewer']);
         return view('admin.payments.show', compact('payment'));
     }
 

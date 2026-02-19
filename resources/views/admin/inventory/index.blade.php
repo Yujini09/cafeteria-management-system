@@ -2,6 +2,63 @@
 @section('page-title', 'Inventory Management')
 
 @section('content')
+<style>
+.table-view-overlay-host {
+    position: relative;
+}
+
+.table-floating-actions {
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transform: translateX(8px);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    z-index: 30;
+}
+
+.table-floating-actions.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.table-floating-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    padding: 0.35rem 0.65rem;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background 0.16s ease;
+}
+
+.table-floating-action-edit {
+    background: var(--primary);
+}
+
+.table-floating-action-edit:hover {
+    background: #003824;
+}
+
+.table-floating-action-delete {
+    background: #dc2626;
+}
+
+.table-floating-action-delete:hover {
+    background: #b91c1c;
+}
+</style>
 
 <div x-data="{ 
     showCreateModal: false, 
@@ -39,7 +96,9 @@
             </div>
             <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
                 <div class="relative w-full sm:w-64 md:w-72">
-                    <input type="search"
+                    <input type="text"
+                           inputmode="search"
+                           autocomplete="off"
                            id="searchInput"
                            placeholder="Search inventory items..."
                            class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
@@ -93,8 +152,9 @@
             </form>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
-            <table class="modern-table table-fixed">
+        <div id="inventoryTableHost" class="table-view-overlay-host">
+            <div id="inventoryTableScroll" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+                <table class="modern-table table-fixed">
                 <colgroup>
                     <col class="w-14">
                     <col class="w-64">
@@ -103,7 +163,6 @@
                     <col class="w-40">
                     <col class="w-40">
                     <col class="w-40">
-                    <col class="w-48">
                 </colgroup>
                 <thead>
                     <tr>
@@ -120,13 +179,24 @@
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Category</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Last Updated</th>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($items as $item)
-                        <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                        @php
+                            $itemPayload = json_encode([
+                                'id' => $item->id,
+                                'name' => $item->name,
+                                'category' => $item->category,
+                                'qty' => $item->qty,
+                                'unit' => $item->unit,
+                                'expiry_date' => $item->expiry_date,
+                            ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+                        @endphp
+                        <tr class="inventory-row hover:bg-admin-neutral-50 transition-colors duration-admin"
+                            data-item-id="{{ $item->id }}"
+                            data-item="{{ $itemPayload }}">
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-500 font-semibold whitespace-nowrap overflow-hidden text-ellipsis">
                                 {{ ($items->firstItem() ?? 0) + $loop->index }}
                             </td>
@@ -148,33 +218,10 @@
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->expiry_date ?? 'N/A' }}</td>
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->category }}</td>
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->updated_at->diffForHumans() }}</td>
-
-                            <td class="py-3 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">
-                                <div class="flex items-center gap-2 flex-nowrap">
-                                    <x-admin.ui.button.secondary
-                                        type="button"
-                                        class="!py-2 !px-3 text-xs"
-                                        @click="editingItem = JSON.parse($el.dataset.item); showEditModal = true"
-                                        data-item='@json($item)'>
-                                        <x-admin.ui.icon name="fa-pen" style="fas" size="sm" />
-                                        Edit
-                                    </x-admin.ui.button.secondary>
-
-                                    {{-- MODIFIED: Change to button that opens delete modal --}}
-                                    <x-admin.ui.button.danger
-                                        type="button"
-                                        class="!py-2 !px-3 text-xs"
-                                        @click="deletingItem = JSON.parse($el.dataset.item); showDeleteModal = true"
-                                        data-item='@json($item)'>
-                                        <x-admin.ui.icon name="fa-trash-can" style="fas" size="sm" />
-                                        Delete
-                                    </x-admin.ui.button.danger>
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8">
+                            <td colspan="7">
                                 <div class="empty-state">
                                     <div class="empty-state-icon">
                                         <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-admin-neutral-400 w-6 h-6" />
@@ -186,7 +233,28 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+                </table>
+            </div>
+            <div id="inventoryFloatingActions" class="table-floating-actions" aria-hidden="true">
+                <button id="inventoryFloatingEditBtn"
+                        type="button"
+                        class="table-floating-action-btn table-floating-action-edit"
+                        data-item=""
+                        @click="if ($el.dataset.item) { editingItem = JSON.parse($el.dataset.item); showEditModal = true }"
+                        aria-label="Edit inventory item">
+                    <x-admin.ui.icon name="fa-pen" style="fas" size="sm" class="text-white" />
+                    Edit
+                </button>
+                <button id="inventoryFloatingDeleteBtn"
+                        type="button"
+                        class="table-floating-action-btn table-floating-action-delete"
+                        data-item=""
+                        @click="if ($el.dataset.item) { deletingItem = JSON.parse($el.dataset.item); showDeleteModal = true }"
+                        aria-label="Delete inventory item">
+                    <x-admin.ui.icon name="fa-trash-can" style="fas" size="sm" class="text-white" />
+                    Delete
+                </button>
+            </div>
         </div>
 
         @if($items->hasPages())
@@ -234,16 +302,10 @@
                     <label for="create_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
                     <select name="unit" id="create_unit" required class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
-                        <optgroup label="Count">
-                            <option value="Pieces">Pieces</option>
-                            <option value="Packs">Packs</option>
-                        </optgroup>
-                        <optgroup label="Weight">
-                            <option value="Kgs">Kgs</option>
-                        </optgroup>
-                        <optgroup label="Volume">
-                            <option value="Liters">Liters</option>
-                        </optgroup>
+                        <option value="Pieces">Pieces</option>
+                        <option value="Packs">Packs</option>
+                        <option value="Kgs">Kgs</option>
+                        <option value="Liters">Liters</option>
                     </select>
                 </div>
 
@@ -303,16 +365,10 @@
                     <label for="edit_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
                     <select name="unit" id="edit_unit" required x-bind:value="editingItem ? editingItem.unit : ''" class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
-                        <optgroup label="Count">
-                            <option value="Pieces">Pieces</option>
-                            <option value="Packs">Packs</option>
-                        </optgroup>
-                        <optgroup label="Weight">
-                            <option value="Kgs">Kgs</option>
-                        </optgroup>
-                        <optgroup label="Volume">
-                            <option value="Liters">Liters</option>
-                        </optgroup>
+                        <option value="Pieces">Pieces</option>
+                        <option value="Packs">Packs</option>
+                        <option value="Kgs">Kgs</option>
+                        <option value="Liters">Liters</option>
                     </select>
                 </div>
 
@@ -406,6 +462,105 @@
 <script>
 document.addEventListener('livewire:navigated', function() {
     const rootCloseEvent = new Event('close-inventory-modals');
+
+    function initInventoryFloatingActions() {
+        const host = document.getElementById('inventoryTableHost');
+        const scrollArea = document.getElementById('inventoryTableScroll');
+        const actions = document.getElementById('inventoryFloatingActions');
+        const editBtn = document.getElementById('inventoryFloatingEditBtn');
+        const deleteBtn = document.getElementById('inventoryFloatingDeleteBtn');
+        if (!host || !scrollArea || !actions || !editBtn || !deleteBtn) return;
+        if (host.dataset.floatingActionsBound === 'true') return;
+        host.dataset.floatingActionsBound = 'true';
+
+        let activeRow = null;
+
+        const clearActionData = () => {
+            editBtn.dataset.item = '';
+            deleteBtn.dataset.item = '';
+        };
+
+        const hideActions = () => {
+            activeRow = null;
+            clearActionData();
+            actions.classList.remove('is-visible');
+            actions.setAttribute('aria-hidden', 'true');
+        };
+
+        const updateActionsPosition = () => {
+            if (!activeRow || !scrollArea.contains(activeRow)) return;
+
+            const hostRect = host.getBoundingClientRect();
+            const scrollRect = scrollArea.getBoundingClientRect();
+            const rowRect = activeRow.getBoundingClientRect();
+            if (rowRect.bottom <= scrollRect.top || rowRect.top >= scrollRect.bottom) {
+                hideActions();
+                return;
+            }
+
+            const actionsHeight = actions.offsetHeight || 32;
+            const proposedTop = rowRect.top - hostRect.top + ((rowRect.height - actionsHeight) / 2);
+            const minTop = scrollRect.top - hostRect.top + 6;
+            const maxTop = scrollRect.bottom - hostRect.top - actionsHeight - 6;
+            const clampedTop = Math.max(minTop, Math.min(proposedTop, maxTop));
+            actions.style.top = `${clampedTop}px`;
+        };
+
+        const showForRow = (row) => {
+            if (!row) return;
+            const itemPayload = row.dataset.item;
+            if (!itemPayload) {
+                hideActions();
+                return;
+            }
+
+            activeRow = row;
+            editBtn.dataset.item = itemPayload;
+            deleteBtn.dataset.item = itemPayload;
+            actions.classList.add('is-visible');
+            actions.setAttribute('aria-hidden', 'false');
+            updateActionsPosition();
+        };
+
+        scrollArea.addEventListener('pointermove', (event) => {
+            const row = event.target.closest('tr[data-item]');
+            if (row && scrollArea.contains(row)) {
+                if (activeRow !== row) {
+                    showForRow(row);
+                } else {
+                    updateActionsPosition();
+                }
+                return;
+            }
+
+            if (!actions.matches(':hover')) {
+                hideActions();
+            }
+        });
+
+        host.addEventListener('mouseleave', hideActions);
+
+        scrollArea.addEventListener('scroll', () => {
+            if (activeRow) {
+                updateActionsPosition();
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+            if (activeRow) {
+                updateActionsPosition();
+            }
+        });
+
+        scrollArea.addEventListener('focusin', (event) => {
+            const row = event.target.closest('tr[data-item]');
+            if (row) {
+                showForRow(row);
+            }
+        });
+    }
+
+    initInventoryFloatingActions();
 
     function getCsrfToken() {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -528,22 +683,24 @@ document.addEventListener('livewire:navigated', function() {
                     return m ? m[1] : null;
                 })();
                 if (deletedId) {
-                    // Find row that contains a button with matching data-item id
-                    const rows = document.querySelectorAll('tbody tr');
+                    const rows = document.querySelectorAll('tr[data-item-id]');
                     for (const row of rows) {
-                        const btn = row.querySelector('button[data-item]');
-                        if (!btn) continue;
-                        try {
-                            const data = JSON.parse(btn.getAttribute('data-item'));
-                            if (String(data.id) === String(deletedId)) {
-                                row.remove();
-                                break;
-                            }
-                        } catch (err) {
-                            continue;
+                        if (String(row.dataset.itemId) === String(deletedId)) {
+                            row.remove();
+                            break;
                         }
                     }
                 }
+
+                const floatingActions = document.getElementById('inventoryFloatingActions');
+                const floatingEdit = document.getElementById('inventoryFloatingEditBtn');
+                const floatingDelete = document.getElementById('inventoryFloatingDeleteBtn');
+                if (floatingActions) {
+                    floatingActions.classList.remove('is-visible');
+                    floatingActions.setAttribute('aria-hidden', 'true');
+                }
+                if (floatingEdit) floatingEdit.dataset.item = '';
+                if (floatingDelete) floatingDelete.dataset.item = '';
 
                 stopLoading(deleteForm);
                 window.dispatchEvent(rootCloseEvent);

@@ -776,13 +776,8 @@
     @php
         // Fetch Counts for Notifications
         $unreadMessagesCount = $sidebarUnreadMessagesCount ?? 0;
-        $pendingReservationsCount = 0;
-        
-        if(Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')) {
-            // Count Pending Reservations
-            // Assuming the Reservation model exists and has a 'status' column
-            $pendingReservationsCount = \App\Models\Reservation::where('status', 'pending')->count();
-        }
+        $pendingReservationsCount = $sidebarPendingReservationsCount ?? 0;
+        $pendingPaymentsCount = $sidebarPendingPaymentsCount ?? 0;
     @endphp
 
     <aside class="sidebar" :class="!openSidebar ? 'close' : ''">
@@ -833,6 +828,12 @@
                        class="menu-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="fas fa-file-invoice-dollar"></i></span>
                         <span class="link-text">Payments</span>
+                        {{-- Payments Badge --}}
+                        @if($pendingPaymentsCount > 0)
+                            <span class="menu-badge">
+                                {{ $pendingPaymentsCount > 99 ? '99+' : $pendingPaymentsCount }}
+                            </span>
+                        @endif
                     </a>
                 </li>
                 <li class="menu-list-item">
@@ -1065,6 +1066,7 @@
     }
 
     let sidebarModalBlurObserver = null;
+    const ADMIN_MODAL_Z_INDEX = '220';
 
     function isElementVisible(el) {
         if (!el || el.hidden) return false;
@@ -1088,9 +1090,17 @@
 
     function syncSidebarModalBlurState() {
         const overlays = document.querySelectorAll('.fixed.inset-0, .reservation-modal-overlay');
-        const hasVisibleModal = Array.from(overlays).some((el) => {
-            if (!elementLooksLikeModalOverlay(el)) return false;
-            return isElementVisible(el);
+        let hasVisibleModal = false;
+
+        overlays.forEach((el) => {
+            if (!elementLooksLikeModalOverlay(el)) return;
+
+            // Keep every detected modal overlay above the sidebar stack.
+            el.style.setProperty('z-index', ADMIN_MODAL_Z_INDEX, 'important');
+
+            if (isElementVisible(el)) {
+                hasVisibleModal = true;
+            }
         });
 
         document.body.classList.toggle('sidebar-modal-active', hasVisibleModal);

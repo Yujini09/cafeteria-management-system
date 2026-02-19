@@ -1,4 +1,4 @@
-@extends('layouts.sidebar')
+﻿@extends('layouts.sidebar')
 @section('page-title', 'Payment Review')
 @php
     $successMessage = session('success');
@@ -232,11 +232,11 @@
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Department:</dt>
-                        <dd class="text-gray-900">{{ $payment->department_office ?? 'â€”' }}</dd>
+                        <dd class="text-gray-900">{{ $payment->department_office ?? 'Ã¢â‚¬â€' }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Account Code:</dt>
-                        <dd class="text-gray-900">{{ $payment->account_code ?? '—' }}</dd>
+                        <dd class="text-gray-900">{{ $payment->account_code ?? 'â€”' }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Payer Name:</dt>
@@ -269,7 +269,7 @@
                                     </a>
                                 @endif
                             @else
-                                —
+                                â€”
                             @endif
                         </dd>
                     </div>
@@ -292,15 +292,15 @@
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Customer:</dt>
-                        <dd class="text-gray-900">{{ $payment->reservation?->user?->name ?? 'â€”' }}</dd>
+                        <dd class="text-gray-900">{{ $payment->reservation?->user?->name ?? 'Ã¢â‚¬â€' }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Event:</dt>
-                        <dd class="text-gray-900">{{ $payment->reservation?->event_name ?? 'â€”' }}</dd>
+                        <dd class="text-gray-900">{{ $payment->reservation?->event_name ?? 'Ã¢â‚¬â€' }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Date:</dt>
-                        <dd class="text-gray-900">{{ optional($payment->reservation?->event_date)->format('M d, Y') ?? 'â€”' }}</dd>
+                        <dd class="text-gray-900">{{ optional($payment->reservation?->event_date)->format('M d, Y') ?? 'Ã¢â‚¬â€' }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Reservation Status:</dt>
@@ -333,7 +333,7 @@
                             <div class="receipt-preview-body">
                                 <div class="receipt-preview-meta">PDF Receipt</div>
                                 <p class="text-sm text-gray-700 mt-2">
-                                    PDF receipts can’t be previewed inline. Use the button below to open it.
+                                    PDF receipts canâ€™t be previewed inline. Use the button below to open it.
                                 </p>
                             </div>
                         @else
@@ -409,11 +409,11 @@
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Reviewed By:</dt>
-                        <dd class="text-gray-900">{{ $payment->reviewer?->name ?? 'â€”' }}</dd>
+                        <dd class="text-gray-900">{{ $payment->reviewer?->name ?? 'None' }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-gray-500">Reviewed At:</dt>
-                        <dd class="text-gray-900">{{ $payment->reviewed_at?->format('M d, Y h:i A') ?? 'â€”' }}</dd>
+                        <dd class="text-gray-900">{{ $payment->reviewed_at?->format('M d, Y h:i A') ?? 'None' }}</dd>
                     </div>
                 </dl>
             </div>

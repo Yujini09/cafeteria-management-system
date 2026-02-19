@@ -103,19 +103,6 @@
 
 .select-with-arrows .filter-select {
     appearance: none;
-    padding-right: 2.75rem;
-}
-
-.select-arrows {
-    position: absolute;
-    right: 0.75rem;
-    pointer-events: none;
-    color: var(--neutral-500);
-}
-
-.select-arrows svg {
-    width: 16px;
-    height: 16px;
 }
 
 .customer-name {
@@ -236,7 +223,9 @@
         </div>
         <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
             <div class="relative w-full sm:w-64 md:w-72">
-                <input type="search"
+                <input type="text"
+                       inputmode="search"
+                       autocomplete="off"
                        id="searchInput"
                        placeholder="Search payments..."
                        class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
@@ -258,18 +247,13 @@
         <form method="GET" action="{{ route('admin.payments.index') }}" class="flex flex-col gap-4">
             <div class="filter-row w-full">
                 <label for="status" class="filter-label filter-label-inline">Filter by Status</label>
-                <div class="select-with-arrows w-full sm:w-64">
-                    <select name="status" id="status" onchange="this.form.submit()" class="filter-select w-full" data-admin-select="true">
+                <div class="w-full sm:w-64">
+                    <select name="status" id="status" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
                         <option value="" {{ $status === null ? 'selected' : '' }}>All Payments</option>
                         <option value="submitted" {{ $status === 'submitted' ? 'selected' : '' }}>Submitted</option>
                         <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved</option>
                         <option value="rejected" {{ $status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
-                    <span class="select-arrows" aria-hidden="true">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4M8 15l4 4 4-4"></path>
-                        </svg>
-                    </span>
                 </div>
             </div>
         </form>

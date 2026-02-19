@@ -13,14 +13,14 @@
         <nav role="navigation" aria-label="Pagination" class="inline-flex items-center gap-1">
             @if ($paginator->onFirstPage())
                 <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-admin-neutral-50 text-xs font-semibold text-admin-neutral-400 cursor-not-allowed">
-                    Prev
+                    &lt;
                 </span>
             @else
                 <a href="{{ $paginator->previousPageUrl() }}"
                    wire:navigate
                    class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150"
                    rel="prev">
-                    Prev
+                    &lt;
                 </a>
             @endif
 
@@ -54,11 +54,11 @@
                    wire:navigate
                    class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150"
                    rel="next">
-                    Next
+                    &gt;
                 </a>
             @else
                 <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-admin-neutral-50 text-xs font-semibold text-admin-neutral-400 cursor-not-allowed">
-                    Next
+                    &gt;
                 </span>
             @endif
         </nav>

@@ -338,7 +338,7 @@
 
     <div class="w-full lg:w-auto lg:min-w-[280px]">
       <div class="relative w-full">
-        <input type="search" id="searchInput" placeholder="Search menu name, meal, or item..."
+        <input type="text" inputmode="search" autocomplete="off" id="searchInput" placeholder="Search menu name, meal, or item..."
                class="menu-search-field admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                oninput="filterTable(this.value)" aria-label="Search menus">
         <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -129,6 +129,28 @@
         padding-right: 2.5rem !important;
     }
 
+    /* Use only the custom clear button for admin search fields. */
+    .admin-search-input[type='search'] {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .admin-search-input[type='search']::-webkit-search-decoration,
+    .admin-search-input[type='search']::-webkit-search-cancel-button,
+    .admin-search-input[type='search']::-webkit-search-results-button,
+    .admin-search-input[type='search']::-webkit-search-results-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+        display: none;
+    }
+
+    .admin-search-input[type='search']::-ms-clear,
+    .admin-search-input[type='search']::-ms-reveal {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
     .admin-input::placeholder,
     .admin-textarea::placeholder {
         color: #9ca3af;

@@ -34,7 +34,6 @@ final class AuditDictionary
     public const CREATED_ADMIN_USER = 'Created Admin User';
     public const UPDATED_ADMIN_USER = 'Updated Admin User';
     public const DELETED_USER = 'Deleted User';
-    public const VIEWED_USER_AUDIT_TRAIL = 'Viewed User Audit Trail';
 
     // Messages
     public const SUBMITTED_MESSAGE = 'Submitted Message';

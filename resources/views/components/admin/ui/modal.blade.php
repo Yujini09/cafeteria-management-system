@@ -57,7 +57,7 @@ $iconColor = match($variant) {
     x-on:close-admin-modal.window="if ($event.detail === '{{ $name }}' && !locked) show = false"
     x-show="show"
     x-cloak
-    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 z-[220] flex items-center justify-center p-4"
     style="display: none;"
 >
     {{-- Overlay with blur; click to close --}}
