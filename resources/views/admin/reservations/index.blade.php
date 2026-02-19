@@ -459,18 +459,21 @@
                         $statusLabel = match($status) {
                             'approved' => 'Approved',
                             'declined' => 'Declined',
+                            'cancelled' => 'Cancelled', // <--- ADDED THIS
                             default => 'Pending'
                         };
                         
                         $statusClass = match($status) {
-                            'approved' => 'status-approved',
-                            'declined' => 'status-declined',
-                            default => 'status-pending'
+                            'approved' => 'bg-green-100 text-green-700',
+                            'declined' => 'bg-red-100 text-red-700',
+                            'cancelled' => 'bg-gray-100 text-gray-700', // <--- ADDED THIS
+                            default => 'bg-yellow-100 text-yellow-700'
                         };
                         
                         $statusIcon = match($status) {
                             'approved' => 'fa-check',
                             'declined' => 'fa-xmark',
+                            'cancelled' => 'fa-ban', // <--- ADDED THIS
                             default => 'fa-clock'
                         };
 

@@ -9,11 +9,14 @@ class ContactMessage extends Model
 {
     use HasFactory;
 
-    // This allows the controller to save these specific fields
     protected $fillable = [
         'name', 
         'email', 
         'message', 
-        'is_read'
+        'status' // Changed from is_read to status (UNREAD, READ, REPLIED)
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
     ];
 }
