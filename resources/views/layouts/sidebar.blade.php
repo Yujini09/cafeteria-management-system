@@ -31,8 +31,6 @@
             --icon-bg-default: #f1f5f9;
             --icon-border-default: #e2e8f0;
             --icon-color-default: #475569;
-            
-            /* UPDATED: Changed from #f1f5f9 to #ffffff to match sidebar */
             --main-bg: #ffffff; 
 
             /* --- Dimensions --- */
@@ -79,19 +77,13 @@
             width: var(--sidebar-collapsed-width);
         }
 
-        /* Allow tooltips to escape sidebar in collapsed state */
+        /* Allow tooltips/badges to escape sidebar in collapsed state */
         .sidebar.close {
             overflow: visible !important;
         }
 
-        .sidebar.close .sidebar-menu {
-            overflow: visible !important;
-        }
-
-        .sidebar.close .menu-list {
-            overflow: visible !important;
-        }
-
+        .sidebar.close .sidebar-menu,
+        .sidebar.close .menu-list,
         .sidebar.close .menu-list-item {
             overflow: visible !important;
         }
@@ -204,6 +196,7 @@
             color: var(--text-default);
             font-weight: 400;
             font-size: 0.85rem;
+            position: relative;
         }
 
         .sidebar.close .menu-link {
@@ -351,24 +344,41 @@
             display: none;
         }
 
-        .sidebar.close .submenu-list {
-            display: none !important;
+        /* --- NOTIFICATION BADGE --- */
+        .menu-badge {
+            background-color: #ef4444; /* red-500 */
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            margin-left: auto;
+            line-height: 1;
+            min-width: 1.25rem;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 1.25rem;
+            transition: all 0.2s ease;
         }
 
-        .sidebar.close .menu-caret {
-            display: none;
-        }
-
-        .sidebar.close .message-count-badge,
-        .sidebar.close .inventory-warning-badge {
+        /* Collapsed state badge */
+        .sidebar.close .menu-badge {
             position: absolute;
-            top: 4px;
-            right: 6px;
-            margin-left: 0;
-            min-width: 1rem;
-            height: 1rem;
-            padding: 0 0.2rem;
-            font-size: 0.6rem;
+            top: 2px;
+            right: 12px;
+            margin: 0;
+            padding: 0 4px;
+            min-width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            border-radius: 99px;
+            border: 2px solid var(--sidebar-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
         }
 
         /* Collapsed State + Hover: Floating tooltip */
@@ -628,6 +638,21 @@
          x-transition.opacity
          x-cloak></div>
 
+    @php
+        // Fetch Counts for Notifications
+        $unreadMessagesCount = 0;
+        $pendingReservationsCount = 0;
+        
+        if(Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')) {
+            // Count Unread Messages
+            $unreadMessagesCount = \App\Models\ContactMessage::where('status', 'UNREAD')->count();
+            
+            // Count Pending Reservations
+            // Assuming the Reservation model exists and has a 'status' column
+            $pendingReservationsCount = \App\Models\Reservation::where('status', 'pending')->count();
+        }
+    @endphp
+
     <aside class="sidebar" :class="!openSidebar ? 'close' : ''">
         <div class="sidebar-brand">
             <img src="{{ asset('images/ret-logoo.png') }}" alt="RET Logo">
@@ -658,6 +683,12 @@
                        class="menu-link {{ request()->routeIs('admin.reservations*') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="far fa-calendar-check"></i></span>
                         <span class="link-text">Reservations</span>
+                        {{-- Reservations Badge --}}
+                        @if($pendingReservationsCount > 0)
+                            <span class="menu-badge">
+                                {{ $pendingReservationsCount > 99 ? '99+' : $pendingReservationsCount }}
+                            </span>
+                        @endif
                     </a>
                 </li>
                 <li class="menu-list-item">
@@ -743,11 +774,26 @@
                        class="menu-link {{ request()->routeIs('admin.messages.*') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="far fa-envelope"></i></span>
                         <span class="link-text">Messages</span>
-                        @if(($sidebarUnreadMessagesCount ?? 0) > 0)
-                        <span class="message-count-badge" aria-label="{{ $sidebarUnreadMessagesCount }} unread messages">
-                            {{ $sidebarUnreadMessagesCount > 99 ? '99+' : $sidebarUnreadMessagesCount }}
-                        </span>
+                        {{-- Messages Badge --}}
+                        @if($unreadMessagesCount > 0)
+                            <span class="menu-badge">
+                                {{ $unreadMessagesCount > 99 ? '99+' : $unreadMessagesCount }}
+                            </span>
                         @endif
+                    </a>
+                </li>                
+                <li class="menu-list-item">
+                    <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}" wire:navigate
+                       class="menu-link {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-utensils"></i></span>
+                        <span class="link-text">Manage Menus</span>
+                    </a>
+                </li>
+                <li class="menu-list-item">
+                    <a href="{{ route('admin.menus.prices') }}" wire:navigate
+                       class="menu-link {{ request()->routeIs('admin.menus.prices') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-peso-sign"></i></span>
+                        <span class="link-text">Manage Prices</span>
                     </a>
                 </li>
                 @endif
