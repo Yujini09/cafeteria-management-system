@@ -32,13 +32,19 @@
 /* Add a little visual gap between Status and Payment columns */
 .modern-table th.column-status,
 .modern-table td.column-status {
-    padding-right: 1rem;
+    padding-right: 0.75rem;
+    overflow: visible;
 }
 
 .modern-table th.column-payment,
 .modern-table td.column-payment {
-    padding-left: 4rem;
-    padding-right: 5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.column-status .status-badge {
+    white-space: nowrap;
+    overflow: visible;
 }
 
 /* Status Badges - Same size as role badges in manage users */
@@ -65,55 +71,6 @@
     color: #166534;
 }
 
-
-/* Action Buttons - Same as manage users */
-.action-btn {
-    padding: 0.5rem 0.75rem; /* Same padding */
-    border-radius: 8px; /* Same radius */
-    font-size: 0.75rem; /* Same font size */
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem; /* Same gap */
-    text-decoration: none;
-    border: 1px solid transparent;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.action-btn-view {
-    background: rgba(59, 130, 246, 0.1);
-    color: #2563eb;
-    border-color: rgba(59, 130, 246, 0.2);
-}
-
-.action-btn-view:hover {
-    background: rgba(59, 130, 246, 0.2);
-    transform: translateY(-1px);
-}
-
-.action-btn-approve {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border-color: rgba(34, 197, 94, 0.2);
-}
-
-.action-btn-approve:hover {
-    background: rgba(34, 197, 94, 0.2);
-    transform: translateY(-1px);
-}
-
-.action-btn-decline {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-}
-
-.action-btn-decline:hover {
-    background: rgba(239, 68, 68, 0.2);
-    transform: translateY(-1px);
-}
 
 /* Filter Styles */
 .filter-select {
@@ -239,6 +196,47 @@
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
+/* Floating View Button */
+.table-view-overlay-host {
+    position: relative;
+}
+
+.table-floating-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+    transform: translateX(6px);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    z-index: 30;
+}
+
+.table-floating-view-btn:hover {
+    background: #003824;
+    color: #ffffff;
+}
+
+.table-floating-view-btn.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: translateX(0);
+}
+
 /* Icon Sizes - Same as manage users */
 .icon-sm {
     width: 14px; /* Same as w-3.5 (14px) */
@@ -255,15 +253,6 @@
     height: 20px;
 }
 
-/* Action Buttons Container - Single line */
-.action-buttons {
-    display: flex;
-    gap: 0.375rem;
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-}
-
 /* Column Widths for better alignment */
 .column-id {
     width: 80px;
@@ -278,7 +267,8 @@
 }
 
 .column-status {
-    width: 112px;
+    width: 144px;
+    min-width: 144px;
 }
 
 .column-payment {
@@ -293,10 +283,6 @@
     width: 140px;
 }
 
-.column-actions {
-    width: 200px;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .page-header {
@@ -308,30 +294,6 @@
         width: 100%;
     }
     
-    .modern-table th:nth-child(4),
-    .modern-table td:nth-child(4),
-    .modern-table th:nth-child(5),
-    .modern-table td:nth-child(5) {
-        display: none;
-    }
-    
-    .action-buttons {
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .action-buttons {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-    
-    .action-btn {
-        width: 100%;
-        justify-content: center;
-    }
 }
 
 /* Menu Card Styling for Inventory Sections */
@@ -347,8 +309,6 @@
 }
 
 [x-cloak] { display: none !important; }
-</style>
-
 </style>
 
 <div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
@@ -416,15 +376,15 @@
     </div>
 
     <!-- Table -->
-    <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
-        <table class="modern-table table-fixed">
+    <div id="reservationsTableHost" class="table-view-overlay-host">
+        <div id="reservationsTableScroll" data-table-scroll class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+            <table class="modern-table table-fixed">
             <colgroup>
                 <col class="w-14">
                 <col class="w-64">
                 <col class="w-56">
-                <col class="w-28">
+                <col class="w-36">
                 <col class="w-44">
-                <col class="w-48">
                 <col class="w-48">
                 <col class="w-48">
             </colgroup>
@@ -435,8 +395,8 @@
                     <th class="column-department text-left">Office/Department</th>
                     <th class="column-status text-left">Status</th>
                     <th class="column-payment text-left">Payment</th>
-                    <th class="column-email hidden md:table-cell text-left">Email</th>
-                    <th class="column-date hidden lg:table-cell text-left">
+                    <th class="column-email text-left">Email</th>
+                    <th class="column-date text-left">
                         @php
                             $nextCreatedSort = $createdSort === 'asc' ? 'desc' : 'asc';
                             $createdSortIcon = $createdSort === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down';
@@ -448,7 +408,6 @@
                             <x-admin.ui.icon name="{{ $createdSortIcon }}" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
                         </a>
                     </th>
-                    <th class="column-actions text-left">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -495,7 +454,7 @@
                             $shortEmail = $email;
                         }
                     @endphp
-                    <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                    <tr class="reservation-row hover:bg-admin-neutral-50 transition-colors duration-admin" data-view-url="{{ route('admin.reservations.show', $r) }}">
                         <td class="text-admin-neutral-500 font-semibold">
                             <a href="{{ route('admin.reservations.show', $r) }}" wire:navigate class="text-admin-primary font-semibold hover:text-admin-primary-light transition-colors duration-admin">
                                 {{ $r->id }}
@@ -527,44 +486,16 @@
                             @endphp
                             <span class="status-badge {{ $paymentClass }}">{{ $paymentLabel }}</span>
                         </td>
-                        <td class="column-email hidden md:table-cell text-gray-600">
+                        <td class="column-email text-gray-600">
                             <span class="short-email" title="{{ $email }}">
                                 {{ $shortEmail }}
                             </span>
                         </td>
-                        <td class="hidden lg:table-cell text-admin-neutral-600 whitespace-nowrap">
-                            {{ $r->created_at->format('M d, Y H:i') }}
-                        </td>
-                        <td class="whitespace-nowrap">
-                            <div class="flex flex-wrap gap-2">
-                                <a href="{{ route('admin.reservations.show', $r) }}" wire:navigate class="inline-flex items-center gap-2 px-3 py-2 rounded-admin text-xs font-semibold bg-admin-secondary text-admin-secondary-text border border-admin-neutral-200 hover:bg-admin-secondary-hover transition-all duration-admin ease-out">
-                                    <x-admin.ui.icon name="fa-eye" style="fas" size="sm" />
-                                    View
-                                </a>
-                                {{-- @if ($status === 'pending')
-                                    <button type="button" 
-                                            class="action-btn action-btn-approve"
-                                            @click="openApproveConfirmation({{ $r->id }})">
-                                        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Approve
-                                    </button>
-                                    <button type="button" 
-                                            class="action-btn action-btn-decline"
-                                            @click="openDeclineConfirmation({{ $r->id }})">
-                                        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                        Decline
-                                    </button>
-                                @endif --}}
-                            </div>
-                        </td>
+                        <td class="column-date text-admin-neutral-600 whitespace-nowrap">{{ $r->created_at->format('M d, Y H:i') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <div class="empty-state-icon">
                                     <svg class="w-8 h-8 text-admin-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,7 +509,17 @@
                     </tr>
                 @endforelse
             </tbody>
-        </table>
+            </table>
+        </div>
+        <a id="reservationsFloatingViewBtn"
+           href="#"
+           wire:navigate
+           class="table-floating-view-btn"
+           aria-label="View reservation"
+           aria-hidden="true">
+            <x-admin.ui.icon name="fa-eye" style="fas" size="sm" class="text-white" />
+            View
+        </a>
     </div>
 
     {{-- Approve Confirmation Modal --}}
@@ -632,5 +573,98 @@
         </div>
     @endif
 </div>
+
+<script>
+(() => {
+    function initReservationsFloatingView() {
+        const host = document.getElementById('reservationsTableHost');
+        const scrollArea = document.getElementById('reservationsTableScroll');
+        const button = document.getElementById('reservationsFloatingViewBtn');
+        if (!host || !scrollArea || !button) return;
+        if (host.dataset.floatingViewBound === 'true') return;
+        host.dataset.floatingViewBound = 'true';
+
+        let activeRow = null;
+
+        const hideButton = () => {
+            activeRow = null;
+            button.classList.remove('is-visible');
+            button.setAttribute('aria-hidden', 'true');
+        };
+
+        const updateButtonPosition = () => {
+            if (!activeRow || !scrollArea.contains(activeRow)) return;
+
+            const hostRect = host.getBoundingClientRect();
+            const scrollRect = scrollArea.getBoundingClientRect();
+            const rowRect = activeRow.getBoundingClientRect();
+            if (rowRect.bottom <= scrollRect.top || rowRect.top >= scrollRect.bottom) {
+                hideButton();
+                return;
+            }
+            const buttonHeight = button.offsetHeight || 28;
+            const proposedTop = rowRect.top - hostRect.top + ((rowRect.height - buttonHeight) / 2);
+            const minTop = scrollRect.top - hostRect.top + 6;
+            const maxTop = scrollRect.bottom - hostRect.top - buttonHeight - 6;
+            const clampedTop = Math.max(minTop, Math.min(proposedTop, maxTop));
+            button.style.top = `${clampedTop}px`;
+        };
+
+        const showForRow = (row) => {
+            if (!row) return;
+            activeRow = row;
+            const viewUrl = row.dataset.viewUrl;
+            if (viewUrl) {
+                button.setAttribute('href', viewUrl);
+            }
+            button.classList.add('is-visible');
+            button.setAttribute('aria-hidden', 'false');
+            updateButtonPosition();
+        };
+
+        scrollArea.addEventListener('pointermove', (event) => {
+            const row = event.target.closest('tr[data-view-url]');
+            if (row && scrollArea.contains(row)) {
+                if (activeRow !== row) {
+                    showForRow(row);
+                } else {
+                    updateButtonPosition();
+                }
+                return;
+            }
+
+            if (!button.matches(':hover')) {
+                hideButton();
+            }
+        });
+
+        host.addEventListener('mouseleave', () => {
+            hideButton();
+        });
+
+        scrollArea.addEventListener('scroll', () => {
+            if (activeRow) {
+                updateButtonPosition();
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+            if (activeRow) {
+                updateButtonPosition();
+            }
+        });
+
+        scrollArea.addEventListener('focusin', (event) => {
+            const row = event.target.closest('tr[data-view-url]');
+            if (row) {
+                showForRow(row);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initReservationsFloatingView);
+    document.addEventListener('livewire:navigated', initReservationsFloatingView);
+})();
+</script>
 
 @endsection

@@ -7,6 +7,23 @@
 
     <title>{{ config('app.name', 'Smart Cafeteria') }}</title>
 
+    <script>
+        (function () {
+            try {
+                var desktopQuery = window.matchMedia('(min-width: 768px)');
+                var storageKey = desktopQuery.matches ? 'cms.sidebar.desktop.open' : 'cms.sidebar.mobile.open';
+                var stored = window.localStorage.getItem(storageKey);
+                var root = document.documentElement;
+                root.classList.remove('sidebar-prefers-open', 'sidebar-prefers-closed');
+                if (stored === '0' || stored === 'false') {
+                    root.classList.add('sidebar-prefers-closed');
+                } else if (stored === '1' || stored === 'true') {
+                    root.classList.add('sidebar-prefers-open');
+                }
+            } catch (error) {}
+        })();
+    </script>
+
     {{-- FontAwesome and Google Fonts --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -34,8 +51,8 @@
             --main-bg: #ffffff; 
 
             /* --- Dimensions --- */
-            --sidebar-width: 260px;
-            --sidebar-collapsed-width: 72px;
+            --sidebar-width: 278px;
+            --sidebar-collapsed-width: 88px;
         }
 
         * {
@@ -51,6 +68,11 @@
             height: 100vh;
         }
 
+        body.sidebar-state-initializing .sidebar,
+        body.sidebar-state-initializing .home-section {
+            transition: none !important;
+        }
+
         /* --- SIDEBAR CONTAINER --- */
         .sidebar {
             position: fixed;
@@ -58,13 +80,18 @@
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--sidebar-border);
+            background: transparent;
+            border-right: none;
             z-index: 100;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.02);
+            box-shadow: none;
+            padding: 0.65rem 0.55rem;
+        }
+
+        html.sidebar-prefers-closed .sidebar {
+            width: var(--sidebar-collapsed-width);
         }
 
         body.sidebar-modal-active .sidebar {
@@ -91,49 +118,93 @@
         /* --- BRAND / LOGO AREA --- */
         .sidebar-brand {
             flex-shrink: 0;
-            min-height: 64px;
+            min-height: 78px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 0.75rem;
+            justify-content: center;
+            padding: 0.7rem 0.75rem;
             background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
             color: white;
+            border: 1px solid var(--sidebar-border);
+            border-radius: 14px;
         }
 
         .sidebar-brand img {
-            height: 32px;
+            height: 44px;
+            max-width: 92%;
             width: auto;
+            display: block;
             transition: all 0.3s ease;
         }
 
+        .sidebar-toggle-row {
+            position: absolute;
+            top: 38px;
+            right: 2px;
+            left: auto;
+            width: auto;
+            transform: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            pointer-events: none;
+            z-index: 120;
+        }
+
         #sidebar-toggle-btn {
-            font-size: 18px;
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ffffff;
+            background: linear-gradient(135deg, var(--active-bg) 0%, #0b7d53 100%);
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
             cursor: pointer;
-            color: white;
-            padding: 6px;
-            border-radius: 8px;
-            transition: background 0.2s;
+            color: #ffffff;
+            border-radius: 9999px;
+            transition: all 0.2s;
+            box-shadow: 0 6px 14px rgba(0, 70, 46, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.95);
+            pointer-events: auto;
         }
         #sidebar-toggle-btn:hover {
-            background: rgba(255,255,255,0.15);
+            background: linear-gradient(135deg, #005238 0%, #0b8c5c 100%);
+            box-shadow: 0 8px 18px rgba(0, 70, 46, 0.42), 0 0 0 2px rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+        #sidebar-toggle-btn:focus-visible {
+            outline: 2px solid #ffffff;
+            outline-offset: 2px;
         }
 
         .sidebar.close .sidebar-brand {
             justify-content: center;
-            padding: 0;
+            padding: 0.55rem 0.35rem;
         }
         .sidebar.close .sidebar-brand img {
-            display: none;
+            height: 30px;
+        }
+
+        .sidebar.close .sidebar-toggle-row {
+            top: 38px;
+            right: 2px;
         }
 
         /* --- NAVIGATION LIST --- */
         .sidebar-menu {
             flex: 1;
             overflow-y: auto;
-            padding: 8px 0 4px 0;
+            padding: 0.45rem;
+            margin-top: 0.45rem;
             scrollbar-width: thin;
             scrollbar-color: var(--sidebar-border) transparent;
-            max-height: calc(100vh - 159px);
+            max-height: calc(100vh - 170px);
+            background: var(--sidebar-bg);
+            border: 1px solid var(--sidebar-border);
+            border-radius: 14px;
         }
         
         .sidebar-menu::-webkit-scrollbar {
@@ -178,12 +249,12 @@
         /* --- MENU ITEMS --- */
         .menu-list {
             list-style: none;
-            padding: 0 0.4rem;
+            padding: 0;
         }
 
         .menu-list-item {
             position: relative;
-            margin: 1px 0;
+            margin: 3px 0;
         }
 
         .menu-link {
@@ -191,22 +262,25 @@
             align-items: center;
             justify-content: flex-start;
             text-decoration: none;
-            padding: 0.35rem 0.4rem;
-            border-radius: 8px;
+            min-height: 38px;
+            padding: 0.35rem 0.45rem;
+            border-radius: 10px;
             color: var(--text-default);
-            font-weight: 400;
+            font-weight: 500;
             font-size: 0.85rem;
             position: relative;
+            transition: all 0.2s ease;
         }
 
         .sidebar.close .menu-link {
             justify-content: center;
-            padding: 0.35rem 0;
+            padding: 0.35rem 0.2rem;
         }
 
         .menu-link:hover {
             background: var(--bg-hover);
             color: var(--text-hover);
+            transform: translateX(1px);
         }
 
         .menu-link.active {
@@ -251,18 +325,18 @@
 
         /* --- ICONS --- */
         .menu-icon {
-            height: 30px;
-            min-width: 30px;
-            width: 30px;
-            font-size: 13px;
+            height: 28px;
+            min-width: 28px;
+            width: 28px;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--icon-bg-default);
             border: 1px solid var(--icon-border-default);
             color: var(--icon-color-default);
-            border-radius: 6px;
-            margin-right: 0.6rem;
+            border-radius: 8px;
+            margin-right: 0.55rem;
         }
 
         .sidebar.close .menu-icon {
@@ -289,8 +363,8 @@
 
         .submenu-list {
             list-style: none;
-            padding: 0 0 0 1.2rem;
-            margin: 0.15rem 0 0.25rem 0;
+            padding: 0 0 0 0.55rem;
+            margin: 0.2rem 0 0.3rem 0;
         }
 
         .submenu-list .menu-link {
@@ -413,25 +487,14 @@
         /* --- PROFILE / LOGOUT SECTION --- */
         .sidebar-footer {
             flex-shrink: 0;
-            padding: 0.6rem 0.75rem;
+            padding: 0.45rem;
             background: var(--sidebar-bg);
-            border-top: 1px solid var(--sidebar-border);
+            border: 1px solid var(--sidebar-border);
+            border-radius: 12px;
             margin-top: auto;
         }
         
         .role-badge {
-            margin-bottom: 0.4rem;
-            padding: 0.25rem;
-            background: var(--bg-hover);
-            border: 1px solid var(--sidebar-border);
-            border-radius: 6px;
-            text-align: center;
-            font-size: 0.65rem;
-            color: var(--header-text);
-            white-space: nowrap;
-            overflow: hidden;
-        }
-        .sidebar.close .role-badge {
             display: none;
         }
 
@@ -440,8 +503,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0.4rem;
-            border-radius: 6px;
+            padding: 0.5rem;
+            border-radius: 10px;
             background: #ef4444;
             color: white;
             font-weight: 500;
@@ -464,9 +527,9 @@
             justify-content: center;
             display: flex !important;
             background: #ef4444;
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             margin: 0 auto;
         }
 
@@ -500,6 +563,12 @@
             display: flex;
             flex-direction: column;
         }
+
+        html.sidebar-prefers-closed .home-section {
+            left: var(--sidebar-collapsed-width);
+            width: calc(100% - var(--sidebar-collapsed-width));
+        }
+
         .sidebar.close ~ .home-section {
             left: var(--sidebar-collapsed-width);
             width: calc(100% - var(--sidebar-collapsed-width));
@@ -535,17 +604,19 @@
         .mobile-sidebar-toggle {
             display: none;
             position: fixed;
-            top: 1rem;
-            left: 1rem;
+            top: 0.65rem;
+            left: 10px;
+            right: auto;
+            transform: none;
             z-index: 130;
-            width: 2.5rem;
-            height: 2.5rem;
-            border: 0;
-            border-radius: 0.75rem;
+            width: 42px;
+            height: 42px;
+            border: 2px solid #ffffff;
+            border-radius: 9999px;
             cursor: pointer;
             color: #ffffff;
-            background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
-            box-shadow: 0 8px 20px rgba(0, 70, 46, 0.25);
+            background: linear-gradient(135deg, var(--active-bg) 0%, #0b7d53 100%);
+            box-shadow: 0 8px 18px rgba(0, 70, 46, 0.38), 0 0 0 2px rgba(255, 255, 255, 0.95);
         }
 
         .mobile-sidebar-overlay {
@@ -558,14 +629,34 @@
         }
 
         @media (max-width: 767.98px) {
+            .sidebar-toggle-row {
+                display: none;
+            }
+
+            .sidebar.close .sidebar-toggle-row {
+                display: none;
+            }
+
             .sidebar {
                 width: var(--sidebar-width);
                 transform: translateX(calc(-100% - 8px));
                 z-index: 120;
                 box-shadow: none;
+                padding: 0.5rem;
+                background: var(--sidebar-bg);
+                border-right: 1px solid var(--sidebar-border);
             }
 
             .sidebar.close {
+                width: var(--sidebar-width);
+                transform: translateX(calc(-100% - 8px));
+            }
+
+            html.sidebar-prefers-open .sidebar {
+                transform: translateX(0);
+            }
+
+            html.sidebar-prefers-closed .sidebar {
                 width: var(--sidebar-width);
                 transform: translateX(calc(-100% - 8px));
             }
@@ -602,24 +693,68 @@
     $menusAndPricingActive = (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') || request()->routeIs('admin.menus.prices');
 @endphp
 
-<body class="font-poppins antialiased text-sm"
+<body class="font-poppins antialiased text-sm sidebar-state-initializing"
       x-data="{
           confirmLogout: false,
+          sidebarStorageDesktopKey: 'cms.sidebar.desktop.open',
+          sidebarStorageMobileKey: 'cms.sidebar.mobile.open',
           isDesktop: window.matchMedia('(min-width: 768px)').matches,
-          openSidebar: window.matchMedia('(min-width: 768px)').matches,
-          menusPricingOpen: {{ $menusAndPricingActive ? 'true' : 'false' }}
+          openSidebar: (() => {
+              const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
+              const storageKey = isDesktopViewport ? 'cms.sidebar.desktop.open' : 'cms.sidebar.mobile.open';
+              try {
+                  const stored = window.localStorage.getItem(storageKey);
+                  if (stored === '1' || stored === 'true') return true;
+                  if (stored === '0' || stored === 'false') return false;
+              } catch (error) {}
+              return isDesktopViewport;
+          })(),
+          menusPricingOpen: {{ $menusAndPricingActive ? 'true' : 'false' }},
+          readSidebarState(storageKey, fallbackValue) {
+              try {
+                  const stored = window.localStorage.getItem(storageKey);
+                  if (stored === '1' || stored === 'true') return true;
+                  if (stored === '0' || stored === 'false') return false;
+              } catch (error) {}
+              return fallbackValue;
+          },
+          writeSidebarState(storageKey, value) {
+              try {
+                  window.localStorage.setItem(storageKey, value ? '1' : '0');
+              } catch (error) {}
+          },
+          syncRootSidebarState(value) {
+              const root = document.documentElement;
+              root.classList.toggle('sidebar-prefers-open', !!value);
+              root.classList.toggle('sidebar-prefers-closed', !value);
+          }
       }"
       x-init="
           const mq = window.matchMedia('(min-width: 768px)');
           const syncSidebarWithViewport = (event) => {
-              isDesktop = event.matches;
-              openSidebar = event.matches;
+              const nextDesktop = event.matches;
+              const viewportChanged = isDesktop !== nextDesktop;
+              isDesktop = nextDesktop;
+              if (viewportChanged) {
+                  const key = isDesktop ? sidebarStorageDesktopKey : sidebarStorageMobileKey;
+                  openSidebar = readSidebarState(key, isDesktop);
+                  syncRootSidebarState(openSidebar);
+              }
           };
+          const initialKey = isDesktop ? sidebarStorageDesktopKey : sidebarStorageMobileKey;
+          openSidebar = readSidebarState(initialKey, isDesktop);
+          syncRootSidebarState(openSidebar);
+          $watch('openSidebar', (value) => {
+              const key = isDesktop ? sidebarStorageDesktopKey : sidebarStorageMobileKey;
+              writeSidebarState(key, value);
+              syncRootSidebarState(value);
+          });
           if (mq.addEventListener) {
               mq.addEventListener('change', syncSidebarWithViewport);
           } else {
               mq.addListener(syncSidebarWithViewport);
           }
+          requestAnimationFrame(() => { $el.classList.remove('sidebar-state-initializing'); });
       "
       x-on:keydown.escape.window="if (!isDesktop && openSidebar) openSidebar = false">
 
@@ -629,7 +764,7 @@
             @click="openSidebar = true"
             aria-label="Open sidebar"
             x-cloak>
-        <i class="fas fa-bars" aria-hidden="true"></i>
+        <span aria-hidden="true">&gt;</span>
     </button>
 
     <div class="mobile-sidebar-overlay"
@@ -640,13 +775,10 @@
 
     @php
         // Fetch Counts for Notifications
-        $unreadMessagesCount = 0;
+        $unreadMessagesCount = $sidebarUnreadMessagesCount ?? 0;
         $pendingReservationsCount = 0;
         
         if(Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'superadmin')) {
-            // Count Unread Messages
-            $unreadMessagesCount = \App\Models\ContactMessage::where('status', 'UNREAD')->count();
-            
             // Count Pending Reservations
             // Assuming the Reservation model exists and has a 'status' column
             $pendingReservationsCount = \App\Models\Reservation::where('status', 'pending')->count();
@@ -656,7 +788,12 @@
     <aside class="sidebar" :class="!openSidebar ? 'close' : ''">
         <div class="sidebar-brand">
             <img src="{{ asset('images/ret-logoo.png') }}" alt="RET Logo">
-            <i class="fas fa-bars" id="sidebar-toggle-btn" @click="openSidebar = !openSidebar"></i>
+        </div>
+        <div class="sidebar-toggle-row">
+            <button type="button" id="sidebar-toggle-btn" @click="openSidebar = !openSidebar"
+                    :aria-label="openSidebar ? 'Collapse sidebar' : 'Expand sidebar'">
+                <span x-text="openSidebar ? '<' : '>'"></span>
+            </button>
         </div>
         
         <div class="sidebar-menu" @click="if (!isDesktop && $event.target.closest('.menu-link')) { openSidebar = false; }">
@@ -781,19 +918,12 @@
                             </span>
                         @endif
                     </a>
-                </li>                
-                <li class="menu-list-item">
-                    <a href="{{ route('admin.menus.index', ['type' => 'standard', 'meal' => 'breakfast']) }}" wire:navigate
-                       class="menu-link {{ (request()->routeIs('admin.menus.*') && !request()->routeIs('admin.menus.prices')) || request()->routeIs('admin.recipes.index') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-utensils"></i></span>
-                        <span class="link-text">Manage Menus</span>
-                    </a>
                 </li>
                 <li class="menu-list-item">
-                    <a href="{{ route('admin.menus.prices') }}" wire:navigate
-                       class="menu-link {{ request()->routeIs('admin.menus.prices') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-peso-sign"></i></span>
-                        <span class="link-text">Manage Prices</span>
+                    <a href="{{ route('profile.edit') }}" wire:navigate
+                       class="menu-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-gear"></i></span>
+                        <span class="link-text">Account Settings</span>
                     </a>
                 </li>
                 @endif
@@ -801,9 +931,6 @@
         </div>
 
         <div class="sidebar-footer">
-            <div class="role-badge">
-                Role: <span class="font-semibold text-[#059669]">{{ ucfirst(Auth::user()->role) }}</span>
-            </div>
             <button @click="confirmLogout = true" class="logout-btn">
                 <i class="fas fa-right-from-bracket"></i>
                 <span>Logout</span>

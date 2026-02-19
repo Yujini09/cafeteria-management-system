@@ -564,6 +564,10 @@ document.addEventListener('alpine:init', () => {
         const item = this.allInventoryItems.find(i => i.id == id);
         return item ? item.name : '';
       },
+      getIngredientUnit(id) {
+        const item = this.allInventoryItems.find(i => i.id == id);
+        return item ? (item.unit || '') : '';
+      },
       normalizeIngredientId(id) {
         if (id === null || id === undefined || id === '') return null;
         return String(id);
@@ -723,7 +727,14 @@ document.addEventListener('alpine:init', () => {
         this.editForm.description = description || '';
         this.editForm.type = type || 'standard';
         this.editForm.meal = meal || 'breakfast';
-        this.editForm.items = (items || []).map(i => ({ name: i.name, type: i.type, recipes: i.recipes || [] }));
+        this.editForm.items = (items || []).map(i => ({
+          name: i.name,
+          type: i.type,
+          recipes: (i.recipes || []).map(recipe => ({
+            ...recipe,
+            unit: recipe.unit || this.getIngredientUnit(recipe.inventory_item_id) || ''
+          }))
+        }));
         this.$refs.editForm.action = `/admin/menus/${id}`;
         this.isEditOpen = true;
       },

@@ -29,8 +29,7 @@ class MessageController extends Controller
                 $query->orderBy('created_at', 'asc');
                 break;
             case 'unread':
-                // Custom SQL sort: UNREAD first, then REPLIED, then READ
-                $query->orderByRaw("FIELD(status, 'UNREAD', 'REPLIED', 'READ')");
+                $query->unreadFirst()->orderBy('created_at', 'desc');
                 break;
             default: // newest
                 $query->orderBy('created_at', 'desc');
@@ -39,7 +38,7 @@ class MessageController extends Controller
         $messages = $query->paginate(10)->withQueryString();
         
         // Count for the badge
-        $unreadCount = ContactMessage::where('status', 'UNREAD')->count();
+        $unreadCount = ContactMessage::unreadCount();
 
         return view('admin.messages.index', compact('messages', 'unreadCount'));
     }
@@ -50,11 +49,19 @@ class MessageController extends Controller
         $message = ContactMessage::findOrFail($id);
         
         // Only update status if it is currently UNREAD
-        if ($message->status === 'UNREAD') {
-            $message->update(['status' => 'READ']);
+        if ($message->isUnread()) {
+            $message->markAsRead();
         }
 
-        return response()->json($message);
+        return response()->json([
+            'id' => $message->id,
+            'name' => $message->name,
+            'email' => $message->email,
+            'message' => $message->message,
+            'status' => $message->status,
+            'created_at' => $message->created_at,
+            'updated_at' => $message->updated_at,
+        ]);
     }
 
     // AJAX Handler: Reply (Marks as REPLIED)
@@ -76,7 +83,7 @@ class MessageController extends Controller
             });
 
             // Update status to REPLIED
-            $contact->update(['status' => 'REPLIED']);
+            $contact->markAsReplied();
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {

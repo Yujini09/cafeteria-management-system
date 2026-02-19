@@ -46,32 +46,6 @@
     color: #991b1b;
 }
 
-.action-btn {
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    text-decoration: none;
-    border: 1px solid transparent;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.action-btn-view {
-    background: rgba(59, 130, 246, 0.1);
-    color: #2563eb;
-    border-color: rgba(59, 130, 246, 0.2);
-}
-
-.action-btn-view:hover {
-    background: rgba(59, 130, 246, 0.2);
-    transform: translateY(-1px);
-}
-
 .filter-select {
     background: white;
     border: 1px solid var(--neutral-300);
@@ -183,25 +157,57 @@
     height: 20px;
 }
 
-.action-buttons {
-    display: flex;
-    gap: 0.375rem;
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-}
-
 .column-id { width: 110px; }
 .column-customer { width: 160px; }
 .column-reference { width: 160px; }
 .column-amount { width: 130px; }
 .column-status { width: 120px; }
 .column-date { width: 140px; }
-.column-actions { width: 160px; }
 
 .column-amount,
 .column-amount .amount-cell {
     text-align: right;
+}
+
+/* Floating View Button */
+.table-view-overlay-host {
+    position: relative;
+}
+
+.table-floating-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+    transform: translateX(6px);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    z-index: 30;
+}
+
+.table-floating-view-btn:hover {
+    background: #003824;
+    color: #ffffff;
+}
+
+.table-floating-view-btn.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: translateX(0);
 }
 
 @media (max-width: 768px) {
@@ -214,28 +220,6 @@
         width: 100%;
     }
 
-    .column-reference,
-    .column-date {
-        display: none;
-    }
-
-    .action-buttons {
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .action-buttons {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-
-    .action-btn {
-        width: 100%;
-        justify-content: center;
-    }
 }
 </style>
 
@@ -291,8 +275,9 @@
         </form>
     </div>
 
-    <div class="overflow-auto max-h-96 modern-scrollbar">
-        <table class="modern-table">
+    <div id="paymentsTableHost" class="table-view-overlay-host">
+        <div id="paymentsTableScroll" data-table-scroll class="overflow-auto max-h-96 modern-scrollbar">
+            <table class="modern-table">
             <thead>
                 <tr>
                     <th class="column-id">Reservation</th>
@@ -300,8 +285,7 @@
                     <th class="column-reference column-reference">Reference</th>
                     <th class="column-amount">Amount</th>
                     <th class="column-status">Status</th>
-                    <th class="column-date hidden lg:table-cell">Submitted</th>
-                    <th class="column-actions">Actions</th>
+                    <th class="column-date">Submitted</th>
                 </tr>
             </thead>
             <tbody>
@@ -326,7 +310,7 @@
                             default => '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"></path></svg>'
                         };
                     @endphp
-                    <tr>
+                    <tr class="payment-row hover:bg-admin-neutral-50 transition-colors duration-admin" data-view-url="{{ route('admin.payments.show', $payment) }}">
                         <td class="column-id">
                             <a href="{{ route('admin.reservations.show', $payment->reservation_id) }}" class="id-link">#{{ $payment->reservation_id }}</a>
                         </td>
@@ -334,7 +318,7 @@
                             <div class="customer-name">{{ $payment->user?->name ?? 'â€”' }}</div>
                             <div class="customer-department md:hidden">{{ $payment->department_office ?? 'â€”' }}</div>
                         </td>
-                        <td class="column-reference hidden md:table-cell text-gray-600">
+                        <td class="column-reference text-gray-600">
                             {{ $payment->reference_number }}
                         </td>
                         <td class="column-amount">
@@ -346,28 +330,27 @@
                                 {{ $statusLabel }}
                             </span>
                         </td>
-                        <td class="column-date hidden lg:table-cell text-gray-600">
-                            {{ $payment->created_at?->format('M d, Y') }}
-                        </td>
-                        <td class="column-actions">
-                            <div class="action-buttons">
-                                <a href="{{ route('admin.payments.show', $payment) }}" class="action-btn action-btn-view">
-                                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                    View
-                                </a>
-                            </div>
-                        </td>
+                        <td class="column-date text-gray-600">{{ $payment->created_at?->format('M d, Y') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">No payments found.</td>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">No payments found.</td>
                     </tr>
                 @endforelse
             </tbody>
-        </table>
+            </table>
+        </div>
+        <a id="paymentsFloatingViewBtn"
+           href="#"
+           class="table-floating-view-btn"
+           aria-label="View payment"
+           aria-hidden="true">
+            <svg class="icon-sm text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            View
+        </a>
     </div>
 
     @if($payments->hasPages())
@@ -376,4 +359,97 @@
         </div>
     @endif
 </div>
+
+<script>
+(() => {
+    function initPaymentsFloatingView() {
+        const host = document.getElementById('paymentsTableHost');
+        const scrollArea = document.getElementById('paymentsTableScroll');
+        const button = document.getElementById('paymentsFloatingViewBtn');
+        if (!host || !scrollArea || !button) return;
+        if (host.dataset.floatingViewBound === 'true') return;
+        host.dataset.floatingViewBound = 'true';
+
+        let activeRow = null;
+
+        const hideButton = () => {
+            activeRow = null;
+            button.classList.remove('is-visible');
+            button.setAttribute('aria-hidden', 'true');
+        };
+
+        const updateButtonPosition = () => {
+            if (!activeRow || !scrollArea.contains(activeRow)) return;
+
+            const hostRect = host.getBoundingClientRect();
+            const scrollRect = scrollArea.getBoundingClientRect();
+            const rowRect = activeRow.getBoundingClientRect();
+            if (rowRect.bottom <= scrollRect.top || rowRect.top >= scrollRect.bottom) {
+                hideButton();
+                return;
+            }
+            const buttonHeight = button.offsetHeight || 28;
+            const proposedTop = rowRect.top - hostRect.top + ((rowRect.height - buttonHeight) / 2);
+            const minTop = scrollRect.top - hostRect.top + 6;
+            const maxTop = scrollRect.bottom - hostRect.top - buttonHeight - 6;
+            const clampedTop = Math.max(minTop, Math.min(proposedTop, maxTop));
+            button.style.top = `${clampedTop}px`;
+        };
+
+        const showForRow = (row) => {
+            if (!row) return;
+            activeRow = row;
+            const viewUrl = row.dataset.viewUrl;
+            if (viewUrl) {
+                button.setAttribute('href', viewUrl);
+            }
+            button.classList.add('is-visible');
+            button.setAttribute('aria-hidden', 'false');
+            updateButtonPosition();
+        };
+
+        scrollArea.addEventListener('pointermove', (event) => {
+            const row = event.target.closest('tr[data-view-url]');
+            if (row && scrollArea.contains(row)) {
+                if (activeRow !== row) {
+                    showForRow(row);
+                } else {
+                    updateButtonPosition();
+                }
+                return;
+            }
+
+            if (!button.matches(':hover')) {
+                hideButton();
+            }
+        });
+
+        host.addEventListener('mouseleave', () => {
+            hideButton();
+        });
+
+        scrollArea.addEventListener('scroll', () => {
+            if (activeRow) {
+                updateButtonPosition();
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+            if (activeRow) {
+                updateButtonPosition();
+            }
+        });
+
+        scrollArea.addEventListener('focusin', (event) => {
+            const row = event.target.closest('tr[data-view-url]');
+            if (row) {
+                showForRow(row);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initPaymentsFloatingView);
+    document.addEventListener('livewire:navigated', initPaymentsFloatingView);
+})();
+</script>
 @endsection

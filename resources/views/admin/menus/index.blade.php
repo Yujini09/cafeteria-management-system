@@ -9,6 +9,11 @@
     ];
     $type = $type ?? request('type', 'standard');
     $meal = $meal ?? request('meal', 'all');
+    $list = isset($currentMenus)
+            ? $currentMenus
+            : ($meal === 'all'
+                ? data_get($menusByDay ?? [], 'all', collect())
+                : data_get($menusByDay ?? [], $meal, collect()));
 @endphp
 
 <style>
@@ -46,11 +51,53 @@
     }
     
     .price-pill {
-        background: linear-gradient(135deg, rgba(0, 70, 46, 0.08) 0%, rgba(5, 124, 60, 0.12) 100%);
-        border: 1px solid rgba(5, 124, 60, 0.2);
-        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.45rem 0.65rem;
+        border-radius: 10px;
+        border: 1px solid #d7e4dc;
+        background: #ffffff;
+        color: #1f4a36;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+
+    .price-pill-label {
+        font-size: 0.72rem;
         font-weight: 600;
-        font-size: 0.875rem;
+        color: #4b6a5c;
+        line-height: 1.1;
+    }
+
+    .price-pill-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f8a4c;
+        line-height: 1.1;
+    }
+
+    .price-pill-unit {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #4b6a5c;
+    }
+
+    .price-pill-edit {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid #d5e3da;
+        background: #f7fbf8;
+        color: #0f7a46;
+        transition: all 0.2s ease;
+    }
+
+    .price-pill-edit:hover {
+        background: #eef6f1;
+        border-color: #c4d8cb;
     }
     
     .food-item {
@@ -121,6 +168,144 @@
     .icon-sm { width: 16px; height: 16px; }
     .icon-md { width: 20px; height: 20px; }
     .icon-lg { width: 24px; height: 24px; }
+
+    .menus-index-surface {
+        background: transparent;
+    }
+
+    .menus-hero {
+        background:
+            radial-gradient(circle at top right, rgba(5, 124, 60, 0.08), transparent 42%),
+            linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+        border: 1px solid #e6efe9;
+        border-top: 4px solid #057c3c;
+        border-radius: 18px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        padding: 1.25rem;
+    }
+
+    .menu-search-field {
+        padding-left: 2.25rem;
+        padding-right: 2.25rem;
+    }
+
+    .toolbar-group {
+        border: 1px solid #e3ede7;
+        border-radius: 12px;
+        background: #f9fcfa;
+        padding: 0.5rem;
+    }
+
+    .meal-quick-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 0.75rem;
+        border-radius: 9999px;
+        border: 1px solid #dde8e2;
+        color: #335145;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+
+    .meal-quick-link:hover {
+        border-color: #059669;
+        color: #064e3b;
+        background: #f0fdf4;
+    }
+
+    .meal-quick-link.active {
+        border-color: #057c3c;
+        background: #057c3c;
+        color: #ffffff;
+    }
+
+    .menus-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    @media (min-width: 1024px) {
+        .menus-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    .bundle-card {
+        border: 1px solid #e2ebe5;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+        padding: 1rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .bundle-card:hover {
+        transform: translateY(-2px);
+        border-color: #c8ddcf;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .menu-meta-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.55rem;
+        border-radius: 9999px;
+        border: 1px solid #d8e9df;
+        background: #f6fbf8;
+        color: #315243;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+
+    .icon-action {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .icon-action.edit {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #dbeafe;
+    }
+
+    .icon-action.edit:hover {
+        background: #dbeafe;
+    }
+
+    .icon-action.delete {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fee2e2;
+    }
+
+    .icon-action.delete:hover {
+        background: #fee2e2;
+    }
+
+    .empty-state-panel {
+        border: 1px dashed #cfe2d6;
+        border-radius: 14px;
+        background: #f9fcfa;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
 </style>
 
 <div x-data='menuCreateModal({
@@ -131,27 +316,30 @@
      })'
      x-effect="document.body.classList.toggle('overflow-hidden', isCreateOpen || isEditOpen || isDeleteOpen)"
      @keydown.escape.window="isCreateOpen = false; isEditOpen = false; closeDelete()"
-     class="admin-page-shell bg-transparent border-0 shadow-none p-0 space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
+     class="admin-page-shell menus-index-surface border-0 shadow-none p-0 space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
 
 {{-- Header --}}
-<div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 menu-card">
-  <div class="flex items-start justify-between gap-4 flex-wrap w-full">
-    <div class="flex items-center">
-      <div class="w-12 h-12 primary-gradient rounded-lg flex items-center justify-center mr-3 shadow-lg">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-        </svg>
+<div class="menus-hero">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="min-w-0">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 primary-gradient rounded-lg flex items-center justify-center shadow-md">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Menu Bundles</h1>
+          <p class="text-gray-600 mt-1 text-sm">Manage available menus and adjust pricing.</p>
+        </div>
       </div>
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Menu Bundles</h1>
-        <p class="text-gray-600 mt-1 text-sm">Manage your cafeteria menu offerings</p>
-      </div>
+
     </div>
 
-    <div class="flex flex-col gap-3 ml-auto w-full sm:w-auto sm:items-end">
-      <div class="relative w-full sm:w-64 md:w-72">
-        <input type="search" id="searchInput" placeholder="Search menus..."
-               class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+    <div class="w-full lg:w-auto lg:min-w-[280px]">
+      <div class="relative w-full">
+        <input type="search" id="searchInput" placeholder="Search menu name, meal, or item..."
+               class="menu-search-field admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                oninput="filterTable(this.value)" aria-label="Search menus">
         <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -165,68 +353,58 @@
     </div>
   </div>
 
-  {{-- Type Tabs --}}
-  <div class="mt-6 flex items-center justify-between gap-3">
-    <div class="flex items-center gap-2 overflow-x-auto min-w-0 flex-1 whitespace-nowrap">
-      @foreach($types as $key => $label)
-        <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
-           wire:navigate
-           class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
-          {{ $label }}
-        </a>
-      @endforeach
-    </div>
-    <div class="shrink-0 flex justify-end">
+  <div class="toolbar-group mt-5 flex flex-col gap-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-2 overflow-x-auto min-w-0 whitespace-nowrap">
+        @foreach($types as $key => $label)
+          <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
+             wire:navigate
+             class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
+            {{ $label }}
+          </a>
+        @endforeach
+      </div>
       <button type="button" @click="openCreate()"
-              class="primary-gradient hover:shadow-xl text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium transition-all duration-300 shadow-lg flex items-center transform hover:scale-105">
+              class="primary-gradient hover:shadow-xl text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-md inline-flex items-center justify-center">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg>
         Add Menu
       </button>
     </div>
-  </div>
 
-  {{-- Meal Filter and Fixed Price Row --}}
-  <div class="mt-4 flex items-center justify-between gap-4 flex-wrap">
-    {{-- Meal Filter --}}
-    <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col sm:flex-row sm:items-center gap-3">
-      <input type="hidden" name="type" value="{{ $type }}">
-      <label class="form-label whitespace-nowrap">Filter by Meal:</label>
-      <div class="w-full sm:w-64">
-        <select name="meal" data-admin-select="true" class="form-select" onchange="this.form.submit()">
-          <option value="all" {{ $meal === 'all' ? 'selected' : '' }}>
-            All Menus {{ !empty($totalCount) ? "($totalCount)" : '' }}
-          </option>
-          @foreach($meals as $key => $label)
-            @php $count = data_get($counts ?? [], $key, 0); @endphp
-            <option value="{{ $key }}" {{ $meal === $key ? 'selected' : '' }}>
-              {{ $label }} {{ $count ? "($count)" : '' }}
-            </option>
-          @endforeach
-        </select>
-      </div>
-    </form>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="{{ route('admin.menus.index', ['type' => $type, 'meal' => 'all']) }}"
+         wire:navigate
+         class="meal-quick-link {{ $meal === 'all' ? 'active' : '' }}">
+        All Meals
+      </a>
+      @foreach($meals as $key => $label)
+        <a href="{{ route('admin.menus.index', ['type' => $type, 'meal' => $key]) }}"
+           wire:navigate
+           class="meal-quick-link {{ $meal === $key ? 'active' : '' }}">
+          {{ $label }}
+        </a>
+      @endforeach
+    </div>
 
-    {{-- Fixed price pill (hide on "All") --}}
     @if($meal !== 'all' && !is_null($activePrice))
-      <div class="flex items-center">
-        <div class="inline-flex items-center px-4 py-3 rounded-lg price-pill shadow-sm border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
-          <div class="text-center">
-            <div class="flex items-center gap-2 text-sm font-bold text-green-900">
-              <span>{{ ucfirst($type) }}</span>
-              <span class="text-green-600">•</span>
-              <span>{{ data_get($meals, $meal, 'Meal') }}</span>
+      <div class="flex items-center justify-start">
+        <div class="price-pill">
+          <div class="leading-tight">
+            <div class="price-pill-label">
+              {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
             </div>
-            <div class="flex items-center gap-1 mt-1">
-              <strong class="text-lg text-green-600">₱{{ number_format($activePrice,2) }}</strong>
-              <span class="text-xs text-green-700">/ head</span>
+            <div class="mt-0.5 flex items-baseline gap-1">
+              <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
+              <span class="price-pill-unit">/ head</span>
             </div>
           </div>
-          <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}" 
+          <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
              wire:navigate
-             class="ml-3 p-2 bg-white border border-green-300 rounded-lg hover:bg-green-50 transition-colors duration-200 shadow-sm">
-            <svg class="icon-md primary-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             class="price-pill-edit"
+             aria-label="Update menu prices">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
           </a>
@@ -235,118 +413,123 @@
     @endif
   </div>
 
-  {{-- Menus grid - 3 columns --}}
-  @php
-    $list = isset($currentMenus)
-              ? $currentMenus
-              : ($meal === 'all'
-                  ? data_get($menusByDay ?? [], 'all', collect())
-                  : data_get($menusByDay ?? [], $meal, collect()));
-  @endphp
+  <div class="mt-5 border-t border-[#e6efe9] pt-5">
+    {{-- Menus grid --}}
+    <div class="menus-grid">
+      @forelse($list as $menu)
+        @php $menuItemsCount = $menu->items->count(); @endphp
+        <div id="menu-card-{{ $menu->id }}" data-search-card="true" class="bundle-card h-full flex flex-col">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <div class="meal-badge">{{ strtoupper(str_replace('_',' ', $menu->meal_time)) }}</div>
+              <h2 class="font-semibold text-gray-900 mb-1 text-lg leading-tight">{{ $menu->name ?: ('Menu #' . $menu->id) }}</h2>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="menu-meta-pill">{{ $menuItemsCount }} {{ \Illuminate\Support\Str::plural('item', $menuItemsCount) }}</span>
+              </div>
+              @if(!empty($menu->description))
+                <p class="text-gray-600 mt-1 leading-relaxed text-sm line-clamp-2">{{ $menu->description }}</p>
+              @endif
+            </div>
+            <div class="flex gap-2 ml-2">
+              @php
+                $editItems = $menu->items->map(fn($i) => [
+                  'name' => $i->name,
+                  'type' => $i->type,
+                  'recipes' => $i->recipes->map(fn($r) => [
+                    'inventory_item_id' => $r->inventory_item_id,
+                    'quantity_needed' => $r->quantity_needed,
+                    'unit' => $r->unit
+                  ])->toArray()
+                ])->toArray();
+              @endphp
+              <button type="button" @click='openEdit({{ $menu->id }}, @json($menu->name), @json($menu->description), @json($menu->type), @json($menu->meal_time), @json($editItems))'
+                      class="icon-action edit"
+                      aria-label="Edit menu">
+                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              <button type="button" @click='openDelete({{ $menu->id }}, @json($menu->name ?: ("Menu #".$menu->id)))'
+                      class="icon-action delete"
+                      aria-label="Delete menu">
+                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
 
-  <div class="grid gap-4 grid-cols-1 lg:grid-cols-3 mt-4">
-    @forelse($list as $menu)
-      <div id="menu-card-{{ $menu->id }}" data-search-card="true" class="menu-card rounded-xl p-4 h-full flex flex-col">
-        <div class="flex items-start justify-between mb-3">
-          <div class="flex-1">
-            <div class="meal-badge">{{ strtoupper(str_replace('_',' ', $menu->meal_time)) }}</div>
-            <h2 class="font-semibold text-gray-900 mb-1 text-lg">{{ $menu->name ?: ('Menu #' . $menu->id) }}</h2>
-            @if(!empty($menu->description))
-              <p class="text-gray-600 mt-2 leading-relaxed text-sm">{{ $menu->description }}</p>
+          <div class="border-t border-gray-200 pt-3 mt-3 flex-1">
+            @if($menuItemsCount)
+              <h4 class="font-semibold text-gray-700 mb-2 flex items-center justify-between text-sm">
+                <span class="inline-flex items-center">
+                <svg class="w-3 h-3 mr-1 primary-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                </svg>
+                Menu Items
+                </span>
+                <span class="text-xs text-gray-500">{{ $menuItemsCount }}</span>
+              </h4>
+              <ul class="space-y-2">
+                @foreach($menu->items as $food)
+                  <li class="food-item p-2 rounded-md">
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1">
+                        <span class="font-medium text-gray-900 block text-sm">{{ $food->name }}</span>
+                        <span class="text-gray-500 mt-0.5 text-xs">{{ ucfirst($food->type) }}</span>
+                      </div>
+                      <a href="{{ route('admin.recipes.index', $food) }}"
+                         wire:navigate
+                         class="primary-color hover:text-[#00462E] font-medium flex items-center transition-colors duration-200 ml-2 text-xs">
+                        Recipe
+                        <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                      </a>
+                    </div>
+                  </li>
+                @endforeach
+              </ul>
+            @else
+              <div class="text-center text-gray-500 py-5 flex-1 flex items-center justify-center">
+                <div>
+                  <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                  </svg>
+                  <p class="text-sm font-medium">No items added yet</p>
+                  <p class="text-xs text-gray-400 mt-1">Open Edit to add menu items.</p>
+                </div>
+              </div>
             @endif
           </div>
-          <div class="flex gap-1 ml-2">
-            @php
-              $editItems = $menu->items->map(fn($i) => [
-                'name' => $i->name,
-                'type' => $i->type,
-                'recipes' => $i->recipes->map(fn($r) => [
-                  'inventory_item_id' => $r->inventory_item_id,
-                  'quantity_needed' => $r->quantity_needed,
-                  'unit' => $r->unit
-                ])->toArray()
-              ])->toArray();
-            @endphp
-            <button type="button" @click='openEdit({{ $menu->id }}, @json($menu->name), @json($menu->description), @json($menu->type), @json($menu->meal_time), @json($editItems))'
-                    class="p-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors duration-200">
-              <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
-            </button>
-            <button type="button" @click='openDelete({{ $menu->id }}, @json($menu->name ?: ("Menu #".$menu->id)))'
-                    class="p-1 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors duration-200">
-              <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-              </svg>
-            </button>
+        </div>
+      @empty
+        <div class="col-span-full text-center py-12 empty-state-panel">
+          <div class="w-16 h-16 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
           </div>
+          <h3 class="font-semibold text-gray-600 mb-1 text-lg">No menus found</h3>
+          <p class="text-gray-500 mb-4 text-sm">Get started by creating your first menu bundle</p>
+          <button type="button" @click="openCreate()"
+                  class="primary-gradient text-white px-6 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Create Menu
+          </button>
         </div>
-
-        <div class="border-t border-gray-200 pt-3 mt-3 flex-1">
-          @if($menu->items->count())
-            <h4 class="font-semibold text-gray-700 mb-2 flex items-center text-sm">
-              <svg class="w-3 h-3 mr-1 primary-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-              </svg>
-              Menu Items
-            </h4>
-            <ul class="space-y-2">
-              @foreach($menu->items as $food)
-                <li class="food-item p-2 rounded-md">
-                  <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                      <span class="font-medium text-gray-900 block text-sm">{{ $food->name }}</span>
-                      <span class="text-gray-500 mt-0.5 text-xs">{{ ucfirst($food->type) }}</span>
-                    </div>
-                    <a href="{{ route('admin.recipes.index', $food) }}" 
-                       wire:navigate
-                       class="primary-color hover:text-[#00462E] font-medium flex items-center transition-colors duration-200 ml-2 text-xs">
-                      Recipe
-                      <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                  </div>
-                </li>
-              @endforeach
-            </ul>
-          @else
-            <div class="text-center text-gray-500 py-4 flex-1 flex items-center justify-center">
-              <div>
-                <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-                <p class="text-sm">No items added yet</p>
-              </div>
-            </div>
-          @endif
-        </div>
-      </div>
-    @empty
-      <div class="col-span-full text-center py-12">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-          </svg>
-        </div>
-        <h3 class="font-semibold text-gray-600 mb-1 text-lg">No menus found</h3>
-        <p class="text-gray-500 mb-4 text-sm">Get started by creating your first menu bundle</p>
-        <button type="button" @click="openCreate()"
-                class="primary-gradient text-white px-6 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Create Menu
-        </button>
-      </div>
-    @endforelse
-  </div>
-
-  @if($currentMenus->hasPages())
-    <div class="mt-6">
-      {{ $currentMenus->links('components.pagination') }}
+      @endforelse
     </div>
-  @endif
+
+    @if($currentMenus->hasPages())
+      <div class="mt-6">
+        {{ $currentMenus->links('components.pagination') }}
+      </div>
+    @endif
+  </div>
+</div>
 
   {{-- Success Modal --}}
   <x-success-modal name="menu-create-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
@@ -632,16 +815,10 @@
                             <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
                                     x-model="recipe.unit" class="form-select" data-admin-select="true" required>
                               <option value="">Select unit</option>
-                              <optgroup label="Count">
-                                <option value="Pieces">Pieces</option>
-                                <option value="Packs">Packs</option>
-                              </optgroup>
-                              <optgroup label="Weight">
-                                <option value="Kgs">Kgs</option>
-                              </optgroup>
-                              <optgroup label="Volume">
-                                <option value="Liters">Liters</option>
-                              </optgroup>
+                              <option value="Pieces">Pieces</option>
+                              <option value="Packs">Packs</option>
+                              <option value="Kgs">Kgs</option>
+                              <option value="Liters">Liters</option>
                             </select>
                           </div>
                           <button type="button" @click="item.recipes.splice(rIndex, 1)" 
@@ -725,18 +902,18 @@
 
       <div @click.stop class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl p-0 transform transition-all duration-300 scale-95 max-h-[90vh] overflow-hidden"
            x-transition:enter="scale-100" x-transition:enter-start="scale-95">
-         
+
         <div class="modal-header p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center">
-              <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center mr-3">
+              <div class="w-10 h-10 primary-gradient rounded-lg flex items-center justify-center mr-3">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
               </div>
               <div>
                 <h2 class="font-bold text-gray-900 text-2xl">Edit Menu</h2>
-                <p class="text-gray-600 mt-1 text-sm">Update menu bundle details</p>
+                <p class="text-gray-600 mt-1 text-sm">Update food items and recipes only</p>
               </div>
             </div>
             <button class="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded hover:bg-gray-100" @click="closeEdit()">
@@ -751,130 +928,150 @@
           <form method="POST" action="" x-ref="editForm" class="space-y-4" data-action-loading>
             @csrf @method('PATCH')
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="form-label">Menu Type</label>
-                <select name="type" class="form-select" x-model="editForm.type" required data-admin-select="true">
-                  <option value="standard">Standard Menu</option>
-                  <option value="special">Special Menu</option>
-                </select>
+            <input type="hidden" name="type" :value="editForm.type || 'standard'">
+            <input type="hidden" name="meal_time" :value="editForm.meal || 'breakfast'">
+
+            <div class="bg-white border border-gray-200 rounded-xl p-4">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-semibold text-gray-900" x-text="editForm.name || 'Menu'"></span>
+                <span class="menu-meta-pill" x-text="(editForm.type || 'standard').charAt(0).toUpperCase() + (editForm.type || 'standard').slice(1)"></span>
+                <span class="menu-meta-pill" x-text="(editForm.meal || 'breakfast').split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')"></span>
+                <span class="menu-meta-pill text-[#046c41]" x-text="editPriceText"></span>
               </div>
-
-              <div>
-                <label class="form-label">Meal Time</label>
-                <select name="meal_time" class="form-select" x-model="editForm.meal" required data-admin-select="true">
-                  <option value="breakfast">Breakfast</option>
-                  <option value="am_snacks">AM Snacks</option>
-                  <option value="lunch">Lunch</option>
-                  <option value="pm_snacks">PM Snacks</option>
-                  <option value="dinner">Dinner</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="form-label">Display Name (Optional)</label>
-              <input name="name" class="form-input" placeholder="e.g., Breakfast Menu" x-model="editForm.name">
-              <p class="text-xs text-gray-500 mt-1">Leave blank to keep the current menu name.</p>
-            </div>
-
-            <div>
-              <label class="form-label">Description (Optional)</label>
-              <textarea name="description" class="form-textarea" rows="2" placeholder="Short description..."></textarea>
+              <p class="text-xs text-gray-500 mt-2">Menu name, type, and meal time are locked during editing.</p>
             </div>
 
             {{-- Menu Items --}}
-            <div class="border border-gray-200 rounded-lg p-4 recipe-form">
-              <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
-                <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                </svg>
-                Menu Items
-              </h3>
-              <div class="space-y-3">
+            <div class="border border-gray-200 rounded-lg p-4 bg-white">
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Menu Items</h3>
+                <p class="text-sm text-gray-600">Edit item names and recipe ingredients below.</p>
+              </div>
+
+              <div class="space-y-4">
                 <template x-for="(item, index) in editForm.items" :key="index">
-                  <div class="bg-gray-50 p-3 rounded-lg space-y-3 border border-gray-200">
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                      <input type="text" :name="'items[' + index + '][name]'" x-model="item.name" placeholder="Food name" class="form-input flex-1" required>
-                      <select :name="'items[' + index + '][type]'" x-model="item.type" class="form-select" data-admin-select="true">
-                        <option value="food">Food/Main Dish</option>
-                        <option value="drink">Drink</option>
-                        <option value="dessert">Dessert</option>
-                      </select>
-                      <button type="button" @click="editForm.items.splice(index, 1)" class="self-end sm:self-auto p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
-                    </div>
-                    {{-- Recipes for this item --}}
-                    <div class="border-t border-gray-300 pt-3">
-                      <h4 class="font-medium text-gray-700 mb-2 flex items-center text-xs">
-                        <svg class="w-3 h-3 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        Recipes
-                      </h4>
-                      <div class="space-y-2">
-                        <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                          <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                            <div class="flex-1 relative" x-data="{ dropdownOpen: false, searchTerm: '' }">
-                              <button type="button" @click="dropdownOpen = !dropdownOpen"
-                                      class="form-input flex items-center justify-between hover:border-blue-500 text-left text-xs">
-                                <span class="truncate">
-                                  <template x-if="recipe.inventory_item_id">
-                                    <span x-text="getIngredientLabel(recipe.inventory_item_id)"></span>
-                                  </template>
-                                  <template x-if="!recipe.inventory_item_id">
-                                    <span class="text-gray-400">Select Ingredient</span>
-                                  </template>
-                                </span>
-                                <svg class="w-3 h-3 text-gray-400 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                                </svg>
-                              </button>
-                              
-                              <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-72" style="display: none;">
-                                <div class="sticky top-0 bg-white border-b border-gray-300 p-1.5 z-50">
-                                  <input type="text" x-model="searchTerm" @keydown.escape="dropdownOpen = false"
-                                         placeholder="Search..." class="form-input" style="font-size: 0.75rem;">
-                                </div>
-                                <div class="overflow-y-auto max-h-60">
-                                  <template x-for="inv in getAvailableIngredients(item, rIndex, searchTerm)" :key="inv.id">
-                                    <button type="button" @click="recipe.inventory_item_id = inv.id; dropdownOpen = false; searchTerm = '';"
-                                            class="w-full text-left px-2 py-1.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors text-xs">
-                                      <span x-text="inv.name"></span>
-                                    </button>
-                                  </template>
-                                  <template x-if="getAvailableIngredients(item, rIndex, searchTerm).length === 0">
-                                    <div class="px-2 py-2 text-center text-gray-500 text-xs">No ingredients found</div>
-                                  </template>
-                                </div>
-                              </div>
-                              <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
-                              <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
-                            </div>
-                            <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="form-input w-full sm:w-20" required>
-                            <input type="text" :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" placeholder="Unit" class="form-input w-full sm:w-16" required>
-                            <button type="button" @click="item.recipes.splice(rIndex, 1)" class="self-end sm:self-auto p-1 text-red-600 hover:text-red-800 transition-colors duration-200 rounded hover:bg-red-50">
-                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                              </svg>
-                            </button>
-                          </div>
-                        </template>
-                        <button type="button" @click="item.recipes.push({inventory_item_id: '', quantity_needed: '', unit: ''})" class="text-blue-600 hover:text-blue-800 font-medium flex items-center transition-colors duration-200 text-xs">
-                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div class="flex items-center mb-4 pb-4 border-b border-gray-300">
+                      <div class="w-8 h-8 primary-gradient rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                        <span x-text="index + 1"></span>
+                      </div>
+                      <div class="w-full flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <div class="flex-1">
+                          <label class="text-xs font-medium text-gray-700 mb-1 block">Item Name</label>
+                          <input type="text" :name="'items[' + index + '][name]'" x-model="item.name" placeholder="Enter food name" class="form-input" required>
+                        </div>
+                        <div class="w-full sm:w-40">
+                          <label class="text-xs font-medium text-gray-700 mb-1 block">Type</label>
+                          <select :name="'items[' + index + '][type]'" x-model="item.type" class="form-select" data-admin-select="true">
+                            <option value="food">Food/Main Dish</option>
+                            <option value="drink">Drink</option>
+                            <option value="dessert">Dessert</option>
+                          </select>
+                        </div>
+                        <button type="button" @click="editForm.items.splice(index, 1)" class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                           </svg>
-                          Add Recipe
                         </button>
                       </div>
                     </div>
+
+                    <div class="space-y-3">
+                      <h4 class="font-medium text-gray-700 flex items-center text-sm">
+                        <svg class="w-4 h-4 mr-2 primary-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Ingredients
+                      </h4>
+
+                      <template x-if="item.recipes.length === 0">
+                        <div class="text-center py-4 bg-white rounded-lg border border-dashed border-gray-300">
+                          <p class="text-gray-500 text-sm">No ingredients added yet</p>
+                        </div>
+                      </template>
+
+                      <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end bg-white p-3 rounded-lg border border-gray-100">
+                          <div class="flex-1 relative" x-data="{ dropdownOpen: false, searchTerm: '' }">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient</label>
+                            <button type="button" @click="dropdownOpen = !dropdownOpen"
+                                    class="form-input flex items-center justify-between hover:border-[#057C3C] text-left text-xs">
+                              <span class="truncate">
+                                <template x-if="recipe.inventory_item_id">
+                                  <span x-text="getIngredientLabel(recipe.inventory_item_id)"></span>
+                                </template>
+                                <template x-if="!recipe.inventory_item_id">
+                                  <span class="text-gray-400">Select Ingredient</span>
+                                </template>
+                              </span>
+                              <svg class="w-3 h-3 text-gray-400 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                              </svg>
+                            </button>
+
+                            <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-72" style="display: none;">
+                              <div class="sticky top-0 bg-white border-b border-gray-300 p-1.5 z-50">
+                                <input type="text" x-model="searchTerm" @keydown.escape="dropdownOpen = false"
+                                       placeholder="Search..." class="form-input" style="font-size: 0.75rem;">
+                              </div>
+                              <div class="overflow-y-auto max-h-60">
+                                <template x-for="inv in getAvailableIngredients(item, rIndex, searchTerm)" :key="inv.id">
+                                  <button type="button" @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; dropdownOpen = false; searchTerm = '';"
+                                          class="w-full text-left px-2 py-1.5 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-xs">
+                                    <span x-text="inv.name"></span>
+                                  </button>
+                                </template>
+                                <template x-if="getAvailableIngredients(item, rIndex, searchTerm).length === 0">
+                                  <div class="px-2 py-2 text-center text-gray-500 text-xs">No ingredients found</div>
+                                </template>
+                              </div>
+                            </div>
+
+                            <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
+                            <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
+                          </div>
+                          <div class="w-full sm:w-24">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Quantity</label>
+                            <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="form-input" required>
+                          </div>
+                          <div class="w-full sm:w-24">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Unit</label>
+                            <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" data-admin-select="true" required>
+                              <option value="">Select unit</option>
+                              <option value="Pieces">Pieces</option>
+                              <option value="Packs">Packs</option>
+                              <option value="Kgs">Kgs</option>
+                              <option value="Liters">Liters</option>
+                            </select>
+                          </div>
+                          <button type="button" @click="item.recipes.splice(rIndex, 1)" class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                          </button>
+                        </div>
+                      </template>
+
+                      <button type="button" @click="item.recipes.push({inventory_item_id: '', quantity_needed: '', unit: ''})"
+                              class="primary-color hover:text-[#00462E] text-sm font-medium flex items-center transition-colors duration-200 w-full justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C] mt-2">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Ingredient
+                      </button>
+                    </div>
                   </div>
                 </template>
-                <button type="button" @click="editForm.items.push({name: '', type: 'food', recipes: []})" class="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 flex items-center text-sm">
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <template x-if="editForm.items.length === 0">
+                  <div class="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
+                    <p class="text-sm">No menu items yet. Add one below.</p>
+                  </div>
+                </template>
+
+                <button type="button" @click="editForm.items.push({name: '', type: 'food', recipes: []})"
+                        class="w-full primary-color hover:text-[#00462E] font-medium transition-colors duration-200 flex items-center justify-center py-2 border border-dashed border-gray-300 rounded-lg hover:border-[#057C3C] text-sm">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
                   Add Item
@@ -882,13 +1079,13 @@
               </div>
             </div>
 
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div class="text-blue-800 flex items-center text-xs">
-                <svg class="w-4 h-4 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div class="text-green-800 flex items-center text-xs">
+                <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                 </svg>
                 Fixed price per head: <span class="font-semibold ml-1" x-text="editPriceText"></span>
-                <span class="text-blue-600 ml-1">(auto-applied on save)</span>
+                <span class="text-green-700 ml-1">(auto-applied on save)</span>
               </div>
             </div>
 
@@ -896,7 +1093,7 @@
               <button type="button" @click="closeEdit()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm text-sm">
                 Cancel
               </button>
-              <button type="submit" data-loading-text="Updating Menu..." class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
+              <button type="submit" data-loading-text="Updating Menu..." class="px-6 py-2 primary-gradient text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
@@ -1009,3 +1206,4 @@
 @endif
 
 @endsection
+

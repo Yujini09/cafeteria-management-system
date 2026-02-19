@@ -7,7 +7,6 @@ use App\Models\ReservationItem;
 use App\Models\InventoryItem;
 use App\Models\ContactMessage;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminDashboardController extends Controller
@@ -30,10 +29,7 @@ class AdminDashboardController extends Controller
             ->where('expiry_date', '>=', Carbon::now())
             ->get();
 
-        $unreadCount = 0;
-        if (Schema::hasTable('contact_messages')) {
-            $unreadCount = ContactMessage::where('is_read', false)->count();
-        }
+        $unreadCount = ContactMessage::unreadCount();
 
         return view('admin.dashboard', compact(
             'totalReservations',

@@ -119,7 +119,7 @@
                             <a href="?sort=expiry_date" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Category</th>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide hidden md:table-cell whitespace-nowrap overflow-hidden text-ellipsis">Last Updated</th>
+                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Last Updated</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Actions</th>
                     </tr>
                 </thead>
@@ -147,7 +147,7 @@
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->unit }}</td>
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->expiry_date ?? 'N/A' }}</td>
                             <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->category }}</td>
-                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 hidden md:table-cell whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->updated_at->diffForHumans() }}</td>
+                            <td class="py-3 px-4 border-b border-admin-neutral-100 text-admin-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis">{{ $item->updated_at->diffForHumans() }}</td>
 
                             <td class="py-3 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">
                                 <div class="flex items-center gap-2 flex-nowrap">

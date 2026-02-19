@@ -40,8 +40,8 @@ class AppServiceProvider extends ServiceProvider
             $user = auth()->user();
             $isAdminAreaUser = $user && in_array($user->role, ['admin', 'superadmin'], true);
 
-            if ($isAdminAreaUser && Schema::hasTable('contact_messages')) {
-                $unreadMessagesCount = ContactMessage::where('is_read', false)->count();
+            if ($isAdminAreaUser) {
+                $unreadMessagesCount = ContactMessage::unreadCount();
             }
 
             if ($isAdminAreaUser && Schema::hasTable('inventory_items')) {

@@ -3,19 +3,8 @@
 
 @section('content')
 <style>
-/* Modern Card Styles */
-.modern-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-    border: 1px solid var(--neutral-200);
-    overflow: hidden;
-    transition: all 0.25s ease;
-    position: relative;
-}
-
 /* Action Buttons */
-.action-btn {
+.reservation-show-view .action-btn {
     padding: 0.75rem 1.5rem;
     border-radius: 10px;
     font-size: 0.875rem;
@@ -29,60 +18,38 @@
     white-space: nowrap;
 }
 
-.action-btn-approve {
+.reservation-show-view .action-btn-approve {
     color: #16a34a;
     border-color: rgba(34, 197, 94, 0.2);
 }
 
-.action-btn-approve:hover {
+.reservation-show-view .action-btn-approve:hover {
     transform: translateY(-1px);
 }
 
-.action-btn-decline {
+.reservation-show-view .action-btn-decline {
     color: #dc2626;
     border-color: rgba(239, 68, 68, 0.2);
 }
 
-.action-btn-decline:hover {
-    transform: translateY(-1px);
-}
-
-/* Back Button */
-.back-btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    border: 1px solid var(--neutral-300);
-    background: white;
-    color: var(--neutral-700);
-}
-
-.back-btn:hover {
-    background: var(--neutral-50);
-    border-color: var(--neutral-400);
+.reservation-show-view .action-btn-decline:hover {
     transform: translateY(-1px);
 }
 
 /* Icon Sizes */
-.icon-sm { width: 14px; height: 14px; }
-.icon-md { width: 16px; height: 16px; }
-.icon-lg { width: 20px; height: 20px; }
+.reservation-show-view .icon-sm { width: 14px; height: 14px; }
+.reservation-show-view .icon-md { width: 16px; height: 16px; }
+.reservation-show-view .icon-lg { width: 20px; height: 20px; }
 
 /* Modal Styles */
-.modern-modal {
+.reservation-show-view .modern-modal {
     background: white;
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--neutral-200);
 }
 
-.additionals-input {
+.reservation-show-view .additionals-input {
     width: 100%;
     border: 1px solid var(--neutral-300);
     border-radius: 0.75rem;
@@ -93,13 +60,60 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.additionals-input:focus {
+.reservation-show-view .additionals-input:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.12);
 }
 
-.additionals-pill {
+.reservation-show-view .additionals-price-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid var(--neutral-300);
+    border-radius: 0.75rem;
+    background: #ffffff;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reservation-show-view .additionals-price-group:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.12);
+}
+
+.reservation-show-view .additionals-currency {
+    padding: 0.6rem 0.7rem;
+    border-right: 1px solid var(--neutral-200);
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1;
+    user-select: none;
+}
+
+.reservation-show-view .additionals-price-input {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+    text-align: right;
+    background: #ffffff;
+    color: var(--neutral-900);
+    appearance: textfield;
+}
+
+.reservation-show-view .additionals-price-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.reservation-show-view .additionals-price-input::-webkit-outer-spin-button,
+.reservation-show-view .additionals-price-input::-webkit-inner-spin-button {
+    margin: 0;
+}
+
+.reservation-show-view .additionals-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -113,19 +127,10 @@
     color: var(--primary);
 }
 
-/* Back Button Container */
-.back-button-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--neutral-200);
-}
-
 [x-cloak] { display: none !important; }
 </style>
 
-<div class="admin-page-shell modern-card p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
+<div class="admin-page-shell reservation-show-view p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
      x-data="reservationShow({
         accepted:@js(session('accepted',false)),
         declined:@js(session('declined',false)),
@@ -447,10 +452,10 @@
                         </div>
                         <div class="sm:col-span-2">
                             <label for="additional_price" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Price</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₱</span>
+                            <div class="additionals-price-group">
+                                <span class="additionals-currency">₱</span>
                                 <input id="additional_price" name="price" type="number" step="0.01" min="0"
-                                       class="additionals-input pl-7 text-right" placeholder="0.00"
+                                       class="additionals-price-input" placeholder="0.00"
                                        value="{{ old('price') }}" required>
                             </div>
                             @error('price')
