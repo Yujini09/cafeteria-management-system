@@ -83,8 +83,7 @@
 }
 
 .reservation-show-view .additionals-currency {
-    padding: 0.6rem 0.7rem;
-    border-right: 1px solid var(--neutral-200);
+    padding: 0.6rem 0.5rem 0.6rem 0.7rem;
     color: #6b7280;
     font-size: 0.875rem;
     line-height: 1;
@@ -92,15 +91,20 @@
 }
 
 .reservation-show-view .additionals-price-input {
-    width: 100%;
-    border: 0;
-    border-radius: 0;
-    padding: 0.6rem 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0.6rem 0.75rem 0.6rem 0.35rem;
     font-size: 0.875rem;
-    text-align: right;
-    background: #ffffff;
+    text-align: left;
+    background: transparent !important;
     color: var(--neutral-900);
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
     appearance: textfield;
+    box-shadow: none !important;
 }
 
 .reservation-show-view .additionals-price-input:focus {
@@ -110,7 +114,12 @@
 
 .reservation-show-view .additionals-price-input::-webkit-outer-spin-button,
 .reservation-show-view .additionals-price-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
     margin: 0;
+}
+
+.reservation-show-view .additionals-price-input::-webkit-textfield-decoration-container {
+    padding: 0;
 }
 
 .reservation-show-view .additionals-pill {
@@ -436,13 +445,13 @@
                 </div>
 
                 <p class="text-sm text-gray-600 mb-4">
-                    Add charges requested during the event (extra staff, overtime, add-on items). These are included in the total automatically.
+                    Add charges requested during the event. These are included in the total automatically.
                 </p>
 
                 @if($r->status === 'approved')
                     <form method="POST" action="{{ route('admin.reservations.additionals.store', $r) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-6" data-action-loading>
                         @csrf
-                        <div class="sm:col-span-4">
+                        <div class="sm:col-span-3">
                             <label for="additional_name" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Additional Name</label>
                             <input id="additional_name" name="name" type="text" placeholder="e.g. Extra chairs (20 pcs)"
                                    class="additionals-input" value="{{ old('name') }}" required>
@@ -450,7 +459,7 @@
                                 <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                             @enderror
                         </div>
-                        <div class="sm:col-span-2">
+                        <div class="sm:col-span-3">
                             <label for="additional_price" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Price</label>
                             <div class="additionals-price-group">
                                 <span class="additionals-currency">₱</span>
@@ -463,7 +472,6 @@
                             @enderror
                         </div>
                         <div class="sm:col-span-6 flex flex-wrap justify-end gap-2">
-                            <x-admin.ui.button.secondary type="reset" class="w-full sm:w-auto">Clear</x-admin.ui.button.secondary>
                             <x-admin.ui.button.primary type="submit" data-loading-text="Adding Additional..." class="w-full sm:w-auto">Add</x-admin.ui.button.primary>
                         </div>
                     </form>

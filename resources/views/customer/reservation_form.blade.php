@@ -782,9 +782,12 @@
 
         renderCalendar();
         validateForm();
-        initializeEmailValidation();
+        // TEMPORARILY DISABLED: CLSU domain email validation (@clsu2.edu.ph)
+        // initializeEmailValidation();
     });
 
+    /*
+    TEMPORARILY DISABLED: CLSU domain email validation (@clsu2.edu.ph)
     function initializeEmailValidation() {
         const emailInput = document.getElementById('email');
         const emailError = document.getElementById('email-error');
@@ -821,6 +824,7 @@
             }
         });
     }
+    */
 
     (function() {
         const shouldShowConflict = @json(session('reservation_conflict', false));

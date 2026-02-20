@@ -23,7 +23,6 @@
         height: 42px;
         border: 2px solid #ffffff;
         border-radius: 9999px;
-        display: inline-flex;
         align-items: center;
         justify-content: center;
         color: #ffffff;
@@ -225,8 +224,20 @@
         }"
         x-effect="document.body.classList.toggle('overflow-hidden', mobileNavOpen)"
         x-on:keydown.escape.window="mobileNavOpen = false">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16 relative">
-        <div class="flex items-center space-x-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 relative justify-start md:justify-between">
+        <button type="button"
+                class="mobile-nav-toggle inline-flex md:hidden"
+                :aria-expanded="mobileNavOpen.toString()"
+                aria-controls="mobile-nav-drawer"
+                :aria-label="mobileNavOpen ? 'Close menu' : 'Open menu'"
+                @click="mobileNavOpen = !mobileNavOpen">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path x-show="!mobileNavOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M4 6h16M4 12h16M4 18h16"></path>
+                <path x-show="mobileNavOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M6 6l12 12M18 6l-12 12"></path>
+            </svg>
+        </button>
+
+        <div class="flex items-center space-x-4 absolute left-1/2 -translate-x-1/2 md:static md:left-auto md:translate-x-0">
             <a href="{{ url('/') }}">
                 <img src="{{ asset('images/ret-logo-nav.png') }}" alt="RET Cafeteria Logo" class="h-12 w-auto" />
             </a>
@@ -313,17 +324,6 @@
             @endauth
         </div>
 
-        <button type="button"
-                class="mobile-nav-toggle md:hidden"
-                :aria-expanded="mobileNavOpen.toString()"
-                aria-controls="mobile-nav-drawer"
-                :aria-label="mobileNavOpen ? 'Close menu' : 'Open menu'"
-                @click="mobileNavOpen = !mobileNavOpen">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path x-show="!mobileNavOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M4 6h16M4 12h16M4 18h16"></path>
-                <path x-show="mobileNavOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M6 6l12 12M18 6l-12 12"></path>
-            </svg>
-        </button>
     </div>
 
     <div class="mobile-nav-overlay md:hidden"

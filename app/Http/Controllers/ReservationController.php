@@ -174,11 +174,11 @@ class ReservationController extends Controller
             'reservations.*.*.qty' => 'required|integer|min:0',
         ]);
 
-        // Calculate total persons across all days/meals
-        $totalPersons = 0;
+        // Compute party size as the highest pax value across all selected day/meal slots.
+        $maxPersons = 0;
         foreach ($validated['reservations'] as $day => $meals) {
             foreach ($meals as $meal => $data) {
-                $totalPersons += $data['qty'];
+                $maxPersons = max($maxPersons, (int) ($data['qty'] ?? 0));
             }
         }
 
@@ -195,7 +195,7 @@ class ReservationController extends Controller
             if (isset($firstDay['start_time'])) $eventTime = $firstDay['start_time'];
         }
 
-        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $totalPersons, $validated, $isEditing, $editingReservationId, &$savedReservationId) {
+        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $maxPersons, $validated, $isEditing, $editingReservationId, &$savedReservationId) {
             
             // CHECK IF EDITING OR CREATING
             if ($isEditing) {
@@ -211,7 +211,7 @@ class ReservationController extends Controller
                     'end_date' => $reservationData['end_date'],
                     'event_time' => $eventTime,
                     'day_times' => $dayTimes,
-                    'number_of_persons' => $totalPersons,
+                    'number_of_persons' => $maxPersons,
                     'special_requests' => $validated['notes'] ?? null,
                     // Update contact details as well
                     'contact_person' => $reservationData['name'],
@@ -236,7 +236,7 @@ class ReservationController extends Controller
                     'end_date' => $reservationData['end_date'] ?? null,
                     'event_time' => $eventTime,
                     'day_times' => $dayTimes,
-                    'number_of_persons' => $totalPersons,
+                    'number_of_persons' => $maxPersons,
                     'special_requests' => $validated['notes'] ?? null,
                     'status' => 'pending',
                     'contact_person' => $reservationData['name'] ?? null,

@@ -289,18 +289,18 @@ class ReportsController extends Controller
             $maxRevenueInDay = max($dailyRevenue);
             $maxRevenueDay = array_search($maxRevenueInDay, $dailyRevenue, true);
             if ($maxRevenueDay !== false) {
-                $highestRevenueDay = $maxRevenueDay . ' (' . $this->formatCurrency($maxRevenueInDay) . ')';
+                $highestRevenueDay = $maxRevenueDay . ' (' . $this->formatCurrencyWithPesoSign($maxRevenueInDay) . ')';
             }
         }
 
         $topMenuLabel = $topMenuRevenue->isNotEmpty()
-            ? ($topMenuRevenue->keys()->first() . ' (' . $this->formatCurrency((float) $topMenuRevenue->first()) . ')')
+            ? ($topMenuRevenue->keys()->first() . ' (' . $this->formatCurrencyWithPesoSign((float) $topMenuRevenue->first()) . ')')
             : 'N/A';
 
         $kpiCards = [
             $this->buildKpiCard(
                 'Total Revenue',
-                $this->formatCurrency((float) $totalRevenue),
+                $this->formatCurrencyWithPesoSign((float) $totalRevenue),
                 'fas fa-money-bill-wave',
                 'kpi-success',
                 null
@@ -314,7 +314,7 @@ class ReportsController extends Controller
             ),
             $this->buildKpiCard(
                 'Avg Order Value',
-                $this->formatCurrency((float) $currentAverageOrderValue),
+                $this->formatCurrencyWithPesoSign((float) $currentAverageOrderValue),
                 'fas fa-receipt',
                 'kpi-warning',
                 null
@@ -343,7 +343,7 @@ class ReportsController extends Controller
             ],
             'topContributors' => [
                 'type' => 'bar',
-                'label' => 'Top Menu Items by Revenue',
+                'label' => 'Top Menu Items',
                 'labels' => $topMenuRevenue->keys()->values()->all(),
                 'values' => $topMenuRevenue->values()->all(),
             ],
@@ -352,7 +352,7 @@ class ReportsController extends Controller
         $insights = [
             'Highest revenue day: ' . $highestRevenueDay,
             'Top menu item: ' . $topMenuLabel,
-            'Average order value: ' . $this->formatCurrency((float) $currentAverageOrderValue),
+            'Average order value: ' . $this->formatCurrencyWithPesoSign((float) $currentAverageOrderValue),
         ];
 
         $salesData = $this->paginateCollection($salesData, $request);
@@ -394,8 +394,8 @@ class ReportsController extends Controller
                 null
             ),
             $this->buildKpiCard(
-                'Unique Items Used',
-                number_format((float) $inventoryMetrics['uniqueItems'], 0),
+                'Total Items Used',
+                number_format((float) $inventoryMetrics['totalItemsUsed'], 0),
                 'fas fa-tags',
                 'kpi-success',
                 null
@@ -469,7 +469,7 @@ class ReportsController extends Controller
         $crmData = $crmMetrics['crmData'];
 
         $topCustomerLabel = $crmMetrics['topCustomers']->isNotEmpty()
-            ? ($crmMetrics['topCustomers']->keys()->first() . ' (' . $this->formatCurrency((float) $crmMetrics['topCustomers']->first()) . ')')
+            ? ($crmMetrics['topCustomers']->keys()->first() . ' (' . $this->formatCurrencyWithPesoSign((float) $crmMetrics['topCustomers']->first()) . ')')
             : 'N/A';
 
         $kpiCards = [
@@ -489,14 +489,14 @@ class ReportsController extends Controller
             ),
             $this->buildKpiCard(
                 'Total Customer Spend',
-                $this->formatCurrency($crmMetrics['totalSpend']),
+                $this->formatCurrencyWithPesoSign($crmMetrics['totalSpend']),
                 'fas fa-wallet',
                 'kpi-warning',
                 null
             ),
             $this->buildKpiCard(
                 'Avg Spend / Customer',
-                $this->formatCurrency($crmMetrics['averageSpend']),
+                $this->formatCurrencyWithPesoSign($crmMetrics['averageSpend']),
                 'fas fa-chart-line',
                 'kpi-neutral',
                 null
@@ -527,7 +527,7 @@ class ReportsController extends Controller
         $insights = [
             'Top customer by spend: ' . $topCustomerLabel,
             'Repeat customers: ' . number_format((float) $crmMetrics['repeatCustomers'], 0),
-            'Average spend per customer: ' . $this->formatCurrency($crmMetrics['averageSpend']),
+            'Average spend per customer: ' . $this->formatCurrencyWithPesoSign($crmMetrics['averageSpend']),
         ];
 
         $crmData = $this->paginateCollection($crmData, $request);
@@ -547,6 +547,7 @@ class ReportsController extends Controller
         $inventoryUsage = [];
         $dailyUsage = [];
         $unitUsage = [];
+        $totalItemsUsed = 0;
 
         foreach ($reservations as $reservation) {
             $eventDateKey = $reservation->event_date ? $reservation->event_date->format('Y-m-d') : null;
@@ -572,6 +573,7 @@ class ReportsController extends Controller
                         if ($usedQuantity <= 0) {
                             continue;
                         }
+                        $totalItemsUsed++;
 
                         if (!isset($inventoryUsage[$inventoryItem->id])) {
                             $inventoryUsage[$inventoryItem->id] = [
@@ -617,6 +619,7 @@ class ReportsController extends Controller
             'unitUsage' => collect($unitUsage)->take(7),
             'topItems' => $topItems,
             'totalUsed' => $totalUsed,
+            'totalItemsUsed' => $totalItemsUsed,
             'uniqueItems' => $inventoryData->count(),
             'reservationsCount' => $reservationsCount,
             'averageUsedPerReservation' => $averageUsedPerReservation,
@@ -724,6 +727,11 @@ class ReportsController extends Controller
     private function formatCurrency(float $value): string
     {
         return 'PHP ' . number_format($value, 2);
+    }
+
+    private function formatCurrencyWithPesoSign(float $value): string
+    {
+        return "\u{20B1}" . number_format($value, 2);
     }
 
     public function exportPdf(Request $request)
@@ -929,7 +937,7 @@ class ReportsController extends Controller
                     ],
                     'topContributors' => [
                         'type' => 'bar',
-                        'label' => 'Top Menu Items by Revenue',
+                        'label' => 'Top Menu Items',
                         'labels' => $topMenuRevenue->keys()->values()->all(),
                         'values' => $topMenuRevenue->values()->all(),
                     ],

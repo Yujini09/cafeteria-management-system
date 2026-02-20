@@ -558,7 +558,7 @@
                                 </td>
                                 <td class="font-medium text-gray-900">{{ $customer['total_reservations'] }}</td>
                                 <td class="text-gray-600">{{ $customer['approved_reservations'] }}</td>
-                                <td class="font-medium text-gray-900">PHP {{ number_format($customer['total_spent'], 2) }}</td>
+                                <td class="font-medium text-gray-900">&#8369;{{ number_format($customer['total_spent'], 2) }}</td>
                                 <td class="text-gray-600">{{ $customer['last_reservation'] }}</td>
                             </tr>
                             @endforeach
@@ -614,8 +614,8 @@
                                             </div>
                                             <div class="text-gray-500 text-xs mt-1">({{ $item['type'] }} - {{ $item['meal_time'] }})</div>
                                             <div class="mt-1 text-gray-600 text-xs">
-                                                Qty: {{ $item['quantity'] }} x PHP {{ number_format($item['unit_price'], 2) }} =
-                                                <span class="font-semibold text-green-600">PHP {{ number_format($item['total'], 2) }}</span>
+                                                Qty: {{ $item['quantity'] }} x &#8369;{{ number_format($item['unit_price'], 2) }} =
+                                                <span class="font-semibold text-green-600">&#8369;{{ number_format($item['total'], 2) }}</span>
                                             </div>
                                         </div>
                                         @endforeach
@@ -623,7 +623,7 @@
                                 </td>
                                 <td>
                                     <div class="text-lg font-bold text-green-600">
-                                        PHP {{ number_format($reservation['reservation_total'], 2) }}
+                                        &#8369;{{ number_format($reservation['reservation_total'], 2) }}
                                     </div>
                                 </td>
                             </tr>
@@ -740,6 +740,27 @@
                 legend: {
                     display: true,
                     position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            // For Top Departments chart: show "Department: X reservations"
+                            if (canvasId === 'topContributorsChart' && type === 'bar') {
+                                const value = typeof context.parsed?.y === 'number'
+                                    ? context.parsed.y
+                                    : (typeof context.parsed?.x === 'number' ? context.parsed.x : Number(context.raw ?? 0));
+                                const safeValue = Number.isFinite(value) ? value : 0;
+                                const suffix = safeValue === 1 ? 'reservation' : 'reservations';
+                                return `${context.label}: ${safeValue} ${suffix}`;
+                            }
+
+                            // Keep default-style tooltip text for other charts.
+                            const value = typeof context.parsed?.y === 'number'
+                                ? context.parsed.y
+                                : (typeof context.parsed?.x === 'number' ? context.parsed.x : context.raw);
+                            return `${config.label || ''}: ${value}`;
+                        }
+                    }
                 }
             }
         };
