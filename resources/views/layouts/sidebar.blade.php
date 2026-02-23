@@ -823,19 +823,7 @@
                         @endif
                     </a>
                 </li>
-                <li class="menu-list-item">
-                    <a href="{{ route('admin.payments.index') }}" wire:navigate
-                       class="menu-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
-                        <span class="menu-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-                        <span class="link-text">Payments</span>
-                        {{-- Payments Badge --}}
-                        @if($pendingPaymentsCount > 0)
-                            <span class="menu-badge">
-                                {{ $pendingPaymentsCount > 99 ? '99+' : $pendingPaymentsCount }}
-                            </span>
-                        @endif
-                    </a>
-                </li>
+
                 <li class="menu-list-item">
                     <a href="{{ route('admin.inventory.index') }}" wire:navigate
                        class="menu-link {{ request()->routeIs('admin.inventory.index') ? 'active' : '' }}">
