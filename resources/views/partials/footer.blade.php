@@ -44,7 +44,7 @@
                         <div>
                             <p class="font-medium text-white mb-1">Email</p>
                             <a href="mailto:RETCafeteria@clsu2.edu.ph" class="text-gray-300 text-sm hover:text-ret-green-light transition-colors">
-                                RETCafeteria@clsu2.edu.ph
+                                food.lodgingservices@clsu.edu.ph
                             </a>
                         </div>
                     </div>

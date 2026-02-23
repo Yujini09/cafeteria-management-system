@@ -35,6 +35,23 @@ class ReservationController extends Controller
         return view('admin.reservations.index', compact('reservations','status','counts','createdSort'));
     }
 
+// Add this method to handle the OR Number submission
+public function markPaid(\Illuminate\Http\Request $request, $id)
+{
+    $request->validate([
+        'or_number' => 'required|string|max:255'
+    ]);
+
+    $reservation = \App\Models\Reservation::findOrFail($id);
+
+    $reservation->update([
+        'payment_status' => 'paid',
+        'or_number' => $request->or_number
+    ]);
+
+    return back()->with('success', 'Reservation marked as paid successfully!');
+}
+
     public function show(Reservation $reservation)
     {
         // Load all necessary relationships

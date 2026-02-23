@@ -354,6 +354,368 @@ body {
     </div>
 </section>
 
+<section id="testimonials" class="py-20 bg-white relative" 
+         x-data="{ 
+            showFeedbackModal: false, 
+            active: 0, 
+            count: {{ count($feedbacks) }},
+            next() { if(this.count > 1) this.active = (this.active + 1) % this.count; },
+            prev() { if(this.count > 1) this.active = (this.active - 1 + this.count) % this.count; }
+         }">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {{-- Section Header with Title and Button --}}
+        <div class="text-center mb-16">
+            <span class="text-clsu-green font-semibold text-sm uppercase tracking-wider mb-2 block">Testimonials</span>
+            <h2 class="text-4xl md:text-4xl font-bold text-ret-dark mb-4">What Our Customers Say</h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Share your experience and help us serve you better</p>
+            
+            @auth
+                {{-- Logged in: Opens the review modal --}}
+                <button @click="showFeedbackModal = true" 
+                        class="mt-8 bg-clsu-green hover:bg-green-700 text-white font-semibold py-4 px-8 rounded-lg transition duration-300 shadow-lg hover:shadow-xl flex items-center gap-3 mx-auto group">
+                    <i class="fas fa-pen"></i> Write a Review
+                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            @else
+                {{-- Logged out: Redirects to login page --}}
+                <a href="{{ route('login') }}" 
+                   class="mt-8 inline-flex bg-clsu-green hover:bg-green-700 text-white font-semibold py-4 px-8 rounded-lg transition duration-300 shadow-lg hover:shadow-xl items-center gap-3 mx-auto group">
+                    <i class="fas fa-sign-in-alt"></i> Login to Write a Review
+                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            @endauth
+        </div>
+
+        {{-- Success Message --}}
+        @if(session('success'))
+            <div class="mb-8 max-w-2xl mx-auto p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-r-lg text-sm font-medium flex items-center justify-between animate-fade-in">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                </div>
+            </div>
+        @endif
+
+        {{-- Feedback Display Logic --}}
+        @if($feedbacks->isEmpty())
+            {{-- Empty State --}}
+            <div class="col-span-full bg-white p-16 rounded-2xl shadow-lg border border-gray-100 text-center">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-comments text-4xl text-gray-400"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">No reviews yet</h3>
+                <p class="text-gray-600 mb-8">Be the first to share your experience with us!</p>
+            </div>
+        @else
+            @php $totalCount = count($feedbacks); @endphp
+
+            @if($totalCount == 1)
+                {{-- Single item - centered with original card width --}}
+                <div class="flex justify-center mt-8">
+                    @foreach($feedbacks as $feedback)
+                        <div class="w-full max-w-sm md:max-w-md bg-white rounded-2xl overflow-hidden relative group flex flex-col h-[400px] border-2 border-gray-100 hover:border-clsu-green/30 transition-all duration-300 shadow-xl">
+                            {{-- Top Color Bar --}}
+                            <div class="h-1.5 w-full bg-clsu-green"></div>
+                            
+                            <div class="p-8 flex flex-col h-full relative z-10">
+                                {{-- Star Rating --}}
+                                <div class="flex items-center gap-1 mb-4 flex-shrink-0">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= ($feedback->rating ?? 5))
+                                            <span class="text-yellow-400 text-xl">★</span>
+                                        @else
+                                            <span class="text-gray-300 text-xl">★</span>
+                                        @endif
+                                    @endfor
+                                </div>
+                                
+                                {{-- Testimonial Message with Enhanced Design --}}
+                                <div class="flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar min-h-0">
+                                    <div class="relative">
+                                        {{-- Decorative large quotation mark --}}
+                                        <div class="absolute -top-2 -left-2 text-6xl text-clsu-green/10 font-serif leading-none">"</div>
+                                        
+                                        {{-- Message container with subtle background and border --}}
+                                        <div class="relative z-10 bg-gradient-to-br from-gray-50 to-white p-5 rounded-xl border-l-4 border-clsu-green shadow-sm">
+                                            <p class="text-gray-700 leading-relaxed italic font-light text-base">
+                                                {{ $feedback->message }}
+                                            </p>
+                                        </div>
+                                        
+                                        {{-- Small quotation mark at the end --}}
+                                        <div class="absolute -bottom-2 -right-2 text-4xl text-clsu-green/10 font-serif rotate-180">"</div>
+                                    </div>
+                                </div>
+                                
+                                {{-- Author Info --}}
+                                <div class="flex items-center gap-4 pt-4 border-t border-gray-100 flex-shrink-0">
+                                    <div class="w-12 h-12 bg-clsu-green rounded-lg flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
+                                        {{ substr($feedback->name, 0, 1) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-gray-900 truncate">{{ $feedback->name }}</h4>
+                                        <p class="text-sm text-gray-500 flex items-center gap-1">
+                                            <i class="fas fa-calendar-alt text-clsu-green text-xs"></i>
+                                            {{ $feedback->created_at->format('F j, Y') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @elseif($totalCount == 2)
+                {{-- Two items - side by side with proper spacing --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-8">
+                    @foreach($feedbacks as $feedback)
+                        <div class="bg-white rounded-2xl overflow-hidden relative group flex flex-col h-[400px] border-2 border-gray-100 hover:border-clsu-green/30 transition-all duration-300 w-full shadow-xl">
+                            {{-- Top Color Bar --}}
+                            <div class="h-1.5 w-full bg-clsu-green"></div>
+                            
+                            <div class="p-8 flex flex-col h-full relative z-10">
+                                {{-- Star Rating --}}
+                                <div class="flex items-center gap-1 mb-4 flex-shrink-0">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= ($feedback->rating ?? 5))
+                                            <span class="text-yellow-400 text-xl">★</span>
+                                        @else
+                                            <span class="text-gray-300 text-xl">★</span>
+                                        @endif
+                                    @endfor
+                                </div>
+                                
+                                {{-- Testimonial Message with Enhanced Design --}}
+                                <div class="flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar min-h-0">
+                                    <div class="relative">
+                                        {{-- Decorative large quotation mark --}}
+                                        <div class="absolute -top-2 -left-2 text-6xl text-clsu-green/10 font-serif leading-none">"</div>
+                                        
+                                        {{-- Message container with subtle background and border --}}
+                                        <div class="relative z-10 bg-gradient-to-br from-gray-50 to-white p-5 rounded-xl border-l-4 border-clsu-green shadow-sm">
+                                            <p class="text-gray-700 leading-relaxed italic font-light text-base">
+                                                {{ $feedback->message }}
+                                            </p>
+                                        </div>
+                                        
+                                        {{-- Small quotation mark at the end --}}
+                                        <div class="absolute -bottom-2 -right-2 text-4xl text-clsu-green/10 font-serif rotate-180">"</div>
+                                    </div>
+                                </div>
+                                
+                                {{-- Author Info --}}
+                                <div class="flex items-center gap-4 pt-4 border-t border-gray-100 flex-shrink-0">
+                                    <div class="w-12 h-12 bg-clsu-green rounded-lg flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
+                                        {{ substr($feedback->name, 0, 1) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-gray-900 truncate">{{ $feedback->name }}</h4>
+                                        <p class="text-sm text-gray-500 flex items-center gap-1">
+                                            <i class="fas fa-calendar-alt text-clsu-green text-xs"></i>
+                                            {{ $feedback->created_at->format('F j, Y') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                {{-- Original 3D slider logic for 3+ items --}}
+                <div class="relative w-full h-[450px] flex items-center justify-center mt-8" style="perspective: 1000px;">
+                    
+                    {{-- Left Arrow --}}
+                    <button @click="prev()" class="absolute left-0 md:left-8 z-40 bg-clsu-green hover:bg-green-700 text-white w-12 h-12 rounded-lg shadow-lg flex items-center justify-center transition-all hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <div class="relative w-full max-w-5xl h-full flex justify-center items-center">
+                        @foreach($feedbacks as $index => $feedback)
+                            <div class="absolute w-full max-w-sm md:max-w-md transition-all duration-500 ease-in-out cursor-pointer"
+                                 style="will-change: transform, opacity;"
+                                 :class="{
+                                     'z-30 scale-100 opacity-100 translate-x-0 shadow-2xl': active === {{ $index }},
+                                     'z-20 scale-[0.85] opacity-50 -translate-x-[65%] md:-translate-x-[85%] blur-[1px] hover:opacity-100 hover:blur-none': active === {{ ($index + 1) % count($feedbacks) }},
+                                     'z-20 scale-[0.85] opacity-50 translate-x-[65%] md:translate-x-[85%] blur-[1px] hover:opacity-100 hover:blur-none': active === {{ ($index - 1 + count($feedbacks)) % count($feedbacks) }},
+                                     'z-10 scale-75 opacity-0 pointer-events-none': active !== {{ $index }} && active !== {{ ($index + 1) % count($feedbacks) }} && active !== {{ ($index - 1 + count($feedbacks)) % count($feedbacks) }}
+                                 }"
+                                 @click="active = {{ $index }}">
+                                
+                                {{-- Card Structure with Fixed Height --}}
+                                <div class="bg-white rounded-2xl overflow-hidden relative group flex flex-col h-[400px] border-2 border-gray-100 hover:border-clsu-green/30 transition-all duration-300 w-full" 
+                                     :class="active === {{ $index }} ? 'shadow-xl border-clsu-green/30' : 'shadow-md'">
+                                    
+                                    {{-- Top Color Bar --}}
+                                    <div class="h-1.5 w-full bg-clsu-green"></div>
+                                    
+                                    <div class="p-8 flex flex-col h-full relative z-10">
+                                        {{-- Star Rating --}}
+                                        <div class="flex items-center gap-1 mb-4 flex-shrink-0">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                @if($i <= ($feedback->rating ?? 5))
+                                                    <span class="text-yellow-400 text-xl">★</span>
+                                                @else
+                                                    <span class="text-gray-300 text-xl">★</span>
+                                                @endif
+                                            @endfor
+                                        </div>
+                                        
+                                        {{-- Testimonial Message with Enhanced Design --}}
+                                        <div class="flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar min-h-0">
+                                            <div class="relative">
+                                                <div class="absolute -top-2 -left-2 text-6xl text-clsu-green/10 font-serif leading-none">"</div>
+                                                <div class="relative z-10 bg-gradient-to-br from-gray-50 to-white p-5 rounded-xl border-l-4 border-clsu-green shadow-sm">
+                                                    <p class="text-gray-700 leading-relaxed italic font-light text-base">
+                                                        {{ $feedback->message }}
+                                                    </p>
+                                                </div>
+                                                <div class="absolute -bottom-2 -right-2 text-4xl text-clsu-green/10 font-serif rotate-180">"</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {{-- Author Info --}}
+                                        <div class="flex items-center gap-4 pt-4 border-t border-gray-100 flex-shrink-0">
+                                            <div class="w-12 h-12 bg-clsu-green rounded-lg flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
+                                                {{ substr($feedback->name, 0, 1) }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <h4 class="font-bold text-gray-900 truncate">{{ $feedback->name }}</h4>
+                                                <p class="text-sm text-gray-500 flex items-center gap-1">
+                                                    <i class="fas fa-calendar-alt text-clsu-green text-xs"></i>
+                                                    {{ $feedback->created_at->format('F j, Y') }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Right Arrow --}}
+                    <button @click="next()" class="absolute right-0 md:right-8 z-40 bg-clsu-green hover:bg-green-700 text-white w-12 h-12 rounded-lg shadow-lg flex items-center justify-center transition-all hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Dot Indicators --}}
+                <div class="flex justify-center flex-wrap gap-2 mt-8 max-w-lg mx-auto">
+                    @foreach($feedbacks as $index => $feedback)
+                        <button @click="active = {{ $index }}" 
+                                class="h-2.5 rounded-full transition-all duration-300"
+                                :class="active === {{ $index }} ? 'w-8 bg-clsu-green' : 'w-2.5 bg-gray-300 hover:bg-clsu-green/50'"></button>
+                    @endforeach
+                </div>
+            @endif
+        @endif
+    </div>
+
+    {{-- Custom Scrollbar Styles --}}
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+    </style>
+
+    {{-- === FEEDBACK MODAL FORM === --}}
+    <div x-show="showFeedbackModal" 
+         x-cloak 
+         class="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/60 backdrop-blur-sm p-4"
+         x-transition.opacity>
+        
+        <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all overflow-hidden"
+             @click.away="showFeedbackModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+
+            {{-- Top Bar --}}
+            <div class="h-1.5 w-full bg-clsu-green"></div>
+            
+            <div class="p-8 relative">
+                {{-- Close Button --}}
+                <button type="button"
+                        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors bg-gray-100 hover:bg-gray-200 rounded-lg p-2 z-50 cursor-pointer"
+                        @click="showFeedbackModal = false">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                {{-- Modal Header --}}
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-ret-dark">Share Your Experience</h3>
+                    <p class="text-gray-600 mt-1">Your feedback helps us improve</p>
+                </div>
+
+                {{-- Form --}}
+                <form action="{{ route('feedback.store') }}" method="POST" class="space-y-5">
+                    @csrf
+                    
+                    {{-- Rating Stars --}}
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Your Rating</label>
+                        <div class="flex items-center gap-2" 
+                             x-data="{ selectedRating: 0 }">
+                            <div class="flex items-center gap-1 text-3xl">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <span @click="selectedRating = {{ $i }}" class="cursor-pointer">
+                                        <span x-show="selectedRating >= {{ $i }}" class="text-yellow-400">★</span>
+                                        <span x-show="selectedRating < {{ $i }}" class="text-gray-300">★</span>
+                                    </span>
+                                @endfor
+                            </div>
+                            <span class="ml-2 text-sm text-gray-500" x-show="selectedRating > 0" x-text="'(' + selectedRating + '/5)'"></span>
+                            <input type="hidden" name="rating" :value="selectedRating">
+                        </div>
+                    </div>
+
+                    {{-- Name Field --}}
+                    <div class="space-y-2">
+                        <label for="feedback_name" class="block text-sm font-semibold text-gray-700">Your Name</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">
+                                <i class="fas fa-user text-sm"></i>
+                            </span>
+                            <input type="text" id="feedback_name" name="name" required 
+                                   class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-clsu-green focus:border-transparent transition-all bg-gray-50 focus:bg-white" 
+                                   placeholder="Enter your name"
+                                   value="{{ Auth::check() ? Auth::user()->name : '' }}"
+                                   {{ Auth::check() ? 'readonly' : '' }}>
+                        </div>
+                    </div>
+                    
+                    {{-- Message Field --}}
+                    <div class="space-y-2">
+                        <label for="feedback_message" class="block text-sm font-semibold text-gray-700">Your Review</label>
+                        <div class="relative">
+                            <span class="absolute top-3 left-4 text-gray-400">
+                                <i class="fas fa-comment text-sm"></i>
+                            </span>
+                            <textarea id="feedback_message" name="message" rows="4" required 
+                                      class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-clsu-green focus:border-transparent transition-all bg-gray-50 focus:bg-white resize-none" 
+                                      placeholder="Tell us about your experience..."></textarea>
+                        </div>
+                    </div>
+
+                    {{-- Submit Button --}}
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-clsu-green hover:bg-green-700 text-white font-semibold py-4 px-4 rounded-xl transition duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 text-lg">
+                            <i class="fas fa-paper-plane"></i> Submit Review
+                        </button>
+                        <p class="text-xs text-gray-400 text-center mt-4">Your review will be displayed after moderation.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const slides = document.querySelectorAll('.slide');

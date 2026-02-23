@@ -47,23 +47,19 @@
     overflow: visible;
 }
 
-/* Status Badges - Same size as role badges in manage users */
+/* Status Badges */
 .status-badge {
-    border-radius: 20px; /* Same as role-badge */
+    border-radius: 20px;
     text-transform: uppercase;
-    letter-spacing: 0.5px; /* Same as role-badge */
+    letter-spacing: 0.5px;
     gap: 0.375rem;
     border: 1px solid transparent;
 }
 
-.payment-pending {
+/* NEW PAYMENT BADGE STYLES */
+.payment-unpaid {
     background: #fef3c7;
     color: #92400e;
-}
-
-.payment-under-review {
-    background: #dbeafe;
-    color: #1e40af;
 }
 
 .payment-paid {
@@ -71,6 +67,10 @@
     color: #166534;
 }
 
+.payment-na {
+    background: #f3f4f6;
+    color: #4b5563;
+}
 
 /* Filter Styles */
 .filter-select {
@@ -97,73 +97,17 @@
 /* Filter Section */
 .filter-section {
     background: var(--neutral-50);
-    padding: 1.25rem; /* Adjusted padding */
+    padding: 1.25rem;
     border-radius: 12px;
     border: 1px solid var(--neutral-200);
-    margin-bottom: 1.5rem; /* Same margin */
+    margin-bottom: 1.5rem;
 }
 
-.filter-label {
-    font-weight: 600;
-    color: var(--neutral-700);
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-}
-
-.filter-label-inline {
-    margin-bottom: 0;
-}
-
-.filter-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-    .filter-row {
-        flex-direction: row;
-        align-items: center;
-    }
-}
-
-.select-with-arrows {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    min-width: 0;
-}
-
-.select-with-arrows .filter-select {
-    appearance: none;
-    padding-right: 2.75rem;
-}
-
-.select-arrows {
-    position: absolute;
-    right: 0.75rem;
-    pointer-events: none;
-    color: var(--neutral-500);
-}
-
-.select-arrows svg {
-    width: 16px;
-    height: 16px;
-}
-
-/* Created sort dropdown */
-
-/* Customer Info - Same font sizes as manage users */
+/* Customer Info */
 .customer-name {
     font-weight: 600;
     color: var(--neutral-900);
-    font-size: 0.875rem; /* Same as table font */
-}
-
-.customer-department {
-    color: var(--neutral-500);
-    font-size: 0.75rem; /* Smaller like in manage users */
-    margin-top: 0.125rem;
+    font-size: 0.875rem;
 }
 
 /* ID Link */
@@ -172,7 +116,7 @@
     font-weight: 600;
     text-decoration: none;
     transition: color 0.2s ease;
-    font-size: 0.875rem; /* Same as table font */
+    font-size: 0.875rem;
 }
 
 .id-link:hover {
@@ -237,85 +181,24 @@
     transform: translateX(0);
 }
 
-/* Icon Sizes - Same as manage users */
-.icon-sm {
-    width: 14px; /* Same as w-3.5 (14px) */
-    height: 14px;
-}
-
-.icon-md {
-    width: 16px; /* Same as w-4 (16px) */
-    height: 16px;
-}
-
-.icon-lg {
-    width: 20px; /* Same as in header */
-    height: 20px;
-}
-
-/* Column Widths for better alignment */
-.column-id {
-    width: 80px;
-}
-
-.column-customer {
-    width: 150px;
-}
-
-.column-department {
-    width: 180px;
-}
-
-.column-status {
-    width: 144px;
-    min-width: 144px;
-}
-
-.column-payment {
-    width: 168px;
-}
-
-.column-email {
-    width: 140px;
-}
-
-.column-date {
-    width: 140px;
-}
+/* Column Widths */
+.column-id { width: 80px; }
+.column-customer { width: 150px; }
+.column-department { width: 180px; }
+.column-status { width: 144px; min-width: 144px; }
+.column-payment { width: 168px; }
+.column-email { width: 140px; }
+.column-date { width: 140px; }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .header-content {
-        width: 100%;
-    }
-    
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .header-content { width: 100%; }
 }
-
-/* Menu Card Styling for Inventory Sections */
-
-
-
-/* Modal Styles */
-.modern-modal {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--neutral-200);
-}
-
-[x-cloak] { display: none !important; }
 </style>
 
-<div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0"
-     x-data="reservationList()"
-     x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen)"
-     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false">
-    <!-- Header -->
+<div class="modern-card admin-page-shell p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
+    
     <div class="page-header items-start">
         <div class="header-content">
             <div class="header-icon">
@@ -347,6 +230,7 @@
             </div>
         </div>
     </div>
+    
     <div class="mb-4">
         <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
             <x-admin.ui.icon name="fa-calendar-check" size="xs" />
@@ -354,7 +238,6 @@
         </span>
     </div>
 
-    <!-- Filter Section -->
     <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
         <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col gap-4">
             <input type="hidden" name="created_sort" value="{{ $createdSort }}">
@@ -377,10 +260,9 @@
         </form>
     </div>
 
-    <!-- Table -->
     <div id="reservationsTableHost" class="table-view-overlay-host">
         <div id="reservationsTableScroll" data-table-scroll class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
-            <table class="modern-table table-fixed">
+            <table class="modern-table table-fixed w-full">
             <colgroup>
                 <col class="w-14">
                 <col class="w-64">
@@ -392,19 +274,19 @@
             </colgroup>
             <thead>
                 <tr>
-                    <th class="column-id text-left">ID</th>
-                    <th class="column-customer text-left">Customer</th>
-                    <th class="column-department text-left">Office/Department</th>
-                    <th class="column-status text-left">Status</th>
-                    <th class="column-payment text-left">Payment</th>
-                    <th class="column-email text-left">Email</th>
-                    <th class="column-date text-left">
+                    <th class="column-id text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                    <th class="column-customer text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th class="column-department text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Office/Dept</th>
+                    <th class="column-status text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="column-payment text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
+                    <th class="column-email text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="column-date text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         @php
                             $nextCreatedSort = $createdSort === 'asc' ? 'desc' : 'asc';
                             $createdSortIcon = $createdSort === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down';
                         @endphp
                         <a href="{{ request()->fullUrlWithQuery(['created_sort' => $nextCreatedSort, 'page' => null]) }}"
-                           class="group inline-flex items-center gap-2"
+                           class="group inline-flex items-center gap-2 hover:text-gray-700"
                            aria-label="Sort by created date">
                             <span>Created</span>
                             <x-admin.ui.icon name="{{ $createdSortIcon }}" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
@@ -412,100 +294,87 @@
                     </th>
                 </tr>
             </thead>
-            <tbody>
-                {{-- In the table body section of admin/reservations/index.blade.php --}}
+            <tbody class="divide-y divide-gray-200">
                 @forelse($reservations as $r)
                     @php
-                        $status = strtolower($r->status);
-                        $statusLabel = match($status) {
+                        $statusText = strtolower($r->status);
+                        $statusLabel = match($statusText) {
                             'approved' => 'Approved',
                             'declined' => 'Declined',
-                            'cancelled' => 'Cancelled', // <--- ADDED THIS
+                            'cancelled' => 'Cancelled',
                             default => 'Pending'
                         };
                         
-                        $statusClass = match($status) {
+                        $statusClass = match($statusText) {
                             'approved' => 'bg-green-100 text-green-700',
                             'declined' => 'bg-red-100 text-red-700',
-                            'cancelled' => 'bg-gray-100 text-gray-700', // <--- ADDED THIS
+                            'cancelled' => 'bg-gray-100 text-gray-700', 
                             default => 'bg-yellow-100 text-yellow-700'
                         };
                         
-                        $statusIcon = match($status) {
+                        $statusIcon = match($statusText) {
                             'approved' => 'fa-check',
                             'declined' => 'fa-xmark',
-                            'cancelled' => 'fa-ban', // <--- ADDED THIS
+                            'cancelled' => 'fa-ban', 
                             default => 'fa-clock'
                         };
 
-                        // Get customer name from contact_person field
                         $customerName = $r->contact_person ?? optional($r->user)->name ?? '—';
                         
                         $department = $r->department ?? optional($r->user)->department ?? 'N/A';
-                        if ($department !== 'N/A' && strlen($department) > 15) {
-                            $shortDepartment = substr($department, 0, 15) . '...';
-                        } else {
-                            $shortDepartment = $department;
-                        }
+                        $shortDepartment = (strlen($department) > 15) ? substr($department, 0, 15) . '...' : $department;
 
-                        // Get email from reservation or user
                         $email = $r->email ?? optional($r->user)->email ?? '—';
-                        if ($email !== '—' && strlen($email) > 15) {
-                            $shortEmail = substr($email, 0, 15) . '...';
-                        } else {
-                            $shortEmail = $email;
-                        }
+                        $shortEmail = (strlen($email) > 15) ? substr($email, 0, 15) . '...' : $email;
                     @endphp
                     <tr class="reservation-row hover:bg-admin-neutral-50 transition-colors duration-admin" data-view-url="{{ route('admin.reservations.show', $r) }}">
-                        <td class="text-admin-neutral-500 font-semibold">
-                            <a href="{{ route('admin.reservations.show', $r) }}" wire:navigate class="text-admin-primary font-semibold hover:text-admin-primary-light transition-colors duration-admin">
+                        <td class="px-4 py-4 text-sm font-semibold">
+                            <a href="{{ route('admin.reservations.show', $r) }}" class="text-admin-primary hover:text-admin-primary-light transition-colors duration-admin">
                                 {{ $r->id }}
                             </a>
                         </td>
-                        <td>
-                            <div class="font-semibold text-admin-neutral-900">{{ $customerName }}</div>
+                        <td class="px-4 py-4">
+                            <div class="text-sm font-semibold text-admin-neutral-900">{{ $customerName }}</div>
                         </td>
-                        <td class="column-department text-admin-neutral-600">
-                            <span class="short-email" title="{{ $department }}">
-                                {{ $shortDepartment }}
-                            </span>
+                        <td class="px-4 py-4 text-sm text-admin-neutral-600">
+                            <span class="short-email" title="{{ $department }}">{{ $shortDepartment }}</span>
                         </td>
-                        <td class="column-status">
-                            <span class="status-badge {{ $statusClass }} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide">
+                        <td class="px-4 py-4 column-status">
+                            <span class="status-badge {{ $statusClass }} inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold">
                                 <x-admin.ui.icon name="{{ $statusIcon }}" style="fas" size="sm" />
                                 {{ $statusLabel }}
                             </span>
                         </td>
-                        <td class="column-payment">
-                            @php
-                                $paymentStatus = $r->payment_status ?? 'pending';
-                                $paymentClass = match($paymentStatus) {
-                                    'paid' => 'payment-paid',
-                                    'under_review' => 'payment-under-review',
-                                    default => 'payment-pending'
-                                };
-                                $paymentLabel = $paymentStatus === 'under_review' ? 'Under Review' : ucfirst($paymentStatus);
-                            @endphp
-                            <span class="status-badge {{ $paymentClass }}">{{ $paymentLabel }}</span>
+                        <td class="px-4 py-4 column-payment">
+                            {{-- NEW STRICTLY PAID OR UNPAID PAYMENT LOGIC --}}
+                            @if(in_array($statusText, ['declined', 'cancelled']))
+                                <span class="status-badge payment-na inline-flex items-center px-2.5 py-1 text-[11px] font-bold">N/A</span>
+                            @elseif(($r->payment_status ?? 'unpaid') === 'paid')
+                                <span class="status-badge payment-paid inline-flex items-center px-2.5 py-1 text-[11px] font-bold">Paid</span>
+                                @if(!empty($r->or_number))
+                                @endif
+                            @else
+                                <span class="status-badge payment-unpaid inline-flex items-center px-2.5 py-1 text-[11px] font-bold">Unpaid</span>
+                            @endif
                         </td>
-                        <td class="column-email text-gray-600">
-                            <span class="short-email" title="{{ $email }}">
-                                {{ $shortEmail }}
-                            </span>
+                        <td class="px-4 py-4 text-sm text-gray-600">
+                            <span class="short-email" title="{{ $email }}">{{ $shortEmail }}</span>
                         </td>
-                        <td class="column-date text-admin-neutral-600 whitespace-nowrap">{{ $r->created_at->format('M d, Y H:i') }}</td>
+                        <td class="px-4 py-4 text-sm text-admin-neutral-600 whitespace-nowrap">
+                            {{ $r->created_at->format('M d, Y H:i') }}
+                        </td>
                     </tr>
                 @empty
                     <tr>
                         <td colspan="7">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <svg class="w-8 h-8 text-admin-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="empty-state py-12 text-center">
+                                <div class="empty-state-icon flex justify-center mb-3">
+                                    <svg class="w-10 h-10 text-admin-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                                     </svg>
                                 </div>
-                                <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No Reservations Found</p>
-                                <p class="text-sm text-admin-neutral-500">Try adjusting your filter or check back later for new reservations</p>
+                                <p class="text-lg font-semibold text-admin-neutral-900 mb-1">No Reservations Found</p>
+                                <p class="text-sm text-admin-neutral-500">Try adjusting your filter or check back later.</p>
                             </div>
                         </td>
                     </tr>
@@ -515,7 +384,6 @@
         </div>
         <a id="reservationsFloatingViewBtn"
            href="#"
-           wire:navigate
            class="table-floating-view-btn"
            aria-label="View reservation"
            aria-hidden="true">
@@ -524,51 +392,6 @@
         </a>
     </div>
 
-    {{-- Approve Confirmation Modal --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"></div>
-        <div class="relative w-full max-w-sm rounded-admin-lg bg-white shadow-admin-modal border border-admin-neutral-200"
-             x-transition.scale.90
-             @click.stop>
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-admin-neutral-100">
-                <span class="flex h-10 w-10 items-center justify-center rounded-admin bg-admin-primary-light text-admin-primary">
-                    <x-admin.ui.icon name="fa-check" style="fas" size="sm" />
-                </span>
-                <h3 class="text-lg font-semibold text-admin-neutral-900">Confirm Approval</h3>
-            </div>
-            <div class="px-6 py-4 text-sm text-admin-neutral-600">
-                Are you sure you want to approve this reservation?
-            </div>
-            <div class="flex justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
-                <x-admin.ui.button.secondary type="button" @click="approveConfirmationOpen=false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.primary type="button" @click="redirectToShowPage()">Yes, Approve</x-admin.ui.button.primary>
-            </div>
-        </div>
-    </div>
-
-    {{-- Decline Confirmation Modal --}}
-    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="declineConfirmationOpen=false" class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"></div>
-        <div class="relative w-full max-w-sm rounded-admin-lg bg-white shadow-admin-modal border border-admin-neutral-200"
-             x-transition.scale.90
-             @click.stop>
-            <div class="flex items-center gap-3 px-6 py-4 border-b border-admin-neutral-100">
-                <span class="flex h-10 w-10 items-center justify-center rounded-admin bg-admin-danger-light text-admin-danger">
-                    <x-admin.ui.icon name="fa-triangle-exclamation" style="fas" size="sm" />
-                </span>
-                <h3 class="text-lg font-semibold text-admin-neutral-900">Confirm Decline</h3>
-            </div>
-            <div class="px-6 py-4 text-sm text-admin-neutral-600">
-                Are you sure you want to decline this reservation?
-            </div>
-            <div class="flex justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
-                <x-admin.ui.button.secondary type="button" @click="declineConfirmationOpen=false">Cancel</x-admin.ui.button.secondary>
-                <x-admin.ui.button.danger type="button" @click="redirectToShowPage()">Yes, Decline</x-admin.ui.button.danger>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pagination -->
     @if($reservations->hasPages())
         <div class="mt-6">
             {{ $reservations->links('components.pagination') }}
@@ -578,6 +401,38 @@
 
 <script>
 (() => {
+    function filterTable(query) {
+        const lowerQuery = query.toLowerCase();
+        const rows = document.querySelectorAll('.reservation-row');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(lowerQuery)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        const clearBtn = document.getElementById('clearSearch');
+        if(clearBtn) {
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+        }
+    }
+
+    // Bind global function so HTML input can trigger it
+    window.filterTable = filterTable;
+
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    
+    if(clearSearch && searchInput) {
+        clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            filterTable('');
+        });
+    }
+
     function initReservationsFloatingView() {
         const host = document.getElementById('reservationsTableHost');
         const scrollArea = document.getElementById('reservationsTableScroll');
@@ -655,17 +510,9 @@
                 updateButtonPosition();
             }
         });
-
-        scrollArea.addEventListener('focusin', (event) => {
-            const row = event.target.closest('tr[data-view-url]');
-            if (row) {
-                showForRow(row);
-            }
-        });
     }
 
     document.addEventListener('DOMContentLoaded', initReservationsFloatingView);
-    document.addEventListener('livewire:navigated', initReservationsFloatingView);
 })();
 </script>
 

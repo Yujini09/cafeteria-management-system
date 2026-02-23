@@ -2,18 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\View\View;
+use Illuminate\Http\Request;
+use App\Models\Feedback; // Make sure this is imported!
+use Illuminate\Support\Facades\Auth;
 
 class CustomerHomeController extends Controller
 {
-    public function __construct()
+    // The method to load the homepage
+    public function index()
     {
-        $this->middleware(['auth','role:customer']);
-    }
+        // Fetch visible feedbacks
+        $feedbacks = Feedback::where('is_visible', true)
+                        ->latest()
+                        ->get();
 
-    public function index(): View
+        return view('customer.homepage', compact('feedbacks'));
+    } // <-- Make sure this closing brace is here!
+
+    // The method to store new feedback
+    public function storeFeedback(Request $request)
     {
-        $menus = \App\Models\Menu::with('items')->get();
-        return view('customer.homepage', compact('menus'));
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'message' => 'required|string|min:10',
+            'rating' => 'required|integer|min:1|max:5',
+        ]);
+
+        Feedback::create([
+            'name' => $request->name,
+            'message' => $request->message,
+            'rating' => $request->rating,
+            'is_visible' => false,
+        ]);
+
+        return back()->with('success', 'Thank you! Your feedback has been submitted and is waiting for review.');
     }
 }

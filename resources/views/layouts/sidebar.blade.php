@@ -921,6 +921,13 @@
                     </a>
                 </li>
                 <li class="menu-list-item">
+                    <a href="{{ route('admin.feedbacks.index') }}" wire:navigate
+                    class="menu-link {{ request()->routeIs('admin.feedbacks.*') ? 'active' : '' }}">
+                        <span class="menu-icon"><i class="fas fa-comments"></i></span>
+                        <span class="link-text">Feedbacks</span>
+                    </a>
+                </li>
+                <li class="menu-list-item">
                     <a href="{{ route('profile.edit') }}" wire:navigate
                        class="menu-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="fas fa-gear"></i></span>
