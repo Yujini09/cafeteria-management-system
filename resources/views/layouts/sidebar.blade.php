@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <link rel="icon" type="image/png" href="{{ asset('images/Cafeteria-logo.png') }}">
+
+
     <title>{{ config('app.name', 'Smart Cafeteria') }}</title>
 
     <script>
@@ -437,8 +440,9 @@
             transition: all 0.2s ease;
         }
 
-        /* Collapsed state badge */
-        .sidebar.close .menu-badge {
+        /* Collapsed state badge (APPLIED TO BOTH RED AND YELLOW BADGES) */
+        .sidebar.close .menu-badge,
+        .sidebar.close .inventory-warning-badge {
             position: absolute;
             top: 2px;
             right: 12px;

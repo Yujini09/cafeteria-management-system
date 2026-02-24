@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Smart Cafeteria'))</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('images/Cafeteria-logo.png') }}">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
