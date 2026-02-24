@@ -120,7 +120,7 @@ body {
             </div>
         </div>
 
-        <div class="flex-1 relative flex justify-center lg:justify-end min-h-[450px]">
+        <div class="flex-1 relative flex justify-center lg:justify-end min-h-[490px]">
             <div class="relative w-80 h-80 z-10 mt-16">
                 <div class="absolute -translate-x-20 inset-0 w-full h-full border-[100px] border-white rounded-full"></div>
                 <div class="absolute -translate-x-20 inset-[6px] w-[calc(100%-12px)] h-[calc(100%-12px)] border-[100px] border-[#1F2937] rounded-full"></div>                
