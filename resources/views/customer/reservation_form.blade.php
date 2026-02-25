@@ -170,14 +170,11 @@
 
                     {{-- EMAIL IS READ-ONLY --}}
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span> (CLSU Email only)</label>
-                        <input type="email" id="email" name="email" placeholder="Enter your CLSU email (@clsu2.edu.ph)" required
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required
                             value="{{ old('email', $data['email'] ?? Auth::user()->email) }}" 
                             readonly
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed">
-                        <div id="email-error" class="text-sm text-red-500 mt-1 hidden">
-                            Please use a valid CLSU email address (must end with @clsu2.edu.ph)
-                        </div>
                     </div>
 
                     <div>
@@ -231,7 +228,7 @@
                         
                         <div id="selected-date-range-container" class="flex flex-col gap-2 mb-4 min-h-[40px] items-start p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                             <div id="no-dates-selected" class="text-sm text-gray-500 italic">
-                                Select a date range by clicking the start and end dates on the calendar.
+                                Select a date range by clicking the start and end dates on the calendar. Double click if you reserve for 1 day event.
                             </div>
                             <div id="date-range-display" class="hidden">
                                 <div class="flex items-center gap-2">

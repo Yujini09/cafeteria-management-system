@@ -112,16 +112,6 @@
     box-shadow: none;
 }
 
-.reservation-show-view .additionals-price-input::-webkit-outer-spin-button,
-.reservation-show-view .additionals-price-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.reservation-show-view .additionals-price-input::-webkit-textfield-decoration-container {
-    padding: 0;
-}
-
 .reservation-show-view .additionals-pill {
     display: inline-flex;
     align-items: center;
@@ -148,15 +138,15 @@
         overlapWarning:@js(session('overlap_warning',false)),
         overlapReservationId:@js(session('overlap_reservation_id',null)),
         overlapDate:@js(session('overlap_reservation_date',null))
-})"
+     })"
      x-effect="document.body.classList.toggle('overflow-hidden', approveConfirmationOpen || declineConfirmationOpen || acceptedOpen || inventoryWarningOpen || declineOpen || overlapWarningOpen)"
-     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false; overlapWarningOpen = false">
+     @keydown.escape.window="approveConfirmationOpen = false; declineConfirmationOpen = false; acceptedOpen = false; inventoryWarningOpen = false; declineOpen = false; overlapWarningOpen = false;">
     
     @php
         $additionalsTotal = $r->additionals ? $r->additionals->sum('price') : 0;
+        $serviceFee = $r->service_fee ?? 0;
     @endphp
 
-    <!-- Header -->
     <div class="page-header">
         <div class="header-content">
             <a href="{{ route('admin.reservations') }}" class="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors duration-200">
@@ -193,6 +183,16 @@
         </span>
     </div>
 
+    {{-- Success Message for Payment updates --}}
+    @if(session('success'))
+        <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+            <div class="flex items-center">
+                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
             <div class="info-card">
@@ -221,7 +221,6 @@
                                             $dayTimes = $r->day_times ?? [];
                                             $days = $startDate->diffInDays($endDate) + 1;
                                             
-                                            // Helper function logic kept same as previous fix
                                             function formatTimeForDisplay($timeString) {
                                                 if (empty($timeString) || trim($timeString) === '') return '';
                                                 $timeString = trim($timeString);
@@ -255,7 +254,6 @@
                                                         $startTime = '';
                                                         $endTime = '';
                                                         
-                                                        // Same time extraction logic
                                                         if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
                                                             $timeData = $dayTimes[$dateKey];
                                                             if (is_array($timeData)) {
@@ -318,7 +316,8 @@
                 </dl>
             </div>
 
-            <div class="info-card">
+            {{-- 1. ISOLATED COMPONENT: Selected Menus & Service Fee Edit --}}
+            <div class="info-card" x-data="{ serviceFeeOpen: false }">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -368,14 +367,10 @@
                                     @foreach($dayItems as $item)
                                         @if($item->menu)
                                             @php
-                                                // Ensure price is grabbed correctly. 
-                                                // Priority: Item Price (if saved) -> Menu Price -> Default
                                                 $price = $item->price ?? $item->menu->price ?? 150; 
-                                                // Fallback if database has 0
                                                 if($price <= 0) {
                                                     $price = ($item->menu->type == 'special' ? 200 : 150);
                                                 }
-                                                
                                                 $itemTotal = $item->quantity * $price;
                                                 $totalAmount += $itemTotal;
                                             @endphp
@@ -404,26 +399,55 @@
                         </div>
                     @endforeach
                     
-                    <!-- Total Amount -->
                     @php
-                        $grandTotal = $totalAmount + $additionalsTotal;
+                        $grandTotal = $totalAmount + $additionalsTotal + $serviceFee;
                     @endphp
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 relative">
                         <div class="flex justify-between items-center">
                             <div>
                                 <div class="text-sm text-green-800">Subtotal:</div>
                                 <div class="text-sm text-green-800">Additionals:</div>
-                                <div class="text-sm text-green-800">Service Fee:</div>
+                                <div class="text-sm text-green-800 flex items-center">
+                                    Service Fee: 
+                                    <button type="button" @click="serviceFeeOpen = true" class="ml-2 text-green-600 hover:text-green-800 focus:outline-none">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="text-right">
                                 <div class="text-sm font-medium">₱{{ number_format($totalAmount, 2) }}</div>
                                 <div class="text-sm font-medium">₱{{ number_format($additionalsTotal, 2) }}</div>
-                                <div class="text-sm font-medium">₱0.00</div>
+                                <div class="text-sm font-medium">₱{{ number_format($serviceFee, 2) }}</div>
                             </div>
                         </div>
                         <div class="border-t border-green-300 mt-2 pt-2 flex justify-between items-center">
                             <div class="font-bold text-green-900">Total:</div>
                             <div class="font-bold text-xl text-green-900">₱{{ number_format($grandTotal, 2) }}</div>
+                        </div>
+                    </div>
+
+                    {{-- Edit Service Fee Modal --}}
+                    <div x-cloak x-show="serviceFeeOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div @click="serviceFeeOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+                        <div class="modern-modal p-6 w-full max-w-sm relative z-10" x-transition.scale.90>
+                            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-20" @click="serviceFeeOpen = false">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                            <h3 class="text-lg font-bold mb-4">Edit Service Fee</h3>
+                            <form method="POST" action="{{ route('admin.reservations.service_fee.update', $r->id) }}">
+                                @csrf @method('PATCH')
+                                <div class="mb-4">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Service Fee Amount</label>
+                                    <div class="additionals-price-group">
+                                        <span class="additionals-currency">₱</span>
+                                        <input name="service_fee" type="number" step="0.01" min="0" class="additionals-price-input" value="{{ $serviceFee }}" required>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end gap-3">
+                                    <button type="button" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium" @click="serviceFeeOpen = false">Cancel</button>
+                                    <button type="submit" class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-md">Update Fee</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 @else
@@ -435,7 +459,6 @@
         </div>
 
         <div class="space-y-6">
-            <!-- Additionals -->
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -453,26 +476,17 @@
                         @csrf
                         <div class="sm:col-span-3">
                             <label for="additional_name" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Additional Name</label>
-                            <input id="additional_name" name="name" type="text" placeholder="e.g. Extra chairs (20 pcs)"
-                                   class="additionals-input" value="{{ old('name') }}" required>
-                            @error('name')
-                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                            @enderror
+                            <input id="additional_name" name="name" type="text" placeholder="e.g. Extra chairs" class="additionals-input" required>
                         </div>
                         <div class="sm:col-span-3">
                             <label for="additional_price" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Price</label>
                             <div class="additionals-price-group">
                                 <span class="additionals-currency">₱</span>
-                                <input id="additional_price" name="price" type="number" step="0.01" min="0"
-                                       class="additionals-price-input" placeholder="0.00"
-                                       value="{{ old('price') }}" required>
+                                <input id="additional_price" name="price" type="number" step="0.01" min="0" class="additionals-price-input" placeholder="0.00" required>
                             </div>
-                            @error('price')
-                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
                         <div class="sm:col-span-6 flex flex-wrap justify-end gap-2">
-                            <x-admin.ui.button.primary type="submit" data-loading-text="Adding Additional..." class="w-full sm:w-auto">Add</x-admin.ui.button.primary>
+                            <button type="submit" class="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-semibold w-full sm:w-auto">Add</button>
                         </div>
                     </form>
                 @endif
@@ -480,30 +494,19 @@
                 @if($r->additionals && $r->additionals->count() > 0)
                     <div class="space-y-3">
                         @foreach($r->additionals as $additional)
-                            <div class="rounded-xl border border-gray-200 bg-white p-3">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-semibold text-gray-900 break-words">{{ $additional->name }}</p>
-                                        <p class="text-xs text-gray-600 mt-1">&#8369;{{ number_format((float) $additional->price, 2) }}</p>
-                                    </div>
-
-                                    @if($r->status === 'approved')
-                                        <button type="button"
-                                                class="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-200"
-                                                title="Delete additional"
-                                                aria-label="Delete additional {{ $additional->name }}"
-                                                onclick="if (window.cmsActionButtons && !window.cmsActionButtons.start(this, 'Deleting...')) { return; } document.getElementById('deleteAdditional{{ $additional->id }}').submit()">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    @endif
+                            <div class="rounded-xl border border-gray-200 bg-white p-3 flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ $additional->name }}</p>
+                                    <p class="text-xs text-gray-600 mt-1">&#8369;{{ number_format((float) $additional->price, 2) }}</p>
                                 </div>
-                                <form id="deleteAdditional{{ $additional->id }}" method="POST"
-                                      action="{{ route('admin.reservations.additionals.destroy', [$r, $additional]) }}" class="hidden">
-                                    @csrf
-                                    @method('DELETE')
-                                </form>
+                                @if($r->status === 'approved')
+                                    <form method="POST" action="{{ route('admin.reservations.additionals.destroy', [$r, $additional]) }}">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Delete">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -513,12 +516,11 @@
                     </div>
                 @else
                     <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-                        No additionals recorded for this reservation.
+                        No additionals recorded.
                     </div>
                 @endif
             </div>
 
-            <!-- Customer Information -->
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -543,19 +545,83 @@
                         <dt class="text-gray-500 font-medium">Phone</dt>
                         <dd class="text-gray-900">{{ $r->contact_number ?? optional($r->user)->phone ?? '—' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-500 font-medium">Address</dt>
-                        <dd class="text-gray-900">{{ $r->address ?? '—' }}</dd>
+                </dl>
+            </div>
+
+            {{-- 2. ISOLATED COMPONENT: Reservation & Payment --}}
+            <div class="info-card" x-data="{ markPaidOpen: false }">
+                <div class="info-card-header">
+                    <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h2 class="info-card-title">Reservation & Payment</h2>
+                </div>
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Created:</dt>
+                        <dd class="text-gray-900">{{ $r->created_at->format('M d, Y h:i A') }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-500 font-medium">Project Name</dt>
-                        <dd class="text-gray-900">{{ $r->project_name ?? '—' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500 font-medium">Account Code</dt>
-                        <dd class="text-gray-900">{{ $r->account_code ?? '—' }}</dd>
+                    
+                    <div class="pt-4 mt-4 border-t border-gray-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <dt class="text-gray-500 font-medium">Payment Status:</dt>
+                            <dd>
+                                @if(($r->payment_status ?? 'unpaid') === 'paid')
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 uppercase tracking-wide">
+                                        <i class="fas fa-check-circle mr-1"></i> Paid
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 uppercase tracking-wide">
+                                        <i class="fas fa-clock mr-1"></i> Unpaid
+                                    </span>
+                                @endif
+                            </dd>
+                        </div>
+
+                        @if(($r->payment_status ?? 'unpaid') === 'paid' && !empty($r->or_number))
+                            <div class="flex justify-between items-center mb-4">
+                                <dt class="text-gray-500 font-medium">OR Number:</dt>
+                                <dd class="text-gray-900 font-bold bg-gray-100 px-3 py-1 rounded border border-gray-200">
+                                    {{ $r->or_number }}
+                                </dd>
+                            </div>
+                        @endif
+
+                        @if($r->status === 'approved' && ($r->payment_status ?? 'unpaid') !== 'paid')
+                            <button type="button" @click="markPaidOpen = true" class="w-full action-btn action-btn-approve justify-center mt-2 focus:outline-none">
+                                <i class="fas fa-receipt text-lg mr-2"></i> Mark as Paid (Enter OR)
+                            </button>
+                        @endif
                     </div>
                 </dl>
+
+                {{-- Mark Paid Modal (Inside the x-data) --}}
+                <div x-cloak x-show="markPaidOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div @click="markPaidOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+                    <div class="modern-modal p-6 w-full max-w-sm relative z-10" x-transition.scale.90>
+                        <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-20" @click="markPaidOpen = false">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        <h3 class="text-lg font-bold mb-2">Mark as Paid</h3>
+                        <p class="text-sm text-gray-600 mb-5">Please enter the Official Receipt (OR) Number from the cashier to mark this reservation as completely paid.</p>
+                        <form method="POST" action="{{ route('admin.reservations.mark_paid', $r->id) }}" class="space-y-4">
+                            @csrf 
+                            <div class="space-y-2">
+                                <label for="or_number" class="block text-sm font-semibold text-gray-700">Official Receipt (OR) Number</label>
+                                <input type="text" name="or_number" id="or_number" required 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                                        placeholder="e.g., OR-1029384"
+                                        value="{{ old('or_number') }}">
+                            </div>
+                            <div class="flex justify-end gap-3 pt-2">
+                                <button type="button" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium" @click="markPaidOpen = false">Cancel</button>
+                                <button type="submit" class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-md flex items-center">
+                                    <i class="fas fa-check mr-2"></i> Save Payment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             @if($r->status !== 'approved' && $r->status !== 'declined')
@@ -590,242 +656,133 @@
             @if($r->status === 'declined' && !empty($r->decline_reason))
             <div class="info-card">
                 <div class="info-card-header">
-                    <svg class="icon-md text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h2 class="info-card-title">Decline Reason</h2>
+                    <h2 class="info-card-title text-red-600">Decline Reason</h2>
                 </div>
                 <p class="text-sm text-gray-700">{{ $r->decline_reason }}</p>
             </div>
             @endif
-            
-            <div class="info-card">
-                <div class="info-card-header">
-                    <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h2 class="info-card-title">Reservation Info</h2>
-                </div>
-                <dl class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <dt class="text-gray-500">Created:</dt>
-                        <dd class="text-gray-900">{{ $r->created_at->format('M d, Y h:i A') }}</dd>
-                    </div>
-                    @if($r->updated_at->ne($r->created_at))
-                    <div class="flex justify-between">
-                        <dt class="text-gray-500">Last Updated:</dt>
-                        <dd class="text-gray-900">{{ $r->updated_at->format('M d, Y h:i A') }}</dd>
-                    </div>
-                    @endif
-                    @php
-                        $paymentStatus = $r->payment_status ?? 'pending';
-                        $paymentLabel = $paymentStatus === 'under_review' ? 'Under Review' : ucfirst($paymentStatus);
-                        $latestPayment = $r->payments->sortByDesc('created_at')->first();
-                    @endphp
-                    <div class="flex justify-between items-center">
-                        <dt class="text-gray-500">Payment Status:</dt>
-                        <dd class="text-gray-900">
-                            {{ $paymentLabel }}
-                            @if($latestPayment)
-                                <a href="{{ route('admin.payments.show', $latestPayment) }}" class="ml-2 text-xs text-blue-600 hover:text-blue-800">View</a>
-                            @endif
-                        </dd>
-                    </div>
-                </dl>
-            </div>
         </div>
     </div>
 
-    {{-- Confirmation Modals (Same logic as before, kept clean) --}}
-    <div x-cloak x-show="approveConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10" x-transition.scale.90 @click.stop>
-            <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
+    {{-- Main Page Confirmation Modals (Using reservationShow scope) --}}
+    <div x-cloak x-show="approveConfirmationOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div @click="approveConfirmationOpen=false" class="absolute inset-0 bg-black/40"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
             <h3 class="text-lg font-semibold mb-2">Confirm Approval</h3>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to approve this reservation?</p>
-            <div class="flex justify-center gap-3">
-                <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="approveConfirmationOpen=false">Cancel</button>
-                <button type="button"
-                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium"
-                        data-loading-text="Approving..."
-                        :disabled="approving"
-                        :class="{ 'opacity-60 cursor-not-allowed': approving }"
-                        @click="handleApprove($event)">
-                    <span x-show="!approving">Yes, Approve</span>
-                    <span x-show="approving">Approving...</span>
-                </button>
+            <div class="flex justify-center gap-3 mt-4">
+                <button @click="approveConfirmationOpen=false" class="px-6 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                <button @click="handleApprove($event)" class="px-6 py-2 bg-green-600 text-white rounded-lg">Approve</button>
             </div>
         </div>
     </div>
 
-    <div x-cloak x-show="declineConfirmationOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="declineConfirmationOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10" x-transition.scale.90 @click.stop>
-            <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
-            </div>
+    <div x-cloak x-show="declineConfirmationOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div @click="declineConfirmationOpen=false" class="absolute inset-0 bg-black/40"></div>
+        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10">
             <h3 class="text-lg font-semibold mb-2">Confirm Decline</h3>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to decline this reservation?</p>
-            <div class="flex justify-center gap-3">
-                <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium" @click="declineConfirmationOpen = false">Cancel</button>
-                <button type="button" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium" @click="openDeclineForm()">Yes, Decline</button>
-            </div>
-        </div>
-    </div>
-
-    {{-- Overlap Warning Modal --}}
-    <div x-cloak x-show="overlapWarningOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="overlapWarningOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-lg relative z-10"
-             x-transition.scale.90
-             @click.stop>
-            <div class="flex items-center mb-4">
-                <svg class="w-10 h-10 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-                <div>
-                    <h3 class="text-lg font-semibold">Schedule Conflict</h3>
-                    <p class="text-sm text-gray-600">This reservation overlaps with an already approved reservation.</p>
-                </div>
-            </div>
-            <p class="text-sm text-gray-700 mb-5">
-                This reservation overlaps with reservation
-                <span class="font-semibold">#<span x-text="overlapReservationId ?? 'N/A'"></span></span>
-                <template x-if="overlapDate">
-                    <span> on <span x-text="overlapDate"></span></span>
-                </template>.
-                You can’t approve overlapping reservations. Would you like to proceed with declining this reservation?
-            </p>
-            <div class="flex justify-end gap-3">
-                <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="overlapWarningOpen = false">Close</button>
-                <button type="button" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium" @click="openDeclineFromOverlap()">Proceed to Decline</button>
+            <div class="flex justify-center gap-3 mt-4">
+                <button @click="declineConfirmationOpen=false" class="px-6 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                <button @click="openDeclineForm()" class="px-6 py-2 bg-red-600 text-white rounded-lg">Decline</button>
             </div>
         </div>
     </div>
     
-
-    {{-- Accepted popup --}}
-    <div x-cloak x-show="acceptedOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="acceptedOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-sm text-center relative z-10"
-             x-transition.scale.90
-             @click.stop>
-            <div class="flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-semibold mb-2">Reservation Accepted</h3>
-            <p class="text-sm text-gray-600">Inventory was updated and the customer was notified.</p>
-            <button class="mt-4 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium" @click="acceptedOpen = false">OK</button>
-        </div>
-    </div>
-    {{-- Inventory Warning modal --}}
-    <div x-cloak x-show="inventoryWarningOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="inventoryWarningOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10"
-             x-transition.scale.90
-             @click.stop>
-            <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200 z-20" @click="inventoryWarningOpen = false">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            
-            <div class="flex items-center mb-4">
-                <svg class="w-12 h-12 text-yellow-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-                <h3 class="text-xl font-bold text-gray-900">Insufficient Inventory</h3>
-            </div>
-            
-            <p class="text-sm text-gray-600 mb-4">The following ingredients do not have enough quantity to fulfill this reservation:</p>
-
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <table class="modern-table">
-                    <thead>
-                        <tr>
-                            <th class="text-left">Ingredient</th>
-                            <th class="text-right">Required</th>
-                            <th class="text-right">Available</th>
-                            <th class="text-right">Shortage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="item in insufficientItems" :key="item.name">
-                            <tr>
-                                <td class="text-gray-900" x-text="item.name"></td>
-                                <td class="text-right text-gray-700">
-                                    <span x-text="item.required.toFixed(2)"></span>
-                                    <span class="text-xs text-gray-500 ml-1" x-text="item.unit"></span>
-                                </td>
-                                <td class="text-right text-gray-700">
-                                    <span x-text="item.available.toFixed(2)"></span>
-                                    <span class="text-xs text-gray-500 ml-1" x-text="item.unit"></span>
-                                </td>
-                                <td class="text-right text-red-600 font-semibold">
-                                    <span x-text="item.shortage.toFixed(2)"></span>
-                                    <span class="text-xs ml-1" x-text="item.unit"></span>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div class="flex items-start">
-                    <svg class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div class="text-sm text-blue-800">
-                        <p class="font-semibold mb-1">What happens if you proceed?</p>
-                        <p>If you approve this reservation, the inventory will be deducted as much as possible. Items with insufficient stock will be reduced to zero.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-3 pt-4">
-                <button type="button" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="inventoryWarningOpen = false">Cancel</button>
-                <button type="button"
-                        @click="proceedWithApproval($event)"
-                        class="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 font-medium"
-                        data-loading-text="Approving..."
-                        :disabled="approving"
-                        :class="{ 'opacity-60 cursor-not-allowed': approving }">
-                    <span x-show="!approving">Proceed Anyway</span>
-                    <span x-show="approving">Approving...</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- Decline Form Modal --}}
-    <div x-cloak x-show="declineOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div @click="declineOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="modern-modal p-6 w-full max-w-lg relative z-10" x-transition.scale.90 @click.stop>
-            <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-20" @click="declineOpen = false">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <h3 class="text-lg font-semibold mb-3">Decline Reservation</h3>
-            <p class="text-sm text-gray-600 mb-6">Please provide a reason. The customer will receive this via email and SMS.</p>
-
-            <form method="POST" action="{{ route('admin.reservations.decline', $r) }}" class="space-y-4" data-action-loading>
+    <div x-cloak x-show="declineOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div @click="declineOpen = false" class="absolute inset-0 bg-black/40"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10">
+            <h3 class="text-lg font-semibold mb-3">Decline Reason</h3>
+            <form method="POST" action="{{ route('admin.reservations.decline', $r) }}">
                 @csrf @method('PATCH')
-                <div class="space-y-2">
-                    <label for="reason" class="block text-sm font-medium text-gray-700">Reason for declining</label>
-                    <textarea name="reason" id="reason" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" placeholder="Detailed reason..."></textarea>
-                    @error('reason') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium" @click="declineOpen = false">Cancel</button>
-                    <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium" data-loading-text="Rejecting...">Submit</button>
+                <textarea name="reason" rows="4" required class="w-full border rounded-lg p-2"></textarea>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" @click="declineOpen = false" class="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">Submit</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <div x-cloak x-show="inventoryWarningOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div @click="inventoryWarningOpen=false" class="absolute inset-0 bg-black/40"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10 border-l-4 border-yellow-500">
+            <h3 class="text-lg font-bold text-yellow-700 mb-2">Inventory Warning</h3>
+            <p class="text-sm text-gray-700 mb-4">Approving this reservation exceeds current inventory for the following items:</p>
+            <ul class="list-disc list-inside text-sm text-gray-600 mb-6 pl-4">
+                <template x-for="item in insufficientItems" :key="item.name">
+                    <li>
+                        <span class="font-semibold" x-text="item.name"></span>: 
+                        Need <span x-text="item.needed"></span>, 
+                        Available <span x-text="item.available" class="text-red-500 font-bold"></span>
+                    </li>
+                </template>
+            </ul>
+            <div class="flex justify-end gap-3">
+                <button @click="inventoryWarningOpen=false" class="px-5 py-2 bg-gray-200 rounded-lg text-sm font-medium">Cancel Approval</button>
+                <button @click="forceApprove()" class="px-5 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium">Approve Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <div x-cloak x-show="overlapWarningOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div @click="overlapWarningOpen=false" class="absolute inset-0 bg-black/40"></div>
+        <div class="modern-modal p-6 w-full max-w-lg relative z-10 border-l-4 border-orange-500">
+            <h3 class="text-lg font-bold text-orange-700 mb-2">Schedule Overlap Detected</h3>
+            <p class="text-sm text-gray-700 mb-4">
+                There is already an approved reservation (ID: <span class="font-bold" x-text="overlapReservationId"></span>) 
+                scheduled on <span class="font-bold" x-text="overlapDate"></span>.
+            </p>
+            <p class="text-sm text-gray-600 mb-6">Are you sure you want to approve this reservation on the same date?</p>
+            <div class="flex justify-end gap-3">
+                <button @click="overlapWarningOpen=false" class="px-5 py-2 bg-gray-200 rounded-lg text-sm font-medium">Cancel Approval</button>
+                <button @click="forceApprove()" class="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium">Approve Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <div x-cloak x-show="acceptedOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div @click="acceptedOpen=false" class="absolute inset-0 bg-black/40"></div>
+        <div class="modern-modal p-8 w-full max-w-sm text-center relative z-10">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Reservation Approved!</h3>
+            <p class="text-gray-500 mb-6">The customer will be notified.</p>
+            <button @click="acceptedOpen=false" class="w-full py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium">Close</button>
+        </div>
+    </div>
 </div>
 
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('reservationShow', (config) => ({
+            approveConfirmationOpen: false,
+            declineConfirmationOpen: false,
+            acceptedOpen: config.accepted,
+            inventoryWarningOpen: config.inventoryWarning,
+            declineOpen: false,
+            overlapWarningOpen: config.overlapWarning,
+            insufficientItems: config.insufficientItems || [],
+            overlapReservationId: config.overlapReservationId,
+            overlapDate: config.overlapDate,
+
+            openApproveConfirmation() {
+                this.approveConfirmationOpen = true;
+            },
+            handleApprove(event) {
+                document.getElementById('approveForm').submit();
+            },
+            openDeclineConfirmation() {
+                this.declineConfirmationOpen = true;
+            },
+            openDeclineForm() {
+                this.declineConfirmationOpen = false;
+                this.declineOpen = true;
+            },
+            forceApprove() {
+                document.getElementById('forceApproveInput').value = '1';
+                document.getElementById('approveForm').submit();
+            }
+        }));
+    });
+</script>
 @endsection

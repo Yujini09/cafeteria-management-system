@@ -119,30 +119,13 @@
 }
 
 /* Icon Sizes */
-.icon-sm {
-    width: 14px;
-    height: 14px;
-}
-
-.icon-md {
-    width: 16px;
-    height: 16px;
-}
-
-.icon-lg {
-    width: 20px;
-    height: 20px;
-}
-
-.section-divider {
-    border-top: 1px solid var(--neutral-200);
-    margin: 2rem 0;
-}
-
+.icon-sm { width: 14px; height: 14px; }
+.icon-md { width: 16px; height: 16px; }
+.icon-lg { width: 20px; height: 20px; }
+.section-divider { border-top: 1px solid var(--neutral-200); margin: 2rem 0; }
 </style>
 
 <div class="modern-card menu-card admin-page-shell p-6 mx-auto max-w-full">
-    <!-- Header -->
     <div class="page-header">
         <div class="header-content">
             <div class="header-icon">
@@ -157,103 +140,49 @@
         </div>
     </div>
 
-    <!-- Report Generation Form -->
     <form action="{{ route('admin.reports.generate') }}" method="POST" class="modern-form">
         @csrf
 
-        <!-- Report Type -->
         <div class="form-group form-row">
-            <label for="report_type" class="form-label form-label-inline">
-                Report Type
-            </label>
-            <select id="report_type"
-                    name="report_type"
-                    class="form-select @error('report_type') form-error @enderror"
-                    data-admin-select="true"
-                    required>
+            <label for="report_type" class="form-label form-label-inline">Report Type</label>
+            <select id="report_type" name="report_type" class="form-select @error('report_type') form-error @enderror" data-admin-select="true" required>
                 <option value="">Select Report Type</option>
-                <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report</option>
-                <option value="sales" {{ old('report_type') == 'sales' ? 'selected' : '' }}>Cafeteria Sales Report</option>
-                <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>Inventory Usage Report</option>
+                <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report (Participants & Revenue)</option>
+                <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>Current Inventory Stock Report</option>
                 <option value="crm" {{ old('report_type') == 'crm' ? 'selected' : '' }}>Customer Relationship Management Report</option>
             </select>
-            @error('report_type')
-                <p class="error-message">{{ $message }}</p>
-            @enderror
+            @error('report_type') <p class="error-message">{{ $message }}</p> @enderror
         </div>
 
-        <!-- Date Range -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Start Date -->
             <div class="form-group">
-                <label for="start_date" class="form-label">
-                    Start Date
-                </label>
-                <input type="date"
-                       id="start_date"
-                       name="start_date"
-                       value="{{ old('start_date', now()->startOfMonth()->format('Y-m-d')) }}"
-                       class="form-input @error('start_date') form-error @enderror"
-                       required>
-                @error('start_date')
-                    <p class="error-message">{{ $message }}</p>
-                @enderror
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" id="start_date" name="start_date" value="{{ old('start_date', now()->startOfMonth()->format('Y-m-d')) }}" class="form-input @error('start_date') form-error @enderror" required>
+                @error('start_date') <p class="error-message">{{ $message }}</p> @enderror
             </div>
-
-            <!-- End Date -->
             <div class="form-group">
-                <label for="end_date" class="form-label">
-                    End Date
-                </label>
-                <input type="date"
-                       id="end_date"
-                       name="end_date"
-                       value="{{ old('end_date', now()->format('Y-m-d')) }}"
-                       class="form-input @error('end_date') form-error @enderror"
-                       required>
-                @error('end_date')
-                    <p class="error-message">{{ $message }}</p>
-                @enderror
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" id="end_date" name="end_date" value="{{ old('end_date', now()->format('Y-m-d')) }}" class="form-input @error('end_date') form-error @enderror" required>
+                @error('end_date') <p class="error-message">{{ $message }}</p> @enderror
             </div>
         </div>
 
-        <!-- Generate Button -->
         <div class="flex justify-center pt-2">
             <button type="submit" class="action-btn">
-                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
+                <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Generate Report
             </button>
         </div>
     </form>
 
-    <!-- Quick Date Ranges -->
     <div class="section-divider"></div>
-    
     <div class="mt-6">
         <h3 class="section-title">Quick Date Ranges</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button type="button"
-                    onclick="setDateRange('today')"
-                    class="quick-action-btn">
-                Today
-            </button>
-            <button type="button"
-                    onclick="setDateRange('week')"
-                    class="quick-action-btn">
-                This Week
-            </button>
-            <button type="button"
-                    onclick="setDateRange('month')"
-                    class="quick-action-btn">
-                This Month
-            </button>
-            <button type="button"
-                    onclick="setDateRange('year')"
-                    class="quick-action-btn">
-                This Year
-            </button>
+            <button type="button" onclick="setDateRange('today')" class="quick-action-btn">Today</button>
+            <button type="button" onclick="setDateRange('week')" class="quick-action-btn">This Week</button>
+            <button type="button" onclick="setDateRange('month')" class="quick-action-btn">This Month</button>
+            <button type="button" onclick="setDateRange('year')" class="quick-action-btn">This Year</button>
         </div>
     </div>
 </div>
@@ -272,30 +201,19 @@ function setDateRange(range) {
 
     switch(range) {
         case 'today':
-            startDate = endDate = today;
-            break;
+            startDate = endDate = today; break;
         case 'week':
-            // Monday of current week
             const dayOfWeek = today.getDay();
             const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            const monday = new Date(today);
-            monday.setDate(today.getDate() + diffToMonday);
-            startDate = monday;
-            // Sunday of current week
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            endDate = sunday;
-            break;
+            startDate = new Date(today); startDate.setDate(today.getDate() + diffToMonday);
+            endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); break;
         case 'month':
             startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            break;
+            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); break;
         case 'year':
             startDate = new Date(today.getFullYear(), 0, 1);
-            endDate = new Date(today.getFullYear(), 11, 31);
-            break;
+            endDate = new Date(today.getFullYear(), 11, 31); break;
     }
-
     document.getElementById('start_date').value = formatLocalDate(startDate);
     document.getElementById('end_date').value = formatLocalDate(endDate);
 }

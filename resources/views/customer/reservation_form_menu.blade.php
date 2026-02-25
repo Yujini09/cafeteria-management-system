@@ -536,7 +536,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {{-- Notes Section --}}
                         <div class="card p-6 lg:col-span-2">
-                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Special Instructions</h3>
+                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Special Request:</h3>
                             <textarea name="notes" rows="6" class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-clsu-green focus:border-clsu-green" placeholder="Add special instructions, allergy notes, or dietary restrictions..."></textarea>
                         </div>
 
@@ -742,15 +742,6 @@
                             <div>
                                 <h4 class="font-semibold text-gray-800">Landbank Online</h4>
                                 <p class="text-sm text-gray-600">Fund transfer</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 w-8 h-8 bg-clsu-green rounded-full flex items-center justify-center mr-3">
-                                <span class="text-white text-sm font-bold">3</span>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800">GCash</h4>
-                                <p class="text-sm text-gray-600">Transfer/deposit only</p>
                             </div>
                         </div>
                     </div>

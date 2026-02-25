@@ -37,6 +37,10 @@ class Reservation extends Model
         'payment_requested_at',
         'payment_last_reminder_at',
         'payment_reminder_count',
+
+        'payment_status',
+        'or_number',
+        'service_fee'
     ];
 
     protected $casts = [

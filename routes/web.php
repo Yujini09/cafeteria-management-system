@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerHomeController;
+use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SuperAdminController;
@@ -14,9 +15,14 @@ use App\Http\Controllers\Admin\MessageController;
 
 // 1. PUBLIC MARKETING PAGES
 Route::get('/', function () {
-    return view('customer.homepage');
-})->name('marketing.home');
+    // Fetch the visible feedbacks from the database
+    $feedbacks = \App\Models\Feedback::where('is_visible', true)
+                    ->latest()
+                    ->get();
 
+    // Pass the feedbacks to the view
+    return view('customer.homepage', compact('feedbacks'));
+})->name('marketing.home');
 // 2. EXPLICIT LOGIN ROUTE
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 
@@ -78,6 +84,11 @@ Route::middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');
+        Route::patch('/feedbacks/{feedback}/toggle', [FeedbackController::class, 'toggleVisibility'])->name('feedbacks.toggle');
+        Route::delete('/feedbacks/{feedback}', [FeedbackController::class, 'destroy'])->name('feedbacks.destroy');
+
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
 
         Route::resource('inventory', InventoryItemController::class);
@@ -98,7 +109,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/reservations/{reservation}/additionals', [ReservationController::class, 'storeAdditional'])->name('reservations.additionals.store');
         Route::patch('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'updateAdditional'])->name('reservations.additionals.update');
         Route::delete('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'deleteAdditional'])->name('reservations.additionals.destroy');
-
+        Route::post('/reservations/{id}/mark-paid', [\App\Http\Controllers\ReservationController::class, 'markPaid'])->name('reservations.mark_paid');
+        Route::patch('reservations/{reservation}/service-fee', [\App\Http\Controllers\ReservationController::class, 'updateServiceFee'])->name('reservations.service_fee.update');
         // Payments
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{payment}', [PaymentController::class, 'showAdmin'])->name('payments.show');
@@ -115,7 +127,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
         Route::post('/messages/{message}/reply', [MessageController::class, 'reply'])->name('messages.reply');
         Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.delete');
-    });
+       });
 
 // ---------- Customer ----------
 Route::middleware(['auth', 'role:customer'])->group(function () {
@@ -131,6 +143,8 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
 });
 
 Route::get('/menu', [MenuController::class, 'customerIndex'])->name('menu');
+
+Route::post('/feedback', [App\Http\Controllers\CustomerHomeController::class, 'storeFeedback'])->name('feedback.store');
 
 Route::get('/about', function () {
     return view('customer.about');
