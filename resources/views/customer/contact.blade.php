@@ -207,7 +207,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-800">Email Address</h4>
-                                <p class="text-gray-600">support@clsu-ret.com</p>
+                                <p class="text-gray-600">food.lodgingservices@clsu.edu.ph</p>
                                 <p class="text-sm text-gray-500">For general inquiries and support</p>
                             </div>
                         </div>
@@ -222,7 +222,7 @@
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-800">Business Hours</h4>
                                 <p class="text-gray-600">
-                                    Monday - Friday: 8:00 AM - 5:00 PM
+                                    Monday - Friday: 7:00 AM - 5:00 PM
                                 </p>
                             </div>
                         </div>
