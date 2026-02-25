@@ -228,7 +228,7 @@
                         
                         <div id="selected-date-range-container" class="flex flex-col gap-2 mb-4 min-h-[40px] items-start p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                             <div id="no-dates-selected" class="text-sm text-gray-500 italic">
-                                Select a date range by clicking the start and end dates on the calendar.
+                                Select a date range by clicking the start and end dates on the calendar. Double click if you reserve for 1 day event.
                             </div>
                             <div id="date-range-display" class="hidden">
                                 <div class="flex items-center gap-2">

@@ -110,7 +110,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'updateAdditional'])->name('reservations.additionals.update');
         Route::delete('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'deleteAdditional'])->name('reservations.additionals.destroy');
         Route::post('/reservations/{id}/mark-paid', [\App\Http\Controllers\ReservationController::class, 'markPaid'])->name('reservations.mark_paid');
-        
+        Route::patch('reservations/{reservation}/service-fee', [\App\Http\Controllers\ReservationController::class, 'updateServiceFee'])->name('reservations.service_fee.update');
         // Payments
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{payment}', [PaymentController::class, 'showAdmin'])->name('payments.show');

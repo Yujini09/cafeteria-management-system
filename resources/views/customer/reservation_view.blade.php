@@ -124,6 +124,7 @@
                             </div>
                             <div><span class="font-medium">Venue:</span> <span class="font-semibold text-gray-900">{{ $reservation->venue ?? 'Not specified' }}</span></div>
                             <div><span class="font-medium">Persons:</span> <span class="font-bold text-xl text-clsu-green">{{ $reservation->number_of_persons }}</span></div>
+                            <div><span class="font-medium">Special Request:</span> <span class="text-gray-900">{{ $reservation->special_requests ?? 'None' }}</span></div>
                         </div>
                     </div>
                     
@@ -141,7 +142,7 @@
 
             <div class="receipt-section">
                 <h3 class="text-xl font-bold text-gray-900 mb-6">SELECTED MENU ITEMS</h3>
-                @php $reservation->load(['items.menu.items']); $grandTotal = 0; @endphp
+                @php $reservation->load(['items.menu.items']); $totalAmount = 0; @endphp
                 @if($reservation->items && $reservation->items->count() > 0)
                     @php
                         $groupedItems = [];
@@ -165,7 +166,7 @@
                                                 @php
                                                     $price = $item->menu->price > 0 ? $item->menu->price : ($item->menu->type == 'special' ? 200 : 150);
                                                     $itemTotal = $item->quantity * $price;
-                                                    $grandTotal += $itemTotal;
+                                                    $totalAmount += $itemTotal;
                                                 @endphp
                                                 <tr>
                                                     <td class="text-xs uppercase font-bold">{{ str_replace('_', ' ', $item->meal_time ?? 'lunch') }}</td>
@@ -183,9 +184,36 @@
                         @endforeach
                     </div>
 
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between mb-2"><span class="text-gray-600">Subtotal:</span><span class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span></div>
-                        <div class="flex justify-between pt-4 border-t border-gray-300"><span class="text-lg font-bold text-gray-900">TOTAL:</span><span class="text-xl font-bold text-clsu-green">₱{{ number_format($grandTotal, 2) }}</span></div>
+                    @php
+                        $additionalsTotal = $reservation->additionals ? $reservation->additionals->sum('price') : 0;
+                        $serviceFee = $reservation->service_fee ?? 0;
+                        $grandTotal = $totalAmount + $additionalsTotal + $serviceFee;
+                    @endphp
+
+                    <div class="mt-6 border-t border-gray-200 pt-4 flex flex-col items-end">
+                        <div class="w-full sm:w-1/2 md:w-1/3 text-gray-700 mb-2">
+                            <div class="flex justify-between py-1">
+                                <span>Subtotal:</span>
+                                <span class="font-medium">&#8369;{{ number_format($totalAmount, 2) }}</span>
+                            </div>
+                            @if($additionalsTotal > 0)
+                            <div class="flex justify-between py-1">
+                                <span>Additionals:</span>
+                                <span class="font-medium">&#8369;{{ number_format($additionalsTotal, 2) }}</span>
+                            </div>
+                            @endif
+                            @if($serviceFee > 0)
+                            <div class="flex justify-between py-1">
+                                <span>Service Fee:</span>
+                                <span class="font-medium">&#8369;{{ number_format($serviceFee, 2) }}</span>
+                            </div>
+                            @endif
+                        </div>
+                        
+                        <div class="w-full sm:w-1/2 md:w-1/3 flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <span class="text-gray-600 font-semibold uppercase tracking-wider text-sm">Total Amount</span>
+                            <span class="text-2xl font-bold text-clsu-green">&#8369;{{ number_format($grandTotal, 2) }}</span>
+                        </div>
                     </div>
                 @endif
             </div>

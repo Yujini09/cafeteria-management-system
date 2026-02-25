@@ -40,6 +40,7 @@ class Reservation extends Model
 
         'payment_status',
         'or_number',
+        'service_fee'
     ];
 
     protected $casts = [
