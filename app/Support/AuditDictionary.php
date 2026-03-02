@@ -48,6 +48,7 @@ final class AuditDictionary
     public const DECLINED_RESERVATION = 'Declined Reservation';
     public const CANCELLED_RESERVATION = 'Cancelled Reservation';
     public const UPLOADED_RECEIPT = 'Uploaded Receipt';
+    public const EXPORTED_RESERVATION_PDF = 'Exported Reservation PDF';
     public const ADDED_ADDITIONAL_CHARGE = 'Added Additional Charge';
     public const UPDATED_ADDITIONAL_CHARGE = 'Updated Additional Charge';
     public const DELETED_ADDITIONAL_CHARGE = 'Deleted Additional Charge';

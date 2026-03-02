@@ -65,11 +65,6 @@ class Reservation extends Model
         return $this->hasMany(ReservationItem::class);
     }
 
-    public function payments()
-    {
-        return $this->hasMany(Payment::class);
-    }
-
     public function additionals()
     {
         return $this->hasMany(ReservationAdditional::class);

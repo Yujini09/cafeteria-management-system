@@ -8,10 +8,29 @@ use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $feedbacks = Feedback::latest()->paginate(10);
-        return view('admin.feedbacks.index', compact('feedbacks'));
+        $visibility = $request->string('visibility')->toString();
+
+        $feedbackQuery = Feedback::query();
+
+        if ($visibility === 'visible') {
+            $feedbackQuery->where('is_visible', true);
+        } elseif ($visibility === 'hidden') {
+            $feedbackQuery->where('is_visible', false);
+        } else {
+            $visibility = '';
+        }
+
+        $feedbacks = $feedbackQuery
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $visibleCount = Feedback::where('is_visible', true)->count();
+        $hiddenCount = Feedback::where('is_visible', false)->count();
+
+        return view('admin.feedbacks.index', compact('feedbacks', 'visibility', 'visibleCount', 'hiddenCount'));
     }
 
     public function toggleVisibility(Feedback $feedback)

@@ -17,11 +17,5 @@ class DatabaseSeeder extends Seeder
             VerifySuperAdminSeeder::class
             // Add other seeders here
         ]);
-
-        if (app()->environment(['local', 'testing'])) {
-            $this->call([
-                PaymentTestSeeder::class,
-            ]);
-        }
     }
 }

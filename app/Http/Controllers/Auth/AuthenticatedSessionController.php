@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use App\Models\AuditTrail;
-use App\Models\Payment;
 use App\Support\AuditDictionary;
-use App\Services\NotificationService;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -58,25 +56,6 @@ class AuthenticatedSessionController extends Controller
         $redirect = $this->normalizeRedirect($request->input('redirect') ?? $request->session()->pull('login_redirect'));
         if ($redirect) {
             return redirect($redirect);
-        }
-
-        if (in_array(Auth::user()->role, ['admin', 'superadmin'], true)) {
-            $pendingPayments = Payment::where('status', 'submitted')->count();
-            if ($pendingPayments > 0) {
-                $notificationService = new NotificationService();
-                $description = 'Payments awaiting review.';
-                if (! $notificationService->notificationExists('payments_pending', 'payments', $description)) {
-                    $notificationService->createAdminNotification(
-                        'payments_pending',
-                        'payments',
-                        $description,
-                        [
-                            'pending_count' => $pendingPayments,
-                            'url' => route('admin.payments.index'),
-                        ]
-                    );
-                }
-            }
         }
 
         if (in_array(Auth::user()->role, ['admin', 'superadmin'], true)) return redirect()->route('admin.dashboard');

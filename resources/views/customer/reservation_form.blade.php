@@ -58,6 +58,16 @@
     color: white !important; 
     font-weight: 700;
 }
+.calendar-day-pending-time {
+    background-color: #e5e7eb !important;
+    color: #4b5563 !important;
+    box-shadow: inset 0 0 0 2px #9ca3af;
+}
+.calendar-day-pending-time.calendar-day-range-start,
+.calendar-day-pending-time.calendar-day-range-end {
+    background-color: #6b7280 !important;
+    color: white !important;
+}
 .day-tab {
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -70,6 +80,16 @@
     background-color: #16a34a;
     color: white;
     border-color: #15803d;
+}
+.day-tab-pending-time {
+    background-color: #e5e7eb;
+    color: #4b5563;
+    border-color: #9ca3af;
+}
+.day-tab-pending-time.day-tab-active {
+    background-color: #6b7280;
+    color: white;
+    border-color: #4b5563;
 }
 .time-section {
     border: 1px solid #e5e7eb;
@@ -228,7 +248,7 @@
                         
                         <div id="selected-date-range-container" class="flex flex-col gap-2 mb-4 min-h-[40px] items-start p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                             <div id="no-dates-selected" class="text-sm text-gray-500 italic">
-                                Select a date range by clicking the start and end dates on the calendar. Double click if you reserve for 1 day event.
+                                Click one date for a 1-day reservation, or click another date to extend the range.
                             </div>
                             <div id="date-range-display" class="hidden">
                                 <div class="flex items-center gap-2">
@@ -384,6 +404,24 @@
         });
     };
 
+    const createEmptyDayTime = () => ({ start_time: '', end_time: '' });
+
+    const hasCompleteTime = (day) => Boolean(dayTimes[day]?.start_time && dayTimes[day]?.end_time);
+
+    const normalizeDayTimes = (days, sourceTimes = {}) => {
+        const normalized = {};
+
+        days.forEach((day) => {
+            const timeData = sourceTimes[day] ?? {};
+            normalized[day] = {
+                start_time: timeData.start_time || '',
+                end_time: timeData.end_time || '',
+            };
+        });
+
+        return normalized;
+    };
+
     // Utility function to get all dates between start and end
     const getDatesInRange = (startDate, endDate) => {
         const dates = [];
@@ -454,15 +492,19 @@
                 }
             }
             
-            const isPast = dateStr < todayStr;
-            if (isPast) {
+            const isUnavailable = dateStr <= todayStr;
+            if (isUnavailable) {
                 status = 'other-month'; 
             }
             
             const cell = createCalendarDay(day, status, dateStr);
+
+            if (selectedDays.includes(dateStr) && !hasCompleteTime(dateStr)) {
+                cell.classList.add('calendar-day-pending-time');
+            }
             
-            if (!isPast) {
-                cell.addEventListener('click', () => handleDateSelection(dateStr, cell));
+            if (!isUnavailable) {
+                cell.addEventListener('click', () => handleDateSelection(dateStr));
             }
 
             calendarDaysEl.appendChild(cell);
@@ -513,14 +555,24 @@
         return cell;
     };
 
-    const handleDateSelection = (dateStr, cell) => {
+    const handleDateSelection = (dateStr) => {
+        const existingDayTimes = dayTimes;
+
         if (isSelectingStartDate) {
             selectedStartDate = dateStr;
-            selectedEndDate = null; 
+            selectedEndDate = dateStr;
             isSelectingStartDate = false;
             selectedDays = [dateStr];
-            dayTimes = { [dateStr]: { start_time: '07:00', end_time: '10:00' } };
+            dayTimes = normalizeDayTimes(selectedDays, existingDayTimes);
         } else {
+            if (dateStr === selectedStartDate && dateStr === selectedEndDate) {
+                updateDateRangeDisplay();
+                renderDayTabs();
+                renderCalendar();
+                validateForm();
+                return;
+            }
+
             const startDate = parseDateLocal(selectedStartDate);
             const endDate = parseDateLocal(dateStr);
             
@@ -533,18 +585,10 @@
             
             isSelectingStartDate = true; 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
-            
-            // Handle times for new range
-            const newDayTimes = {};
-            selectedDays.forEach(day => {
-                if (dayTimes[day]) {
-                    newDayTimes[day] = dayTimes[day];
-                } else {
-                    newDayTimes[day] = { start_time: '07:00', end_time: '10:00' };
-                }
-            });
-            dayTimes = newDayTimes;
+            dayTimes = normalizeDayTimes(selectedDays, existingDayTimes);
         }
+
+        activeDayTab = 0;
         
         updateDateRangeDisplay();
         renderDayTabs();
@@ -591,14 +635,32 @@
         }
     };
 
+    const updateTimeErrorState = (day, dayIndex) => {
+        const errorEl = document.getElementById(`time-error-${dayIndex}`);
+        const startTime = dayTimes[day]?.start_time;
+        const endTime = dayTimes[day]?.end_time;
+
+        if (!errorEl) {
+            return;
+        }
+
+        if (startTime && endTime && startTime >= endTime) {
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        errorEl.classList.add('hidden');
+    };
+
     const renderDayTabs = () => {
         dayTabsEl.innerHTML = '';
         timeSectionsContainer.innerHTML = '';
         
         selectedDays.forEach((day, index) => {
             const tab = document.createElement('div');
-            tab.className = `day-tab ${index === activeDayTab ? 'day-tab-active' : ''}`;
-            tab.textContent = `Day ${index + 1} (${formatDateDisplay(day)})`;
+            const isTimeComplete = hasCompleteTime(day);
+            tab.className = `day-tab ${index === activeDayTab ? 'day-tab-active' : ''} ${isTimeComplete ? '' : 'day-tab-pending-time'}`.trim();
+            tab.textContent = `Day ${index + 1} (${formatDateDisplay(day)})${isTimeComplete ? '' : ' - Set time'}`;
             tab.dataset.dayIndex = index;
             
             tab.addEventListener('click', () => {
@@ -618,24 +680,25 @@
                     <div>
                         <label for="start_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">Start Time</label>
                         <input type="time" id="start_time_${index}" name="start_time_${index}" 
-                            value="${dayTimes[day]?.start_time || '07:00'}" 
+                            value="${dayTimes[day]?.start_time || ''}" 
                             class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                             data-day="${day}" data-type="start_time">
                     </div>
                     <div>
                         <label for="end_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">End Time</label>
                         <input type="time" id="end_time_${index}" name="end_time_${index}" 
-                            value="${dayTimes[day]?.end_time || '10:00'}" 
+                            value="${dayTimes[day]?.end_time || ''}" 
                             class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                             data-day="${day}" data-type="end_time">
                     </div>
                 </div>
                 <div id="time-error-${index}" class="text-sm text-red-500 hidden mt-2 font-semibold">
-                    Error: End time must be after start time.
+                    Error: Start and end times are required, and end time must be after start time.
                 </div>
             `;
             
             timeSectionsContainer.appendChild(timeSection);
+            updateTimeErrorState(day, index);
         });
         
         document.querySelectorAll('.day-time-input').forEach(input => {
@@ -651,22 +714,12 @@
         const value = e.target.value;
         
         if (!dayTimes[day]) {
-            dayTimes[day] = {};
+            dayTimes[day] = createEmptyDayTime();
         }
         dayTimes[day][type] = value;
-        
-        const dayIndex = selectedDays.indexOf(day);
-        const startTime = dayTimes[day].start_time;
-        const endTime = dayTimes[day].end_time;
-        const errorEl = document.getElementById(`time-error-${dayIndex}`);
-        
-        if (startTime && endTime && startTime >= endTime) {
-            errorEl.classList.remove('hidden');
-        } else {
-            errorEl.classList.add('hidden');
-        }
-        
-        updateDayTimesInput();
+
+        renderDayTabs();
+        renderCalendar();
         validateForm();
     };
 
@@ -729,7 +782,7 @@
             if (!isDateRangeSelected) {
                 validationMessageEl.textContent = 'Please select a complete date range (start and end dates).';
             } else if (!allTimesValid) {
-                validationMessageEl.textContent = 'Please ensure the end time is after the start time for all days.';
+                validationMessageEl.textContent = 'Please set a valid start and end time for every selected day.';
             } else if (!isNativeValid) {
                 const form = document.getElementById('reservation-form');
                 const firstInvalid = Array.from(form.elements).find(el => el.required && !el.value);
@@ -767,6 +820,7 @@
             }
 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
+            dayTimes = normalizeDayTimes(selectedDays, dayTimes);
 
             const startDateObj = parseDateLocal(selectedStartDate);
             if (!isNaN(startDateObj.getTime())) {

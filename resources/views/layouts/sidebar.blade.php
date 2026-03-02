@@ -184,16 +184,26 @@
         }
 
         .sidebar.close .sidebar-brand {
-            justify-content: center;
-            padding: 0.55rem 0.35rem;
-        }
-        .sidebar.close .sidebar-brand img {
-            height: 30px;
+            display: none;
         }
 
         .sidebar.close .sidebar-toggle-row {
-            top: 38px;
-            right: 2px;
+            position: relative;
+            top: auto;
+            right: auto;
+            left: auto;
+            width: 100%;
+            min-height: 78px;
+            margin-bottom: 0.45rem;
+            border: 1px solid var(--sidebar-border);
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
+            pointer-events: auto;
+        }
+
+        .sidebar.close #sidebar-toggle-btn {
+            width: 40px;
+            height: 40px;
         }
 
         /* --- NAVIGATION LIST --- */
@@ -596,13 +606,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 3rem;
+            height: 3rem;
             border-radius: 50%;
             border: 2px solid #ffffff;
             background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
             color: #ffffff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .notification-bell {
+            font-size: 1.375rem;
+            line-height: 1;
         }
 
         .mobile-sidebar-toggle {
@@ -781,7 +796,6 @@
         // Fetch Counts for Notifications
         $unreadMessagesCount = $sidebarUnreadMessagesCount ?? 0;
         $pendingReservationsCount = $sidebarPendingReservationsCount ?? 0;
-        $pendingPaymentsCount = $sidebarPendingPaymentsCount ?? 0;
     @endphp
 
     <aside class="sidebar" :class="!openSidebar ? 'close' : ''">

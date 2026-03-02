@@ -47,6 +47,8 @@
     }
     .day-tabs {
         display: flex;
+        justify-content: center;
+        align-items: center;
         gap: 8px;
         flex-wrap: wrap;
     }
@@ -186,6 +188,94 @@
         padding: 12px 16px;
         border-radius: 8px 8px 0 0;
         flex-shrink: 0; /* Prevent header from shrinking */
+    }
+    .green-menu-header-layout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .green-menu-header-copy {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .menu-price-preview-box {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        width: auto;
+        max-width: 100%;
+        min-width: 0;
+        align-self: center;
+        padding-top: 0;
+    }
+    .menu-price-preview-context {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 0;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.82);
+    }
+    .menu-price-preview-line {
+        display: block;
+        width: auto;
+        white-space: nowrap;
+        font-size: 0.84rem;
+        font-weight: 600;
+        line-height: 1.1;
+    }
+    .menu-price-preview-meal {
+        margin-top: 0;
+        opacity: 0.95;
+    }
+    .menu-price-preview-divider {
+        display: inline-block;
+        font-size: 0.7rem;
+        line-height: 1;
+        opacity: 0.75;
+    }
+    .menu-price-preview-price-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+    }
+    .menu-price-preview-price-unit {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.82);
+    }
+    .menu-price-preview-value {
+        display: block;
+        width: auto;
+        margin-top: 0;
+        color: #ffffff;
+        font-size: 1.4rem;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+    }
+    @media (max-width: 420px) {
+        .menu-price-preview-box {
+            gap: 5px;
+        }
+        .menu-price-preview-value {
+            font-size: 1.2rem;
+        }
     }
     .menu-list-item {
         border-left: 4px solid #1a5e3d;
@@ -469,20 +559,22 @@
                             $defaultStandardPrice = 150;
                             $defaultSpecialPrice = 200;
 
-                            // Get date range from session or previous form
-                            $startDate = session('reservation_data.start_date') ?? now()->format('Y-m-d');
-                            $endDate = session('reservation_data.end_date') ?? now()->addDays(0)->format('Y-m-d');
+                            // Get date range from the validated reservation details
+                            $startDate = $reservationData['start_date'] ?? null;
+                            $endDate = $reservationData['end_date'] ?? null;
 
                             // Parse day_times JSON if available
-                            $dayTimes = [];
-                            if (session('reservation_data.day_times')) {
-                                $dayTimes = json_decode(session('reservation_data.day_times'), true);
-                            }
+                            $dayTimes = !empty($reservationData['day_times'])
+                                ? (json_decode($reservationData['day_times'], true) ?? [])
+                                : [];
 
                             // Calculate number of days
-                            $start = new DateTime($startDate);
-                            $end = new DateTime($endDate);
-                            $numberOfDays = $end->diff($start)->days + 1;
+                            $numberOfDays = 0;
+                            if ($startDate && $endDate) {
+                                $start = new DateTime($startDate);
+                                $end = new DateTime($endDate);
+                                $numberOfDays = $end->diff($start)->days + 1;
+                            }
                         @endphp
 
                         {{-- Hidden fields for date range --}}
@@ -516,16 +608,16 @@
                         {{-- Quick Actions --}}
                         <div class="mt-6 pt-4 border-t border-gray-200">
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" id="clear-current-day" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                <button type="button" id="clear-current-day" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
                                     Clear Current Day
                                 </button>
-                                <button type="button" id="clear-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                <button type="button" id="clear-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
                                     Clear All Days
                                 </button>
-                                <button type="button" id="set-standard-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                                <button type="button" id="set-standard-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
                                     Set 10 Pax for All Days
                                 </button>
-                                <button type="button" id="copy-to-all-days" class="px-4 py-2 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                                <button type="button" id="copy-to-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
                                     Copy to All Days
                                 </button>
                             </div>
@@ -581,7 +673,7 @@
                             <button type="button" id="back-button" class="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 shadow-lg font-semibold">
                                 Back
                             </button>
-                            <button type="button" id="confirm-button" data-loading-text="Submitting..." class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold flex items-center">
+                            <button type="button" id="confirm-button" data-loading-text="Submitting..." class="px-8 py-3 bg-clsu-green text-white rounded-lg transition duration-150 shadow-lg font-semibold flex items-center opacity-50 cursor-not-allowed" disabled aria-disabled="true" title="Select at least one menu for each selected date to continue.">
                                 Confirm
                             </button>
                         </div>
@@ -596,14 +688,21 @@
                 {{-- Menu Details Card - Fixed with compact layout and search --}}
                 <div class="green-menu-list">
                     <div class="green-menu-header">
-                        <div class="flex justify-between items-center">
-                            <div>
+                        <div class="green-menu-header-layout">
+                            <div class="green-menu-header-copy">
                                 <h2 class="text-2xl font-bold">Available Menus</h2>
                                 <p class="text-sm mt-1 opacity-90">Browse our delicious meal options</p>
                             </div>
-                            <div class="text-right py-5">
-                                <div class="price-badge px-4">Standard: ₱{{ number_format($defaultStandardPrice, 2) }}</div>
-                                <div class="price-badge px-4 mt-1">Special: ₱{{ number_format($defaultSpecialPrice, 2) }}</div>
+                            <div class="menu-price-preview-box" id="active-menu-price-container">
+                                <div id="active-menu-price-context" class="menu-price-preview-context">
+                                    <span id="active-menu-price-category" class="menu-price-preview-line">Standard Menu</span>
+                                    <span class="menu-price-preview-divider" aria-hidden="true">|</span>
+                                    <span id="active-menu-price-meal" class="menu-price-preview-line menu-price-preview-meal">Breakfast</span>
+                                </div>
+                                <div class="menu-price-preview-price-row" aria-label="Current price per pax">
+                                    <div id="active-menu-price-preview" class="menu-price-preview-value">&#8369;{{ number_format($defaultStandardPrice, 2) }}</div>
+                                    <span class="menu-price-preview-price-unit">/ pax</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -722,30 +821,6 @@
                     </div>
                 </div>
 
-                {{-- Payment Procedure Card --}}
-                <div class="card p-6 border-l-4 border-clsu-green">
-                    <h2 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800">Payment Methods</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 w-8 h-8 bg-clsu-green rounded-full flex items-center justify-center mr-3">
-                                <span class="text-white text-sm font-bold">1</span>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800">CLSU Cashier</h4>
-                                <p class="text-sm text-gray-600">On-site cash deposit</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 w-8 h-8 bg-clsu-green rounded-full flex items-center justify-center mr-3">
-                                <span class="text-white text-sm font-bold">2</span>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800">Landbank Online</h4>
-                                <p class="text-sm text-gray-600">Fund transfer</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -891,6 +966,48 @@
         window.location.href = '{{ route('reservation_details') }}';
     }
 
+    function dayHasSelectedMenu(day) {
+        return Array.from(document.querySelectorAll(`.quantity-input[data-day="${day}"]`)).some((input) => {
+            return (parseInt(input.value, 10) || 0) > 0;
+        });
+    }
+
+    function everySelectedDayHasMenu() {
+        if (totalDays < 1) {
+            return false;
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            if (!dayHasSelectedMenu(day)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function updateConfirmButtonState() {
+        const confirmButton = document.getElementById('confirm-button');
+        if (!confirmButton) {
+            return;
+        }
+
+        const canConfirm = everySelectedDayHasMenu();
+
+        confirmButton.disabled = !canConfirm;
+        confirmButton.setAttribute('aria-disabled', String(!canConfirm));
+        confirmButton.classList.toggle('opacity-50', !canConfirm);
+        confirmButton.classList.toggle('cursor-not-allowed', !canConfirm);
+        confirmButton.classList.toggle('hover:bg-green-700', canConfirm);
+
+        if (canConfirm) {
+            confirmButton.removeAttribute('title');
+            return;
+        }
+
+        confirmButton.title = 'Select at least one menu for each selected date to continue.';
+    }
+
     // Notification system
     function showNotification(message, type = 'success', duration = 5000) {
         // Remove existing notifications
@@ -959,6 +1076,74 @@
 
         // Get menu prices
         menuPrices = initializeMenuPrices();
+        const activeMenuPriceCategory = document.getElementById('active-menu-price-category');
+        const activeMenuPriceMeal = document.getElementById('active-menu-price-meal');
+        const activeMenuPricePreview = document.getElementById('active-menu-price-preview');
+
+        function formatPricePreview(value) {
+            const pesoSign = String.fromCharCode(0x20B1);
+
+            return pesoSign + Number(value || 0).toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatMealLabel(mealTime) {
+            return String(mealTime || '')
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function getActiveMenuCategory() {
+            const activeMenuTab = document.querySelector('.menu-tab.active');
+            return activeMenuTab ? activeMenuTab.dataset.menuCategory : 'standard';
+        }
+
+        function getActivePreviewState() {
+            const activeMealButton = document.querySelector('.meal-type-btn.active');
+            const selectedMealType = activeMealButton ? activeMealButton.dataset.mealType : 'all';
+
+            if (selectedMealType !== 'all') {
+                return {
+                    mealTime: selectedMealType
+                };
+            }
+
+            const activeCategory = getActiveMenuCategory();
+            const activeContainer = document.getElementById(`${activeCategory}-menu-details`);
+            const firstSection = activeContainer
+                ? activeContainer.querySelector('.meal-type-section')
+                : null;
+
+            return {
+                mealTime: firstSection ? firstSection.dataset.mealType : 'breakfast'
+            };
+        }
+
+        function getMenuPriceForCategory(mealTime, category) {
+            if (menuPrices[mealTime] && typeof menuPrices[mealTime][category] !== 'undefined') {
+                return menuPrices[mealTime][category];
+            }
+
+            return category === 'special' ? 200 : 150;
+        }
+
+        function updateMenuPricePreview() {
+            if (!activeMenuPriceCategory || !activeMenuPriceMeal || !activeMenuPricePreview) {
+                return;
+            }
+
+            const category = getActiveMenuCategory();
+            const previewState = getActivePreviewState();
+            const mealLabel = formatMealLabel(previewState.mealTime);
+            const categoryLabel = category === 'special' ? 'Special Menu' : 'Standard Menu';
+            const price = getMenuPriceForCategory(previewState.mealTime, category);
+
+            activeMenuPriceCategory.textContent = categoryLabel;
+            activeMenuPriceMeal.textContent = mealLabel;
+            activeMenuPricePreview.textContent = formatPricePreview(price);
+        }
 
         // --- DAY SYSTEM FUNCTIONS ---
         function initializeDaySystem() {
@@ -999,8 +1184,8 @@
                 @if(!empty($dayTimes) && is_array($dayTimes))
                     @foreach($dayTimes as $date => $times)
                         if (dateKey === '{{ $date }}') {
-                            tab.dataset.startTime = '{{ $times["start_time"] ?? "07:00" }}';
-                            tab.dataset.endTime = '{{ $times["end_time"] ?? "10:00" }}';
+                            tab.dataset.startTime = '{{ $times["start_time"] ?? "" }}';
+                            tab.dataset.endTime = '{{ $times["end_time"] ?? "" }}';
                         }
                     @endforeach
                 @endif
@@ -1010,6 +1195,29 @@
             }
     
             updateDayInfo(1);
+        }
+
+        function formatTimeForDisplay(timeValue) {
+            if (!timeValue) {
+                return '';
+            }
+
+            const match = String(timeValue).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+            if (!match) {
+                return timeValue;
+            }
+
+            const hours = parseInt(match[1], 10);
+            const minutes = match[2];
+
+            if (Number.isNaN(hours) || hours < 0 || hours > 23) {
+                return timeValue;
+            }
+
+            const meridiem = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+
+            return `${displayHours}:${minutes} ${meridiem}`;
         }
 
         function updateDayInfo(day) {
@@ -1027,7 +1235,9 @@
                 
                 let timeInfo = '';
                 if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
-                    timeInfo = ` | Time: ${activeTab.dataset.startTime} to ${activeTab.dataset.endTime}`;
+                    const formattedStartTime = formatTimeForDisplay(activeTab.dataset.startTime);
+                    const formattedEndTime = formatTimeForDisplay(activeTab.dataset.endTime);
+                    timeInfo = ` | Time: ${formattedStartTime} to ${formattedEndTime}`;
                 }
                 
                 dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
@@ -1463,6 +1673,7 @@
             
             document.getElementById('summary-standard-rate').textContent = formatCurrency(standardRate) + ' /head';
             document.getElementById('summary-special-rate').textContent = formatCurrency(specialRate) + ' /head';
+            updateConfirmButtonState();
         }
 
         // --- MEAL TYPE BUTTONS FUNCTIONALITY ---
@@ -1484,6 +1695,8 @@
                         section.classList.remove('active');
                     }
                 });
+
+                updateMenuPricePreview();
                 
                 // Trigger search to apply current filter
                 performSearch();
@@ -1511,6 +1724,8 @@
                     standardDetails.classList.add('hidden');
                     specialDetails.classList.remove('hidden');
                 }
+
+                updateMenuPricePreview();
                 
                 // Trigger search on tab change to apply current filter
                 performSearch();
@@ -1595,21 +1810,19 @@
         // --- FORM VALIDATION ---
         function validateForm() {
             let hasErrors = false;
-            let hasSelectedMeals = false;
-            
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                if (!validateQuantity(input) && parseInt(input.value) > 0) {
-                    hasErrors = true;
-                }
-                if (parseInt(input.value) > 0) {
-                    hasSelectedMeals = true;
-                }
-            });
-            
-            if (!hasSelectedMeals) {
-                showNotification('Please select at least one meal with minimum 10 pax.', 'error', 5000);
+
+            if (!everySelectedDayHasMenu()) {
+                showNotification('Please select at least one menu for each selected date before confirming.', 'error', 5000);
                 return false;
             }
+            
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                const quantity = parseInt(input.value, 10) || 0;
+
+                if (!validateQuantity(input) && quantity > 0) {
+                    hasErrors = true;
+                }
+            });
             
             if (hasErrors) {
                 showNotification('Please ensure all selected meals have at least 10 pax.', 'error', 5000);
@@ -1717,6 +1930,7 @@
         document.querySelectorAll('.category-select').forEach(select => {
             select.dispatchEvent(new Event('change'));
         });
+        updateMenuPricePreview();
         updateSummary();
     });
 

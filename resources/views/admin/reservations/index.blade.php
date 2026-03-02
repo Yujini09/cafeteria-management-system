@@ -72,6 +72,35 @@
     color: #4b5563;
 }
 
+.payment-filter-control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.payment-filter-native {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.payment-filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: inherit;
+    pointer-events: none;
+    user-select: none;
+}
+
+.payment-filter-label.is-active {
+    color: #374151;
+}
+
 /* Filter Styles */
 .filter-select {
     background: white;
@@ -183,7 +212,7 @@
 
 /* Column Widths */
 .column-id { width: 80px; }
-.column-customer { width: 150px; }
+.column-customer { width: 140px; }
 .column-department { width: 180px; }
 .column-status { width: 144px; min-width: 144px; }
 .column-payment { width: 168px; }
@@ -241,6 +270,9 @@
     <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
         <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col gap-4">
             <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+            @if($payment !== null)
+                <input type="hidden" name="payment" value="{{ $payment }}">
+            @endif
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <label for="status" class="text-sm font-semibold text-admin-neutral-700">Filter by Status</label>
                 @php
@@ -265,7 +297,7 @@
             <table class="modern-table table-fixed w-full">
             <colgroup>
                 <col class="w-14">
-                <col class="w-64">
+                <col class="w-44">
                 <col class="w-56">
                 <col class="w-36">
                 <col class="w-44">
@@ -278,8 +310,27 @@
                     <th class="column-customer text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
                     <th class="column-department text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Office/Dept</th>
                     <th class="column-status text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="column-payment text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
-                    <th class="column-email text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="column-payment text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <form method="GET" action="{{ route('admin.reservations') }}" class="payment-filter-control">
+                            <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+                            @if($status !== null)
+                                <input type="hidden" name="status" value="{{ $status }}">
+                            @endif
+                            <select name="payment"
+                                    id="paymentColumnFilter"
+                                    onchange="this.form.submit()"
+                                    class="payment-filter-native"
+                                    aria-label="Filter by payment">
+                                <option value="" {{ $payment === null ? 'selected' : '' }}>All Types</option>
+                                <option value="paid" {{ $payment === 'paid' ? 'selected' : '' }}>Paid</option>
+                                <option value="unpaid" {{ $payment === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                            </select>
+                            <span class="payment-filter-label {{ $payment !== null ? 'is-active' : '' }}">
+                                <span>Payment</span>
+                                <x-admin.ui.icon name="fa-chevron-down" style="fas" size="xs" class="text-admin-neutral-400" />
+                            </span>
+                        </form>
+                    </th>
                     <th class="column-date text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         @php
                             $nextCreatedSort = $createdSort === 'asc' ? 'desc' : 'asc';
@@ -292,6 +343,7 @@
                             <x-admin.ui.icon name="{{ $createdSortIcon }}" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
                         </a>
                     </th>
+                    <th class="column-email text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
@@ -357,11 +409,11 @@
                                 <span class="status-badge payment-unpaid inline-flex items-center px-2.5 py-1 text-[11px] font-bold">Unpaid</span>
                             @endif
                         </td>
-                        <td class="px-4 py-4 text-sm text-gray-600">
-                            <span class="short-email" title="{{ $email }}">{{ $shortEmail }}</span>
-                        </td>
                         <td class="px-4 py-4 text-sm text-admin-neutral-600 whitespace-nowrap">
                             {{ $r->created_at->format('M d, Y H:i') }}
+                        </td>
+                        <td class="px-4 py-4 text-sm text-gray-600">
+                            <span class="short-email" title="{{ $email }}">{{ $shortEmail }}</span>
                         </td>
                     </tr>
                 @empty
@@ -512,7 +564,9 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', initReservationsFloatingView);
+    document.addEventListener('DOMContentLoaded', () => {
+        initReservationsFloatingView();
+    });
 })();
 </script>
 
