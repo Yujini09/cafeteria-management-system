@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title','Reservation #'.$r->id)
+@section('page-title','Reservations')
 
 @section('content')
 <style>
@@ -321,8 +321,8 @@
                 </svg>
             </div>
             <div class="header-text">
-                <h1 class="header-title">Reservation #{{ $r->id }}</h1>
-                <p class="header-subtitle">Review and manage reservation details</p>
+                <h1 class="header-title">Reservations</h1>
+                <p class="header-subtitle">Reservation #{{ $r->id }} - Review and manage reservation details</p>
             </div>
         </div>
 

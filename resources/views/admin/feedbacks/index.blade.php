@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Feedback Management')
+@section('page-title', 'Feedbacks')
 
 @section('content')
 @php
@@ -93,7 +93,7 @@
                 <x-admin.ui.icon name="fa-comments" style="fas" class="text-white w-6 h-6" />
             </div>
             <div class="header-text">
-                <h1 class="header-title">Customer Feedback</h1>
+                <h1 class="header-title">Feedbacks</h1>
                 <p class="header-subtitle">Review submitted feedback and control what appears on the homepage.</p>
             </div>
         </div>

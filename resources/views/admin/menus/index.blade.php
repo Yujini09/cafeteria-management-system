@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title','Menu Bundles')
+@section('page-title','Manage Menus')
 
 @section('content')
 @php
@@ -210,7 +210,6 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
-        margin-bottom: 1rem;
     }
 
     @media (max-width: 639px) {
@@ -324,7 +323,7 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Menu Bundles</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Manage Menus</h1>
           <p class="text-gray-600 mt-1 text-sm">Manage available menus and adjust pricing.</p>
         </div>
       </div>
@@ -348,20 +347,29 @@
     </div>
   </div>
 
-  <div class="toolbar-group mt-5">
-    <div class="menu-type-tabs">
-        @foreach($types as $key => $label)
-          <a href="{{ route('admin.menus.index', ['type' => $key, 'meal' => 'all']) }}"
-             wire:navigate
-             class="type-tab {{ $type === $key ? 'active' : '' }}">
-            {{ $label }}
-          </a>
-        @endforeach
+  <div class="toolbar-group mt-5 space-y-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="menu-type-tabs">
+          @foreach($types as $key => $label)
+            <a href="{{ route('admin.menus.index', ['type' => $key, 'meal' => 'all']) }}"
+               wire:navigate
+               class="type-tab {{ $type === $key ? 'active' : '' }}">
+              {{ $label }}
+            </a>
+          @endforeach
+      </div>
+
+      <div class="hidden sm:flex sm:w-auto sm:justify-end">
+        <x-admin.ui.button.primary type="button" @click="openCreate()">
+          <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
+          Add Menu
+        </x-admin.ui.button.primary>
+      </div>
     </div>
 
     <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col gap-4">
       <input type="hidden" name="type" value="{{ $type }}">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
           <label for="meal" class="text-sm font-semibold text-admin-neutral-700">Filter by Meal</label>
           <div class="w-full sm:w-64">
@@ -374,32 +382,30 @@
           </div>
         </div>
 
-        <div class="flex w-full flex-col gap-4 sm:w-auto sm:items-end">
+        <div class="flex w-full items-center gap-3 {{ $meal !== 'all' && !is_null($activePrice) ? 'justify-between' : 'justify-end' }} sm:w-auto sm:justify-end">
           @if($meal !== 'all' && !is_null($activePrice))
-            <div class="order-1 flex w-full sm:order-2 sm:w-auto sm:justify-end">
-              <div class="price-pill">
-                <div class="leading-tight">
-                  <div class="price-pill-label">
-                    {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
-                  </div>
-                  <div class="mt-0.5 flex items-baseline gap-1">
-                    <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
-                    <span class="price-pill-unit">/ head</span>
-                  </div>
+            <div class="price-pill">
+              <div class="leading-tight">
+                <div class="price-pill-label">
+                  {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
                 </div>
-                <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
-                   wire:navigate
-                   class="price-pill-edit"
-                   aria-label="Update menu prices">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
-                </a>
+                <div class="mt-0.5 flex items-baseline gap-1">
+                  <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
+                  <span class="price-pill-unit">/ head</span>
+                </div>
               </div>
+              <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
+                 wire:navigate
+                 class="price-pill-edit"
+                 aria-label="Update menu prices">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </a>
             </div>
           @endif
 
-          <div class="order-2 flex w-full sm:order-1 sm:w-auto sm:justify-end">
+          <div class="flex shrink-0 sm:hidden">
             <x-admin.ui.button.primary type="button" @click="openCreate()">
               <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
               Add Menu
@@ -636,10 +642,7 @@
 
               <div class="bg-green-50 border border-green-200 rounded-lg p-3">
                 <div class="text-green-800 flex items-center text-xs">
-                  <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                  </svg>
-                  Fixed price per head: <span class="font-semibold ml-1" x-text="priceText"></span>
+                  Price: <span class="font-semibold ml-1" x-text="priceText"></span>
                   <span class="text-green-600 ml-1">(auto-applied on save)</span>
                 </div>
               </div>
@@ -1078,10 +1081,7 @@
 
             <div class="bg-green-50 border border-green-200 rounded-lg p-3">
               <div class="text-green-800 flex items-center text-xs">
-                <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                </svg>
-                Fixed price per head: <span class="font-semibold ml-1" x-text="editPriceText"></span>
+                Price: <span class="font-semibold ml-1" x-text="editPriceText"></span>
                 <span class="text-green-700 ml-1">(auto-applied on save)</span>
               </div>
             </div>

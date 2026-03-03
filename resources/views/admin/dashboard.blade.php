@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Admin')
+@section('page-title', 'Dashboard')
 
 @section('content')
 <style>

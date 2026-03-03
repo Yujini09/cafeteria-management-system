@@ -7,6 +7,8 @@
     $kpiCards = $kpiCards ?? [];
     $charts = $charts ?? [];
     $insights = $insights ?? [];
+    $inventoryLowStockItems = $inventoryLowStockItems ?? [];
+    $inventoryOutOfStockItems = $inventoryOutOfStockItems ?? [];
 @endphp
 
 <style>
@@ -32,6 +34,8 @@
 .chart-canvas-wrap { position: relative; height: 210px; width: 100%; display: flex; align-items: center; justify-content: center; }
 .insight-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; }
 .insight-list li { padding: 0.5rem 0.65rem; border: 1px solid var(--neutral-200); border-radius: 8px; background: var(--neutral-50); color: var(--neutral-700); font-size: 0.78rem; line-height: 1.25; }
+.status-list { max-height: 210px; overflow-y: auto; }
+.status-list-meta { display: block; margin-top: 0.2rem; font-size: 0.72rem; color: var(--neutral-500); }
 .table-toolbar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 0.8rem; }
 .table-search { width: min(100%, 260px); border: 1px solid var(--neutral-300); border-radius: 10px; padding: 0.55rem 0.75rem; font-size: 0.82rem; }
 .table-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1); }
@@ -93,18 +97,19 @@
                 <i class="fas fa-chart-bar text-white"></i>
             </div>
             <div class="header-text">
-                <h1 class="header-title">
+                <h1 class="header-title">Reports</h1>
+                <p class="header-subtitle">
                     @if(isset($reportType))
                         @switch($reportType)
                             @case('reservation') Reservations Report @break
                             @case('sales') Cafeteria Sales Report @break
                             @case('inventory') Current Inventory Stock Report @break
                             @case('crm') Customer Relationship Management Report @break
-                            @default Report
+                            @default Reports
                         @endswitch
-                    @else Report @endif
-                </h1>
-                <p class="header-subtitle">Period: {{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}</p>
+                    @else Reports @endif
+                    - Period: {{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}
+                </p>
             </div>
         </div>
         <div class="header-actions">
@@ -180,8 +185,38 @@
             </div>
             @endif
 
+            @if(isset($reportType) && $reportType === 'inventory')
             <div class="chart-card">
-                <h3 class="chart-title">Key Insights</h3>
+                <h3 class="chart-title">Low Stock / Critical Items</h3>
+                <ul class="insight-list status-list">
+                    @forelse($inventoryLowStockItems as $item)
+                        <li>
+                            <span class="font-semibold text-gray-900">{{ $item['name'] }}</span>
+                            <span class="status-list-meta">{{ number_format((float) $item['stock_left'], 2) }} {{ $item['unit'] }}</span>
+                        </li>
+                    @empty
+                        <li>No low stock items.</li>
+                    @endforelse
+                </ul>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">Out of Stock Items</h3>
+                <ul class="insight-list status-list">
+                    @forelse($inventoryOutOfStockItems as $item)
+                        <li>
+                            <span class="font-semibold text-gray-900">{{ $item['name'] }}</span>
+                            <span class="status-list-meta">{{ number_format((float) $item['stock_left'], 2) }} {{ $item['unit'] }}</span>
+                        </li>
+                    @empty
+                        <li>No out of stock items.</li>
+                    @endforelse
+                </ul>
+            </div>
+            @endif
+
+            <div class="chart-card">
+                <h3 class="chart-title">Summary</h3>
                 <ul class="insight-list">
                     @forelse($insights as $insight) <li>{{ $insight }}</li>
                     @empty <li>No insights available for this period.</li> @endforelse

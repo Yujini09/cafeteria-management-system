@@ -140,14 +140,14 @@
         </div>
     </div>
 
-    <form action="{{ route('admin.reports.generate') }}" method="POST" class="modern-form">
+    <form action="{{ route('admin.reports.generate') }}" method="POST" class="modern-form" data-action-loading>
         @csrf
 
         <div class="form-group form-row">
             <label for="report_type" class="form-label form-label-inline">Report Type</label>
             <select id="report_type" name="report_type" class="form-select @error('report_type') form-error @enderror" data-admin-select="true" required>
                 <option value="">Select Report Type</option>
-                <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report (Participants & Revenue)</option>
+                <option value="reservation" {{ old('report_type') == 'reservation' ? 'selected' : '' }}>Reservation Report</option>
                 <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>Current Inventory Stock Report</option>
                 <option value="crm" {{ old('report_type') == 'crm' ? 'selected' : '' }}>Customer Relationship Management Report</option>
             </select>
@@ -168,7 +168,7 @@
         </div>
 
         <div class="flex justify-center pt-2">
-            <button type="submit" class="action-btn">
+            <button type="submit" class="action-btn" data-loading-text="Generating Report...">
                 <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Generate Report
             </button>

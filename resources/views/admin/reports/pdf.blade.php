@@ -78,7 +78,25 @@
                             $diagramCards[] = ['type' => 'chart', 'label' => $chart['label'] ?? 'Chart', 'svg' => $chart['svg'] ?? null];
                         }
                         if (!empty($insights)) {
-                            $diagramCards[] = ['type' => 'insights', 'label' => 'Key Insights', 'items' => $insights];
+                            $diagramCards[] = ['type' => 'insights', 'label' => 'Summary', 'items' => $insights];
+                        }
+                        if (($reportType ?? null) === 'inventory') {
+                            $lowStockItems = array_map(function ($item) {
+                                $name = $item['name'] ?? 'Unknown Item';
+                                $stock = number_format((float) ($item['stock_left'] ?? 0), 2);
+                                $unit = $item['unit'] ?? 'unit';
+                                return "{$name} ({$stock} {$unit})";
+                            }, $inventoryLowStockItems ?? []);
+
+                            $outOfStockItems = array_map(function ($item) {
+                                $name = $item['name'] ?? 'Unknown Item';
+                                $stock = number_format((float) ($item['stock_left'] ?? 0), 2);
+                                $unit = $item['unit'] ?? 'unit';
+                                return "{$name} ({$stock} {$unit})";
+                            }, $inventoryOutOfStockItems ?? []);
+
+                            $diagramCards[] = ['type' => 'insights', 'label' => 'Low Stock / Critical Items', 'items' => !empty($lowStockItems) ? $lowStockItems : ['No low stock items.']];
+                            $diagramCards[] = ['type' => 'insights', 'label' => 'Out of Stock Items', 'items' => !empty($outOfStockItems) ? $outOfStockItems : ['No out of stock items.']];
                         }
                         $chartChunks = array_chunk($diagramCards, 2);
                     @endphp
@@ -88,7 +106,7 @@
                                 <td>
                                     @if(($card['type'] ?? '') === 'insights')
                                         <div class="diagram-card insight-card">
-                                            <h4>{{ $card['label'] ?? 'Key Insights' }}</h4>
+                                            <h4>{{ $card['label'] ?? 'Summary' }}</h4>
                                             <ul class="insight-list">
                                                 @foreach(($card['items'] ?? []) as $insight) <li>{{ $insight }}</li> @endforeach
                                             </ul>

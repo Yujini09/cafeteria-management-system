@@ -83,6 +83,7 @@
     inset: 0;
     width: 100%;
     height: 100%;
+    padding-right: 0.75rem;
     opacity: 0;
     cursor: pointer;
     z-index: 1;
@@ -92,6 +93,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    padding-right: 0.3rem;
     color: inherit;
     pointer-events: none;
     user-select: none;
@@ -121,6 +123,47 @@
 /* Header Styles */
 .page-header {
     flex-wrap: wrap;
+}
+
+.export-dropdown {
+    position: relative;
+}
+
+.export-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.4rem);
+    min-width: 170px;
+    border: 1px solid var(--neutral-200);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+    padding: 0.35rem;
+    z-index: 40;
+}
+
+.export-menu[hidden] {
+    display: none;
+}
+
+.export-menu-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.55rem 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--neutral-700);
+    cursor: pointer;
+    text-align: left;
+}
+
+.export-menu-item:hover {
+    background: var(--neutral-50);
 }
 
 /* Filter Section */
@@ -223,6 +266,10 @@
 @media (max-width: 768px) {
     .page-header { flex-direction: column; align-items: flex-start; }
     .header-content { width: 100%; }
+    .header-actions { width: 100%; }
+    .export-dropdown { width: 100%; }
+    #reservationsExportToggle { width: 100%; justify-content: center; }
+    .export-menu { left: 0; right: 0; min-width: 0; }
 }
 </style>
 
@@ -238,7 +285,7 @@
                 <p class="header-subtitle">Manage and review all reservation requests</p>
             </div>
         </div>
-        <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
+        <div class="header-actions w-full md:w-auto flex flex-col items-stretch md:items-end gap-3">
             <div class="relative w-full sm:w-64 md:w-72">
                 <input type="text"
                        inputmode="search"
@@ -259,34 +306,128 @@
             </div>
         </div>
     </div>
-    
-    <div class="mb-4">
-        <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <span class="inline-flex w-fit items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
             <x-admin.ui.icon name="fa-calendar-check" size="xs" />
             Total Reservations: {{ $reservations->total() }}
         </span>
+
+        <div class="export-dropdown w-full sm:w-auto md:ml-auto" id="reservationsExportDropdown">
+            <button type="button" id="reservationsExportToggle" class="btn-primary" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-file-export mr-2"></i> Export <i class="fas fa-chevron-down ml-2 text-xs"></i>
+            </button>
+
+            <div id="reservationsExportMenu" class="export-menu" hidden>
+                <form action="{{ route('admin.reservations.export.list.pdf') }}" method="POST">
+                    @csrf
+                    @if($status !== null)
+                        <input type="hidden" name="status" value="{{ $status }}">
+                    @endif
+                    @if($payment !== null)
+                        <input type="hidden" name="payment" value="{{ $payment }}">
+                    @endif
+                    @if($department !== null)
+                        <input type="hidden" name="department" value="{{ $department }}">
+                    @endif
+                    @if($createdFrom !== null)
+                        <input type="hidden" name="created_from" value="{{ $createdFrom }}">
+                    @endif
+                    @if($createdTo !== null)
+                        <input type="hidden" name="created_to" value="{{ $createdTo }}">
+                    @endif
+                    <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+                    <button type="submit" class="export-menu-item">
+                        <i class="fas fa-file-pdf text-red-600"></i> PDF
+                    </button>
+                </form>
+
+                <form action="{{ route('admin.reservations.export.list.excel') }}" method="POST">
+                    @csrf
+                    @if($status !== null)
+                        <input type="hidden" name="status" value="{{ $status }}">
+                    @endif
+                    @if($payment !== null)
+                        <input type="hidden" name="payment" value="{{ $payment }}">
+                    @endif
+                    @if($department !== null)
+                        <input type="hidden" name="department" value="{{ $department }}">
+                    @endif
+                    @if($createdFrom !== null)
+                        <input type="hidden" name="created_from" value="{{ $createdFrom }}">
+                    @endif
+                    @if($createdTo !== null)
+                        <input type="hidden" name="created_to" value="{{ $createdTo }}">
+                    @endif
+                    <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+                    <button type="submit" class="export-menu-item">
+                        <i class="fas fa-file-excel text-green-600"></i> Excel
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
         <form method="GET" action="{{ route('admin.reservations') }}" class="flex flex-col gap-4">
             <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+            @if($status !== null)
+                <input type="hidden" name="status" value="{{ $status }}">
+            @endif
             @if($payment !== null)
                 <input type="hidden" name="payment" value="{{ $payment }}">
             @endif
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <label for="status" class="text-sm font-semibold text-admin-neutral-700">Filter by Status</label>
-                @php
-                    $pending  = data_get($counts, 'pending', 0);
-                    $approved = data_get($counts, 'approved', 0);
-                    $declined = data_get($counts, 'declined', 0);
-                @endphp
-                <div class="w-full sm:w-64">
-                    <select name="status" id="status" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
-                        <option value="" {{ $status === null ? 'selected' : '' }}>All Reservations</option>
-                        <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending ({{ $pending }})</option>
-                        <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved ({{ $approved }})</option>
-                        <option value="declined" {{ $status === 'declined' ? 'selected' : '' }}>Declined ({{ $declined }})</option>
-                    </select>
+            @if($department !== null)
+                <input type="hidden" name="department" value="{{ $department }}">
+            @endif
+            <div class="flex flex-col gap-3">
+                <span class="text-sm font-semibold text-admin-neutral-700">Filter by Date Range</span>
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="w-full sm:w-48">
+                            <label for="created_from" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-neutral-500">From</label>
+                            <input type="date"
+                                   name="created_from"
+                                   id="created_from"
+                                   data-initial-value="{{ $createdFrom ?? '' }}"
+                                   value="{{ $createdFrom }}"
+                                   max="{{ $createdTo ?: '' }}"
+                                   class="w-full rounded-admin border border-admin-neutral-300 bg-white px-3 py-2.5 text-sm text-admin-neutral-700 focus:border-admin-primary focus:outline-none focus:ring-2 focus:ring-admin-primary/20">
+                        </div>
+                        <div class="w-full sm:w-48">
+                            <label for="created_to" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-admin-neutral-500">To</label>
+                            <input type="date"
+                                   name="created_to"
+                                   id="created_to"
+                                   data-initial-value="{{ $createdTo ?? '' }}"
+                                   value="{{ $createdTo }}"
+                                   min="{{ $createdFrom ?: '' }}"
+                                   class="w-full rounded-admin border border-admin-neutral-300 bg-white px-3 py-2.5 text-sm text-admin-neutral-700 focus:border-admin-primary focus:outline-none focus:ring-2 focus:ring-admin-primary/20">
+                        </div>
+                    </div>
+                    @php
+                        $hasCreatedRange = $createdFrom !== null || $createdTo !== null;
+                        $resetDateRangeUrl = route('admin.reservations', array_filter([
+                            'created_sort' => $createdSort,
+                            'status' => $status,
+                            'payment' => $payment,
+                            'department' => $department,
+                        ], static fn ($value) => $value !== null && $value !== ''));
+                    @endphp
+                    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row" data-date-range-actions data-has-initial-range="{{ $hasCreatedRange ? 'true' : 'false' }}">
+                        <button type="submit"
+                                class="btn-primary w-full sm:w-auto"
+                                data-date-range-apply
+                                @if($hasCreatedRange) hidden @endif>
+                            Apply
+                        </button>
+                        <a href="{{ $resetDateRangeUrl }}"
+                           class="btn-secondary inline-flex w-full items-center justify-center sm:w-auto"
+                           data-date-range-reset
+                           @unless($hasCreatedRange) hidden @endunless>
+                            Reset
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>
@@ -308,13 +449,84 @@
                 <tr>
                     <th class="column-id text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
                     <th class="column-customer text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th class="column-department text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Office/Dept</th>
-                    <th class="column-status text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="column-department text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <form method="GET" action="{{ route('admin.reservations') }}" class="payment-filter-control">
+                            <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+                            @if($status !== null)
+                                <input type="hidden" name="status" value="{{ $status }}">
+                            @endif
+                            @if($payment !== null)
+                                <input type="hidden" name="payment" value="{{ $payment }}">
+                            @endif
+                            @if($createdFrom !== null)
+                                <input type="hidden" name="created_from" value="{{ $createdFrom }}">
+                            @endif
+                            @if($createdTo !== null)
+                                <input type="hidden" name="created_to" value="{{ $createdTo }}">
+                            @endif
+                            <select name="department"
+                                    id="departmentColumnFilter"
+                                    onchange="this.form.submit()"
+                                    class="payment-filter-native"
+                                    aria-label="Filter by office or department">
+                                <option value="" {{ $department === null ? 'selected' : '' }}>All Office/Dept</option>
+                                @foreach(($departmentOptions ?? []) as $departmentOption)
+                                    <option value="{{ $departmentOption }}" {{ $department === $departmentOption ? 'selected' : '' }}>
+                                        {{ $departmentOption }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span class="payment-filter-label {{ $department !== null ? 'is-active' : '' }}">
+                                <span>Office/Dept</span>
+                                <x-admin.ui.icon name="fa-chevron-down" style="fas" size="xs" class="text-admin-neutral-400" />
+                            </span>
+                        </form>
+                    </th>
+                    <th class="column-status text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <form method="GET" action="{{ route('admin.reservations') }}" class="payment-filter-control">
+                            <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+                            @if($department !== null)
+                                <input type="hidden" name="department" value="{{ $department }}">
+                            @endif
+                            @if($payment !== null)
+                                <input type="hidden" name="payment" value="{{ $payment }}">
+                            @endif
+                            @if($createdFrom !== null)
+                                <input type="hidden" name="created_from" value="{{ $createdFrom }}">
+                            @endif
+                            @if($createdTo !== null)
+                                <input type="hidden" name="created_to" value="{{ $createdTo }}">
+                            @endif
+                            <select name="status"
+                                    id="statusColumnFilter"
+                                    onchange="this.form.submit()"
+                                    class="payment-filter-native"
+                                    aria-label="Filter by status">
+                                <option value="" {{ $status === null ? 'selected' : '' }}>All Status</option>
+                                <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="declined" {{ $status === 'declined' ? 'selected' : '' }}>Declined</option>
+                                <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
+                            </select>
+                            <span class="payment-filter-label {{ $status !== null ? 'is-active' : '' }}">
+                                <span>Status</span>
+                                <x-admin.ui.icon name="fa-chevron-down" style="fas" size="xs" class="text-admin-neutral-400" />
+                            </span>
+                        </form>
+                    </th>
                     <th class="column-payment text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         <form method="GET" action="{{ route('admin.reservations') }}" class="payment-filter-control">
                             <input type="hidden" name="created_sort" value="{{ $createdSort }}">
                             @if($status !== null)
                                 <input type="hidden" name="status" value="{{ $status }}">
+                            @endif
+                            @if($department !== null)
+                                <input type="hidden" name="department" value="{{ $department }}">
+                            @endif
+                            @if($createdFrom !== null)
+                                <input type="hidden" name="created_from" value="{{ $createdFrom }}">
+                            @endif
+                            @if($createdTo !== null)
+                                <input type="hidden" name="created_to" value="{{ $createdTo }}">
                             @endif
                             <select name="payment"
                                     id="paymentColumnFilter"
@@ -482,6 +694,73 @@
         clearSearch.addEventListener('click', () => {
             searchInput.value = '';
             filterTable('');
+        });
+    }
+
+    const createdFromInput = document.getElementById('created_from');
+    const createdToInput = document.getElementById('created_to');
+    const dateRangeActions = document.querySelector('[data-date-range-actions]');
+    const dateRangeApply = document.querySelector('[data-date-range-apply]');
+    const dateRangeReset = document.querySelector('[data-date-range-reset]');
+
+    if (createdFromInput && createdToInput && dateRangeActions && dateRangeApply && dateRangeReset) {
+        const initialCreatedFrom = createdFromInput.dataset.initialValue || '';
+        const initialCreatedTo = createdToInput.dataset.initialValue || '';
+        const hasInitialRange = dateRangeActions.dataset.hasInitialRange === 'true';
+
+        const syncDateRangeAction = () => {
+            const currentCreatedFrom = createdFromInput.value;
+            const currentCreatedTo = createdToInput.value;
+            const hasChanged = currentCreatedFrom !== initialCreatedFrom || currentCreatedTo !== initialCreatedTo;
+
+            createdFromInput.max = currentCreatedTo || '';
+            createdToInput.min = currentCreatedFrom || '';
+
+            if (hasChanged || !hasInitialRange) {
+                dateRangeApply.removeAttribute('hidden');
+                dateRangeReset.setAttribute('hidden', '');
+            } else {
+                dateRangeApply.setAttribute('hidden', '');
+                dateRangeReset.removeAttribute('hidden');
+            }
+        };
+
+        ['input', 'change'].forEach((eventName) => {
+            createdFromInput.addEventListener(eventName, syncDateRangeAction);
+            createdToInput.addEventListener(eventName, syncDateRangeAction);
+        });
+
+        syncDateRangeAction();
+    }
+
+    const exportToggle = document.getElementById('reservationsExportToggle');
+    const exportMenu = document.getElementById('reservationsExportMenu');
+    const exportDropdown = document.getElementById('reservationsExportDropdown');
+
+    if (exportToggle && exportMenu && exportDropdown) {
+        exportToggle.addEventListener('click', () => {
+            const isHidden = exportMenu.hasAttribute('hidden');
+            if (isHidden) {
+                exportMenu.removeAttribute('hidden');
+                exportToggle.setAttribute('aria-expanded', 'true');
+            } else {
+                exportMenu.setAttribute('hidden', '');
+                exportToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!exportDropdown.contains(event.target)) {
+                exportMenu.setAttribute('hidden', '');
+                exportToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                exportMenu.setAttribute('hidden', '');
+                exportToggle.setAttribute('aria-expanded', 'false');
+            }
         });
     }
 

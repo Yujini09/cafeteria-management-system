@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Calendars')
+@section('page-title', 'Calendar')
 
 @section('content')
 <style>
@@ -632,14 +632,14 @@
                 @forelse($monthlyApproved as $event)
                     @php
                         $eventCustomer = $event->contact_person ?? optional($event->user)->name ?? 'N/A';
-                        $eventGuests = $event->guests ?? $event->number_of_persons ?? 0;
+                        $eventGuests = $event->number_of_persons ?? 0;
                         $eventEmail = $event->email ?? optional($event->user)->email ?? 'N/A';
                         $eventPhone = $event->contact_number ?? optional($event->user)->phone ?? 'N/A';
                         $eventDepartment = $event->department ?? optional($event->user)->department ?? 'N/A';
                         $eventVenue = $event->venue ?? 'N/A';
                         $eventName = $event->event_name ?? 'N/A';
                         $eventTime = !empty($event->event_time) ? $event->event_time : 'Not specified';
-                        $eventStartDate = \Carbon\Carbon::parse($event->event_date ?? $event->date);
+                        $eventStartDate = \Carbon\Carbon::parse($event->event_date ?? $event->created_at);
                         $eventEndDate = $event->end_date ? \Carbon\Carbon::parse($event->end_date) : $eventStartDate->copy();
                         if ($eventEndDate->lt($eventStartDate)) {
                             $eventEndDate = $eventStartDate->copy();
@@ -724,7 +724,7 @@
                 $segmentEventsByDate = [];
 
                 foreach ($monthlyApproved as $calendarEvent) {
-                    $calendarEventStartRaw = $calendarEvent->event_date ?? $calendarEvent->date;
+                    $calendarEventStartRaw = $calendarEvent->event_date ?? $calendarEvent->created_at;
                     if (empty($calendarEventStartRaw)) {
                         continue;
                     }
@@ -804,14 +804,14 @@
                                         $ev = $segment['event'];
                                         $spanDays = (int) ($segment['span'] ?? 1);
                                         $dayEventCustomer = $ev->contact_person ?? optional($ev->user)->name ?? 'N/A';
-                                        $dayEventGuests = $ev->guests ?? $ev->number_of_persons ?? 0;
+                                        $dayEventGuests = $ev->number_of_persons ?? 0;
                                         $dayEventEmail = $ev->email ?? optional($ev->user)->email ?? 'N/A';
                                         $dayEventPhone = $ev->contact_number ?? optional($ev->user)->phone ?? 'N/A';
                                         $dayEventDepartment = $ev->department ?? optional($ev->user)->department ?? 'N/A';
                                         $dayEventVenue = $ev->venue ?? 'N/A';
                                         $dayEventName = $ev->event_name ?? 'N/A';
                                         $dayEventTime = !empty($ev->event_time) ? $ev->event_time : 'Not specified';
-                                        $dayEventStartDate = \Carbon\Carbon::parse($ev->event_date ?? $ev->date);
+                                        $dayEventStartDate = \Carbon\Carbon::parse($ev->event_date ?? $ev->created_at);
                                         $dayEventEndDate = $ev->end_date ? \Carbon\Carbon::parse($ev->end_date) : $dayEventStartDate->copy();
                                         if ($dayEventEndDate->lt($dayEventStartDate)) {
                                             $dayEventEndDate = $dayEventStartDate->copy();

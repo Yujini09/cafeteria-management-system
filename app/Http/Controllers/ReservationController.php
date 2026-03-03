@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AdminReservationsExport;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\ReservationAdditional;
 use App\Models\InventoryItem;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use App\Notifications\ReservationStatusChanged;
@@ -17,47 +19,83 @@ use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Notifications\ReservationAdditionalAdded;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReservationController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->query('status');
-        if ($status === '') {
-            $status = null;
-        }
-
-        $payment = $request->query('payment');
-        if ($payment === '') {
-            $payment = null;
-        }
-
-        $createdSort = $request->query('created_sort', 'desc');
-        if (!in_array($createdSort, ['asc', 'desc'], true)) {
-            $createdSort = 'desc';
-        }
-
-        $q = Reservation::with(['user']);
-        if (in_array($status, ['pending','approved','declined', 'cancelled'], true)) {
-            $q->where('status', $status);
-        }
-
-        if (in_array($payment, ['paid', 'unpaid'], true)) {
-            $q->whereNotIn('status', ['declined', 'cancelled']);
-
-            if ($payment === 'paid') {
-                $q->where('payment_status', 'paid');
-            } else {
-                $q->where(function ($paymentQuery) {
-                    $paymentQuery->whereNull('payment_status')
-                        ->orWhere('payment_status', '!=', 'paid');
-                });
-            }
-        }
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+        $q = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo);
 
         $reservations = $q->orderBy('created_at', $createdSort)->paginate(10)->withQueryString();
-        $counts = Reservation::selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total','status');
-        return view('admin.reservations.index', compact('reservations','status','payment','counts','createdSort'));
+        $departmentOptions = $this->getAdminDepartmentOptions();
+
+        return view('admin.reservations.index', compact(
+            'reservations',
+            'status',
+            'payment',
+            'department',
+            'createdSort',
+            'departmentOptions',
+            'createdFrom',
+            'createdTo'
+        ));
+    }
+
+    public function exportIndexPdf(Request $request)
+    {
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+
+        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo)
+            ->orderBy('created_at', $createdSort)
+            ->get();
+
+        $exportedBy = Auth::user()?->name ?? 'Unknown';
+        $exportedAt = now();
+        $filename = 'reservations_' . $exportedAt->format('Y-m-d_His') . '.pdf';
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_RESERVATION_PDF,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "exported reservations list as PDF by {$exportedBy}"
+        );
+
+        $pdf = Pdf::loadView('admin.reservations.list-pdf', [
+            'reservations' => $reservations,
+            'status' => $status,
+            'payment' => $payment,
+            'department' => $department,
+            'createdSort' => $createdSort,
+            'createdFrom' => $createdFrom,
+            'createdTo' => $createdTo,
+            'exportedBy' => $exportedBy,
+            'exportedAt' => $exportedAt,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download($filename);
+    }
+
+    public function exportIndexExcel(Request $request)
+    {
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+
+        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo)
+            ->orderBy('created_at', $createdSort)
+            ->get();
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_REPORT_EXCEL,
+            AuditDictionary::MODULE_RESERVATIONS,
+            'exported reservations list as Excel'
+        );
+
+        return Excel::download(
+            new AdminReservationsExport($reservations),
+            'reservations_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
     }
 
 // Add this method to handle the OR Number submission
@@ -539,7 +577,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
     {
         $startDate = $reservation->event_date
             ? Carbon::parse($reservation->event_date)
-            : Carbon::parse($reservation->date ?? $reservation->created_at);
+            : Carbon::parse($reservation->created_at);
 
         $endDate = $reservation->end_date
             ? Carbon::parse($reservation->end_date)
@@ -562,7 +600,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             $dayTimes = is_array($decoded) ? $decoded : [];
         }
 
-        $fallbackRange = $reservation->event_time ?? $reservation->time ?? null;
+        $fallbackRange = $reservation->event_time;
         $slots = [];
 
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
@@ -1029,5 +1067,120 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
         (new NotificationService())->createAdminNotification($action, $module, $description, $metadata);
+    }
+
+    protected function resolveAdminIndexFilters(Request $request): array
+    {
+        $status = $request->input('status');
+        if ($status === '') {
+            $status = null;
+        }
+
+        $payment = $request->input('payment');
+        if ($payment === '') {
+            $payment = null;
+        }
+
+        $department = $request->input('department');
+        if ($department === '') {
+            $department = null;
+        }
+
+        $createdSort = $request->input('created_sort', 'desc');
+        if (!in_array($createdSort, ['asc', 'desc'], true)) {
+            $createdSort = 'desc';
+        }
+
+        $createdFrom = $this->normalizeAdminIndexDateFilter($request->input('created_from'));
+        $createdTo = $this->normalizeAdminIndexDateFilter($request->input('created_to'));
+
+        if ($createdFrom !== null && $createdTo !== null && $createdFrom > $createdTo) {
+            [$createdFrom, $createdTo] = [$createdTo, $createdFrom];
+        }
+
+        return [$status, $payment, $department, $createdSort, $createdFrom, $createdTo];
+    }
+
+    protected function buildAdminIndexQuery(
+        ?string $status,
+        ?string $payment,
+        ?string $department,
+        ?string $createdFrom,
+        ?string $createdTo
+    ): Builder
+    {
+        $q = Reservation::with(['user']);
+
+        if (in_array($status, ['pending', 'approved', 'declined', 'cancelled'], true)) {
+            $q->where('status', $status);
+        }
+
+        if (in_array($payment, ['paid', 'unpaid'], true)) {
+            $q->whereNotIn('status', ['declined', 'cancelled']);
+
+            if ($payment === 'paid') {
+                $q->where('payment_status', 'paid');
+            } else {
+                $q->where(function ($paymentQuery) {
+                    $paymentQuery->whereNull('payment_status')
+                        ->orWhere('payment_status', '!=', 'paid');
+                });
+            }
+        }
+
+        if (is_string($department) && $department !== '') {
+            $q->where(function ($departmentQuery) use ($department) {
+                $departmentQuery->where('department', $department)
+                    ->orWhere(function ($fallbackQuery) use ($department) {
+                        $fallbackQuery->whereNull('department')
+                            ->whereHas('user', function ($userQuery) use ($department) {
+                                $userQuery->where('department', $department);
+                            });
+                });
+            });
+        }
+
+        if ($createdFrom !== null) {
+            $q->whereDate('created_at', '>=', $createdFrom);
+        }
+
+        if ($createdTo !== null) {
+            $q->whereDate('created_at', '<=', $createdTo);
+        }
+
+        return $q;
+    }
+
+    protected function normalizeAdminIndexDateFilter(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function getAdminDepartmentOptions(): array
+    {
+        return Reservation::with(['user:id,department'])
+            ->get(['id', 'user_id', 'department'])
+            ->map(function (Reservation $reservation) {
+                return $reservation->department ?? optional($reservation->user)->department;
+            })
+            ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value) => trim($value))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 }

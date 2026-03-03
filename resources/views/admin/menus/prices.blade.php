@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title','Manage Menu Prices')
+@section('page-title','Prices')
 
 @section('content')
 <style>
@@ -99,7 +99,7 @@
                 <i class="fas fa-peso-sign"></i>
             </div>
             <div class="header-text">
-                <h1 class="header-title">Manage Menu Prices</h1>
+                <h1 class="header-title">Prices</h1>
             </div>
         </div>
     </div>

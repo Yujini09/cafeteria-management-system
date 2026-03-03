@@ -11,14 +11,13 @@ class Reservation extends Model
         'user_id',
         'event_name',
         'event_date',
-        'event_time',  // This should be a string time like "07:00-10:00"
-        'end_date',    // Add this if you want to store date range
-        'day_times', // Add this
+        'event_time',
+        'end_date',
+        'day_times',
         'number_of_persons',
         'special_requests',
         'status',
         'decline_reason',
-        // Additional fields from your form
         'contact_person',
         'department',
         'address',
@@ -27,32 +26,14 @@ class Reservation extends Model
         'venue',
         'project_name',
         'account_code',
-        // Legacy fields for backward compatibility
-        'date',
-        'time',
-        'guests',
-        // Add these to your Reservation model's $fillable array:
-        'receipt_path',
-        'receipt_uploaded_at',
-        'payment_status', // 'pending', 'paid', 'overdue'
-        'payment_requested_at',
-        'payment_last_reminder_at',
-        'payment_reminder_count',
-
         'payment_status',
-        'or_number'
+        'or_number',
     ];
 
     protected $casts = [
         'event_date' => 'date',
-        'receipt_uploaded_at' => 'datetime',
         'end_date' => 'date',
-        'day_times' => 'array', // Add this cast
-        'payment_requested_at' => 'datetime',
-        'payment_last_reminder_at' => 'datetime',
-        'payment_reminder_count' => 'integer',
-        // Don't cast event_time to datetime since it might contain JSON or time range string
-        // 'event_time' => 'datetime', // Remove or comment this line
+        'day_times' => 'array',
     ];
 
     public function user()
@@ -72,8 +53,7 @@ class Reservation extends Model
 
     public function getGuestCountAttribute(): int
     {
-        $count = $this->guests ?? $this->attendees ?? $this->number_of_persons;
-        return (int) ($count ?? 1);
+        return (int) ($this->number_of_persons ?? 1);
     }
     
     public function scopeStatus($q, $status)
@@ -152,7 +132,7 @@ class Reservation extends Model
         }
 
         if ($isFirstDay && $startTime === null && $endTime === null) {
-            [$startTime, $endTime] = $this->splitTimeRange($this->event_time ?? $this->time ?? null);
+            [$startTime, $endTime] = $this->splitTimeRange($this->event_time);
         }
 
         return [$startTime, $endTime];

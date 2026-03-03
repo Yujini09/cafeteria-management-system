@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Inventory Management')
+@section('page-title', 'Inventory')
 
 @section('content')
 <style>
@@ -105,7 +105,7 @@
                     <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-white w-6 h-6" />
                 </div>
                 <div class="header-text">
-                    <h1 class="header-title">Inventory Management</h1>
+                    <h1 class="header-title">Inventory</h1>
                     <p class="header-subtitle">Manage and track your inventory items and quantities</p>
                 </div>
             </div>

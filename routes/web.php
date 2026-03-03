@@ -102,6 +102,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/menu-items/{menuItem}/recipes/{recipe}', [RecipeController::class,'destroy'])->name('recipes.destroy');
 
         Route::get  ('/reservations',                       [ReservationController::class,'index'])->name('reservations');
+        Route::post ('/reservations/export/pdf',            [ReservationController::class,'exportIndexPdf'])->name('reservations.export.list.pdf');
+        Route::post ('/reservations/export/excel',          [ReservationController::class,'exportIndexExcel'])->name('reservations.export.list.excel');
         Route::get  ('/reservations/{reservation}',         [ReservationController::class,'show'])->name('reservations.show');
         Route::get  ('/reservations/{reservation}/export-pdf', [ReservationController::class,'exportPdf'])->name('reservations.export.pdf');
         Route::post ('/reservations/{reservation}/check-inventory', [ReservationController::class,'checkInventory'])->name('reservations.check-inventory');

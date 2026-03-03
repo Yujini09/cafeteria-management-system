@@ -13,7 +13,7 @@
                 <x-admin.ui.icon name="fa-users" style="fas" class="text-white w-6 h-6" />
             </div>
             <div class="header-text min-w-0">
-                <h1 class="header-title">User Management</h1>
+                <h1 class="header-title">Manage Users</h1>
                 <p class="header-subtitle">Manage admin accounts and access</p>
             </div>
         </div>

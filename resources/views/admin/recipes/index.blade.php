@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title','Recipe: '.$menuItem->name)
+@section('page-title','Manage Menus')
 
 @section('content')
 <div class="admin-page-shell bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
@@ -20,12 +20,12 @@
         </div>
         <!-- Text Content -->
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2" style="font-family: 'Poppins', sans-serif;">Recipe for: {{ $menuItem->name }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2" style="font-family: 'Poppins', sans-serif;">Manage Menus</h1>
             <div class="flex items-center text-gray-600" style="font-family: 'Poppins', sans-serif;">
                 <svg class="w-5 h-5 mr-2 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
-                <span>Bundle: {{ $menuItem->menu->name }}</span>
+                <span>Recipe for: {{ $menuItem->name }} in {{ $menuItem->menu->name }}</span>
             </div>
         </div>
     </div>

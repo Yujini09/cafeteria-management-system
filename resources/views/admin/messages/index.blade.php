@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Inbox')
+@section('page-title', 'Messages')
 
 @section('content')
 <div x-data="inboxSystem()" x-init="init()" x-effect="document.body.classList.toggle('overflow-hidden', viewOpen || replyOpen || deleteOpen)" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto">
@@ -11,7 +11,7 @@
                 <x-admin.ui.icon name="fa-inbox" style="fas" class="text-white w-6 h-6" />
             </div>
             <div class="header-text">
-                <h1 class="header-title">Customer Inbox</h1>
+                <h1 class="header-title">Messages</h1>
                 <p class="header-subtitle">Manage inquiries from the contact form.</p>
             </div>
         </div>
