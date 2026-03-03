@@ -58,6 +58,21 @@
 .table-floating-action-delete:hover {
     background: #b91c1c;
 }
+
+.page-header {
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-content {
+        width: 100%;
+    }
+}
 </style>
 
 <div x-data="{ 

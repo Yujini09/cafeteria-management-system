@@ -44,6 +44,40 @@
 .compact-table th, .compact-table td { padding: 0.75rem 0.5rem; }
 .compact-table th { font-size: 0.7rem; }
 .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .header-content {
+        min-width: 0;
+    }
+
+    .header-text {
+        min-width: 0;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .export-dropdown {
+        width: 100%;
+    }
+
+    #reportExportToggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .export-menu {
+        left: 0;
+        right: 0;
+        min-width: 0;
+    }
+}
 @media (max-width: 640px) { .kpi-grid { grid-template-columns: 1fr; } }
 </style>
 

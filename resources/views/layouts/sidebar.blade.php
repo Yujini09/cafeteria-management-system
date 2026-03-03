@@ -82,6 +82,7 @@
             top: 0;
             left: 0;
             height: 100vh;
+            height: 100dvh;
             width: var(--sidebar-width);
             background: transparent;
             border-right: none;
@@ -91,6 +92,7 @@
             flex-direction: column;
             box-shadow: none;
             padding: 0.65rem 0.55rem;
+            overflow: hidden;
         }
 
         html.sidebar-prefers-closed .sidebar {
@@ -208,13 +210,15 @@
 
         /* --- NAVIGATION LIST --- */
         .sidebar-menu {
-            flex: 1;
+            flex: 1 1 auto;
+            min-height: 0;
             overflow-y: auto;
             padding: 0.45rem;
             margin-top: 0.45rem;
+            margin-bottom: 0.45rem;
             scrollbar-width: thin;
             scrollbar-color: var(--sidebar-border) transparent;
-            max-height: calc(100vh - 170px);
+            max-height: none;
             background: var(--sidebar-bg);
             border: 1px solid var(--sidebar-border);
             border-radius: 14px;

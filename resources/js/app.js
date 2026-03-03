@@ -66,9 +66,28 @@ const restoreLoadingLabel = (control) => {
     }
 };
 
+const isSubmitControl = (control) => {
+    if (!control || typeof control.tagName !== 'string') return false;
+
+    if (control.tagName === 'BUTTON') {
+        return (control.type || 'submit').toLowerCase() === 'submit';
+    }
+
+    if (control.tagName === 'INPUT') {
+        return (control.type || '').toLowerCase() === 'submit';
+    }
+
+    return false;
+};
+
 const getFormSubmitControls = (form) => {
-    if (!form) return [];
-    return Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+    if (!form || !form.elements) return [];
+    return Array.from(form.elements).filter((control) => isSubmitControl(control));
+};
+
+const isAssociatedSubmitter = (form, submitter) => {
+    if (!form || !submitter) return false;
+    return form.contains(submitter) || submitter.form === form;
 };
 
 const startButtonLoading = (button, fallbackText = null) => {
@@ -97,7 +116,7 @@ const startFormLoading = (form, submitter = null, fallbackText = null) => {
     const controls = getFormSubmitControls(form);
     controls.forEach((control) => markDisabled(control));
 
-    const target = submitter && form.contains(submitter)
+    const target = isAssociatedSubmitter(form, submitter)
         ? submitter
         : (controls[0] || null);
 

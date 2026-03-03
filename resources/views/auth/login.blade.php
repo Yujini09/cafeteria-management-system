@@ -5,20 +5,20 @@
         $passwordLinkStatus = __('passwords.sent');
     @endphp
     {{-- Main Container --}}
-    <div class="min-h-screen flex items-center justify-center bg-admin-neutral-100 relative overflow-hidden font-admin text-admin-neutral-900"> 
+    <div class="min-h-screen flex items-start justify-center bg-admin-neutral-100 relative overflow-hidden px-3 py-4 sm:px-4 sm:py-6 lg:items-center lg:px-6 lg:py-8 font-admin text-admin-neutral-900"> 
         <div class="absolute inset-0 opacity-30">
             {{-- Large Bubble: Top-Center, slightly left --}}
-            <div class="w-96 h-96 bg-green-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="hidden sm:block w-96 h-96 bg-green-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
             {{-- Mid Bubble: Bottom-Right edge --}}
-            <div class="w-64 h-64 bg-green-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
+            <div class="w-40 h-40 sm:w-64 sm:h-64 bg-green-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
             {{-- Large Bubble: Mid-Left edge --}}
-            <div class="w-80 h-80 bg-green-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="hidden sm:block w-80 h-80 bg-green-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
             {{-- Small Bubble: Bottom-Center, slightly right --}}
-            <div class="w-40 h-40 bg-green-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
+            <div class="w-24 h-24 sm:w-40 sm:h-40 bg-green-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
         </div>
 
         {{-- Card Container --}}
-            <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[560px]"> 
+            <div class="relative z-10 flex w-full max-w-5xl flex-col overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin md:flex-row lg:min-h-[560px]"> 
             
             {{-- Left side (Logo Display) --}}
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 
@@ -34,31 +34,31 @@
             </div>
 
             {{-- Right side (Login Form) --}}
-            <div class="w-full md:w-7/12 p-8 md:p-12 relative  bg-green-100 overflow-hidden overflow-x-hidden md:h-full"> 
+            <div class="relative w-full overflow-hidden overflow-x-hidden bg-green-100 px-5 py-6 sm:px-6 sm:py-8 md:w-7/12 md:p-10 lg:h-full lg:p-12"> 
                 <div class="absolute inset-0 pointer-events-none">
-                    <div class="w-56 h-56 bg-green-200 rounded-full absolute -top-20 -right-16"></div> 
-                    <div class="w-40 h-40 bg-green-200 rounded-full absolute -bottom-16 -left-16"></div> 
+                    <div class="h-40 w-40 sm:h-56 sm:w-56 bg-green-200 rounded-full absolute -top-16 sm:-top-20 -right-12 sm:-right-16"></div> 
+                    <div class="h-28 w-28 sm:h-40 sm:w-40 bg-green-200 rounded-full absolute -bottom-10 sm:-bottom-16 -left-10 sm:-left-16"></div> 
                 </div>
 
                 <div class="relative z-10 flex h-full flex-col"> 
-                    <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="md:hidden h-12 w-12 rounded-admin bg-ret-dark/90 flex items-center justify-center">
-                                    <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
-                                         class="h-8 w-8 object-contain"> 
+                    <div class="mb-4 flex flex-col gap-3 sm:mb-5">
+                        <div class="flex items-start justify-between gap-3 sm:items-center">
+                            <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+                                <div class="md:hidden flex h-16 w-16 items-center justify-center">
+                                    <img src="{{ asset('images/Cafeteria-logo.png') }}" alt="RET Cafeteria Logo"
+                                         class="h-16 w-16 object-contain"> 
                                 </div>
-                                <div>
-                                    <h2 class="text-green-900 text-4xl font-extrabold mb-1">Welcome!</h2> 
-                                        <p class="text-green-700 text-lg">Log in to your account</p> 
+                                <div class="min-w-0">
+                                    <h2 class="mb-1 text-3xl font-extrabold text-green-900 sm:text-4xl">Welcome!</h2> 
+                                        <p class="text-base text-green-700 sm:text-lg">Log in to your account</p> 
                                 </div>
                             </div>
                             <a href="{{ route('marketing.home') }}"
-                                class="md:hidden inline-flex items-center justify-center gap-2 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold text-admin-neutral-700 transition hover:bg-admin-neutral-100">
+                                class="md:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-admin-neutral-700 transition hover:bg-admin-neutral-100 hover:text-admin-primary"
+                                aria-label="Back to home">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                                 </svg>
-                                Continue
                             </a>
                         </div>
                     </div>
@@ -73,7 +73,7 @@
                         <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
                     </x-success-modal>
 
-                    <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-6" data-action-loading>
+                    <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-5 sm:gap-6" data-action-loading>
                         @csrf
                         <input type="hidden" name="redirect" value="{{ request('redirect') ?? session('login_redirect') }}">
                         
@@ -111,13 +111,13 @@
                         </div>
 
                         {{-- Remember + Forgot --}}
-                        <div class="flex items-center justify-between text-sm">
+                        <div class="flex flex-col items-start gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                             <label for="remember_me" class="flex items-center gap-2 text-admin-neutral-600">
                                 <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 text-admin-primary focus:ring-admin-primary/20 border-admin-neutral-300 rounded">
                                 <span>Remember me</span>
                             </label>
                             @if (Route::has('password.request'))
-                                <a id="openForgotPassword" href="{{ route('password.request') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
+                                <a id="openForgotPassword" href="{{ route('password.request') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200 sm:self-auto">
                                     {{ __('Forgot Password?') }}
                                 </a>
                             @endif
@@ -144,7 +144,7 @@
                     </div>
                     
 
-                    <div class="mt-6 text-center text-sm text-admin-neutral-600">
+                    <div class="mt-5 text-center text-sm text-admin-neutral-600 sm:mt-6">
                         {{ __("Don't have an Account?") }} 
                         <a href="{{ route('register') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200 font-semibold">
                             {{ __('Register') }}
@@ -153,14 +153,14 @@
                 </div> 
 
                 <div id="forgotPasswordModal"
-                    class="{{ $showForgotModal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center p-4"
+                    class="{{ $showForgotModal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
                     role="dialog"
                     aria-modal="true"
                     aria-hidden="{{ $showForgotModal ? 'false' : 'true' }}"
                     aria-labelledby="forgotPasswordTitle">
                     <div id="forgotPasswordBackdrop" class="absolute inset-0 bg-admin-neutral-900/50 backdrop-blur-sm"></div>
                     <div class="relative w-full max-w-md overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin-modal">
-                        <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 bg-admin-neutral-50 px-6 py-4">
+                        <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 bg-admin-neutral-50 px-4 py-4 sm:px-6">
                             <div>
                                 <h2 id="forgotPasswordTitle" class="text-lg font-semibold text-admin-neutral-900">Reset Password</h2>
                                 <p class="text-xs text-admin-neutral-600 mt-1">We will email you a reset link.</p>
@@ -171,7 +171,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="px-6 py-5">
+                        <div class="px-4 py-5 sm:px-6">
                             <div class="mb-4 text-sm text-admin-neutral-600 bg-admin-neutral-50 p-3 rounded-admin border border-admin-neutral-200 border-l-4 border-l-admin-primary">
                                 {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
                             </div>

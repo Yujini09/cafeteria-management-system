@@ -16,6 +16,7 @@ use App\Support\AuditDictionary;
 use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Notifications\ReservationAdditionalAdded;
 
 class ReservationController extends Controller
 {
@@ -58,18 +59,6 @@ class ReservationController extends Controller
         $counts = Reservation::selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total','status');
         return view('admin.reservations.index', compact('reservations','status','payment','counts','createdSort'));
     }
-
-    public function updateServiceFee(Request $request, Reservation $reservation)
-{
-    $request->validate([
-        'service_fee' => 'required|numeric|min:0'
-    ]);
-
-    $reservation->service_fee = $request->service_fee;
-    $reservation->save();
-
-    return redirect()->back()->with('success', 'Service fee updated successfully.');
-}
 
 // Add this method to handle the OR Number submission
 public function markPaid(\Illuminate\Http\Request $request, $id)
@@ -164,8 +153,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             : [];
 
         $additionalsTotal = (float) ($reservation->additionals?->sum('price') ?? 0);
-        $serviceFee = (float) ($reservation->service_fee ?? 0);
-        $grandTotal = $menuSubtotal + $additionalsTotal + $serviceFee;
+        $grandTotal = $menuSubtotal + $additionalsTotal;
         $paymentLabel = $this->formatReservationPaymentLabel($reservation);
 
         $exportedBy = Auth::user()?->name ?? 'Unknown';
@@ -184,7 +172,6 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             'menuSubtotal' => $menuSubtotal,
             'additionals' => $additionals,
             'additionalsTotal' => $additionalsTotal,
-            'serviceFee' => $serviceFee,
             'grandTotal' => $grandTotal,
             'paymentLabel' => $paymentLabel,
             'exportedBy' => $exportedBy,
@@ -682,9 +669,12 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             return redirect()->back()->with('error', 'Only pending reservations can be approved.');
         }
 
+        $forceApprove = $request->boolean('force_approve');
+        $forceOverlapApprove = $request->boolean('force_overlap_approve');
+
         $overlap = $this->findOverlappingApprovedReservation($reservation);
-        if ($overlap) {
-            return redirect()->back()->with([
+        if ($overlap && !$forceOverlapApprove) {
+            return redirect()->back()->withInput()->with([
                 'overlap_warning' => true,
                 'overlap_reservation_id' => $overlap['reservation']->id ?? null,
                 'overlap_reservation_date' => $overlap['date'] ?? null,
@@ -696,9 +686,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             return ($item['shortage'] ?? 0) > 0;
         }));
 
-        $forceApprove = $request->boolean('force_approve');
         if (!$forceApprove && count($insufficient) > 0) {
-            return redirect()->back()->with([
+            return redirect()->back()->withInput()->with([
                 'inventory_warning' => true,
                 'insufficient_items' => $insufficient,
             ]);
@@ -822,6 +811,35 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             "added additional charge #{$additional->id} to reservation #{$reservation->id}"
         );
 
+        $reservation->loadMissing(['user']);
+        $updatedGrandTotal = $this->calculateReservationGrandTotal($reservation);
+
+        $user = $reservation->user;
+        if ($user) {
+            NotificationFacade::send($user, new ReservationAdditionalAdded($reservation, $additional, $updatedGrandTotal));
+            (new NotificationService())->createUserNotification(
+                $reservation->user_id,
+                'reservation_additional_added',
+                'reservations',
+                sprintf(
+                    'An additional charge of PHP %s was added to reservation #%d. Updated total: PHP %s.',
+                    number_format((float) $additional->price, 2),
+                    $reservation->id,
+                    number_format($updatedGrandTotal, 2)
+                ),
+                [
+                    'reservation_id' => $reservation->id,
+                    'additional_id' => $additional->id,
+                    'additional_name' => $additional->name,
+                    'additional_amount' => (float) $additional->price,
+                    'updated_total' => $updatedGrandTotal,
+                    'url' => route('reservation.view', $reservation->id),
+                    'link_label' => 'View Details',
+                ],
+                'Reservation Total Updated'
+            );
+        }
+
         return redirect()->back()->with('success', 'Additional item added.');
     }
 
@@ -940,6 +958,28 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         unset($row);
 
         return $usage;
+    }
+
+    protected function calculateReservationGrandTotal(Reservation $reservation): float
+    {
+        $menuTotal = (float) ($reservation->total_amount ?? 0);
+
+        if ($menuTotal <= 0) {
+            $reservation->loadMissing(['items.menu']);
+            $menuTotal = 0.0;
+
+            foreach ($reservation->items as $item) {
+                if (!$item->menu) {
+                    continue;
+                }
+
+                $menuTotal += ((int) ($item->quantity ?? 0)) * $this->resolveReservationItemPrice($item);
+            }
+        }
+
+        $additionalsTotal = (float) $reservation->additionals()->sum('price');
+
+        return $menuTotal + $additionalsTotal;
     }
 
     public function cancel(Request $request, Reservation $reservation)

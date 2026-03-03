@@ -2,19 +2,17 @@
 
 namespace App\Notifications;
 
+use App\Mail\StandardAppMail;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\URL;
 
 class VerifyEmail extends Notification
 {
+    use Queueable;
 
     /**
      * Get the notification's delivery channels.
-     *
-     * @param  mixed  $notifiable
-     * @return array
      */
     public function via($notifiable)
     {
@@ -23,30 +21,40 @@ class VerifyEmail extends Notification
 
     /**
      * Get the mail representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
      */
-    public function toMail($notifiable)
+    public function toMail($notifiable): StandardAppMail
     {
         $verificationUrl = $this->verificationUrl($notifiable);
+        $recipient = $notifiable->routeNotificationFor('mail', $this) ?: $notifiable->email;
 
-        return (new MailMessage)
-            ->subject('Verify Email Address')
-            ->line('Please click the button below to verify your email address.')
-            ->action('Verify Email Address', $verificationUrl)
-            ->line('If you did not create an account, no further action is required.');
+        return (new StandardAppMail(
+            topic: 'Verify Your Email Address',
+            title: 'Verify your email address',
+            recipientName: $notifiable->name ?? null,
+            introLines: [
+                'Thanks for creating your account.',
+                'Please confirm your email address to finish setting up access.',
+            ],
+            details: [
+                'Email Address' => $notifiable->getEmailForVerification(),
+            ],
+            action: [
+                'text' => 'Verify Email Address',
+                'url' => $verificationUrl,
+            ],
+            outroLines: [
+                'If you did not create an account, you can ignore this email.',
+            ],
+            headerLabel: 'Account Verification',
+        ))->to($recipient, $notifiable->name ?? null);
     }
 
     /**
      * Get the verification URL for the given notifiable.
-     *
-     * @param  mixed  $notifiable
-     * @return string
      */
     protected function verificationUrl($notifiable)
     {
-        return \Illuminate\Support\Facades\URL::signedRoute(
+        return URL::signedRoute(
             'verification.link',
             [
                 'id' => $notifiable->getKey(),

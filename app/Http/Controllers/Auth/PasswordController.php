@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\RedirectResponse;
+use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
+use App\Notifications\PasswordChangedNotification;
 use App\Support\AuditDictionary;
 use App\Support\PasswordRules;
-use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class PasswordController extends Controller
 {
@@ -29,9 +30,14 @@ class PasswordController extends Controller
         $data = $validator->validate();
 
         if ($user !== null) {
+            $wasForceChangeRequired = (bool) $user->must_change_password;
             $user->password = Hash::make($data['password']);
             $user->must_change_password = false;
             $user->save();
+
+            $user->notify(new PasswordChangedNotification(
+                changeSource: $wasForceChangeRequired ? 'force-change' : 'profile-update'
+            ));
 
             AuditTrail::record(
                 $user->id,

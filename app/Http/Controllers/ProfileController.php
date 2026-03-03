@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\AuditTrail;
+use App\Notifications\PasswordChangedNotification;
 use App\Support\AuditDictionary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -62,24 +63,29 @@ class ProfileController extends Controller
      */
     public function updatePassword(Request $request): RedirectResponse
     {
-        // We explicitly define rules here to accept 'Ts12131989'
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', 'current_password'],
             'password' => [
-                'required', 
-                'confirmed', 
-                // Define specific rules instead of defaults
+                'required',
+                'confirmed',
                 Password::min(8)
                     ->letters()
-                    ->mixedCase() // Requires Uppercase & Lowercase (Ts...)
-                    ->numbers()   // Requires Numbers (12131989)
-                    // ->symbols() // REMOVED: This allows passwords without special chars
+                    ->mixedCase()
+                    ->numbers(),
             ],
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+        $wasForceChangeRequired = (bool) $user->must_change_password;
+
+        $user->update([
             'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
         ]);
+
+        $user->notify(new PasswordChangedNotification(
+            changeSource: $wasForceChangeRequired ? 'force-change' : 'profile-update'
+        ));
 
         AuditTrail::record(
             Auth::id(),

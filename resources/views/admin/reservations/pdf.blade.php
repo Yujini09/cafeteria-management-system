@@ -5,16 +5,38 @@
     <title>Reservation #{{ $reservation->id }}</title>
     <style>
         @page {
-            margin: 20px 22px;
+            size: A4 portrait;
+            margin-top: 8mm;
+            margin-bottom: 10mm;
+            margin-left: 8mm;
+            margin-right: 8mm;
+        }
+
+        :root {
+            --primary: #00462E;
+            --primary-light: #057C3C;
+            --neutral-50: #fafafa;
+            --neutral-100: #f5f5f5;
+            --neutral-200: #e5e5e5;
+            --neutral-300: #d4d4d4;
+            --neutral-400: #a3a3a3;
+            --neutral-500: #737373;
+            --neutral-600: #525252;
+            --neutral-700: #404040;
+            --neutral-800: #262626;
+            --neutral-900: #171717;
+            --success: #059669;
+            --warning: #b45309;
         }
 
         body {
             margin: 0;
-            font-family: DejaVu Sans, sans-serif;
+            padding: 0;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 12px;
             line-height: 1.45;
-            color: #111827;
-            background: #f8fafc;
+            color: var(--neutral-800);
+            background: #ffffff;
         }
 
         .header-table,
@@ -32,21 +54,23 @@
         }
 
         .page-header {
-            margin-bottom: 14px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 12px;
         }
 
         .header-title {
             margin: 0;
-            font-size: 21px;
+            font-size: 18px;
             font-weight: 700;
             line-height: 1.2;
-            color: #111827;
+            color: var(--primary);
         }
 
         .header-subtitle,
         .header-meta {
-            margin-top: 4px;
-            color: #6b7280;
+            margin-top: 3px;
+            color: var(--neutral-600);
             font-size: 11px;
         }
 
@@ -55,35 +79,37 @@
         }
 
         .card {
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            background: #ffffff;
-            padding: 16px;
-            margin-bottom: 14px;
+            border: 1px solid var(--neutral-200);
+            border-radius: 10px;
+            background: var(--neutral-50);
+            padding: 12px;
+            margin-bottom: 12px;
         }
 
         .card-title {
-            margin: 0 0 12px;
-            font-size: 16px;
+            margin: 0 0 10px;
+            font-size: 13px;
             font-weight: 700;
-            color: #111827;
+            color: var(--neutral-800);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .card-title .icon {
             display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #16a34a;
+            width: 10px;
+            height: 10px;
+            border: 2px solid var(--primary-light);
             border-radius: 3px;
-            margin-right: 8px;
-            vertical-align: -1px;
+            margin-right: 6px;
+            vertical-align: 0;
             box-sizing: border-box;
         }
 
         .section-separator {
-            border-top: 1px solid #e5e7eb;
-            margin-top: 14px;
-            padding-top: 14px;
+            border-top: 1px solid var(--neutral-200);
+            margin-top: 12px;
+            padding-top: 12px;
         }
 
         .content-block {
@@ -100,20 +126,22 @@
 
         .field-label {
             margin-bottom: 3px;
-            color: #6b7280;
-            font-weight: 600;
-            font-size: 11px;
+            color: var(--neutral-600);
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
         }
 
         .field-value {
-            color: #111827;
+            color: var(--neutral-900);
             font-size: 12px;
         }
 
         .field-value.emphasis {
             font-size: 16px;
-            font-weight: 700;
-            color: #16a34a;
+            font-weight: 800;
+            color: var(--primary);
         }
 
         .field-value.strong {
@@ -132,17 +160,17 @@
         .timeline-date {
             display: inline-block;
             width: 128px;
-            color: #374151;
-            font-weight: 500;
+            color: var(--neutral-700);
+            font-weight: 600;
         }
 
         .timeline-time {
             display: inline-block;
-            color: #111827;
+            color: var(--neutral-900);
         }
 
         .muted {
-            color: #9ca3af;
+            color: var(--neutral-500);
         }
 
         .break-all {
@@ -156,51 +184,66 @@
             font-size: 10px;
             font-weight: 700;
             margin-left: 6px;
+            border: 1px solid transparent;
         }
 
         .badge-status {
-            background: #e5e7eb;
-            color: #374151;
+            background: var(--neutral-100);
+            color: var(--neutral-700);
+            border-color: var(--neutral-200);
         }
 
         .badge-paid {
-            background: #dcfce7;
-            color: #166534;
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #a7f3d0;
         }
 
         .badge-unpaid {
             background: #fef3c7;
-            color: #92400e;
+            color: var(--warning);
+            border-color: #fcd34d;
         }
 
         .badge-na {
-            background: #f3f4f6;
-            color: #4b5563;
+            background: var(--neutral-100);
+            color: var(--neutral-600);
+            border-color: var(--neutral-200);
         }
 
         .table th,
         .table td {
-            border: 1px solid #e5e7eb;
-            padding: 7px 8px;
+            border: 0.5px solid var(--neutral-300);
+            padding: 6px 8px;
             text-align: left;
             vertical-align: top;
         }
 
         .table th {
-            background: #f9fafb;
-            font-size: 11px;
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background: #ffffff;
         }
 
         .day-heading {
-            margin: 12px 0 6px;
-            font-size: 13px;
+            margin: 10px 0 6px;
+            font-size: 11px;
             font-weight: 700;
-            color: #111827;
+            color: var(--neutral-700);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .component-list {
             margin-top: 3px;
-            color: #6b7280;
+            color: var(--neutral-600);
             font-size: 10px;
         }
 
@@ -210,13 +253,28 @@
         }
 
         .amount-table td {
-            border: 1px solid #e5e7eb;
-            padding: 8px 10px;
+            border: 0.5px solid var(--neutral-300);
+            padding: 7px 10px;
+            background: #ffffff;
         }
 
         .amount-table .total-row td {
-            background: #f0fdf4;
+            background: var(--neutral-100);
             font-weight: 700;
+            border-top: 1px solid var(--primary);
+        }
+
+        .amount-table tr:nth-child(even) td {
+            background: var(--neutral-50);
+        }
+
+        .footer {
+            margin-top: 18px;
+            padding-top: 10px;
+            border-top: 1px solid var(--neutral-300);
+            text-align: center;
+            font-size: 10px;
+            color: var(--neutral-500);
         }
     </style>
 </head>
@@ -274,9 +332,10 @@
                 <td>
                     <h1 class="header-title">Reservation Details</h1>
                     <div class="header-subtitle">Reservation #{{ $reservation->id }}</div>
+                    <div class="header-subtitle">Event Schedule: {{ $dateSummary }}</div>
                 </td>
                 <td class="text-right">
-                    <div class="header-meta">Exported {{ $exportedAt->format('M d, Y h:i A') }}</div>
+                    <div class="header-meta">Exported on {{ $exportedAt->format('F d, Y \a\t h:i A') }}</div>
                     <div class="header-meta">Exported by {{ $exportedBy }}</div>
                     <div style="margin-top: 8px;">
                         <span class="badge badge-status">{{ ucfirst($reservation->status ?? 'pending') }}</span>
@@ -495,15 +554,26 @@
                 <td>Additional Charges</td>
                 <td class="text-right">PHP {{ number_format($additionalsTotal, 2) }}</td>
             </tr>
-            <tr>
-                <td>Service Fee</td>
-                <td class="text-right">PHP {{ number_format($serviceFee, 2) }}</td>
-            </tr>
             <tr class="total-row">
                 <td>Grand Total</td>
                 <td class="text-right">PHP {{ number_format($grandTotal, 2) }}</td>
             </tr>
         </table>
     </div>
+
+    <div class="footer">
+        <p>This reservation detail report was generated automatically by the Smart Cafeteria Management System.</p>
+    </div>
+
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
+            $size = 9;
+            $text = 'Page {PAGE_NUM} of {PAGE_COUNT}';
+            $y = $pdf->get_height() - 24;
+            $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) - 18;
+            $pdf->page_text($x, $y, $text, $font, $size, [0.45, 0.45, 0.45]);
+        }
+    </script>
 </body>
 </html>

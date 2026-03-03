@@ -186,8 +186,7 @@
 
                     @php
                         $additionalsTotal = $reservation->additionals ? $reservation->additionals->sum('price') : 0;
-                        $serviceFee = $reservation->service_fee ?? 0;
-                        $grandTotal = $totalAmount + $additionalsTotal + $serviceFee;
+                        $grandTotal = $totalAmount + $additionalsTotal;
                     @endphp
 
                     <div class="mt-6 border-t border-gray-200 pt-4 flex flex-col items-end">
@@ -200,12 +199,6 @@
                             <div class="flex justify-between py-1">
                                 <span>Additionals:</span>
                                 <span class="font-medium">&#8369;{{ number_format($additionalsTotal, 2) }}</span>
-                            </div>
-                            @endif
-                            @if($serviceFee > 0)
-                            <div class="flex justify-between py-1">
-                                <span>Service Fee:</span>
-                                <span class="font-medium">&#8369;{{ number_format($serviceFee, 2) }}</span>
                             </div>
                             @endif
                         </div>

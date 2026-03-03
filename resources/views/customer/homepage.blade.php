@@ -42,6 +42,20 @@ body {
     right: 20%;
 }
 
+.hero-copy-outline {
+    -webkit-text-stroke: 0.35px rgba(255, 255, 255, 0.95);
+    paint-order: stroke fill;
+    text-shadow:
+        -1px -1px 0 rgba(255, 255, 255, 0.9),
+        0 -1px 0 rgba(255, 255, 255, 0.9),
+        1px -1px 0 rgba(255, 255, 255, 0.9),
+        -1px 0 0 rgba(255, 255, 255, 0.9),
+        1px 0 0 rgba(255, 255, 255, 0.9),
+        -1px 1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 0 rgba(255, 255, 255, 0.9),
+        1px 1px 0 rgba(255, 255, 255, 0.9);
+}
+
 .slide {
     opacity: 0;
     transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -80,25 +94,25 @@ body {
 
 @section('content')
 
-<section id="home" class="relative py-16 bg-white text-black overflow-hidden">
+<section id="home" class="relative py-14 sm:py-16 bg-white text-black overflow-hidden">
     {{-- Blue Background --}}
     <div class="absolute top-0 right-0 h-full w-1/2 bg-[#1F2937] z-0"></div>
     
     {{-- White Curve --}}
     <div class="absolute hero-white-curve z-5"></div>
 
-    <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse lg:flex-row gap-10 items-center">
-        <div class="flex-2 text-center">
-            <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-                <span class="text-clsu-green font-fugaz text-8xl">CLSU</span>
-                <span class="text-ret-green-light font-fugaz text-8xl"> RET</span>
+    <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
+        <div class="flex-2 text-center w-full">
+            <h1 class="font-bold mb-5 sm:mb-6 leading-[0.95]">
+                <span class="text-clsu-green font-fugaz text-[3.6rem] sm:text-[4.85rem] md:text-[6.5rem]">CLSU</span>
+                <span class="text-ret-green-light font-fugaz text-[3.6rem] sm:text-[4.85rem] md:text-[6.5rem]"> RET</span>
                 <br>
-                <span class="text-cafeteria-orange font-damion text-9xl">Cafeteria</span>
+                <span class="text-cafeteria-orange font-damion text-[4.85rem] sm:text-[6.65rem] md:text-[8.5rem]">Cafeteria</span>
             </h1>
-            <p class="text-2xl max-w-3xl mb-8 font-poppins italic opacity-80">
+            <p class="hero-copy-outline text-lg sm:text-2xl max-w-[19rem] sm:max-w-3xl mx-auto mb-5 sm:mb-8 font-poppins italic opacity-80 leading-relaxed">
                 Official Food Caterer of the University. Also offers food catering services for special occasions.
             </p>
-            <p class="text-base mb-8 font-poppins italic opacity-70">
+            <p class="hero-copy-outline text-sm sm:text-base max-w-[18rem] sm:max-w-2xl mx-auto mb-7 sm:mb-8 font-poppins italic opacity-70 leading-relaxed">
                 Your meal, your way—fast, fresh, and convenient. Book Now!
             </p>
 
@@ -107,24 +121,24 @@ body {
                 @auth
                     {{-- User is logged in --}}
                     <a href="{{ route('reservation_form') }}"
-                    class="inline-flex items-center gap-2 bg-clsu-green hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-clsu-green hover:bg-green-700 text-white px-5 sm:px-6 py-3 rounded-lg font-semibold transition-all">
                         Reserve Now
                     </a>
                 @else
                     {{-- Guest User --}}
                     <a href="{{ route('login') }}"
-                    class="inline-flex items-center gap-2 bg-clsu-green hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-clsu-green hover:bg-green-700 text-white px-5 sm:px-6 py-3 rounded-lg font-semibold transition-all">
                         Reserve Now
                     </a>
                 @endauth
             </div>
         </div>
 
-        <div class="flex-1 relative flex justify-center lg:justify-end min-h-[490px]">
-            <div class="relative w-80 h-80 z-10 mt-16">
-                <div class="absolute -translate-x-20 inset-0 w-full h-full border-[100px] border-white rounded-full"></div>
-                <div class="absolute -translate-x-20 inset-[6px] w-[calc(100%-12px)] h-[calc(100%-12px)] border-[100px] border-[#1F2937] rounded-full"></div>                
-                <div class="absolute -translate-x-20 inset-[18px] rounded-full overflow-hidden ">
+        <div class="flex-1 relative flex justify-center lg:justify-end min-h-[260px] sm:min-h-[490px] w-full">
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 z-10 mt-2 sm:mt-16">
+                <div class="absolute -translate-x-6 sm:-translate-x-20 inset-0 w-full h-full border-[72px] sm:border-[100px] border-white rounded-full"></div>
+                <div class="absolute -translate-x-6 sm:-translate-x-20 inset-[5px] sm:inset-[6px] w-[calc(100%-10px)] sm:w-[calc(100%-12px)] h-[calc(100%-10px)] sm:h-[calc(100%-12px)] border-[72px] sm:border-[100px] border-[#1F2937] rounded-full"></div>
+                <div class="absolute -translate-x-6 sm:-translate-x-20 inset-[14px] sm:inset-[18px] rounded-full overflow-hidden">
                     <img src="{{ asset('images/plate.png') }}" alt="Food plate" class="w-full h-full object-cover" />
                 </div>
             </div>
@@ -621,17 +635,15 @@ body {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
     </style>
 
+    @auth
     {{-- === FEEDBACK MODAL FORM === --}}
-    <div x-show="showFeedbackModal" 
-         x-cloak 
-         class="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/60 backdrop-blur-sm p-4"
-         x-transition.opacity>
+    <template x-if="showFeedbackModal">
+    <div class="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/60 backdrop-blur-sm p-4"
+         @click="showFeedbackModal = false"
+         @keydown.escape.window="showFeedbackModal = false">
         
         <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all overflow-hidden"
-             @click.away="showFeedbackModal = false"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+             @click.stop>
 
             {{-- Top Bar --}}
             <div class="h-1.5 w-full bg-clsu-green"></div>
@@ -684,8 +696,8 @@ body {
                             <input type="text" id="feedback_name" name="name" required 
                                    class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-clsu-green focus:border-transparent transition-all bg-gray-50 focus:bg-white" 
                                    placeholder="Enter your name"
-                                   value="{{ Auth::check() ? Auth::user()->name : '' }}"
-                                   {{ Auth::check() ? 'readonly' : '' }}>
+                                   value="{{ Auth::user()->name }}"
+                                   readonly>
                         </div>
                     </div>
                     
@@ -713,6 +725,8 @@ body {
             </div>
         </div>
     </div>
+    </template>
+    @endauth
 </section>
 
 

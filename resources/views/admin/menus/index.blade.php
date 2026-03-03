@@ -20,21 +20,31 @@
     [x-cloak] { display: none !important; }
     
     .type-tab {
-        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0.625rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--neutral-300);
+        background: #ffffff;
+        color: var(--neutral-700);
         font-weight: 600;
-        border: 2px solid transparent;
         font-size: 0.875rem;
+        line-height: 1.2;
+        text-align: center;
+        transition: all 0.2s ease;
     }
     
     .type-tab.active {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-        color: white;
+        background: var(--primary);
+        color: #ffffff;
         border-color: var(--primary);
     }
     
     .type-tab:not(.active):hover {
         background: var(--neutral-100);
-        border-color: var(--neutral-200);
+        border-color: var(--neutral-300);
     }
     
     .meal-badge {
@@ -190,38 +200,23 @@
     }
 
     .toolbar-group {
-        border: 1px solid #e3ede7;
+        border: 1px solid var(--neutral-200);
         border-radius: 12px;
-        background: #f9fcfa;
-        padding: 0.5rem;
+        background: var(--neutral-50);
+        padding: 1.25rem;
     }
 
-    .meal-quick-link {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 34px;
-        padding: 0 0.75rem;
-        border-radius: 9999px;
-        border: 1px solid #dde8e2;
-        color: #335145;
-        font-size: 0.78rem;
-        font-weight: 600;
-        text-decoration: none;
-        background: #ffffff;
-        transition: all 0.2s ease;
+    .menu-type-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
     }
 
-    .meal-quick-link:hover {
-        border-color: #059669;
-        color: #064e3b;
-        background: #f0fdf4;
-    }
-
-    .meal-quick-link.active {
-        border-color: #057c3c;
-        background: #057c3c;
-        color: #ffffff;
+    @media (max-width: 639px) {
+        .menu-type-tabs .type-tab {
+            flex: 1 1 0;
+        }
     }
 
     .menus-grid {
@@ -353,64 +348,66 @@
     </div>
   </div>
 
-  <div class="toolbar-group mt-5 flex flex-col gap-4">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-2 overflow-x-auto min-w-0 whitespace-nowrap">
+  <div class="toolbar-group mt-5">
+    <div class="menu-type-tabs">
         @foreach($types as $key => $label)
-          <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
+          <a href="{{ route('admin.menus.index', ['type' => $key, 'meal' => 'all']) }}"
              wire:navigate
-             class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
+             class="type-tab {{ $type === $key ? 'active' : '' }}">
             {{ $label }}
           </a>
         @endforeach
-      </div>
-      <button type="button" @click="openCreate()"
-              class="primary-gradient hover:shadow-xl text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-md inline-flex items-center justify-center">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        Add Menu
-      </button>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <a href="{{ route('admin.menus.index', ['type' => $type, 'meal' => 'all']) }}"
-         wire:navigate
-         class="meal-quick-link {{ $meal === 'all' ? 'active' : '' }}">
-        All Meals
-      </a>
-      @foreach($meals as $key => $label)
-        <a href="{{ route('admin.menus.index', ['type' => $type, 'meal' => $key]) }}"
-           wire:navigate
-           class="meal-quick-link {{ $meal === $key ? 'active' : '' }}">
-          {{ $label }}
-        </a>
-      @endforeach
-    </div>
-
-    @if($meal !== 'all' && !is_null($activePrice))
-      <div class="flex items-center justify-start">
-        <div class="price-pill">
-          <div class="leading-tight">
-            <div class="price-pill-label">
-              {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
-            </div>
-            <div class="mt-0.5 flex items-baseline gap-1">
-              <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
-              <span class="price-pill-unit">/ head</span>
-            </div>
+    <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col gap-4">
+      <input type="hidden" name="type" value="{{ $type }}">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label for="meal" class="text-sm font-semibold text-admin-neutral-700">Filter by Meal</label>
+          <div class="w-full sm:w-64">
+            <select name="meal" id="meal" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
+              <option value="all" {{ $meal === 'all' ? 'selected' : '' }}>All Meals</option>
+              @foreach($meals as $key => $label)
+                <option value="{{ $key }}" {{ $meal === $key ? 'selected' : '' }}>{{ $label }}</option>
+              @endforeach
+            </select>
           </div>
-          <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
-             wire:navigate
-             class="price-pill-edit"
-             aria-label="Update menu prices">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-          </a>
+        </div>
+
+        <div class="flex w-full flex-col gap-4 sm:w-auto sm:items-end">
+          @if($meal !== 'all' && !is_null($activePrice))
+            <div class="order-1 flex w-full sm:order-2 sm:w-auto sm:justify-end">
+              <div class="price-pill">
+                <div class="leading-tight">
+                  <div class="price-pill-label">
+                    {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
+                  </div>
+                  <div class="mt-0.5 flex items-baseline gap-1">
+                    <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
+                    <span class="price-pill-unit">/ head</span>
+                  </div>
+                </div>
+                <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
+                   wire:navigate
+                   class="price-pill-edit"
+                   aria-label="Update menu prices">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          @endif
+
+          <div class="order-2 flex w-full sm:order-1 sm:w-auto sm:justify-end">
+            <x-admin.ui.button.primary type="button" @click="openCreate()">
+              <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
+              Add Menu
+            </x-admin.ui.button.primary>
+          </div>
         </div>
       </div>
-    @endif
+    </form>
   </div>
 
   <div class="mt-5 border-t border-[#e6efe9] pt-5">
@@ -1206,4 +1203,3 @@
 @endif
 
 @endsection
-

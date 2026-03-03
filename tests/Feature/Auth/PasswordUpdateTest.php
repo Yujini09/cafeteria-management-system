@@ -1,9 +1,13 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\PasswordChangedNotification;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 
 test('password can be updated', function () {
+    Notification::fake();
+
     $user = User::factory()->create();
 
     $response = $this
@@ -20,6 +24,7 @@ test('password can be updated', function () {
         ->assertRedirect('/profile');
 
     $this->assertTrue(Hash::check('NewPassword1!', $user->refresh()->password));
+    Notification::assertSentTo($user, PasswordChangedNotification::class);
 });
 
 test('correct password must be provided to update password', function () {

@@ -54,7 +54,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @php
             // Changed from ->get() to ->paginate(10) to show 10 items per page
-            $reservations = App\Models\Reservation::with(['items.menu.items'])
+            $reservations = App\Models\Reservation::with(['items.menu.items', 'additionals'])
                 ->where('user_id', auth()->id())
                 ->orderBy('created_at', 'desc')
                 ->paginate(10);
@@ -110,14 +110,17 @@
                                     
                                     <td class="py-6 whitespace-nowrap text-sm font-bold text-gray-900">
                                         @php
-                                            $finalTotal = $reservation->total_amount;
-                                            if(!$finalTotal || $finalTotal == 0) {
-                                                $finalTotal = 0;
+                                            $menuTotal = (float) ($reservation->total_amount ?? 0);
+                                            if ($menuTotal <= 0) {
+                                                $menuTotal = 0;
                                                 foreach($reservation->items as $item) {
                                                     $p = $item->menu->price ?? (($item->menu->type ?? 'standard') === 'special' ? 200 : 150);
-                                                    $finalTotal += ($item->quantity * $p);
+                                                    $menuTotal += ($item->quantity * $p);
                                                 }
                                             }
+
+                                            $additionalsTotal = (float) ($reservation->additionals?->sum('price') ?? 0);
+                                            $finalTotal = $menuTotal + $additionalsTotal;
                                         @endphp
                                         &#8369;{{ number_format($finalTotal, 2) }}
                                     </td>

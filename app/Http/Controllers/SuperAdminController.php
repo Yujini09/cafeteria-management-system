@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\StandardAppMail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\AuditTrail;
@@ -553,22 +554,30 @@ class SuperAdminController extends Controller
 
     private function sendAdminCredentialsEmail(User $user, string $temporaryPassword): void
     {
-        $mailData = [
-            'app_name' => config('app.name', 'Smart Cafeteria'),
-            'user_name' => $user->name,
-            'user_email' => $user->email,
-            'temporary_password' => $temporaryPassword,
-            'login_url' => route('login'),
-            'created_at' => now()->format('M d, Y h:i A'),
-        ];
-
-        Mail::send(
-            ['html' => 'emails.admin_account_created', 'text' => 'emails.admin_account_created_plain'],
-            $mailData,
-            function ($message) use ($user, $mailData) {
-                $message->to($user->email, $user->name)
-                    ->subject('Your admin account for ' . ($mailData['app_name'] ?? config('app.name')));
-            }
+        Mail::to($user->email, $user->name)->send(
+            new StandardAppMail(
+                topic: 'Admin Account Details',
+                title: 'Your admin account is ready',
+                recipientName: $user->name,
+                introLines: [
+                    'An admin account has been created for you.',
+                    'Use the temporary password below to sign in, then change it immediately.',
+                ],
+                details: [
+                    'Email Address' => $user->email,
+                    'Temporary Password' => $temporaryPassword,
+                    'Created At' => now()->format('M d, Y h:i A'),
+                ],
+                action: [
+                    'text' => 'Sign In',
+                    'url' => route('login'),
+                ],
+                outroLines: [
+                    'For security, you will be required to change this password after you sign in.',
+                    'If you did not expect this email, contact support immediately.',
+                ],
+                headerLabel: 'Admin Access',
+            )
         );
     }
 }

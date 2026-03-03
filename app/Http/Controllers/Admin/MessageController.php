@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\StandardAppMail;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -13,17 +14,15 @@ class MessageController extends Controller
     {
         $query = ContactMessage::query();
 
-        // 1. Search Logic
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('message', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
             });
         }
 
-        // 2. Sorting Logic (Matches SariSariPH)
         switch ($request->sort) {
             case 'oldest':
                 $query->orderBy('created_at', 'asc');
@@ -31,24 +30,20 @@ class MessageController extends Controller
             case 'unread':
                 $query->unreadFirst()->orderBy('created_at', 'desc');
                 break;
-            default: // newest
+            default:
                 $query->orderBy('created_at', 'desc');
         }
 
         $messages = $query->paginate(10)->withQueryString();
-        
-        // Count for the badge
         $unreadCount = ContactMessage::unreadCount();
 
         return view('admin.messages.index', compact('messages', 'unreadCount'));
     }
 
-    // AJAX Handler: View Message (Marks as READ)
     public function show($id)
     {
         $message = ContactMessage::findOrFail($id);
-        
-        // Only update status if it is currently UNREAD
+
         if ($message->isUnread()) {
             $message->markAsRead();
         }
@@ -64,7 +59,6 @@ class MessageController extends Controller
         ]);
     }
 
-    // AJAX Handler: Reply (Marks as REPLIED)
     public function reply(Request $request, $id)
     {
         $request->validate([
@@ -73,20 +67,43 @@ class MessageController extends Controller
         ]);
 
         $contact = ContactMessage::findOrFail($id);
+        $replySubject = trim((string) $request->subject);
 
         try {
-            // Send Email
-            Mail::html($request->message, function ($mail) use ($contact, $request) {
-                $mail->to($contact->email)
-                     ->subject($request->subject)
-                     ->from(config('mail.from.address'), config('app.name'));
-            });
+            Mail::to($contact->email, $contact->name)->send(
+                new StandardAppMail(
+                    topic: 'Message Reply - '.$replySubject,
+                    title: 'We replied to your message',
+                    recipientName: $contact->name,
+                    introLines: [
+                        'A member of our team has responded to your recent message.',
+                    ],
+                    details: [
+                        'Reply Subject' => $replySubject,
+                        'Replied By' => $request->user()?->name ?? config('app.name'),
+                        'Replied At' => now()->format('M d, Y h:i A'),
+                    ],
+                    sections: [
+                        [
+                            'title' => 'Response',
+                            'content' => $request->message,
+                        ],
+                        [
+                            'title' => 'Your Original Message',
+                            'content' => $contact->message,
+                        ],
+                    ],
+                    outroLines: [
+                        'If you need more help, please send us another message through the website.',
+                    ],
+                    headerLabel: 'Message Reply',
+                )
+            );
 
-            // Update status to REPLIED
             $contact->markAsReplied();
 
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -94,6 +111,7 @@ class MessageController extends Controller
     public function destroy($id)
     {
         ContactMessage::destroy($id);
+
         return back()->with('message_success', 'Message deleted successfully.');
     }
 }

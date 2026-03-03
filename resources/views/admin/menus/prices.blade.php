@@ -47,6 +47,8 @@
 
 /* Meal Time Badge */
 .meal-time-badge {
+    display: inline-flex;
+    align-items: center;
     padding: 0.5rem 0.75rem;
     background: var(--neutral-50);
     border: 1px solid var(--neutral-200);
@@ -54,6 +56,7 @@
     font-weight: 600;
     color: var(--neutral-800);
     text-transform: capitalize;
+    white-space: nowrap;
 }
 
 /* Highlight Animation */

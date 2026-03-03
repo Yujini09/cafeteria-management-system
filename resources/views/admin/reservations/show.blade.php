@@ -150,12 +150,22 @@
     }
 
     .reservation-show-view .additionals-item {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .reservation-show-view .additionals-item .additionals-item-content {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .reservation-show-view .additionals-item .additionals-item-form {
+        margin-left: auto;
+        flex-shrink: 0;
     }
 
     .reservation-show-view .additionals-item .additionals-item-action {
-        align-self: flex-end;
+        align-self: flex-start;
     }
 }
 
@@ -288,7 +298,6 @@
 
 @php
     $additionalsTotal = $r->additionals ? $r->additionals->sum('price') : 0;
-    $serviceFee = $r->service_fee ?? 0;
     $acceptedModal = (bool) session('accepted', false);
     $inventoryWarning = (bool) session('inventory_warning', false);
     $insufficientItems = session('insufficient_items', []);
@@ -487,7 +496,7 @@
                 </dl>
             </div>
 
-            {{-- 1. ISOLATED COMPONENT: Selected Menus & Service Fee Edit --}}
+            {{-- 1. ISOLATED COMPONENT: Selected Menus --}}
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -573,24 +582,17 @@
                     @endforeach
                     
                     @php
-                        $grandTotal = $totalAmount + $additionalsTotal + $serviceFee;
+                        $grandTotal = $totalAmount + $additionalsTotal;
                     @endphp
                     <div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 relative">
                         <div class="reservation-stack-sm flex justify-between items-center">
                             <div>
                                 <div class="text-sm text-green-800">Subtotal:</div>
                                 <div class="text-sm text-green-800">Additionals:</div>
-                                <div class="text-sm text-green-800 flex items-center">
-                                    Service Fee: 
-                                    <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-service-fee' }))" class="ml-2 text-green-600 hover:text-green-800 focus:outline-none">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
                             </div>
                             <div class="text-right">
                                 <div class="text-sm font-medium">₱{{ number_format($totalAmount, 2) }}</div>
                                 <div class="text-sm font-medium">₱{{ number_format($additionalsTotal, 2) }}</div>
-                                <div class="text-sm font-medium">₱{{ number_format($serviceFee, 2) }}</div>
                             </div>
                         </div>
                         <div class="reservation-stack-sm border-t border-green-300 mt-2 pt-2 flex justify-between items-center">
@@ -599,53 +601,6 @@
                         </div>
                     </div>
 
-                    @if(false)
-                    {{-- Edit Service Fee Modal --}}
-                    <div x-cloak x-show="serviceFeeOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <div @click="serviceFeeOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-                        <div class="modern-modal p-6 w-full max-w-sm relative z-10" x-transition.scale.90>
-                            <button type="button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-20" @click="serviceFeeOpen = false">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                            <h3 class="text-lg font-bold mb-4">Edit Service Fee</h3>
-                            <form method="POST" action="{{ route('admin.reservations.service_fee.update', $r->id) }}">
-                                @csrf @method('PATCH')
-                                <div class="mb-4">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Service Fee Amount</label>
-                                    <div class="additionals-price-group">
-                                        <span class="additionals-currency">₱</span>
-                                        <input name="service_fee" type="number" step="0.01" min="0" class="additionals-price-input" value="{{ $serviceFee }}" required>
-                                    </div>
-                                </div>
-                                <div class="flex justify-end gap-3">
-                                    <button type="button" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium" @click="serviceFeeOpen = false">Cancel</button>
-                                    <button type="submit" class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-md">Update Fee</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    @endif
-                    <x-admin.ui.modal name="reservation-service-fee" title="Edit Service Fee" variant="info" maxWidth="sm" icon="fa-receipt">
-                        <form id="reservation-service-fee-form" method="POST" action="{{ route('admin.reservations.service_fee.update', $r->id) }}" class="space-y-4" data-action-loading>
-                            @csrf
-                            @method('PATCH')
-                            <div>
-                                <label for="service_fee" class="block text-sm font-semibold text-admin-neutral-700 mb-2">Service Fee Amount</label>
-                                <div class="additionals-price-group">
-                                    <span class="additionals-currency">&#8369;</span>
-                                    <input id="service_fee" name="service_fee" type="number" step="0.01" min="0" class="additionals-price-input" value="{{ $serviceFee }}" required>
-                                </div>
-                            </div>
-                        </form>
-                        <x-slot name="footer">
-                            <x-admin.ui.button.secondary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'reservation-service-fee' }))">
-                                Cancel
-                            </x-admin.ui.button.secondary>
-                            <x-admin.ui.button.primary type="submit" form="reservation-service-fee-form">
-                                Update Fee
-                            </x-admin.ui.button.primary>
-                        </x-slot>
-                    </x-admin.ui.modal>
                 @else
                     <div class="text-center py-8 text-gray-500">
                         <p>No menus selected for this reservation.</p>
@@ -686,7 +641,7 @@
                                 <input id="additional_price" name="price" type="number" step="0.01" min="0" class="additionals-price-input" placeholder="0.00" required>
                             </div>
                         </div>
-                        <button type="submit" class="additionals-submit">Add Additional</button>
+                        <button type="submit" class="additionals-submit" data-loading-text="Adding Additional...">Add Additional</button>
                     </form>
                 @elseif($r->status === 'approved')
                     <div class="mb-6 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-4 py-3 text-sm text-admin-neutral-600">
@@ -698,12 +653,12 @@
                     <div class="space-y-3">
                         @foreach($r->additionals as $additional)
                             <div class="additionals-item rounded-xl border border-gray-200 bg-white p-3 flex items-start justify-between gap-3">
-                                <div>
+                                <div class="additionals-item-content">
                                     <p class="text-sm font-semibold text-gray-900">{{ $additional->name }}</p>
                                     <p class="text-xs text-gray-600 mt-1">&#8369;{{ number_format((float) $additional->price, 2) }}</p>
                                 </div>
                                 @if($canManageAdditionals)
-                                    <form method="POST" action="{{ route('admin.reservations.additionals.destroy', [$r, $additional]) }}">
+                                    <form method="POST" action="{{ route('admin.reservations.additionals.destroy', [$r, $additional]) }}" class="additionals-item-form">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="additionals-item-action shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Delete">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -847,7 +802,7 @@
                         <x-admin.ui.button.secondary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'reservation-mark-paid' }))">
                             Cancel
                         </x-admin.ui.button.secondary>
-                        <x-admin.ui.button.primary type="submit" form="reservation-mark-paid-form">
+                        <x-admin.ui.button.primary type="submit" form="reservation-mark-paid-form" data-loading-text="Saving Payment...">
                             Save Payment
                         </x-admin.ui.button.primary>
                     </x-slot>
@@ -864,9 +819,10 @@
                     <h2 class="info-card-title">Reservation Actions</h2>
                 </div>
 
-                <form method="POST" action="{{ route('admin.reservations.approve', $r) }}" class="mb-4" id="approveForm">
+                <form method="POST" action="{{ route('admin.reservations.approve', $r) }}" class="mb-4" id="approveForm" data-action-loading>
                     @csrf @method('PATCH')
-                    <input type="hidden" name="force_approve" id="forceApproveInput" value="0">
+                    <input type="hidden" name="force_approve" id="forceApproveInput" value="{{ old('force_approve', 0) }}">
+                    <input type="hidden" name="force_overlap_approve" id="forceOverlapApproveInput" value="{{ old('force_overlap_approve', 0) }}">
                     <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-approve-confirmation' }))" class="action-btn action-btn-approve w-full justify-center">
                         <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -903,7 +859,12 @@
             <x-admin.ui.button.secondary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'reservation-approve-confirmation' }))">
                 Cancel
             </x-admin.ui.button.secondary>
-            <x-admin.ui.button.primary type="button" onclick="document.getElementById('approveForm').submit()">
+            <x-admin.ui.button.primary
+                type="submit"
+                form="approveForm"
+                data-loading-text="Approving Reservation..."
+                onclick="document.getElementById('forceApproveInput').value = '0'; document.getElementById('forceOverlapApproveInput').value = '0';"
+            >
                 Approve
             </x-admin.ui.button.primary>
         </x-slot>
@@ -943,7 +904,7 @@
             <x-admin.ui.button.secondary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'reservation-decline-reason' }))">
                 Cancel
             </x-admin.ui.button.secondary>
-            <x-admin.ui.button.danger type="submit" form="reservation-decline-form">
+            <x-admin.ui.button.danger type="submit" form="reservation-decline-form" data-loading-text="Submitting Decline...">
                 Submit Decline
             </x-admin.ui.button.danger>
         </x-slot>
@@ -965,9 +926,11 @@
                 Cancel Approval
             </x-admin.ui.button.secondary>
             <x-admin.ui.button.primary
-                type="button"
+                type="submit"
+                form="approveForm"
                 class="bg-admin-warning hover:bg-yellow-600 focus:ring-admin-warning"
-                onclick="document.getElementById('forceApproveInput').value = '1'; document.getElementById('approveForm').submit();"
+                data-loading-text="Approving Anyway..."
+                onclick="document.getElementById('forceApproveInput').value = '1';"
             >
                 Approve Anyway
             </x-admin.ui.button.primary>
@@ -985,9 +948,11 @@
                 Cancel Approval
             </x-admin.ui.button.secondary>
             <x-admin.ui.button.primary
-                type="button"
+                type="submit"
+                form="approveForm"
                 class="bg-orange-500 hover:bg-orange-600 focus:ring-orange-400"
-                onclick="document.getElementById('forceApproveInput').value = '1'; document.getElementById('approveForm').submit();"
+                data-loading-text="Approving Anyway..."
+                onclick="document.getElementById('forceOverlapApproveInput').value = '1';"
             >
                 Approve Anyway
             </x-admin.ui.button.primary>
@@ -1017,10 +982,6 @@
 
             if (@json($overlapWarning)) {
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-overlap-warning' }));
-            }
-
-            if (@json($errors->has('service_fee'))) {
-                window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-service-fee' }));
             }
 
             if (@json($errors->has('or_number'))) {
