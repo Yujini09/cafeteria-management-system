@@ -9,10 +9,6 @@ use App\Models\InventoryItem;
 use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\SalesReportExport;
-use App\Exports\InventoryReportExport;
-use App\Exports\ReservationReportExport;
-use App\Exports\CrmReportExport;
 use Carbon\Carbon;
 use App\Models\AuditTrail;
 use App\Support\AuditDictionary;
@@ -34,7 +30,7 @@ class ReportsController extends Controller
         }
 
         $validated = $request->validate([
-            'report_type' => 'required|in:reservation,sales,inventory,crm',
+            'report_type' => 'required|in:reservation,inventory,crm',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -68,8 +64,6 @@ class ReportsController extends Controller
         switch ($reportType) {
             case 'reservation':
                 return $this->generateReservationReport($startDate, $endDate, $request);
-            case 'sales':
-                return $this->generateSalesReport($startDate, $endDate, $request);
             case 'inventory':
                 return $this->generateInventoryReport($startDate, $endDate, $request);
             case 'crm':
@@ -171,132 +165,6 @@ class ReportsController extends Controller
             'charts',
             'insights'
         ))->with('reportType', 'reservation');
-    }
-
-    private function generateSalesReport($startDate, $endDate, Request $request)
-    {
-        $reservations = Reservation::with(['items.menu', 'user'])
-            ->where('status', 'approved')
-            ->whereNotNull('event_date')
-            ->whereBetween('event_date', [$startDate, $endDate])
-            ->get();
-
-        $salesData = [];
-        $totalRevenue = 0;
-        $totalReservations = $reservations->count();
-
-        foreach ($reservations as $reservation) {
-            $reservationTotal = 0;
-            $items = [];
-
-            foreach ($reservation->items as $item) {
-                if (!$item->menu) {
-                    continue;
-                }
-                $price = MenuPrice::getPriceMap()[$item->menu->type][$item->menu->meal_time] ?? 0;
-                $itemTotal = $price * $item->quantity;
-                $reservationTotal += $itemTotal;
-
-                $items[] = [
-                    'menu_name' => $item->menu->name ?? 'N/A',
-                    'type' => ucfirst($item->menu->type ?? 'standard'),
-                    'meal_time' => ucfirst(str_replace('_', ' ', $item->menu->meal_time ?? 'lunch')),
-                    'quantity' => $item->quantity ?? 0,
-                    'unit_price' => $price,
-                    'total' => $itemTotal,
-                ];
-            }
-
-            $salesData[] = [
-                'reservation_id' => $reservation->id,
-                'event_name' => $reservation->event_name ?? 'N/A',
-                'event_date' => $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A',
-                'customer_name' => $reservation->user ? $reservation->user->name : 'N/A',
-                'number_of_persons' => $reservation->number_of_persons ?? 0,
-                'items' => $items,
-                'reservation_total' => $reservationTotal,
-            ];
-
-            $totalRevenue += $reservationTotal;
-        }
-
-        $salesData = collect($salesData);
-
-        $currentAverageOrderValue = $totalReservations > 0 ? $totalRevenue / $totalReservations : 0;
-        $currentAverageGuests = (float) ($reservations->avg('number_of_persons') ?? 0);
-
-        $dailyRevenue = [];
-        $mealTimeRevenue = [];
-        $menuRevenue = [];
-
-        foreach ($salesData as $reservation) {
-            $eventDate = $reservation['event_date'] ?? 'N/A';
-            $dailyRevenue[$eventDate] = ($dailyRevenue[$eventDate] ?? 0) + (float) ($reservation['reservation_total'] ?? 0);
-
-            foreach (($reservation['items'] ?? []) as $item) {
-                $mealKey = $item['meal_time'] ?? 'Unknown';
-                $mealTimeRevenue[$mealKey] = ($mealTimeRevenue[$mealKey] ?? 0) + (float) ($item['total'] ?? 0);
-
-                $menuKey = $item['menu_name'] ?? 'Unknown Item';
-                $menuRevenue[$menuKey] = ($menuRevenue[$menuKey] ?? 0) + (float) ($item['total'] ?? 0);
-            }
-        }
-
-        ksort($dailyRevenue);
-        arsort($mealTimeRevenue);
-        arsort($menuRevenue);
-        $topMenuRevenue = collect($menuRevenue)->take(7);
-
-        $highestRevenueDay = 'N/A';
-        if (!empty($dailyRevenue)) {
-            $maxRevenueInDay = max($dailyRevenue);
-            $maxRevenueDay = array_search($maxRevenueInDay, $dailyRevenue, true);
-            if ($maxRevenueDay !== false) {
-                $highestRevenueDay = $maxRevenueDay . ' (' . $this->formatCurrencyWithPesoSign($maxRevenueInDay) . ')';
-            }
-        }
-
-        $topMenuLabel = $topMenuRevenue->isNotEmpty()
-            ? ($topMenuRevenue->keys()->first() . ' (' . $this->formatCurrencyWithPesoSign((float) $topMenuRevenue->first()) . ')')
-            : 'N/A';
-
-        $kpiCards = [
-            $this->buildKpiCard('Total Revenue', $this->formatCurrencyWithPesoSign((float) $totalRevenue), 'fas fa-money-bill-wave', 'kpi-success', null),
-            $this->buildKpiCard('Approved Reservations', number_format($totalReservations, 0), 'fas fa-calendar-check', 'kpi-primary', null),
-            $this->buildKpiCard('Avg Order Value', $this->formatCurrencyWithPesoSign((float) $currentAverageOrderValue), 'fas fa-receipt', 'kpi-warning', null),
-            $this->buildKpiCard('Avg Guests / Reservation', number_format($currentAverageGuests, 1), 'fas fa-users', 'kpi-neutral', null),
-        ];
-
-        $charts = [
-            'trend' => [
-                'type' => 'line',
-                'label' => 'Revenue per Day',
-                'labels' => array_values(array_keys($dailyRevenue)),
-                'values' => array_values($dailyRevenue),
-            ],
-            'breakdown' => [
-                'type' => 'doughnut',
-                'label' => 'Revenue by Meal Time',
-                'labels' => array_values(array_keys($mealTimeRevenue)),
-                'values' => array_values($mealTimeRevenue),
-            ],
-            'topContributors' => [
-                'type' => 'bar',
-                'label' => 'Top Menu Items',
-                'labels' => $topMenuRevenue->keys()->values()->all(),
-                'values' => $topMenuRevenue->values()->all(),
-            ],
-        ];
-
-        $insights = [
-            'Highest revenue day: ' . $highestRevenueDay,
-            'Top menu item: ' . $topMenuLabel,
-            'Average order value: ' . $this->formatCurrencyWithPesoSign((float) $currentAverageOrderValue),
-        ];
-
-        $salesData = $this->paginateCollection($salesData, $request);
-
-        return view('admin.reports.show', compact('salesData', 'totalRevenue', 'totalReservations', 'startDate', 'endDate', 'kpiCards', 'charts', 'insights'))->with('reportType', 'sales');
     }
 
     private function generateInventoryReport($startDate, $endDate, Request $request)
@@ -547,13 +415,12 @@ class ReportsController extends Controller
     }
 
     private function formatPercent(float $value): string { return number_format($value, 1) . '%'; }
-    private function formatCurrency(float $value): string { return 'PHP ' . number_format($value, 2); }
     private function formatCurrencyWithPesoSign(float $value): string { return "\u{20B1}" . number_format($value, 2); }
 
     public function exportPdf(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|in:reservation,sales,inventory,crm',
+            'report_type' => 'required|in:reservation,inventory,crm',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -637,38 +504,6 @@ class ReportsController extends Controller
                 $viewData['reportType'] = 'reservation';
                 break;
 
-            case 'sales':
-                $reservations = Reservation::with(['items.menu', 'user'])->where('status', 'approved')->whereNotNull('event_date')->whereBetween('event_date', [$startDate, $endDate])->get();
-                $salesData = []; $totalRevenue = 0; $totalReservations = $reservations->count();
-                foreach ($reservations as $reservation) {
-                    $reservationTotal = 0; $items = [];
-                    foreach ($reservation->items as $item) {
-                        if (!$item->menu) continue;
-                        $price = MenuPrice::getPriceMap()[$item->menu->type][$item->menu->meal_time] ?? 0;
-                        $itemTotal = $price * $item->quantity; $reservationTotal += $itemTotal;
-                        $items[] = ['menu_name' => $item->menu->name ?? 'N/A', 'type' => ucfirst($item->menu->type ?? 'standard'), 'meal_time' => ucfirst(str_replace('_', ' ', $item->menu->meal_time ?? 'lunch')), 'quantity' => $item->quantity ?? 0, 'unit_price' => $price, 'total' => $itemTotal];
-                    }
-                    $salesData[] = ['reservation_id' => $reservation->id, 'event_name' => $reservation->event_name ?? 'N/A', 'event_date' => $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A', 'customer_name' => $reservation->user ? $reservation->user->name : 'N/A', 'number_of_persons' => $reservation->number_of_persons ?? 0, 'items' => $items, 'reservation_total' => $reservationTotal];
-                    $totalRevenue += $reservationTotal;
-                }
-                $salesData = collect($salesData);
-                $currentAverageOrderValue = $totalReservations > 0 ? $totalRevenue / $totalReservations : 0;
-                $dailyRevenue = []; $mealTimeRevenue = []; $menuRevenue = [];
-                foreach ($salesData as $reservation) {
-                    $eventDate = $reservation['event_date'] ?? 'N/A'; $dailyRevenue[$eventDate] = ($dailyRevenue[$eventDate] ?? 0) + (float) ($reservation['reservation_total'] ?? 0);
-                    foreach (($reservation['items'] ?? []) as $item) {
-                        $mealKey = $item['meal_time'] ?? 'Unknown'; $mealTimeRevenue[$mealKey] = ($mealTimeRevenue[$mealKey] ?? 0) + (float) ($item['total'] ?? 0);
-                        $menuKey = $item['menu_name'] ?? 'Unknown Item'; $menuRevenue[$menuKey] = ($menuRevenue[$menuKey] ?? 0) + (float) ($item['total'] ?? 0);
-                    }
-                }
-                ksort($dailyRevenue); arsort($mealTimeRevenue); arsort($menuRevenue); $topMenuRevenue = collect($menuRevenue)->take(7);
-                $highestRevenueDay = 'N/A'; if (!empty($dailyRevenue)) { $maxRevenueInDay = max($dailyRevenue); $maxRevenueDay = array_search($maxRevenueInDay, $dailyRevenue, true); if ($maxRevenueDay !== false) { $highestRevenueDay = $maxRevenueDay . ' (' . $this->formatCurrency($maxRevenueInDay) . ')'; } }
-                $topMenuLabel = $topMenuRevenue->isNotEmpty() ? ($topMenuRevenue->keys()->first() . ' (' . $this->formatCurrency((float) $topMenuRevenue->first()) . ')') : 'N/A';
-                $charts = ['trend' => ['type' => 'line', 'label' => 'Revenue per Day', 'labels' => array_values(array_keys($dailyRevenue)), 'values' => array_values($dailyRevenue)], 'breakdown' => ['type' => 'doughnut', 'label' => 'Revenue by Meal Time', 'labels' => array_values(array_keys($mealTimeRevenue)), 'values' => array_values($mealTimeRevenue)], 'topContributors' => ['type' => 'bar', 'label' => 'Top Menu Items', 'labels' => $topMenuRevenue->keys()->values()->all(), 'values' => $topMenuRevenue->values()->all()]];
-                $insights = ['Highest revenue day: ' . $highestRevenueDay, 'Top menu item: ' . $topMenuLabel, 'Average order value: ' . $this->formatCurrency((float) $currentAverageOrderValue)];
-                $viewData['salesData'] = $salesData; $viewData['totalRevenue'] = $totalRevenue; $viewData['totalReservations'] = $totalReservations; $viewData['chartSvgs'] = $this->buildPdfChartSvgs($charts); $viewData['insights'] = $insights; $viewData['reportType'] = 'sales';
-                break;
-
             case 'inventory':
                 $inventoryMetrics = $this->buildInventoryReportMetrics();
                 $charts = ['topContributors' => ['type' => 'bar', 'label' => 'Top 5 Commonly Used Items', 'labels' => $inventoryMetrics['topCommonItems']->keys()->values()->all(), 'values' => $inventoryMetrics['topCommonItems']->values()->all()]];
@@ -699,14 +534,13 @@ class ReportsController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $request->validate(['report_type' => 'required|in:reservation,sales,inventory,crm', 'start_date' => 'required|date', 'end_date' => 'required|date|after_or_equal:start_date']);
+        $request->validate(['report_type' => 'required|in:reservation,inventory,crm', 'start_date' => 'required|date', 'end_date' => 'required|date|after_or_equal:start_date']);
         $reportType = $request->report_type; $startDate = Carbon::parse($request->start_date); $endDate = Carbon::parse($request->end_date);
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.xlsx';
         AuditTrail::record(Auth::id(), AuditDictionary::EXPORTED_REPORT_EXCEL, AuditDictionary::MODULE_REPORTS, "exported {$reportType} report as Excel");
 
         switch ($reportType) {
             case 'reservation': return Excel::download(new \App\Exports\ReservationReportExport($startDate, $endDate), $filename);
-            case 'sales': return Excel::download(new SalesReportExport($startDate, $endDate), $filename);
             case 'inventory': return Excel::download(new \App\Exports\InventoryReportExport($startDate, $endDate), $filename);
             case 'crm': return Excel::download(new \App\Exports\CrmReportExport($startDate, $endDate), $filename);
             default: abort(400, 'Invalid report type');

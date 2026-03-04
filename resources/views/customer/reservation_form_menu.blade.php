@@ -519,6 +519,14 @@
             <div class="lg:col-span-8">
                 <form action="{{ route('reservation.store') }}" method="POST" class="space-y-6" id="reservation-form">
                     @csrf
+
+                    @if ($errors->any())
+                        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            @foreach ($errors->all() as $message)
+                                <p>{{ $message }}</p>
+                            @endforeach
+                        </div>
+                    @endif
                     
                     {{-- CRITICAL: Hidden fields to capture Session Data from Step 1 --}}
                     @if(session('reservation_data'))

@@ -19,10 +19,25 @@ use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Notifications\ReservationAdditionalAdded;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ReservationController extends Controller
 {
+    protected const RESERVATION_CREATE_COOLDOWN_MINUTES = 10;
+    protected const RESERVATION_DAILY_CAP = 5;
+
+    public function showReservationForm()
+    {
+        $reservationCreationLimit = null;
+
+        if (Auth::check() && !session()->has('editing_reservation_id')) {
+            $reservationCreationLimit = $this->getReservationCreationLimitState(Auth::id());
+        }
+
+        return view('customer.reservation_form', compact('reservationCreationLimit'));
+    }
+
     public function index(Request $request)
     {
         [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
@@ -294,6 +309,14 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
     public function postDetails(Request $request)
     {
+        if (Auth::check() && !session()->has('editing_reservation_id')) {
+            $reservationCreationLimit = $this->getReservationCreationLimitState(Auth::id());
+
+            if ($reservationCreationLimit['blocked']) {
+                return redirect()->route('reservation_form')->withInput();
+            }
+        }
+
         $validated = $request->validate([
             'start_date' => 'required|date|after:today',
             'end_date'   => 'required|date|after_or_equal:start_date',
@@ -370,6 +393,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         $editingReservationId = session('editing_reservation_id');
         $isEditing = !empty($editingReservationId);
         $savedReservationId = null;
+        $userId = Auth::id();
 
         if (empty($reservationData['start_date']) || empty($reservationData['end_date']) || empty($reservationData['day_times'])) {
             return redirect()->route('reservation_form')
@@ -429,7 +453,11 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             if (isset($firstDay['start_time'])) $eventTime = $firstDay['start_time'];
         }
 
-        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $maxPersons, $validated, $isEditing, $editingReservationId, &$savedReservationId) {
+        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $maxPersons, $validated, $isEditing, $editingReservationId, $userId, &$savedReservationId) {
+            if (!$isEditing && $userId) {
+                $this->enforceReservationCreationLimits($userId);
+            }
+
             
             // CHECK IF EDITING OR CREATING
             if ($isEditing) {
@@ -527,6 +555,84 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         }
 
         return redirect()->route('reservation_details')->with('success', $message);
+    }
+
+    protected function enforceReservationCreationLimits(int $userId): void
+    {
+        $this->lockReservationCreationForUser($userId);
+
+        $reservationCreationLimit = $this->getReservationCreationLimitState($userId);
+
+        if ($reservationCreationLimit['blocked']) {
+            throw ValidationException::withMessages([
+                'reservations' => $reservationCreationLimit['message'],
+            ]);
+        }
+    }
+
+    protected function lockReservationCreationForUser(int $userId): void
+    {
+        DB::table('users')
+            ->where('id', $userId)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    protected function getReservationCreationLimitState(int $userId): array
+    {
+        $timezone = config('app.timezone', 'Asia/Manila');
+        $now = Carbon::now($timezone);
+
+        $latestReservation = Reservation::query()
+            ->where('user_id', $userId)
+            ->latest('created_at')
+            ->first(['created_at']);
+
+        if ($latestReservation?->created_at) {
+            $nextAllowedAt = $latestReservation->created_at
+                ->copy()
+                ->timezone($timezone)
+                ->addMinutes(self::RESERVATION_CREATE_COOLDOWN_MINUTES);
+
+            $remainingSeconds = $now->diffInSeconds($nextAllowedAt, false);
+
+            if ($remainingSeconds > 0) {
+                $remainingMinutes = max(1, (int) ceil($remainingSeconds / 60));
+                $minuteLabel = $remainingMinutes === 1 ? 'minute' : 'minutes';
+
+                return [
+                    'blocked' => true,
+                    'type' => 'cooldown',
+                    'message' => "Please wait {$remainingMinutes} {$minuteLabel} before creating another reservation.",
+                    'note' => 'If you placed an incorrect reservation, please cancel the previous one.',
+                ];
+            }
+        }
+
+        $activeReservationsToday = Reservation::query()
+            ->where('user_id', $userId)
+            ->whereBetween('created_at', [
+                $now->copy()->startOfDay(),
+                $now->copy()->endOfDay(),
+            ])
+            ->whereNotIn('status', ['cancelled', 'canceled'])
+            ->count();
+
+        if ($activeReservationsToday >= self::RESERVATION_DAILY_CAP) {
+            return [
+                'blocked' => true,
+                'type' => 'daily_cap',
+                'message' => "You've reached the maximum of ".self::RESERVATION_DAILY_CAP.' reservations for today.',
+                'note' => 'If you placed an incorrect reservation, please cancel the previous one.',
+            ];
+        }
+
+        return [
+            'blocked' => false,
+            'type' => null,
+            'message' => null,
+            'note' => null,
+        ];
     }
 
     protected function formatTimeForStorage($timeString)

@@ -35,60 +35,6 @@ class ReportsService
     }
 
     /**
-     * Generate sales report data
-     */
-    public function generateSalesReport(Carbon $startDate, Carbon $endDate): array
-    {
-        $reservations = Reservation::with(['items.menu', 'user'])
-            ->where('status', 'approved')
-            ->whereNotNull('event_date')
-            ->whereBetween('event_date', [$startDate->startOfDay(), $endDate->endOfDay()])
-            ->get();
-
-        $salesData = [];
-        $totalRevenue = 0;
-        $totalReservations = $reservations->count();
-
-        foreach ($reservations as $reservation) {
-            $reservationTotal = 0;
-            $items = [];
-
-            foreach ($reservation->items as $item) {
-                $price = MenuPrice::getPriceMap()[$item->menu->type][$item->menu->meal_time] ?? 0;
-                $itemTotal = $price * $item->quantity;
-                $reservationTotal += $itemTotal;
-
-                $items[] = [
-                    'menu_name' => $item->menu->name,
-                    'type' => ucfirst($item->menu->type),
-                    'meal_time' => ucfirst(str_replace('_', ' ', $item->menu->meal_time)),
-                    'quantity' => $item->quantity,
-                    'unit_price' => $price,
-                    'total' => $itemTotal,
-                ];
-            }
-
-            $salesData[] = [
-                'reservation_id' => $reservation->id,
-                'event_name' => $reservation->event_name,
-                'event_date' => $reservation->event_date->format('Y-m-d'),
-                'customer_name' => $reservation->user->name,
-                'number_of_persons' => $reservation->number_of_persons,
-                'items' => $items,
-                'reservation_total' => $reservationTotal,
-            ];
-
-            $totalRevenue += $reservationTotal;
-        }
-
-        return [
-            'salesData' => collect($salesData),
-            'totalRevenue' => $totalRevenue,
-            'totalReservations' => $totalReservations,
-        ];
-    }
-
-    /**
      * Generate inventory report data
      */
     public function generateInventoryReport(Carbon $startDate, Carbon $endDate): Collection

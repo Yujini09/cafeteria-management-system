@@ -112,6 +112,13 @@
 @php
     $isEditMode = session('editing_reservation_id') ? true : false;
     $data = session('reservation_data', []);
+    $reservationCreationLimit = $reservationCreationLimit ?? [
+        'blocked' => false,
+        'type' => null,
+        'message' => null,
+        'note' => null,
+    ];
+    $reservationFormLocked = !$isEditMode && ($reservationCreationLimit['blocked'] ?? false);
     
     // Helper to get value (Old Input > Session Data > Auth/Default)
     $val = function($key, $default = '') use ($data) {
@@ -158,9 +165,17 @@
             </div>
         </div>
 
-        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10" data-action-loading>
+        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10" data-action-loading data-reservation-form-locked="{{ $reservationFormLocked ? 'true' : 'false' }}">
             @csrf
 
+            @if($reservationFormLocked)
+                <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+                    <p class="font-semibold">{{ $reservationCreationLimit['message'] }}</p>
+                    <p class="mt-1 text-sm">{{ $reservationCreationLimit['note'] }}</p>
+                </div>
+            @endif
+
+            <fieldset @disabled($reservationFormLocked) class="{{ $reservationFormLocked ? 'opacity-60 pointer-events-none select-none' : '' }}">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 {{-- PERSONAL & EVENT INFO (Fully Editable except Email) --}}
@@ -303,6 +318,7 @@
             <div class="text-center pt-4">
                 <button type="submit" data-loading-text="Saving Reservation Details..."
                     id="menu-selection-btn"
+                    @disabled($reservationFormLocked)
                     class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold">
                     Proceed to Menu Selection
                 </button>
@@ -310,6 +326,7 @@
                     Please fill up the form, select a valid date range, and ensure the time slot is valid.
                 </div>
             </div>
+            </fieldset>
 
         </form>
     </div>
@@ -378,6 +395,7 @@
     const timeSectionsContainer = document.getElementById('time-sections-container');
     const menuSelectionBtn = document.getElementById('menu-selection-btn');
     const validationMessageEl = document.getElementById('validation-message');
+    const reservationFormLocked = @json($reservationFormLocked);
 
     // Utility function to format date as YYYY-MM-DD
     const formatDate = (date) => {
@@ -750,6 +768,15 @@
     });
 
     const validateForm = () => {
+        if (reservationFormLocked) {
+            menuSelectionBtn.disabled = true;
+            menuSelectionBtn.classList.add('bg-clsu-green/50', 'cursor-not-allowed');
+            menuSelectionBtn.classList.remove('bg-clsu-green', 'hover:bg-green-700');
+            validationMessageEl.classList.add('hidden');
+
+            return false;
+        }
+
         const isDateRangeSelected = selectedStartDate && selectedEndDate;
         const isNativeValid = document.getElementById('reservation-form').checkValidity(); 
         

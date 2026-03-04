@@ -153,9 +153,7 @@ Route::post('/contact', [ContactController::class, 'send'])->name('contact.send'
 // Group routes that require the user to be logged in (authenticated)
 Route::middleware(['auth'])->group(function () {
     // 1. Initial reservation form (GET)
-    Route::get('/reservation_form', function () {
-        return view('customer.reservation_form');
-    })->name('reservation_form');
+    Route::get('/reservation_form', [ReservationController::class, 'showReservationForm'])->name('reservation_form');
 
     Route::post('/reservation/step1', [ReservationController::class, 'postDetails'])->name('reservation.post_details');
 
