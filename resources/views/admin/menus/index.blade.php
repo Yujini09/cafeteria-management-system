@@ -762,12 +762,12 @@
                                      @focus="form.openDropdowns[index + '_' + rIndex] = true"
                                      @blur="form.openDropdowns[index + '_' + rIndex] = false"
                                      @input="
-                                      form.openDropdowns[index + '_' + rIndex] = true;
+                                     form.openDropdowns[index + '_' + rIndex] = true;
                                       const key = index + '_' + rIndex;
                                       const typed = (form.searchTerms[key] || '').toLowerCase();
                                       const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
-                                      if (!typed) { recipe.inventory_item_id = ''; }
-                                      else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
+                                      if (!typed) { recipe.inventory_item_id = ''; recipe.unit = ''; }
+                                      else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; recipe.unit = ''; }
                                      "
                                      @keydown.escape="form.openDropdowns[index + '_' + rIndex] = false"
                                      placeholder="Search ingredient..."
@@ -812,14 +812,13 @@
                           </div>
                           <div class="w-full sm:w-24">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Unit</label>
-                            <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
-                                    x-model="recipe.unit" class="form-select" data-admin-select="true" required>
-                              <option value="">Select unit</option>
-                              <option value="Pieces">Pieces</option>
-                              <option value="Packs">Packs</option>
-                              <option value="Kgs">Kgs</option>
-                              <option value="Liters">Liters</option>
-                            </select>
+                            <input type="text"
+                                   :name="'items[' + index + '][recipes][' + rIndex + '][unit]'"
+                                   x-model="recipe.unit"
+                                   placeholder="Auto"
+                                   class="form-input bg-gray-50 text-gray-700"
+                                   readonly
+                                   required>
                           </div>
                           <button type="button" @click="item.recipes.splice(rIndex, 1)" 
                                   class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
@@ -991,42 +990,61 @@
                       </template>
 
                       <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end bg-white p-3 rounded-lg border border-gray-100">
-                          <div class="flex-1 relative" x-data="{ dropdownOpen: false, searchTerm: '' }">
-                            <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient</label>
-                            <button type="button" @click="dropdownOpen = !dropdownOpen"
-                                    class="form-input flex items-center justify-between hover:border-[#057C3C] text-left text-xs">
-                              <span class="truncate">
-                                <template x-if="recipe.inventory_item_id">
-                                  <span x-text="getIngredientLabel(recipe.inventory_item_id)"></span>
-                                </template>
-                                <template x-if="!recipe.inventory_item_id">
-                                  <span class="text-gray-400">Select Ingredient</span>
-                                </template>
-                              </span>
-                              <svg class="w-3 h-3 text-gray-400 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                              </svg>
-                            </button>
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end bg-white p-3 rounded-lg">
+                          <div class="flex-1 relative">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient <span class="text-red-500">*</span></label>
+                            <div class="relative" @click.outside="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false">
+                              <input type="text"
+                                     x-model="editForm.searchTerms['edit_' + index + '_' + rIndex]"
+                                     x-init="if (!editForm.searchTerms['edit_' + index + '_' + rIndex] && recipe.inventory_item_id) { editForm.searchTerms['edit_' + index + '_' + rIndex] = getIngredientLabel(recipe.inventory_item_id); }"
+                                     @focus="editForm.openDropdowns['edit_' + index + '_' + rIndex] = true"
+                                     @blur="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false"
+                                     @input="
+                                      const key = 'edit_' + index + '_' + rIndex;
+                                      editForm.openDropdowns[key] = true;
+                                      const typed = (editForm.searchTerms[key] || '').toLowerCase();
+                                      const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
+                                      if (!typed) { recipe.inventory_item_id = ''; recipe.unit = ''; }
+                                      else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; recipe.unit = ''; }
+                                     "
+                                     @keydown.escape="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false"
+                                     placeholder="Search ingredient..."
+                                     autocomplete="off"
+                                     class="form-input w-full bg-white"
+                                     role="combobox"
+                                     aria-autocomplete="list"
+                                     :aria-expanded="editForm.openDropdowns['edit_' + index + '_' + rIndex] ? 'true' : 'false'"
+                                     :aria-controls="'edit-ingredient-list-' + index + '-' + rIndex">
 
-                            <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-72" style="display: none;">
-                              <div class="sticky top-0 bg-white border-b border-gray-300 p-1.5 z-50">
-                                <input type="text" x-model="searchTerm" @keydown.escape="dropdownOpen = false"
-                                       placeholder="Search..." class="form-input" style="font-size: 0.75rem;">
-                              </div>
-                              <div class="overflow-y-auto max-h-60">
-                                <template x-for="inv in getAvailableIngredients(item, rIndex, searchTerm)" :key="inv.id">
-                                  <button type="button" @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; dropdownOpen = false; searchTerm = '';"
-                                          class="w-full text-left px-2 py-1.5 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-xs">
-                                    <span x-text="inv.name"></span>
-                                  </button>
-                                </template>
-                                <template x-if="getAvailableIngredients(item, rIndex, searchTerm).length === 0">
-                                  <div class="px-2 py-2 text-center text-gray-500 text-xs">No ingredients found</div>
-                                </template>
+                              <div x-show="editForm.openDropdowns['edit_' + index + '_' + rIndex]"
+                                   class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-[100] w-full flex flex-col max-h-72">
+                                <div class="overflow-y-auto flex-1" :id="'edit-ingredient-list-' + index + '-' + rIndex">
+                                  <template x-for="inv in getAvailableIngredients(item, rIndex, editForm.searchTerms['edit_' + index + '_' + rIndex])" :key="inv.id">
+                                    <button type="button"
+                                            @mousedown.prevent
+                                            @click="
+                                              recipe.inventory_item_id = inv.id;
+                                              recipe.unit = inv.unit || '';
+                                              editForm.openDropdowns['edit_' + index + '_' + rIndex] = false;
+                                              editForm.searchTerms['edit_' + index + '_' + rIndex] = inv.name;
+                                            "
+                                            class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
+                                      <span x-text="inv.name"></span>
+                                    </button>
+                                  </template>
+                                  <template x-if="getAvailableIngredients(item, rIndex, editForm.searchTerms['edit_' + index + '_' + rIndex]).length === 0">
+                                    <div class="px-3 py-4 text-center text-gray-500 text-sm">
+                                      <template x-if="allInventoryItems.length === 0">
+                                        <span>No ingredients available in inventory</span>
+                                      </template>
+                                      <template x-if="allInventoryItems.length > 0">
+                                        <span>No ingredients matching your search</span>
+                                      </template>
+                                    </div>
+                                  </template>
+                                </div>
                               </div>
                             </div>
-
                             <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
                             <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
                           </div>
@@ -1036,13 +1054,13 @@
                           </div>
                           <div class="w-full sm:w-24">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Unit</label>
-                            <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" data-admin-select="true" required>
-                              <option value="">Select unit</option>
-                              <option value="Pieces">Pieces</option>
-                              <option value="Packs">Packs</option>
-                              <option value="Kgs">Kgs</option>
-                              <option value="Liters">Liters</option>
-                            </select>
+                            <input type="text"
+                                   :name="'items[' + index + '][recipes][' + rIndex + '][unit]'"
+                                   x-model="recipe.unit"
+                                   placeholder="Auto"
+                                   class="form-input bg-gray-50 text-gray-700"
+                                   readonly
+                                   required>
                           </div>
                           <button type="button" @click="item.recipes.splice(rIndex, 1)" class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

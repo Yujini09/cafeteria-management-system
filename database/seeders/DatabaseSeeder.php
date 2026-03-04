@@ -14,7 +14,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MenusAndItemsSqlSeeder::class,
             UserSeeder::class,
-            VerifySuperAdminSeeder::class
+            VerifySuperAdminSeeder::class,
+            InventoryAlertsSeeder::class,
             // Add other seeders here
         ]);
     }

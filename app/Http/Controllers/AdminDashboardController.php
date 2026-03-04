@@ -2,33 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContactMessage;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
-use App\Models\InventoryItem;
-use App\Models\ContactMessage;
-use Carbon\Carbon;
+use App\Services\InventoryAlertService;
 use Illuminate\View\View;
 
 class AdminDashboardController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth','role:admin']);
+        $this->middleware(['auth', 'role:admin']);
     }
 
-    public function index(): View
+    public function index(InventoryAlertService $inventoryAlertService): View
     {
         $totalReservations = Reservation::count();
         $pendingReservations = Reservation::where('status', 'pending')->count();
         $menusSold = ReservationItem::count();
-        $lowStocks = InventoryItem::where('qty', '>', 0)
-            ->where('qty', '<=', 5)
-            ->get();
-        $outOfStocks = InventoryItem::where('qty', 0)->get();
-        $expiringSoon = InventoryItem::where('expiry_date', '<=', Carbon::now()->addDays(7))
-            ->where('expiry_date', '>=', Carbon::now())
-            ->get();
-
+        $lowStocks = $inventoryAlertService->getLowStocks();
+        $outOfStocks = $inventoryAlertService->getOutOfStocks();
+        $expiringSoon = $inventoryAlertService->getExpiringSoon();
         $unreadCount = ContactMessage::unreadCount();
 
         return view('admin.dashboard', compact(

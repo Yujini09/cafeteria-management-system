@@ -576,7 +576,9 @@ document.addEventListener('alpine:init', () => {
         meal: 'breakfast',
         name: '',
         description: '',
-        items: []
+        items: [],
+        openDropdowns: {},
+        searchTerms: {}
       },
       getAllInventoryItems() { return this.allInventoryItems; },
       getIngredientLabel(id) {
@@ -746,18 +748,29 @@ document.addEventListener('alpine:init', () => {
         this.editForm.description = description || '';
         this.editForm.type = type || 'standard';
         this.editForm.meal = meal || 'breakfast';
-        this.editForm.items = (items || []).map(i => ({
+        this.editForm.openDropdowns = {};
+        this.editForm.searchTerms = {};
+        this.editForm.items = (items || []).map((i, itemIndex) => ({
           name: i.name,
           type: i.type,
-          recipes: (i.recipes || []).map(recipe => ({
-            ...recipe,
-            unit: recipe.unit || this.getIngredientUnit(recipe.inventory_item_id) || ''
-          }))
+          recipes: (i.recipes || []).map((recipe, recipeIndex) => {
+            const normalizedRecipe = {
+              ...recipe,
+              unit: this.getIngredientUnit(recipe.inventory_item_id) || recipe.unit || ''
+            };
+            const key = `edit_${itemIndex}_${recipeIndex}`;
+            this.editForm.searchTerms[key] = this.getIngredientLabel(normalizedRecipe.inventory_item_id) || '';
+            return normalizedRecipe;
+          })
         }));
         this.$refs.editForm.action = `/admin/menus/${id}`;
         this.isEditOpen = true;
       },
-      closeEdit() { this.isEditOpen = false; },
+      closeEdit() {
+        this.isEditOpen = false;
+        this.editForm.openDropdowns = {};
+        this.editForm.searchTerms = {};
+      },
       openDelete(id, name = 'this menu') {
         this.deleteId = id;
         this.deleteName = name || 'this menu';

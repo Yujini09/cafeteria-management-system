@@ -655,6 +655,7 @@ document.addEventListener('livewire:navigated', function() {
                 createForm.reset();
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-create-success' }));
+                window.dispatchEvent(new CustomEvent('refresh-admin-inventory-alerts'));
                 setTimeout(function(){ location.reload(); }, 900);
             } else {
                 stopLoading(createForm);
@@ -675,6 +676,7 @@ document.addEventListener('livewire:navigated', function() {
             if (result !== null) {
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-update-success' }));
+                window.dispatchEvent(new CustomEvent('refresh-admin-inventory-alerts'));
                 setTimeout(function(){ location.reload(); }, 700);
             } else {
                 stopLoading(editForm);
@@ -720,6 +722,7 @@ document.addEventListener('livewire:navigated', function() {
                 stopLoading(deleteForm);
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-delete-success' }));
+                window.dispatchEvent(new CustomEvent('refresh-admin-inventory-alerts'));
             } else {
                 stopLoading(deleteForm);
             }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryItem;
+use App\Services\InventoryAlertService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,6 +15,16 @@ use Illuminate\Support\Facades\Auth;
 
 class InventoryItemController extends Controller
 {
+    public function alerts(InventoryAlertService $inventoryAlertService): JsonResponse
+    {
+        $alerts = $inventoryAlertService->getAlerts()->values();
+
+        return response()->json([
+            'alerts' => $alerts->all(),
+            'count' => $alerts->count(),
+        ]);
+    }
+
     public function index(): View
     {
         // Sorting options: name, qty, expiry_date
