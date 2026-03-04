@@ -9,7 +9,30 @@ use Illuminate\Support\Facades\Schema;
 
 class InventoryAlertService
 {
-    private const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+    private const UNIT_LOW_STOCK_THRESHOLDS = [
+        'liters' => 0.5,
+        'kgs' => 1.0,
+        'pieces' => 10.0,
+        'packs' => 2.0,
+    ];
+
+    private const UNIT_ALIASES = [
+        'liter' => 'liters',
+        'liters' => 'liters',
+        'litre' => 'liters',
+        'litres' => 'liters',
+        'l' => 'liters',
+        'kg' => 'kgs',
+        'kgs' => 'kgs',
+        'kilogram' => 'kgs',
+        'kilograms' => 'kgs',
+        'piece' => 'pieces',
+        'pieces' => 'pieces',
+        'pc' => 'pieces',
+        'pcs' => 'pieces',
+        'pack' => 'packs',
+        'packs' => 'packs',
+    ];
 
     private ?bool $hasInventoryTable = null;
     private ?bool $hasExpiryDateColumn = null;
@@ -104,9 +127,11 @@ class InventoryAlertService
     private function isLowStock(InventoryItem $item): bool
     {
         $currentStock = (float) $item->qty;
+        $threshold = $this->resolveLowStockThreshold($item);
 
         return $currentStock > 0
-            && $currentStock <= $this->resolveLowStockThreshold($item);
+            && $threshold !== null
+            && $currentStock <= $threshold;
     }
 
     private function isExpiringSoon(InventoryItem $item): bool
@@ -120,7 +145,7 @@ class InventoryAlertService
         return $expiryDate->between($this->today(), $this->expiryWindowEnd(), true);
     }
 
-    private function resolveLowStockThreshold(InventoryItem $item): int|float
+    private function resolveLowStockThreshold(InventoryItem $item): int|float|null
     {
         if ($this->hasMinStockColumn()) {
             $minStock = $item->getAttribute('min_stock');
@@ -130,7 +155,28 @@ class InventoryAlertService
             }
         }
 
-        return self::DEFAULT_LOW_STOCK_THRESHOLD;
+        $normalizedUnit = $this->normalizeUnit($item->unit);
+
+        if ($normalizedUnit === null) {
+            return null;
+        }
+
+        return self::UNIT_LOW_STOCK_THRESHOLDS[$normalizedUnit] ?? null;
+    }
+
+    private function normalizeUnit(?string $unit): ?string
+    {
+        if ($unit === null) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($unit));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::UNIT_ALIASES[$normalized] ?? $normalized;
     }
 
     private function canQueryInventory(): bool

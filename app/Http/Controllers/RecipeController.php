@@ -11,7 +11,9 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use App\Models\AuditTrail;
 use App\Support\AuditDictionary;
+use App\Support\RecipeUnit;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class RecipeController extends Controller
 {
@@ -27,6 +29,7 @@ class RecipeController extends Controller
         $data = $request->validate([
             'inventory_item_id' => 'required|exists:inventory_items,id',
             'quantity_needed'   => 'required|numeric|min:0.001',
+            'unit'              => 'required|string|max:50',
         ]);
 
         $inventoryItem = InventoryItem::find($data['inventory_item_id']);
@@ -34,9 +37,23 @@ class RecipeController extends Controller
             return back()->with('error', 'Inventory item not found.');
         }
 
+        $normalizedRecipeUnit = RecipeUnit::normalize($data['unit']);
+        if (!RecipeUnit::isAllowedRecipeUnit($normalizedRecipeUnit)) {
+            throw ValidationException::withMessages([
+                'unit' => 'Recipe unit must be one of: ml, liters, g, kgs, pc, pieces, packs.',
+            ]);
+        }
+
+        $stockUnit = RecipeUnit::display($inventoryItem->unit);
+        if (!RecipeUnit::areCompatible($normalizedRecipeUnit, $stockUnit)) {
+            throw ValidationException::withMessages([
+                'unit' => "Recipe unit must be compatible with the inventory unit (Stock unit: {$stockUnit}).",
+            ]);
+        }
+
         $recipe = $menuItem->recipes()->updateOrCreate(
             ['inventory_item_id' => $data['inventory_item_id']],
-            ['quantity_needed'   => $data['quantity_needed'], 'unit' => $inventoryItem->unit ?? null]
+            ['quantity_needed'   => $data['quantity_needed'], 'unit' => $normalizedRecipeUnit]
         );
 
         $recipeAction = $recipe->wasRecentlyCreated
@@ -58,7 +75,7 @@ class RecipeController extends Controller
             'menu_item_name' => $menuItem->name,
             'inventory_item_name' => $inventoryItem->name,
             'quantity_needed' => $data['quantity_needed'],
-            'unit' => $inventoryItem->unit,
+            'unit' => $normalizedRecipeUnit,
             'updated_by' => Auth::user()?->name ?? 'System',
         ]);
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Reservation;
 use App\Models\MenuPrice;
 use App\Models\User;
+use App\Support\RecipeUnit;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -50,15 +51,29 @@ class ReportsService
         foreach ($reservations as $reservation) {
             foreach ($reservation->items as $reservationItem) {
                 $menu = $reservationItem->menu;
+                if (!$menu) {
+                    continue;
+                }
+
                 foreach ($menu->items as $menuItem) {
                     foreach ($menuItem->recipes as $recipe) {
                         $inventoryItem = $recipe->inventoryItem;
-                        $usedQuantity = $recipe->quantity_needed * $reservationItem->quantity;
+                        if (!$inventoryItem) {
+                            continue;
+                        }
+
+                        $totalNeededRecipe = (float) ($recipe->quantity_needed ?? 0) * (float) ($reservationItem->quantity ?? 0);
+                        $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? RecipeUnit::normalize($inventoryItem->unit);
+                        $usedQuantity = RecipeUnit::convertToStockUnit($totalNeededRecipe, $recipeUnit, $inventoryItem->unit);
+
+                        if ($usedQuantity === null || $usedQuantity <= 0) {
+                            continue;
+                        }
 
                         if (!isset($inventoryUsage[$inventoryItem->id])) {
                             $inventoryUsage[$inventoryItem->id] = [
                                 'name' => $inventoryItem->name,
-                                'unit' => $inventoryItem->unit,
+                                'unit' => RecipeUnit::display($inventoryItem->unit) ?: ($inventoryItem->unit ?? ''),
                                 'total_used' => 0,
                                 'reservations_count' => 0,
                             ];

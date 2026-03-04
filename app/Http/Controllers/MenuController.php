@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
 use App\Support\AuditDictionary;
+use App\Support\RecipeUnit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -204,6 +205,60 @@ class MenuController extends Controller
         }
     }
 
+    private function normalizeAndValidateRecipeUnits(array $items): array
+    {
+        $inventoryIds = collect($items)
+            ->flatMap(fn (array $itemData) => $itemData['recipes'] ?? [])
+            ->pluck('inventory_item_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $inventoryItems = InventoryItem::whereIn('id', $inventoryIds)
+            ->get()
+            ->keyBy(fn (InventoryItem $item) => (string) $item->id);
+
+        $errors = [];
+
+        foreach ($items as $itemIndex => &$itemData) {
+            foreach (($itemData['recipes'] ?? []) as $recipeIndex => &$recipeData) {
+                $normalizedRecipeUnit = RecipeUnit::normalize($recipeData['unit'] ?? null);
+
+                if (!RecipeUnit::isAllowedRecipeUnit($normalizedRecipeUnit)) {
+                    $errors["items.$itemIndex.recipes.$recipeIndex.unit"] =
+                        'Recipe unit must be one of: ml, liters, g, kgs, pc, pieces, packs.';
+                    continue;
+                }
+
+                $inventoryItem = $inventoryItems->get((string) ($recipeData['inventory_item_id'] ?? ''));
+                if (!$inventoryItem) {
+                    $recipeData['unit'] = $normalizedRecipeUnit;
+                    continue;
+                }
+
+                $stockUnit = RecipeUnit::display($inventoryItem->unit);
+                if (!RecipeUnit::areCompatible($normalizedRecipeUnit, $stockUnit)) {
+                    $errors["items.$itemIndex.recipes.$recipeIndex.unit"] =
+                        "Recipe unit must be compatible with the inventory unit (Stock unit: {$stockUnit}).";
+                    continue;
+                }
+
+                $recipeData['unit'] = $normalizedRecipeUnit;
+            }
+
+            unset($recipeData);
+        }
+
+        unset($itemData);
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $items;
+    }
+
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         try {
@@ -228,6 +283,7 @@ class MenuController extends Controller
 
             $data = $request->validate($rules);
             $this->assertNoDuplicateIngredients($data['items'] ?? []);
+            $data['items'] = $this->normalizeAndValidateRecipeUnits($data['items'] ?? []);
 
             if ($hasPrice && $hasType && $hasMeal) {
                 $type = $data['type'] ?? 'standard';
@@ -359,6 +415,7 @@ class MenuController extends Controller
 
         $data = $request->validate($rules);
         $this->assertNoDuplicateIngredients($data['items'] ?? []);
+        $data['items'] = $this->normalizeAndValidateRecipeUnits($data['items'] ?? []);
 
         if ($hasPrice && $hasType && $hasMeal) {
             $type = $data['type'] ?? 'standard';
@@ -388,8 +445,9 @@ class MenuController extends Controller
         );
 
         $menu->items()->delete();
-        if ($request->has('items') && is_array($request->items)) {
-            foreach ($request->items as $itemData) {
+        $items = $data['items'] ?? [];
+        if (!empty($items) && is_array($items)) {
+            foreach ($items as $itemData) {
                 $menuItem = $menu->items()->create([
                     'name' => $itemData['name'],
                     'type' => $itemData['type'],

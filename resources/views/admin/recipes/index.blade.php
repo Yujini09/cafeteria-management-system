@@ -31,8 +31,25 @@
     </div>
 </div>
 
+  @if($errors->any())
+    <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+      <p class="font-semibold text-red-900" style="font-family: 'Poppins', sans-serif;">Unable to save the ingredient.</p>
+      <ul class="mt-2 space-y-1" style="font-family: 'Poppins', sans-serif;">
+        @foreach($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+    </div>
+  @endif
+
   {{-- Add Ingredient Form --}}
-  <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 mb-8">
+  @php
+      $selectedInventory = $inventory->firstWhere('id', (int) old('inventory_item_id'));
+      $selectedStockUnit = \App\Support\RecipeUnit::display($selectedInventory?->unit);
+      $recipeUnits = ['ml', 'liters', 'g', 'kgs', 'pc', 'pieces', 'packs'];
+  @endphp
+  <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 mb-8"
+       x-data="{ stockUnit: @js($selectedStockUnit) }">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center" style="font-family: 'Poppins', sans-serif;">
       <svg class="w-5 h-5 mr-2 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -43,18 +60,39 @@
       @csrf
       <div class="md:col-span-5">
         <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Ingredient</label>
-        <select name="inventory_item_id" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" data-admin-select="true" data-searchable="true" data-search-placeholder="Search ingredients..." required style="font-family: 'Poppins', sans-serif;">
+        <select name="inventory_item_id"
+                class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white"
+                data-admin-select="true"
+                data-searchable="true"
+                data-search-placeholder="Search ingredients..."
+                @change="stockUnit = $event.target.selectedOptions[0]?.dataset.unit || ''"
+                required
+                style="font-family: 'Poppins', sans-serif;">
           <option value="">Select an ingredient</option>
           @foreach($inventory as $inv)
-            <option value="{{ $inv->id }}">{{ $inv->name }} ({{ $inv->qty }} {{ $inv->unit }} left)</option>
+            <option value="{{ $inv->id }}"
+                    data-unit="{{ \App\Support\RecipeUnit::display($inv->unit) }}"
+                    @selected((string) old('inventory_item_id') === (string) $inv->id)>
+              {{ $inv->name }} ({{ $inv->qty }} {{ $inv->unit }} left)
+            </option>
           @endforeach
         </select>
       </div>
-      <div class="md:col-span-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Quantity per Serving</label>
-        <input type="number" step="0.001" name="quantity_needed" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" placeholder="0.000" required style="font-family: 'Poppins', sans-serif;">
-      </div>
       <div class="md:col-span-3">
+        <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Qty / 1 Pax</label>
+        <input type="number" step="0.001" min="0.001" name="quantity_needed" value="{{ old('quantity_needed') }}" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" placeholder="0.000" required style="font-family: 'Poppins', sans-serif;">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Recipe Unit</label>
+        <select name="unit" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" required style="font-family: 'Poppins', sans-serif;">
+          <option value="">Select unit</option>
+          @foreach($recipeUnits as $recipeUnit)
+            <option value="{{ $recipeUnit }}" @selected(old('unit') === $recipeUnit)>{{ $recipeUnit }}</option>
+          @endforeach
+        </select>
+        <p class="mt-2 text-xs text-gray-500" x-text="'Stock unit: ' + (stockUnit || '-')"></p>
+      </div>
+      <div class="md:col-span-2">
         <button type="submit" data-loading-text="Saving Ingredient..." class="w-full bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105" style="font-family: 'Poppins', sans-serif;">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -101,9 +139,10 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800" style="font-family: 'Poppins', sans-serif;">
-                    {{ $r->quantity_needed }} {{ $r->inventoryItem->unit }}
+                    {{ $r->quantity_needed }} {{ \App\Support\RecipeUnit::display($r->unit) ?: \App\Support\RecipeUnit::display($r->inventoryItem->unit) }}
                   </span>
-                  <span class="text-sm text-gray-500 ml-2" style="font-family: 'Poppins', sans-serif;">per serving</span>
+                  <span class="text-sm text-gray-500 ml-2" style="font-family: 'Poppins', sans-serif;">per 1 pax</span>
+                  <span class="text-xs text-gray-400 ml-2" style="font-family: 'Poppins', sans-serif;">Stock unit: {{ \App\Support\RecipeUnit::display($r->inventoryItem->unit) }}</span>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-center">

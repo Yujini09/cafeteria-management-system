@@ -15,6 +15,7 @@ use App\Notifications\ReservationStatusChanged;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AuditTrail;
 use App\Support\AuditDictionary;
+use App\Support\RecipeUnit;
 use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -1074,7 +1075,13 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                         continue;
                     }
 
-                    $required = (float) ($recipe->quantity_needed ?? 0) * $reservationQty;
+                    $totalNeededRecipe = (float) ($recipe->quantity_needed ?? 0) * $reservationQty;
+                    $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? RecipeUnit::normalize($inventoryItem->unit);
+                    $required = RecipeUnit::convertToStockUnit($totalNeededRecipe, $recipeUnit, $inventoryItem->unit);
+                    if ($required === null) {
+                        continue;
+                    }
+
                     if ($required <= 0) {
                         continue;
                     }
@@ -1084,7 +1091,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                         $usage[$id] = [
                             'id' => $id,
                             'name' => $inventoryItem->name ?? 'Unknown',
-                            'unit' => $recipe->unit ?? $inventoryItem->unit ?? '',
+                            'unit' => RecipeUnit::display($inventoryItem->unit) ?: ($inventoryItem->unit ?? ''),
                             'required' => 0.0,
                             'available' => (float) ($inventoryItem->qty ?? 0),
                             'shortage' => 0.0,

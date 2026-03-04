@@ -581,13 +581,45 @@ document.addEventListener('alpine:init', () => {
         searchTerms: {}
       },
       getAllInventoryItems() { return this.allInventoryItems; },
+      normalizeUnit(unit) {
+        const value = String(unit || '').trim().toLowerCase();
+        if (!value) return '';
+
+        const aliases = {
+          ml: 'ml',
+          milliliter: 'ml',
+          milliliters: 'ml',
+          millilitre: 'ml',
+          millilitres: 'ml',
+          liter: 'liters',
+          liters: 'liters',
+          litre: 'liters',
+          litres: 'liters',
+          l: 'liters',
+          g: 'g',
+          gram: 'g',
+          grams: 'g',
+          kg: 'kgs',
+          kgs: 'kgs',
+          kilogram: 'kgs',
+          kilograms: 'kgs',
+          pc: 'pc',
+          pcs: 'pc',
+          piece: 'pieces',
+          pieces: 'pieces',
+          pack: 'packs',
+          packs: 'packs',
+        };
+
+        return aliases[value] || value;
+      },
       getIngredientLabel(id) {
         const item = this.allInventoryItems.find(i => i.id == id);
         return item ? item.name : '';
       },
       getIngredientUnit(id) {
         const item = this.allInventoryItems.find(i => i.id == id);
-        return item ? (item.unit || '') : '';
+        return item ? this.normalizeUnit(item.unit) : '';
       },
       normalizeIngredientId(id) {
         if (id === null || id === undefined || id === '') return null;
@@ -756,7 +788,7 @@ document.addEventListener('alpine:init', () => {
           recipes: (i.recipes || []).map((recipe, recipeIndex) => {
             const normalizedRecipe = {
               ...recipe,
-              unit: this.getIngredientUnit(recipe.inventory_item_id) || recipe.unit || ''
+              unit: this.normalizeUnit(recipe.unit) || ''
             };
             const key = `edit_${itemIndex}_${recipeIndex}`;
             this.editForm.searchTerms[key] = this.getIngredientLabel(normalizedRecipe.inventory_item_id) || '';
