@@ -71,7 +71,6 @@
     </div>
 
     <script>
-        // Automatically send verification email on page load
         document.addEventListener('DOMContentLoaded', function() {
             const registrationSuccessKey = 'cms.register.success';
             const registeredSuccessMessage = document.getElementById('registeredSuccessMessage');
@@ -87,22 +86,6 @@
             } catch (error) {
                 console.warn('Unable to read persisted registration success message.', error);
             }
-
-            fetch('{{ route("verification.send") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({})
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Verification email sent automatically');
-            })
-            .catch(error => {
-                console.error('Error sending verification email:', error);
-            });
         });
     </script>
 </x-guest-layout>

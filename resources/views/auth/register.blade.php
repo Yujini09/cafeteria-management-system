@@ -177,10 +177,10 @@
     <div id="verificationModal" class="hidden fixed inset-0 z-50 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
         <div class="bg-white rounded-admin-lg shadow-admin-modal border border-admin-neutral-200 p-6 w-full max-w-md">
             <div class="text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-admin bg-admin-success-light mb-4 text-admin-success">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-admin bg-admin-warning-light mb-4 text-admin-warning">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-                <h3 class="text-lg font-semibold text-admin-neutral-900 mb-2">Account Created Successfully!</h3>
+                <h3 class="text-lg font-semibold text-admin-neutral-900 mb-2">Pending Verification</h3>
                 <p class="text-sm text-admin-neutral-600 mb-6">Please check your email for verification. You must verify your email address before you can log in.</p>
             </div>
             <div class="flex justify-center">
@@ -240,12 +240,25 @@
             }
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // Form Submit Logic
+        let registerSubmitting = false;
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            if (registerSubmitting) return;
+
             const formData = new FormData(this);
             const registerBtn = document.getElementById('registerBtn');
             if (!registerBtn) return;
+            registerSubmitting = true;
             const originalText = registerBtn.innerHTML;
             const usedSharedLoading = Boolean(
                 window.cmsActionButtons
@@ -285,17 +298,33 @@
                     }
                     document.getElementById('verificationModal').classList.remove('hidden');
                 } else {
+                    const errorCode = (data && typeof data.error_code === 'string') ? data.error_code : '';
+
+                    if (errorCode === 'email_not_found') {
+                        document.getElementById('errorModalTitle').textContent = 'Invalid Email Address';
+                        document.getElementById('errorModalContent').innerHTML = '<p>Email address/account could not be found. Please input a valid email.</p>';
+                        document.getElementById('errorModal').classList.remove('hidden');
+                        return;
+                    }
+
+                    if (errorCode === 'email_check_unavailable') {
+                        document.getElementById('errorModalTitle').textContent = 'Email Verification Unavailable';
+                        document.getElementById('errorModalContent').innerHTML = '<p>Could not verify this email account in real time. Please input a valid email and try again.</p>';
+                        document.getElementById('errorModal').classList.remove('hidden');
+                        return;
+                    }
+
                     if (data.errors) {
                         let errorHtml = '<ul class="text-left space-y-2">';
                         for (let field in data.errors) {
-                            errorHtml += `<li class="flex items-start"><span class="text-admin-danger mr-2">&bull;</span><span>${data.errors[field][0]}</span></li>`;
+                            errorHtml += `<li class="flex items-start"><span class="text-admin-danger mr-2">&bull;</span><span>${escapeHtml(data.errors[field][0])}</span></li>`;
                         }
                         errorHtml += '</ul>';
                         document.getElementById('errorModalTitle').textContent = 'Registration Error';
                         document.getElementById('errorModalContent').innerHTML = errorHtml;
                     } else {
                         document.getElementById('errorModalTitle').textContent = 'Registration Failed';
-                        document.getElementById('errorModalContent').innerHTML = `<p>${data.message || 'Registration failed. Please try again.'}</p>`;
+                        document.getElementById('errorModalContent').innerHTML = `<p>${escapeHtml(data.message || 'Registration failed. Please try again.')}</p>`;
                     }
                     document.getElementById('errorModal').classList.remove('hidden');
                 }
@@ -307,6 +336,8 @@
                 document.getElementById('errorModal').classList.remove('hidden');
             })
             .finally(() => {
+                registerSubmitting = false;
+
                 if (usedSharedLoading && window.cmsActionButtons && typeof window.cmsActionButtons.stop === 'function') {
                     window.cmsActionButtons.stop(registerBtn);
                     return;

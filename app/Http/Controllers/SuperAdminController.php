@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\AuditTrail;
 use App\Models\Notification;
+use App\Services\RealtimeEmailVerifier;
 use App\Support\AuditDictionary;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
@@ -24,10 +25,20 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class SuperAdminController extends Controller
 {
+    private const ROLE_PENDING_CUSTOMER = 'customer_pending';
+    private const ROLE_PENDING_ADMIN = 'admin_pending';
+
+    public function __construct(
+        private readonly RealtimeEmailVerifier $realtimeEmailVerifier
+    ) {
+    }
+
     public function index(): View
     {
-        // Show everyone except superadmin
+        // Show everyone except superadmin and pending accounts.
         $users = User::where('role', '!=', 'superadmin')
+            ->where('role', '!=', self::ROLE_PENDING_CUSTOMER)
+            ->where('role', '!=', self::ROLE_PENDING_ADMIN)
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(10)
@@ -38,9 +49,23 @@ class SuperAdminController extends Controller
 
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $emailRule = app()->runningUnitTests() ? 'email' : 'email:rfc,dns';
+
         $data = $request->validate([
             'name'     => ['required','string','max:255'],
-            'email'    => ['required', 'string', 'lowercase', 'max:255', 'email:rfc,dns', 'unique:users,email'],
+            'email'    => [
+                'required',
+                'string',
+                'lowercase',
+                'max:255',
+                $emailRule,
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $email = is_string($value) ? $value : '';
+                    if ($this->hasActiveAccountForEmail($email)) {
+                        $fail('This email address is already in use.');
+                    }
+                },
+            ],
         ], [
             'name.required' => 'Please enter the full name.',
             'name.max' => 'Full name must be 255 characters or fewer.',
@@ -49,16 +74,6 @@ class SuperAdminController extends Controller
             'email.max' => 'Email address must be 255 characters or fewer.',
             'email.unique' => 'This email address is already in use.',
         ]);
-
-        $realtimeEmailCheck = $this->verifyEmailMailboxRealtime($data['email']);
-        if (!$realtimeEmailCheck['ok']) {
-            return $this->respondStoreError(
-                $request,
-                $realtimeEmailCheck['message'],
-                422,
-                $realtimeEmailCheck['error_code']
-            );
-        }
 
         if (!Schema::hasColumn('users', 'must_change_password')) {
             return $this->respondStoreError(
@@ -70,25 +85,44 @@ class SuperAdminController extends Controller
         $temporaryPassword = $this->generateTemporaryPassword();
 
         $user = null;
+        $reusedPendingAccount = false;
 
         try {
-            DB::transaction(function () use (&$user, $data, $temporaryPassword) {
-                $user = User::create([
-                    'name'                 => $data['name'],
-                    'email'                => $data['email'],
-                    'password'             => Hash::make($temporaryPassword),
-                    'role'                 => 'admin', // always admin when created by superadmin
-                    'email_verified_at'    => now(), // no verification needed for admins
-                    'must_change_password' => true,
-                ]);
+            DB::transaction(function () use (&$user, &$reusedPendingAccount, $data, $temporaryPassword) {
+                $pendingAccount = $this->findPendingAccountByEmail($data['email'], true);
+                $reusedPendingAccount = $pendingAccount !== null;
+
+                if ($pendingAccount) {
+                    $pendingAccount->name = $data['name'];
+                    $pendingAccount->email = $data['email'];
+                    $pendingAccount->password = Hash::make($temporaryPassword);
+                    $pendingAccount->role = self::ROLE_PENDING_ADMIN;
+                    $pendingAccount->email_verified_at = null;
+                    $pendingAccount->must_change_password = true;
+                    $pendingAccount->save();
+
+                    $user = $pendingAccount;
+                } else {
+                    $user = User::create([
+                        'name'                 => $data['name'],
+                        'email'                => $data['email'],
+                        'password'             => Hash::make($temporaryPassword),
+                        'role'                 => self::ROLE_PENDING_ADMIN,
+                        'email_verified_at'    => null,
+                        'must_change_password' => true,
+                    ]);
+                }
 
                 $this->sendAdminCredentialsEmail($user, $temporaryPassword);
+                $user->sendEmailVerificationNotification();
 
                 AuditTrail::record(
                     Auth::id(),
                     AuditDictionary::CREATED_ADMIN_USER,
                     AuditDictionary::MODULE_USERS,
-                    "created admin user {$user->name} ({$user->email})"
+                    $reusedPendingAccount
+                        ? "updated pending admin user {$user->name} ({$user->email})"
+                        : "created pending admin user {$user->name} ({$user->email})"
                 );
             });
         } catch (QueryException $e) {
@@ -148,6 +182,8 @@ class SuperAdminController extends Controller
 
         $perPage = 10;
         $position = User::where('role', '!=', 'superadmin')
+            ->where('role', '!=', self::ROLE_PENDING_CUSTOMER)
+            ->where('role', '!=', self::ROLE_PENDING_ADMIN)
             ->where(function ($query) use ($user) {
                 $query->where('name', '<', $user->name)
                     ->orWhere(function ($subQuery) use ($user) {
@@ -158,7 +194,7 @@ class SuperAdminController extends Controller
             ->count();
         $page = intdiv($position, $perPage) + 1;
         $redirectUrl = route('superadmin.users', ['page' => $page]);
-        $successMessage = 'Admin account created. Temporary credentials were sent by email.';
+        $successMessage = 'Admin account created. Temporary credentials were sent by email. The email owner must confirm the account through the verification email before the account becomes active.';
 
         if ($request->expectsJson()) {
             $request->session()->flash('success', $successMessage);
@@ -174,8 +210,22 @@ class SuperAdminController extends Controller
 
     public function checkEmailRealtime(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'email' => ['required', 'string', 'lowercase', 'max:255', 'email:rfc,dns', 'unique:users,email'],
+        $emailRule = app()->runningUnitTests() ? 'email' : 'email:rfc,dns';
+
+        $request->validate([
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'max:255',
+                $emailRule,
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $email = is_string($value) ? $value : '';
+                    if ($this->hasActiveAccountForEmail($email)) {
+                        $fail('This email address is already in use.');
+                    }
+                },
+            ],
         ], [
             'email.required' => 'Please enter an email address.',
             'email.email' => 'Please enter a valid email address.',
@@ -183,211 +233,9 @@ class SuperAdminController extends Controller
             'email.unique' => 'This email address is already in use.',
         ]);
 
-        $verification = $this->verifyEmailMailboxRealtime($data['email']);
-        if (!$verification['ok']) {
-            return response()->json([
-                'message' => $verification['message'],
-                'error_code' => $verification['error_code'],
-            ], 422);
-        }
-
         return response()->json([
-            'message' => 'Email account verified.',
+            'message' => 'Email address is valid and available.',
         ]);
-    }
-
-    private function verifyEmailMailboxRealtime(string $email): array
-    {
-        [$localPart, $domain] = array_pad(explode('@', $email, 2), 2, '');
-        if ($localPart === '' || $domain === '') {
-            return [
-                'ok' => false,
-                'message' => 'Email address/account could not be found. Please verify the email address and try again.',
-                'error_code' => 'email_not_found',
-            ];
-        }
-
-        $mxHosts = [];
-        $mxWeights = [];
-
-        if (function_exists('getmxrr') && getmxrr($domain, $mxHosts, $mxWeights) && count($mxHosts) > 0) {
-            if (count($mxWeights) !== count($mxHosts)) {
-                $mxWeights = array_pad($mxWeights, count($mxHosts), 0);
-            }
-            array_multisort($mxWeights, SORT_ASC, $mxHosts);
-        } elseif (checkdnsrr($domain, 'MX') || checkdnsrr($domain, 'A') || checkdnsrr($domain, 'AAAA')) {
-            $mxHosts = [$domain];
-        } else {
-            return [
-                'ok' => false,
-                'message' => 'Email address/account could not be found. Please verify the email address and try again.',
-                'error_code' => 'email_not_found',
-            ];
-        }
-
-        $mxHosts = array_slice(array_values(array_unique(array_filter($mxHosts))), 0, 2);
-        if (empty($mxHosts)) {
-            return [
-                'ok' => false,
-                'message' => 'Email address/account could not be found. Please verify the email address and try again.',
-                'error_code' => 'email_not_found',
-            ];
-        }
-
-        $heloHost = parse_url((string) config('app.url'), PHP_URL_HOST);
-        if (!is_string($heloHost) || $heloHost === '') {
-            $heloHost = request()->getHost() ?: 'localhost';
-        }
-        $envelopeFrom = $this->resolveVerificationEnvelopeFrom($domain);
-
-        foreach ($mxHosts as $mxHost) {
-            $socket = @fsockopen($mxHost, 25, $errno, $errstr, 3);
-            if (!$socket) {
-                continue;
-            }
-
-            stream_set_timeout($socket, 3);
-
-            $greeting = $this->smtpReadResponse($socket);
-            if (!$this->smtpResponseHasCode($greeting, [220])) {
-                fclose($socket);
-                continue;
-            }
-
-            $ehlo = $this->smtpSendCommand($socket, "EHLO {$heloHost}");
-            if (!$this->smtpResponseHasCode($ehlo, [250])) {
-                $helo = $this->smtpSendCommand($socket, "HELO {$heloHost}");
-                if (!$this->smtpResponseHasCode($helo, [250])) {
-                    $this->smtpSendCommand($socket, 'QUIT');
-                    fclose($socket);
-                    continue;
-                }
-            }
-
-            $mailFrom = $this->smtpSendCommand($socket, "MAIL FROM:<{$envelopeFrom}>");
-            if (!$this->smtpResponseHasCode($mailFrom, [250])) {
-                $this->smtpSendCommand($socket, 'QUIT');
-                fclose($socket);
-                continue;
-            }
-
-            $targetRcpt = $this->smtpSendCommand($socket, "RCPT TO:<{$email}>");
-            $targetRcptCode = $this->smtpResponseCode($targetRcpt);
-
-            if (in_array($targetRcptCode, [550, 551, 552, 553, 554], true)) {
-                $this->smtpSendCommand($socket, 'RSET');
-                $this->smtpSendCommand($socket, 'QUIT');
-                fclose($socket);
-
-                return [
-                    'ok' => false,
-                    'message' => 'Email address/account could not be found. Please verify the email address and try again.',
-                    'error_code' => 'email_not_found',
-                ];
-            }
-
-            if (in_array($targetRcptCode, [250, 251], true)) {
-                try {
-                    $probeLocalPart = 'probe-' . bin2hex(random_bytes(6));
-                } catch (\Throwable) {
-                    $probeLocalPart = 'probe-' . uniqid('', true);
-                }
-                $probeEmail = "{$probeLocalPart}@{$domain}";
-                $probeRcpt = $this->smtpSendCommand($socket, "RCPT TO:<{$probeEmail}>");
-                $probeRcptCode = $this->smtpResponseCode($probeRcpt);
-
-                $this->smtpSendCommand($socket, 'RSET');
-                $this->smtpSendCommand($socket, 'QUIT');
-                fclose($socket);
-
-                if (in_array($probeRcptCode, [250, 251], true)) {
-                    return $this->unavailableRealtimeEmailVerificationResult(
-                        'Could not verify this email account in real time. Please use an address you can confirm and try again.'
-                    );
-                }
-
-                return [
-                    'ok' => true,
-                    'message' => 'Email account verified.',
-                    'error_code' => null,
-                ];
-            }
-
-            $this->smtpSendCommand($socket, 'RSET');
-            $this->smtpSendCommand($socket, 'QUIT');
-            fclose($socket);
-        }
-
-        return $this->unavailableRealtimeEmailVerificationResult(
-            'Could not verify this email account in real time. Please try again.'
-        );
-    }
-
-    private function unavailableRealtimeEmailVerificationResult(string $productionMessage): array
-    {
-        if (app()->environment('local')) {
-            return [
-                'ok' => true,
-                'message' => 'Realtime email verification is unavailable in local mode. Continuing with email send validation.',
-                'error_code' => null,
-            ];
-        }
-
-        return [
-            'ok' => false,
-            'message' => $productionMessage,
-            'error_code' => 'email_check_unavailable',
-        ];
-    }
-
-    private function resolveVerificationEnvelopeFrom(string $fallbackDomain): string
-    {
-        $configuredFrom = config('mail.from.address');
-        if (is_string($configuredFrom) && str_contains($configuredFrom, '@')) {
-            return $configuredFrom;
-        }
-
-        $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
-        if (is_string($appHost) && $appHost !== '') {
-            return "no-reply@{$appHost}";
-        }
-
-        return "no-reply@{$fallbackDomain}";
-    }
-
-    private function smtpSendCommand($socket, string $command): string
-    {
-        fwrite($socket, $command . "\r\n");
-        return $this->smtpReadResponse($socket);
-    }
-
-    private function smtpReadResponse($socket): string
-    {
-        $response = '';
-
-        while (($line = fgets($socket, 512)) !== false) {
-            $response .= $line;
-            if (strlen($line) < 4 || $line[3] === ' ') {
-                break;
-            }
-        }
-
-        return trim($response);
-    }
-
-    private function smtpResponseCode(string $response): ?int
-    {
-        if (preg_match('/^(\d{3})/m', $response, $matches)) {
-            return (int) $matches[1];
-        }
-
-        return null;
-    }
-
-    private function smtpResponseHasCode(string $response, array $expectedCodes): bool
-    {
-        $code = $this->smtpResponseCode($response);
-        return $code !== null && in_array($code, $expectedCodes, true);
     }
 
     private function respondStoreError(Request $request, string $message, int $status = 500, ?string $errorCode = null): RedirectResponse|JsonResponse
@@ -404,9 +252,17 @@ class SuperAdminController extends Controller
             return response()->json($payload, $status);
         }
 
-        $response = back()
-            ->withInput()
-            ->with('error', $message);
+        $isEmailFieldError = in_array($errorCode, ['email_not_found'], true);
+
+        $response = back()->withInput();
+
+        if ($isEmailFieldError) {
+            $response->withErrors([
+                'email' => $message,
+            ]);
+        } else {
+            $response->with('error', $message);
+        }
 
         if ($errorCode) {
             $response->with('error_code', $errorCode);
@@ -417,36 +273,7 @@ class SuperAdminController extends Controller
 
     private function classifyEmailDeliveryFailure(string $errorMessage): array
     {
-        $normalizedError = strtolower($errorMessage);
-        $emailNotFoundIndicators = [
-            'user unknown',
-            'unknown user',
-            'no such user',
-            'mailbox unavailable',
-            'mailbox not found',
-            'recipient address rejected',
-            'recipient not found',
-            'unknown recipient',
-            'invalid recipient',
-            '5.1.1',
-            '550',
-        ];
-
-        foreach ($emailNotFoundIndicators as $indicator) {
-            if (str_contains($normalizedError, $indicator)) {
-                return [
-                    'message' => 'Email address/account could not be found. Please verify the email address and try again.',
-                    'status' => 422,
-                    'code' => 'email_not_found',
-                ];
-            }
-        }
-
-        return [
-            'message' => 'Email failed to send. Please check the mail configuration and try again.',
-            'status' => 500,
-            'code' => 'email_send_failed',
-        ];
+        return $this->realtimeEmailVerifier->classifyDeliveryFailure($errorMessage);
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -552,6 +379,37 @@ class SuperAdminController extends Controller
         return str_shuffle($password);
     }
 
+    private function hasActiveAccountForEmail(string $email): bool
+    {
+        $normalizedEmail = mb_strtolower(trim($email));
+        if ($normalizedEmail === '') {
+            return false;
+        }
+
+        return User::query()
+            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+            ->whereNotIn('role', [self::ROLE_PENDING_CUSTOMER, self::ROLE_PENDING_ADMIN])
+            ->exists();
+    }
+
+    private function findPendingAccountByEmail(string $email, bool $forUpdate = false): ?User
+    {
+        $normalizedEmail = mb_strtolower(trim($email));
+        if ($normalizedEmail === '') {
+            return null;
+        }
+
+        $query = User::query()
+            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+            ->whereIn('role', [self::ROLE_PENDING_CUSTOMER, self::ROLE_PENDING_ADMIN]);
+
+        if ($forUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
     private function sendAdminCredentialsEmail(User $user, string $temporaryPassword): void
     {
         Mail::to($user->email, $user->name)->send(
@@ -561,7 +419,8 @@ class SuperAdminController extends Controller
                 recipientName: $user->name,
                 introLines: [
                     'An admin account has been created for you.',
-                    'Use the temporary password below to sign in, then change it immediately.',
+                    'Before this account becomes active, confirm your email address using the verification email sent separately.',
+                    'After verification, use the temporary password below to sign in, then change it immediately.',
                 ],
                 details: [
                     'Email Address' => $user->email,

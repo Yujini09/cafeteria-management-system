@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Notifications\VerifyEmail;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Support\Facades\Cache;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -106,9 +108,20 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Send the email verification notification.
      */
-    public function sendEmailVerificationNotification()
+    public function sendEmailVerificationNotification(bool $force = false): void
     {
-        $this->notify(new \App\Notifications\VerifyEmail);
+        $cooldownSeconds = max(0, (int) config('auth.verification_notification_cooldown', 30));
+        $cacheKey = 'email_verification_last_sent:user:'.$this->getKey();
+
+        if (!$force && $cooldownSeconds > 0 && Cache::has($cacheKey)) {
+            return;
+        }
+
+        $this->notify(new VerifyEmail);
+
+        if ($cooldownSeconds > 0) {
+            Cache::put($cacheKey, now()->timestamp, now()->addSeconds($cooldownSeconds));
+        }
     }
 
     /**

@@ -30,7 +30,7 @@ class ManualVerifyEmailController extends Controller
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->route('login')->with('status', 'Email already verified.');
+            return $this->redirectToLoginWithVerificationModal('Email already verified. You can now log in.');
         }
 
         $user->markEmailAsVerified();
@@ -45,7 +45,7 @@ class ManualVerifyEmailController extends Controller
         // Clear the session
         session()->forget('verification_user_id');
 
-        return redirect()->route('login')->with('status', 'Email verified successfully. You can now log in.');
+        return $this->redirectToLoginWithVerificationModal('Email verified successfully. You can now log in.');
     }
 
     /**
@@ -68,7 +68,7 @@ class ManualVerifyEmailController extends Controller
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->route('login')->with('status', 'Email already verified.');
+            return $this->redirectToLoginWithVerificationModal('Email already verified. You can now log in.');
         }
 
         $user->markEmailAsVerified();
@@ -80,6 +80,14 @@ class ManualVerifyEmailController extends Controller
         );
         event(new Verified($user));
 
-        return redirect()->route('login')->with('status', 'Email verified successfully. You can now log in.');
+        return $this->redirectToLoginWithVerificationModal('Email verified successfully. You can now log in.');
+    }
+
+    private function redirectToLoginWithVerificationModal(string $statusMessage): RedirectResponse
+    {
+        return redirect()
+            ->route('login')
+            ->with('status', $statusMessage)
+            ->with('verification_success', true);
     }
 }

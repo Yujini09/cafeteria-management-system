@@ -42,7 +42,7 @@ return [
     ],
 
     'realtime_email_verifier' => [
-        'allow_unavailable' => env('REALTIME_EMAIL_ALLOW_UNAVAILABLE', env('APP_ENV') === 'testing'),
+        'allow_unavailable' => env('REALTIME_EMAIL_ALLOW_UNAVAILABLE', false),
     ],
 
 ];

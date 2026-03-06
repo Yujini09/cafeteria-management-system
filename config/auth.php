@@ -112,4 +112,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |----------------------------------------------------------------------
+    | Email Verification Notification Cooldown
+    |----------------------------------------------------------------------
+    |
+    | Prevent accidental duplicate verification emails caused by duplicate
+    | form submits/network retries. Manual resend still works and is guarded
+    | by route throttle.
+    |
+    */
+    'verification_notification_cooldown' => env('AUTH_VERIFICATION_NOTIFICATION_COOLDOWN', 30),
+
 ];

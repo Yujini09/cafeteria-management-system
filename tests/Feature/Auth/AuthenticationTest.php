@@ -23,6 +23,22 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('customer.homepage', absolute: false));
 });
 
+test('verified pending customers are activated on first successful login', function () {
+    $user = User::factory()->create([
+        'role' => 'customer_pending',
+        'email_verified_at' => now(),
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('customer.homepage', absolute: false));
+    expect($user->refresh()->role)->toBe('customer');
+});
+
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
 

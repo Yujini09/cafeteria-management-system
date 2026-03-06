@@ -157,15 +157,19 @@
 </div>
 
 {{-- Unified admin modals: overlay blur, ESC/click-outside, body scroll lock. --}}
-<x-success-modal name="users-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
-    <p id="usersSuccessMessage" class="text-sm text-admin-neutral-600">{{ session('success') ?? 'Admin account created successfully.' }}</p>
+<x-success-modal name="users-success" title="Pending Verification" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+    <p id="usersSuccessMessage" class="text-sm text-admin-neutral-600">{{ session('success') ?? 'The account owner must verify their email before the account becomes active.' }}</p>
 </x-success-modal>
 
 <x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
     <form method="POST" action="{{ route('superadmin.users.store') }}" id="addAdminForm" data-action-loading onsubmit="event.preventDefault(); submitAddAdminForm(document.getElementById('createAdminSubmitButton'));">
         @csrf
         <input type="hidden" name="form_context" value="add_admin">
-        @php($showAddAdminInlineStatus = session('error') && old('form_context') === 'add_admin' && session('error_code') !== 'email_not_found')
+        @php(
+            $showAddAdminInlineStatus = session('error')
+                && old('form_context') === 'add_admin'
+                && !in_array(session('error_code'), ['email_not_found', 'email_check_unavailable'], true)
+        )
         <div class="space-y-4">
             <div
                 id="addAdminInlineStatus"
@@ -175,6 +179,13 @@
                 @if($showAddAdminInlineStatus)
                     {{ session('error') }}
                 @endif
+            </div>
+
+            <div class="rounded-admin border border-amber-200 bg-admin-warning-light px-3 py-2 flex items-start gap-2">
+                <x-admin.ui.icon name="fa-triangle-exclamation" class="mt-0.5 w-4 h-4 text-admin-warning shrink-0" />
+                <p class="text-sm text-admin-warning">
+                    New admin accounts must verify their email before they can sign in and use the system. A temporary password will be sent to this email address.
+                </p>
             </div>
 
             <div class="space-y-1">
@@ -230,10 +241,6 @@
                     @enderror
                 </p>
             </div>
-
-            <p class="text-sm text-admin-neutral-500">
-                A temporary password will be generated and sent to this email address.
-            </p>
         </div>
     </form>
     <x-slot:footer>
@@ -458,9 +465,9 @@ async function verifyAddAdminEmailExistsRealtime(force = false) {
             return { ok: false, errorCode: 'stale', message: '' };
         }
         if (force) {
-            setAddAdminFieldError('email', 'Could not verify this email address right now. Please try again.');
+            setAddAdminFieldError('email', 'Could not verify this email address right now. Please input a valid email and try again.');
         }
-        return { ok: false, errorCode: 'email_check_unavailable', message: 'Could not verify this email address right now. Please try again.' };
+        return { ok: false, errorCode: 'email_check_unavailable', message: 'Could not verify this email address right now. Please input a valid email and try again.' };
     }
 }
 
@@ -533,6 +540,10 @@ function setAddAdminInlineStatus(message = '') {
     }
     inlineStatus.textContent = message;
     inlineStatus.classList.remove('hidden');
+}
+
+function isAddAdminEmailFieldErrorCode(errorCode = '') {
+    return errorCode === 'email_not_found' || errorCode === 'email_check_unavailable';
 }
 
 function resetAddAdminFieldError(fieldName) {
@@ -646,11 +657,6 @@ async function submitAddAdminForm(triggerButton = null) {
     let redirectUrl = null;
 
     try {
-        const emailRealtimeCheck = await verifyAddAdminEmailExistsRealtime(true);
-        if (!emailRealtimeCheck.ok && emailRealtimeCheck.errorCode !== 'stale') {
-            return;
-        }
-
         const response = await fetch(form.action, {
             method: 'POST',
             body: new FormData(form),
@@ -675,7 +681,7 @@ async function submitAddAdminForm(triggerButton = null) {
         if (errorCode === 'email_not_found') {
             const emailNotFoundMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
                 ? payload.message.trim()
-                : 'Email address/account could not be found. Please verify the email address and try again.';
+                : 'Email address/account could not be found. Please input a valid email.';
             setAddAdminFieldError('email', emailNotFoundMessage);
             return;
         }
@@ -683,8 +689,8 @@ async function submitAddAdminForm(triggerButton = null) {
         if (errorCode === 'email_check_unavailable') {
             const unavailableMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
                 ? payload.message.trim()
-                : 'Could not verify this email account in real time. Please try again.';
-            setAddAdminInlineStatus(unavailableMessage);
+                : 'Could not verify this email account in real time. Please input a valid email and try again.';
+            setAddAdminFieldError('email', unavailableMessage);
             return;
         }
 
@@ -695,7 +701,11 @@ async function submitAddAdminForm(triggerButton = null) {
                 ? payload.message.trim()
                 : 'Please review the highlighted fields and try again.';
             if (!Object.keys(validationErrors).length) {
-                setAddAdminInlineStatus(validationMessage);
+                if (isAddAdminEmailFieldErrorCode(errorCode)) {
+                    setAddAdminFieldError('email', validationMessage);
+                } else {
+                    setAddAdminInlineStatus(validationMessage);
+                }
             }
             return;
         }
@@ -710,7 +720,7 @@ async function submitAddAdminForm(triggerButton = null) {
 
         const successMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
             ? payload.message.trim()
-            : 'Admin account created successfully.';
+            : 'Admin account created successfully. The email owner must confirm the account through the verification email before the account becomes active.';
 
         try {
             sessionStorage.setItem('superadmin.users.success_message', successMessage);

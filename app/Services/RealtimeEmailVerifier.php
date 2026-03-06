@@ -6,7 +6,7 @@ class RealtimeEmailVerifier
 {
     public function verifyMailbox(string $email): array
     {
-        if (app()->environment('testing')) {
+        if (app()->runningUnitTests()) {
             return [
                 'ok' => true,
                 'message' => 'Realtime email verification is skipped in testing mode.',
@@ -33,7 +33,7 @@ class RealtimeEmailVerifier
             return $this->emailNotFoundResult();
         }
 
-        $mxHosts = array_slice(array_values(array_unique(array_filter($mxHosts))), 0, 2);
+        $mxHosts = array_slice(array_values(array_unique(array_filter($mxHosts))), 0, 3);
         if (empty($mxHosts)) {
             return $this->emailNotFoundResult();
         }
@@ -45,12 +45,12 @@ class RealtimeEmailVerifier
         $envelopeFrom = $this->resolveVerificationEnvelopeFrom($domain);
 
         foreach ($mxHosts as $mxHost) {
-            $socket = @fsockopen($mxHost, 25, $errno, $errstr, 2);
+            $socket = @fsockopen($mxHost, 25, $errno, $errstr, 6);
             if (!$socket) {
                 continue;
             }
 
-            stream_set_timeout($socket, 2);
+            stream_set_timeout($socket, 6);
 
             $greeting = $this->smtpReadResponse($socket);
             if (!$this->smtpResponseHasCode($greeting, [220])) {
@@ -101,9 +101,7 @@ class RealtimeEmailVerifier
                 fclose($socket);
 
                 if (in_array($probeRcptCode, [250, 251], true)) {
-                    return $this->unavailableRealtimeEmailVerificationResult(
-                        'Could not verify this email account in real time. Please input a valid email and try again.'
-                    );
+                    return $this->unavailableRealtimeEmailVerificationResult();
                 }
 
                 return [
@@ -118,9 +116,7 @@ class RealtimeEmailVerifier
             fclose($socket);
         }
 
-        return $this->unavailableRealtimeEmailVerificationResult(
-            'Could not verify this email account in real time. Please input a valid email and try again.'
-        );
+        return $this->unavailableRealtimeEmailVerificationResult();
     }
 
     public function classifyDeliveryFailure(string $errorMessage): array
@@ -166,7 +162,7 @@ class RealtimeEmailVerifier
         ];
     }
 
-    private function unavailableRealtimeEmailVerificationResult(string $productionMessage): array
+    private function unavailableRealtimeEmailVerificationResult(): array
     {
         if ($this->allowUnavailableVerification()) {
             return [
@@ -178,14 +174,28 @@ class RealtimeEmailVerifier
 
         return [
             'ok' => false,
-            'message' => $productionMessage,
+            'message' => 'Could not verify this email account in real time. Please input a valid email and try again.',
             'error_code' => 'email_check_unavailable',
         ];
     }
 
     private function allowUnavailableVerification(): bool
     {
-        return (bool) config('services.realtime_email_verifier.allow_unavailable', app()->environment('testing'));
+        $configuredValue = config('services.realtime_email_verifier.allow_unavailable');
+
+        if ($configuredValue === null) {
+            return false;
+        }
+
+        if (is_bool($configuredValue)) {
+            return $configuredValue;
+        }
+
+        if (is_string($configuredValue)) {
+            return in_array(strtolower($configuredValue), ['1', 'true', 'on', 'yes'], true);
+        }
+
+        return (bool) $configuredValue;
     }
 
     private function resolveVerificationEnvelopeFrom(string $fallbackDomain): string

@@ -3,6 +3,8 @@
         $showForgotModal = session('forgot') || $errors->passwordReset->any();
         $passwordResetStatus = __('passwords.reset');
         $passwordLinkStatus = __('passwords.sent');
+        $showVerificationModal = (bool) session('verification_success');
+        $verificationModalMessage = session('status') ?: 'Account successfully verified. You can now log in your account.';
     @endphp
     {{-- Main Container --}}
     <div class="min-h-screen flex items-start justify-center bg-admin-neutral-100 relative overflow-hidden px-3 py-4 sm:px-4 sm:py-6 lg:items-center lg:px-6 lg:py-8 font-admin text-admin-neutral-900"> 
@@ -63,7 +65,7 @@
                         </div>
                     </div>
 
-                    @if(session('status') && session('status') !== $passwordResetStatus && session('status') !== $passwordLinkStatus)
+                    @if(session('status') && session('status') !== $passwordResetStatus && session('status') !== $passwordLinkStatus && !$showVerificationModal)
                         <div class="mb-6 rounded-admin border border-admin-success/20 bg-admin-success-light px-4 py-3">
                             <x-auth-session-status class="!text-admin-success" :status="session('status')" />
                         </div>
@@ -77,6 +79,9 @@
 
                     <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
                         <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
+                    </x-success-modal>
+                    <x-success-modal name="email-verified-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+                        <p class="text-sm text-admin-neutral-600">{{ $verificationModalMessage }}</p>
                     </x-success-modal>
 
                     <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-5 sm:gap-6" data-action-loading>
@@ -284,6 +289,14 @@
                         setTimeout(() => {
                             window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'password-reset-success' }));
                         }, 2500);
+                    });
+                </script>
+                @endif
+
+                @if($showVerificationModal)
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'email-verified-success' }));
                     });
                 </script>
                 @endif

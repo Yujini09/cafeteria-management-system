@@ -20,7 +20,8 @@ class EmailVerificationNotificationController extends Controller
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
-        $user?->sendEmailVerificationNotification();
+        // Manual resend should always dispatch a fresh email (route already has throttle).
+        $user?->sendEmailVerificationNotification(force: true);
 
         return back()->with('status', 'verification-link-sent');
     }
