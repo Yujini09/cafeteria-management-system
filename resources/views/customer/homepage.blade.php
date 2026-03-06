@@ -136,9 +136,9 @@ body {
 
         <div class="flex-1 relative flex justify-center lg:justify-end min-h-[260px] sm:min-h-[490px] w-full">
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 z-10 mt-2 sm:mt-16">
-                <div class="absolute -translate-x-6 sm:-translate-x-20 inset-0 w-full h-full border-[72px] sm:border-[100px] border-white rounded-full"></div>
-                <div class="absolute -translate-x-6 sm:-translate-x-20 inset-[5px] sm:inset-[6px] w-[calc(100%-10px)] sm:w-[calc(100%-12px)] h-[calc(100%-10px)] sm:h-[calc(100%-12px)] border-[72px] sm:border-[100px] border-[#1F2937] rounded-full"></div>
-                <div class="absolute -translate-x-6 sm:-translate-x-20 inset-[14px] sm:inset-[18px] rounded-full overflow-hidden">
+                <div class="absolute -translate-x-6 sm:-translate-x-22 inset-0 w-full h-full border-[72px] sm:border-[100px] border-white rounded-full"></div>
+                <div class="absolute -translate-x-6 sm:-translate-x-22 inset-[5px] sm:inset-[6px] w-[calc(100%-10px)] sm:w-[calc(100%-12px)] h-[calc(100%-10px)] sm:h-[calc(100%-12px)] border-[72px] sm:border-[100px] border-[#1F2937] rounded-full"></div>
+                <div class="absolute -translate-x-6 sm:-translate-x-22 inset-[14px] sm:inset-[18px] rounded-full overflow-hidden">
                     <img src="{{ asset('images/plate.png') }}" alt="Food plate" class="w-full h-full object-cover" />
                 </div>
             </div>
@@ -180,7 +180,7 @@ body {
         {{-- MENU ITEMS --}}
         <div class="bg-ret-dark text-white overflow-hidden shadow-lg aspect-square relative group">
             <div class="absolute inset-0 bg-contain bg-no-repeat bg-center transform translate-x-2/4 transition-transform duration-500 group-hover:scale-105"
-                 style="background-image: url('{{ asset('images/veg.png') }}');">
+                 style="background-image: url('{{ asset('images/veggies.png') }}');">
             </div>
             <div class="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
             <a href="{{ route('menu') }}" class="relative z-10 p-6 h-full flex flex-col justify-center items-start w-1/2">
