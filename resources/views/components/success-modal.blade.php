@@ -3,6 +3,7 @@
     'title' => 'Success!',
     'maxWidth' => 'sm',
     'overlayClass' => 'bg-transparent',
+    'autoCloseMs' => 2000,
 ])
 
 @php
@@ -27,7 +28,7 @@ $maxWidthClass = match($maxWidth) {
             else document.body.classList.remove('overflow-hidden');
             if (v) {
                 if (closeTimer) clearTimeout(closeTimer);
-                closeTimer = setTimeout(() => { show = false; }, 2000);
+                closeTimer = setTimeout(() => { show = false; }, {{ (int) $autoCloseMs }});
             } else if (closeTimer) {
                 clearTimeout(closeTimer);
                 closeTimer = null;

@@ -157,7 +157,7 @@
 </div>
 
 {{-- Unified admin modals: overlay blur, ESC/click-outside, body scroll lock. --}}
-<x-success-modal name="users-success" title="Pending Verification" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
+<x-success-modal name="users-success" title="Pending Verification" maxWidth="sm" overlayClass="bg-admin-neutral-900/50" autoCloseMs="3000">
     <p id="usersSuccessMessage" class="text-sm text-admin-neutral-600">{{ session('success') ?? 'The account owner must verify their email before the account becomes active.' }}</p>
 </x-success-modal>
 
@@ -654,7 +654,7 @@ async function submitAddAdminForm(triggerButton = null) {
 
     setCreateAdminSubmittingState(true, triggerButton);
 
-    let redirectUrl = null;
+    let successMessageToShow = '';
 
     try {
         const response = await fetch(form.action, {
@@ -722,15 +722,7 @@ async function submitAddAdminForm(triggerButton = null) {
             ? payload.message.trim()
             : 'Admin account created successfully. The email owner must confirm the account through the verification email before the account becomes active.';
 
-        try {
-            sessionStorage.setItem('superadmin.users.success_message', successMessage);
-        } catch (storageError) {
-            console.warn('Unable to persist success message to sessionStorage.', storageError);
-        }
-
-        redirectUrl = (payload && typeof payload.redirect_url === 'string' && payload.redirect_url.trim().length)
-            ? payload.redirect_url
-            : '{{ route('superadmin.users') }}';
+        successMessageToShow = successMessage;
     } catch (error) {
         console.error('Error creating admin:', error);
         const networkMessage = 'Unable to reach the server. Please try again.';
@@ -739,9 +731,14 @@ async function submitAddAdminForm(triggerButton = null) {
         setCreateAdminSubmittingState(false, triggerButton);
     }
 
-    if (redirectUrl) {
+    if (successMessageToShow) {
+        const successMessageEl = document.getElementById('usersSuccessMessage');
+        if (successMessageEl) {
+            successMessageEl.textContent = successMessageToShow;
+        }
+
         window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'addAdmin' }));
-        window.location.href = redirectUrl;
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));
     }
 }
 
@@ -1334,20 +1331,9 @@ function initUsersPage() {
     bindAddAdminEmailExistenceValidation();
 
     const sessionSuccessMessage = @json(session('success'));
-    let successMessage = (typeof sessionSuccessMessage === 'string' && sessionSuccessMessage.trim().length)
+    const successMessage = (typeof sessionSuccessMessage === 'string' && sessionSuccessMessage.trim().length)
         ? sessionSuccessMessage.trim()
         : '';
-
-    if (!successMessage) {
-        try {
-            const storedSuccessMessage = sessionStorage.getItem('superadmin.users.success_message');
-            if (typeof storedSuccessMessage === 'string' && storedSuccessMessage.trim().length) {
-                successMessage = storedSuccessMessage.trim();
-            }
-        } catch (storageError) {
-            console.warn('Unable to read success message from sessionStorage.', storageError);
-        }
-    }
 
     if (successMessage) {
         const successMessageEl = document.getElementById('usersSuccessMessage');
@@ -1355,11 +1341,6 @@ function initUsersPage() {
             successMessageEl.textContent = successMessage;
         }
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'users-success' }));
-        try {
-            sessionStorage.removeItem('superadmin.users.success_message');
-        } catch (storageError) {
-            console.warn('Unable to clear success message from sessionStorage.', storageError);
-        }
     }
 
     const openEditAdmin = @json(old('form_context') === 'edit_admin');
