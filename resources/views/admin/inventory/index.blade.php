@@ -130,11 +130,17 @@
                 </div>
             </div>
         </div>
-        <div class="mb-4">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
                 <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
                 Total Items: {{ $items->total() }}
             </span>
+            <div class="flex w-full sm:w-auto sm:justify-end">
+                <x-admin.ui.button.secondary type="button" id="inventoryUsageLogsBtn" class="w-full justify-center sm:w-auto">
+                    <x-admin.ui.icon name="fa-file-lines" size="sm" />
+                    Usage Logs
+                </x-admin.ui.button.secondary>
+            </div>
         </div>
 
         <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 use Illuminate\Support\Str;
 
 class GoogleController extends Controller
@@ -45,12 +46,13 @@ class GoogleController extends Controller
     /**
      * Handle Google OAuth callback
      */
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         try {
             \Log::info('Google OAuth callback initiated');
             
             $googleUser = Socialite::driver('google')->user();
+            $request->session()->forget('google_oauth_state_retry');
             \Log::info('Google user retrieved', ['email' => $googleUser->getEmail()]);
 
             // Check if user exists with this email
@@ -100,12 +102,31 @@ class GoogleController extends Controller
                 );
                 return redirect()->route('dashboard');
             }
-        } catch (\Exception $e) {
+        } catch (InvalidStateException $e) {
+            $alreadyRetried = (bool) $request->session()->pull('google_oauth_state_retry', false);
+
+            \Log::warning('Google OAuth invalid state encountered', [
+                'already_retried' => $alreadyRetried,
+            ]);
+
+            // One automatic retry keeps UX smooth without risking redirect loops.
+            if (!$alreadyRetried) {
+                $request->session()->put('google_oauth_state_retry', true);
+                return redirect()->route('auth.google');
+            }
+
+            return redirect()->route('login')->withErrors([
+                'google' => 'Google sign-in session expired. Please try again.',
+            ]);
+        } catch (\Throwable $e) {
+            $request->session()->forget('google_oauth_state_retry');
             \Log::error('Google OAuth Error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString(),
             ]);
-            return redirect()->route('login')->withErrors(['google' => 'Unable to login with Google. Please try again. Error: ' . $e->getMessage()]);
+            return redirect()->route('login')->withErrors([
+                'google' => 'Unable to login with Google. Please try again.',
+            ]);
         }
     }
 }
