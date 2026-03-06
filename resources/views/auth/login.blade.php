@@ -69,6 +69,12 @@
                         </div>
                     @endif
 
+                    @if($errors->has('google'))
+                        <div class="mb-6 rounded-admin border border-admin-danger/20 bg-admin-danger-light px-4 py-3 text-sm text-admin-danger">
+                            {{ $errors->first('google') }}
+                        </div>
+                    @endif
+
                     <x-success-modal name="password-reset-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
                         <p class="text-sm text-admin-neutral-600">Your password has been reset. You can now log in.</p>
                     </x-success-modal>

@@ -41,4 +41,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'realtime_email_verifier' => [
+        'allow_unavailable' => env('REALTIME_EMAIL_ALLOW_UNAVAILABLE', app()->environment('testing')),
+    ],
+
 ];

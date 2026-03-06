@@ -57,7 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getPhoneAttribute()
     {
-        return $this->attributes['contact_no'];
+        return $this->attributes['contact_no'] ?? null;
     }
 
     /**
@@ -84,7 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getContactNumberAttribute()
     {
-        return $this->contact_no;
+        return $this->attributes['contact_no'] ?? null;
     }
 
     /**
