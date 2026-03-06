@@ -97,6 +97,118 @@
     <x-success-modal name="inventory-delete-success" title="Deleted" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">Inventory item deleted successfully.</p>
     </x-success-modal>
+
+    <x-admin.ui.modal name="inventoryUsageLogs" title="Inventory Usage Logs" icon="fa-file-lines" iconStyle="fas" variant="info" maxWidth="6xl">
+        <button type="button"
+                class="absolute top-4 right-4 rounded-full p-1.5 text-admin-neutral-400 hover:bg-admin-neutral-100 hover:text-admin-neutral-600 transition-colors duration-admin"
+                @click="$dispatch('close-admin-modal', 'inventoryUsageLogs')"
+                aria-label="Close inventory usage logs modal">
+            <x-admin.ui.icon name="fa-xmark" size="sm" />
+        </button>
+        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4">
+            <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <p class="text-sm text-admin-neutral-700">Track automatic deductions and manual stock adjustments.</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-admin-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-admin-neutral-600">
+                            Total
+                            <span id="inventoryUsageTotalCount" class="text-admin-neutral-900">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-col gap-3">
+                    <div class="relative">
+                        <input type="text"
+                               id="inventoryUsageSearchInput"
+                               placeholder="Search item, user, or reservation reference..."
+                               class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                               aria-label="Search inventory usage logs">
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-neutral-400">
+                            <x-admin.ui.icon name="fa-magnifying-glass" size="sm" />
+                        </span>
+                        <button type="button"
+                                id="inventoryUsageClearSearch"
+                                class="hidden absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-admin-neutral-400 hover:bg-admin-neutral-100 hover:text-admin-neutral-600"
+                                aria-label="Clear inventory usage search">
+                            <x-admin.ui.icon name="fa-xmark" size="sm" />
+                        </button>
+                    </div>
+
+                    <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,14rem)_minmax(10rem,1fr)_minmax(10rem,1fr)_auto] xl:items-end">
+                        <div class="flex flex-col gap-1">
+                            <label for="inventoryUsageTypeFilter" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Type</label>
+                            <select id="inventoryUsageTypeFilter" class="admin-select w-full" data-admin-select="true" aria-label="Filter inventory usage by type">
+                                <option value="">All Types</option>
+                                <option value="auto_deduct">Auto-deduct</option>
+                                <option value="manual_adjustment">Manual adjustment</option>
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <label for="inventoryUsageDateFrom" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Date from</label>
+                            <input type="date"
+                                   id="inventoryUsageDateFrom"
+                                   class="w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 px-3 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                                   aria-label="Inventory usage date from">
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <label for="inventoryUsageDateTo" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Date to</label>
+                            <input type="date"
+                                   id="inventoryUsageDateTo"
+                                   class="w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 px-3 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                                   aria-label="Inventory usage date to">
+                        </div>
+
+                        <div class="flex items-end">
+                            <x-admin.ui.button.secondary type="button" id="inventoryUsageResetFilters" class="w-full sm:w-auto sm:shrink-0">Reset</x-admin.ui.button.secondary>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="inventoryUsageTableContainer" class="flex-1 min-h-0 overflow-auto rounded-admin border border-admin-neutral-200 bg-white">
+                <table class="min-w-full table-fixed">
+                    <colgroup>
+                        <col class="w-52">
+                        <col class="w-52">
+                        <col class="w-40">
+                        <col class="w-36">
+                        <col class="w-36">
+                        <col class="w-40">
+                        <col class="w-44">
+                    </colgroup>
+                    <thead class="sticky top-0 z-10 bg-admin-neutral-50">
+                        <tr class="text-left text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">
+                                <button id="inventoryUsageSortByDateBtn" type="button" class="group inline-flex items-center gap-2">
+                                    <span>Date/Time</span>
+                                    <x-admin.ui.icon id="inventoryUsageSortIconDate" name="fa-arrow-down" size="xs" class="text-admin-neutral-400" />
+                                </button>
+                            </th>
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">Item</th>
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">Type</th>
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">Quantity Change</th>
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">New Balance</th>
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">Reference</th>
+                            <th class="px-4 py-3 border-b border-admin-neutral-200">Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryUsageTableBody">
+                        <tr>
+                            <td colspan="7" class="py-10 text-center text-admin-neutral-500">Loading usage logs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="inventoryUsagePagination" class="hidden flex-wrap items-center justify-between gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2">
+                <p id="inventoryUsagePaginationInfo" class="text-xs text-admin-neutral-500"></p>
+                <nav id="inventoryUsagePaginationNav" role="navigation" aria-label="Inventory usage pagination" class="inline-flex items-center gap-1"></nav>
+            </div>
+        </div>
+    </x-admin.ui.modal>
     
     <div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full overflow-hidden flex flex-col">
         <div class="page-header items-start">
@@ -483,6 +595,519 @@
 <script>
 document.addEventListener('livewire:navigated', function() {
     const rootCloseEvent = new Event('close-inventory-modals');
+    const inventoryUsageLogsEndpoint = @json(route('admin.inventory.usage-logs'));
+    const inventoryUsagePerPage = 10;
+    let allInventoryUsageLogs = [];
+    let filteredInventoryUsageLogs = [];
+    let currentInventoryUsagePage = 1;
+    let currentInventoryUsageSortDirection = 'desc';
+
+    function inventoryUsageText(value) {
+        return String(value ?? '').trim();
+    }
+
+    function inventoryUsageEscapeHtml(value) {
+        return inventoryUsageText(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function inventoryUsageTypeLabel(type) {
+        if (type === 'auto_deduct') return 'Auto-deduct';
+        if (type === 'manual_adjustment') return 'Manual adjustment';
+        return 'Unknown';
+    }
+
+    function inventoryUsageTypeBadgeClass(type) {
+        if (type === 'auto_deduct') {
+            return 'bg-admin-warning-light text-admin-warning border-amber-200';
+        }
+
+        if (type === 'manual_adjustment') {
+            return 'bg-admin-primary-light text-admin-primary border-admin-neutral-200';
+        }
+
+        return 'bg-admin-neutral-100 text-admin-neutral-700 border-admin-neutral-200';
+    }
+
+    function inventoryUsageFormatNumber(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) {
+            return '0';
+        }
+
+        if (Number.isInteger(number)) {
+            return number.toLocaleString();
+        }
+
+        return number.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 3,
+        });
+    }
+
+    function inventoryUsageGetRelativeTimeLabel(date) {
+        const elapsed = date.getTime() - Date.now();
+        const units = [
+            ['year', 1000 * 60 * 60 * 24 * 365],
+            ['month', 1000 * 60 * 60 * 24 * 30],
+            ['week', 1000 * 60 * 60 * 24 * 7],
+            ['day', 1000 * 60 * 60 * 24],
+            ['hour', 1000 * 60 * 60],
+            ['minute', 1000 * 60],
+        ];
+        const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+        for (const [unit, ms] of units) {
+            if (Math.abs(elapsed) >= ms || unit === 'minute') {
+                return formatter.format(Math.round(elapsed / ms), unit);
+            }
+        }
+
+        return 'just now';
+    }
+
+    function inventoryUsageFormatDate(dateString) {
+        const parsed = new Date(dateString || '');
+        if (Number.isNaN(parsed.getTime())) {
+            return { full: 'Unknown date', relative: 'Unknown', ts: 0 };
+        }
+
+        return {
+            full: parsed.toLocaleString(),
+            relative: inventoryUsageGetRelativeTimeLabel(parsed),
+            ts: parsed.getTime(),
+        };
+    }
+
+    function updateInventoryUsageCounters(total) {
+        const totalEl = document.getElementById('inventoryUsageTotalCount');
+        if (totalEl) {
+            totalEl.textContent = String(total);
+        }
+    }
+
+    function updateInventoryUsageSortIndicators() {
+        const icon = document.getElementById('inventoryUsageSortIconDate');
+        if (!icon) return;
+
+        icon.classList.remove('fa-arrow-up', 'fa-arrow-down', 'text-admin-primary', 'text-admin-neutral-400');
+        icon.classList.add(currentInventoryUsageSortDirection === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down', 'text-admin-primary');
+    }
+
+    function getInventoryUsageTotalPages(totalItems) {
+        return Math.max(1, Math.ceil(totalItems / inventoryUsagePerPage));
+    }
+
+    function buildInventoryUsagePageItems(totalPages, currentPage) {
+        if (totalPages <= 7) {
+            return Array.from({ length: totalPages }, (_, index) => index + 1);
+        }
+
+        const items = [1];
+        let start = Math.max(2, currentPage - 1);
+        let end = Math.min(totalPages - 1, currentPage + 1);
+
+        if (currentPage <= 3) {
+            start = 2;
+            end = 4;
+        } else if (currentPage >= totalPages - 2) {
+            start = totalPages - 3;
+            end = totalPages - 1;
+        }
+
+        if (start > 2) {
+            items.push('...');
+        }
+
+        for (let page = start; page <= end; page += 1) {
+            items.push(page);
+        }
+
+        if (end < totalPages - 1) {
+            items.push('...');
+        }
+
+        items.push(totalPages);
+        return items;
+    }
+
+    function renderInventoryUsagePagination(totalItems) {
+        const wrapper = document.getElementById('inventoryUsagePagination');
+        const info = document.getElementById('inventoryUsagePaginationInfo');
+        const nav = document.getElementById('inventoryUsagePaginationNav');
+
+        if (!wrapper || !info || !nav) return;
+
+        if (totalItems <= 0) {
+            wrapper.classList.add('hidden');
+            wrapper.classList.remove('flex');
+            info.textContent = '';
+            nav.innerHTML = '';
+            return;
+        }
+
+        const totalPages = getInventoryUsageTotalPages(totalItems);
+        if (currentInventoryUsagePage > totalPages) {
+            currentInventoryUsagePage = totalPages;
+        }
+
+        const firstItem = (currentInventoryUsagePage - 1) * inventoryUsagePerPage + 1;
+        const lastItem = Math.min(firstItem + inventoryUsagePerPage - 1, totalItems);
+        info.innerHTML = `Showing <span class="font-semibold text-admin-neutral-700">${firstItem}</span> to <span class="font-semibold text-admin-neutral-700">${lastItem}</span> of <span class="font-semibold text-admin-neutral-700">${totalItems}</span> results`;
+
+        const disabledClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-admin-neutral-50 text-xs font-semibold text-admin-neutral-400 cursor-not-allowed';
+        const defaultClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150';
+        const activeClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-primary bg-admin-primary text-xs font-semibold text-white shadow-sm';
+
+        let navHtml = '';
+        if (currentInventoryUsagePage === 1) {
+            navHtml += `<span class="${disabledClass}">Prev</span>`;
+        } else {
+            navHtml += `<button type="button" class="${defaultClass}" data-page="${currentInventoryUsagePage - 1}">Prev</button>`;
+        }
+
+        const pageItems = buildInventoryUsagePageItems(totalPages, currentInventoryUsagePage);
+        pageItems.forEach((item) => {
+            if (item === '...') {
+                navHtml += '<span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-xs font-semibold text-admin-neutral-400">...</span>';
+                return;
+            }
+
+            if (item === currentInventoryUsagePage) {
+                navHtml += `<span class="${activeClass}" aria-current="page">${item}</span>`;
+                return;
+            }
+
+            navHtml += `<button type="button" class="${defaultClass}" aria-label="Go to page ${item}" data-page="${item}">${item}</button>`;
+        });
+
+        if (currentInventoryUsagePage >= totalPages) {
+            navHtml += `<span class="${disabledClass}">Next</span>`;
+        } else {
+            navHtml += `<button type="button" class="${defaultClass}" data-page="${currentInventoryUsagePage + 1}">Next</button>`;
+        }
+
+        nav.innerHTML = navHtml;
+        wrapper.classList.remove('hidden');
+        wrapper.classList.add('flex');
+    }
+
+    function setInventoryUsageLoadingState() {
+        const tbody = document.getElementById('inventoryUsageTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="py-12 px-4 text-center text-admin-neutral-500">
+                    <div class="inline-flex items-center gap-2">
+                        <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
+                        <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
+                        <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
+                    </div>
+                    <p class="mt-3 text-sm">Loading inventory usage logs...</p>
+                </td>
+            </tr>
+        `;
+        renderInventoryUsagePagination(0);
+    }
+
+    function setInventoryUsageErrorState() {
+        const tbody = document.getElementById('inventoryUsageTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="py-12 px-4 text-center">
+                    <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-admin-danger-light text-admin-danger">
+                        <i class="fas fa-triangle-exclamation text-base" aria-hidden="true"></i>
+                    </div>
+                    <p class="mt-3 font-semibold text-admin-neutral-900">Could not load usage logs</p>
+                    <p class="text-sm text-admin-neutral-500">Please try again in a moment.</p>
+                </td>
+            </tr>
+        `;
+        renderInventoryUsagePagination(0);
+    }
+
+    function renderInventoryUsageTable(logs) {
+        const tbody = document.getElementById('inventoryUsageTableBody');
+        if (!tbody) return;
+
+        const sortedLogs = [...logs].sort((a, b) => {
+            const dateA = inventoryUsageFormatDate(a.created_at).ts;
+            const dateB = inventoryUsageFormatDate(b.created_at).ts;
+
+            if (dateA === dateB) {
+                return 0;
+            }
+
+            if (currentInventoryUsageSortDirection === 'asc') {
+                return dateA > dateB ? 1 : -1;
+            }
+
+            return dateA < dateB ? 1 : -1;
+        });
+
+        const totalItems = sortedLogs.length;
+        renderInventoryUsagePagination(totalItems);
+
+        if (totalItems === 0) {
+            const hasFilters = Boolean(
+                inventoryUsageText(document.getElementById('inventoryUsageSearchInput')?.value).length ||
+                inventoryUsageText(document.getElementById('inventoryUsageTypeFilter')?.value).length ||
+                inventoryUsageText(document.getElementById('inventoryUsageDateFrom')?.value).length ||
+                inventoryUsageText(document.getElementById('inventoryUsageDateTo')?.value).length
+            );
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="py-12 px-4 text-center">
+                        <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-admin-neutral-100 text-admin-neutral-400">
+                            <i class="fas ${hasFilters ? 'fa-filter' : 'fa-file-lines'} text-base" aria-hidden="true"></i>
+                        </div>
+                        <p class="mt-3 font-semibold text-admin-neutral-900">${hasFilters ? 'No matching logs' : 'No usage logs found'}</p>
+                        <p class="text-sm text-admin-neutral-500">${hasFilters ? 'Try changing your search or filters.' : 'Logs will appear when inventory quantities are adjusted.'}</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const totalPages = getInventoryUsageTotalPages(totalItems);
+        if (currentInventoryUsagePage > totalPages) {
+            currentInventoryUsagePage = totalPages;
+        }
+
+        const startIndex = (currentInventoryUsagePage - 1) * inventoryUsagePerPage;
+        const pagedLogs = sortedLogs.slice(startIndex, startIndex + inventoryUsagePerPage);
+
+        let rowsHtml = '';
+        pagedLogs.forEach((log) => {
+            const itemName = inventoryUsageText(log.item_name || log.inventory_item?.name || 'Unknown item');
+            const typeValue = inventoryUsageText(log.type);
+            const typeLabel = inventoryUsageTypeLabel(typeValue);
+            const typeClass = inventoryUsageTypeBadgeClass(typeValue);
+            const quantityChange = Number(log.quantity_change ?? 0);
+            const quantitySign = quantityChange > 0 ? '+' : '';
+            const quantityClass = quantityChange > 0
+                ? 'text-admin-success'
+                : (quantityChange < 0 ? 'text-admin-danger' : 'text-admin-neutral-600');
+            const newBalance = log.new_balance === null || typeof log.new_balance === 'undefined'
+                ? 'N/A'
+                : inventoryUsageFormatNumber(log.new_balance);
+            const reference = log.reservation_id ? `Reservation #${log.reservation_id}` : 'N/A';
+            const performedBy = inventoryUsageText(log.user?.name || 'System');
+            const dateInfo = inventoryUsageFormatDate(log.created_at);
+
+            rowsHtml += `
+                <tr class="border-b border-admin-neutral-100 last:border-b-0 hover:bg-admin-neutral-50 transition-colors duration-admin">
+                    <td class="py-3 px-4 align-top whitespace-nowrap">
+                        <p class="text-admin-neutral-800">${inventoryUsageEscapeHtml(dateInfo.full)}</p>
+                        <p class="text-xs text-admin-neutral-500">${inventoryUsageEscapeHtml(dateInfo.relative)}</p>
+                    </td>
+                    <td class="py-3 px-4 align-top">
+                        <p class="font-semibold text-admin-neutral-900">${inventoryUsageEscapeHtml(itemName)}</p>
+                    </td>
+                    <td class="py-3 px-4 align-top whitespace-nowrap">
+                        <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold truncate ${typeClass}">
+                            ${inventoryUsageEscapeHtml(typeLabel)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 align-top whitespace-nowrap">
+                        <span class="font-semibold ${quantityClass}">
+                            ${inventoryUsageEscapeHtml(quantitySign + inventoryUsageFormatNumber(quantityChange))}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
+                        ${inventoryUsageEscapeHtml(newBalance)}
+                    </td>
+                    <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
+                        ${inventoryUsageEscapeHtml(reference)}
+                    </td>
+                    <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
+                        ${inventoryUsageEscapeHtml(performedBy)}
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = rowsHtml;
+    }
+
+    function applyInventoryUsageFilters(resetPage = false) {
+        const searchInput = document.getElementById('inventoryUsageSearchInput');
+        const typeFilter = document.getElementById('inventoryUsageTypeFilter');
+        const dateFromInput = document.getElementById('inventoryUsageDateFrom');
+        const dateToInput = document.getElementById('inventoryUsageDateTo');
+        const clearButton = document.getElementById('inventoryUsageClearSearch');
+
+        const query = inventoryUsageText(searchInput?.value).toLowerCase();
+        const typeValue = inventoryUsageText(typeFilter?.value);
+        const dateFromValue = inventoryUsageText(dateFromInput?.value);
+        const dateToValue = inventoryUsageText(dateToInput?.value);
+        const fromDate = dateFromValue ? new Date(`${dateFromValue}T00:00:00`) : null;
+        const toDate = dateToValue ? new Date(`${dateToValue}T23:59:59.999`) : null;
+
+        filteredInventoryUsageLogs = allInventoryUsageLogs.filter((log) => {
+            const itemName = inventoryUsageText(log.item_name || log.inventory_item?.name || '');
+            const typeLabel = inventoryUsageTypeLabel(log.type);
+            const reference = log.reservation_id ? `reservation #${log.reservation_id}` : '';
+            const performedBy = inventoryUsageText(log.user?.name || 'System');
+            const dateText = log.created_at ? new Date(log.created_at).toLocaleString() : '';
+            const haystack = `${itemName} ${typeLabel} ${reference} ${performedBy} ${dateText}`.toLowerCase();
+
+            const logDate = log.created_at ? new Date(log.created_at) : null;
+            const matchesQuery = !query || haystack.includes(query);
+            const matchesType = !typeValue || inventoryUsageText(log.type) === typeValue;
+            const matchesFrom = !fromDate || (logDate && !Number.isNaN(logDate.getTime()) && logDate >= fromDate);
+            const matchesTo = !toDate || (logDate && !Number.isNaN(logDate.getTime()) && logDate <= toDate);
+
+            return matchesQuery && matchesType && matchesFrom && matchesTo;
+        });
+
+        if (resetPage) {
+            currentInventoryUsagePage = 1;
+        }
+
+        renderInventoryUsageTable(filteredInventoryUsageLogs);
+        updateInventoryUsageCounters(allInventoryUsageLogs.length);
+
+        if (clearButton) {
+            clearButton.classList.toggle('hidden', !query.length);
+        }
+    }
+
+    async function loadInventoryUsageLogs() {
+        setInventoryUsageLoadingState();
+        updateInventoryUsageCounters(0);
+        filteredInventoryUsageLogs = [];
+        currentInventoryUsagePage = 1;
+
+        try {
+            const response = await fetch(inventoryUsageLogsEndpoint, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            const payload = await response.json();
+            allInventoryUsageLogs = Array.isArray(payload?.logs) ? payload.logs : [];
+            applyInventoryUsageFilters(true);
+            updateInventoryUsageSortIndicators();
+        } catch (error) {
+            setInventoryUsageErrorState();
+            updateInventoryUsageCounters(0);
+            console.error('Error fetching inventory usage logs:', error);
+        }
+    }
+
+    async function openInventoryUsageLogsModal() {
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventoryUsageLogs' }));
+        await loadInventoryUsageLogs();
+    }
+
+    function initInventoryUsageLogsControls() {
+        const openButton = document.getElementById('inventoryUsageLogsBtn');
+        const searchInput = document.getElementById('inventoryUsageSearchInput');
+        const typeFilter = document.getElementById('inventoryUsageTypeFilter');
+        const dateFromInput = document.getElementById('inventoryUsageDateFrom');
+        const dateToInput = document.getElementById('inventoryUsageDateTo');
+        const clearButton = document.getElementById('inventoryUsageClearSearch');
+        const resetButton = document.getElementById('inventoryUsageResetFilters');
+        const sortByDateButton = document.getElementById('inventoryUsageSortByDateBtn');
+        const paginationNav = document.getElementById('inventoryUsagePaginationNav');
+
+        if (openButton && !openButton.dataset.bound) {
+            openButton.addEventListener('click', openInventoryUsageLogsModal);
+            openButton.dataset.bound = 'true';
+        }
+
+        if (searchInput && !searchInput.dataset.bound) {
+            searchInput.addEventListener('input', () => applyInventoryUsageFilters(true));
+            searchInput.dataset.bound = 'true';
+        }
+
+        if (typeFilter && !typeFilter.dataset.bound) {
+            typeFilter.addEventListener('change', () => applyInventoryUsageFilters(true));
+            typeFilter.dataset.bound = 'true';
+        }
+
+        if (dateFromInput && !dateFromInput.dataset.bound) {
+            dateFromInput.addEventListener('change', () => applyInventoryUsageFilters(true));
+            dateFromInput.dataset.bound = 'true';
+        }
+
+        if (dateToInput && !dateToInput.dataset.bound) {
+            dateToInput.addEventListener('change', () => applyInventoryUsageFilters(true));
+            dateToInput.dataset.bound = 'true';
+        }
+
+        if (clearButton && !clearButton.dataset.bound) {
+            clearButton.addEventListener('click', () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                applyInventoryUsageFilters(true);
+            });
+            clearButton.dataset.bound = 'true';
+        }
+
+        if (resetButton && !resetButton.dataset.bound) {
+            resetButton.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                if (typeFilter) typeFilter.value = '';
+                if (dateFromInput) dateFromInput.value = '';
+                if (dateToInput) dateToInput.value = '';
+                applyInventoryUsageFilters(true);
+            });
+            resetButton.dataset.bound = 'true';
+        }
+
+        if (sortByDateButton && !sortByDateButton.dataset.bound) {
+            sortByDateButton.addEventListener('click', () => {
+                currentInventoryUsageSortDirection = currentInventoryUsageSortDirection === 'asc' ? 'desc' : 'asc';
+                updateInventoryUsageSortIndicators();
+                applyInventoryUsageFilters();
+            });
+            sortByDateButton.dataset.bound = 'true';
+        }
+
+        if (paginationNav && !paginationNav.dataset.bound) {
+            paginationNav.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-page]');
+                if (!button) {
+                    return;
+                }
+
+                const nextPage = Number(button.dataset.page || 1);
+                const totalPages = getInventoryUsageTotalPages(filteredInventoryUsageLogs.length);
+                const normalizedPage = Math.min(Math.max(1, nextPage), totalPages);
+
+                if (normalizedPage === currentInventoryUsagePage) {
+                    return;
+                }
+
+                currentInventoryUsagePage = normalizedPage;
+                renderInventoryUsageTable(filteredInventoryUsageLogs);
+            });
+            paginationNav.dataset.bound = 'true';
+        }
+
+        if (typeof enhanceAdminSelects === 'function') {
+            enhanceAdminSelects(document);
+        }
+
+        updateInventoryUsageSortIndicators();
+    }
 
     function initInventoryFloatingActions() {
         const host = document.getElementById('inventoryTableHost');
@@ -582,6 +1207,7 @@ document.addEventListener('livewire:navigated', function() {
     }
 
     initInventoryFloatingActions();
+    initInventoryUsageLogsControls();
 
     function getCsrfToken() {
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';

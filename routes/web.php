@@ -92,6 +92,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
 
         Route::get('/inventory-alerts', [InventoryItemController::class, 'alerts'])->name('inventory.alerts');
+        Route::get('/inventory/usage-logs', [InventoryItemController::class, 'usageLogs'])->name('inventory.usage-logs');
         Route::resource('inventory', InventoryItemController::class);
         Route::get('/menus/prices', [MenuController::class,'prices'])->name('menus.prices');
         Route::post('/menus/prices', [MenuController::class,'updatePrices'])->name('menus.prices.update');

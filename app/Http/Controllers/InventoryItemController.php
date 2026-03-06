@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryItem;
+use App\Models\InventoryUsageLog;
 use App\Services\InventoryAlertService;
 use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +24,62 @@ class InventoryItemController extends Controller
         return response()->json([
             'alerts' => $alerts->all(),
             'count' => $alerts->count(),
+        ]);
+    }
+
+    public function usageLogs(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'type' => ['nullable', 'in:' . InventoryUsageLog::TYPE_AUTO_DEDUCT . ',' . InventoryUsageLog::TYPE_MANUAL_ADJUSTMENT],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+        ]);
+
+        $query = InventoryUsageLog::query()
+            ->with([
+                'inventoryItem:id,name,unit',
+                'reservation:id',
+                'user:id,name',
+            ])
+            ->latest();
+
+        if (!empty($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->where('created_at', '>=', Carbon::parse($filters['date_from'])->startOfDay());
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->where('created_at', '<=', Carbon::parse($filters['date_to'])->endOfDay());
+        }
+
+        if (!empty($filters['search'])) {
+            $search = trim((string) $filters['search']);
+            $searchLike = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search) . '%';
+            $searchReservationId = ctype_digit($search) ? (int) $search : null;
+
+            $query->where(function ($innerQuery) use ($searchLike, $searchReservationId) {
+                $innerQuery->where('item_name', 'like', $searchLike)
+                    ->orWhereHas('inventoryItem', function ($inventoryQuery) use ($searchLike) {
+                        $inventoryQuery->where('name', 'like', $searchLike);
+                    })
+                    ->orWhereHas('user', function ($userQuery) use ($searchLike) {
+                        $userQuery->where('name', 'like', $searchLike);
+                    });
+
+                if ($searchReservationId !== null) {
+                    $innerQuery->orWhere('reservation_id', $searchReservationId);
+                }
+            });
+        }
+
+        $logs = $query->limit(300)->get();
+
+        return response()->json([
+            'logs' => $logs,
         ]);
     }
 
@@ -109,6 +167,20 @@ class InventoryItemController extends Controller
 
         $oldQty = $inventory->qty;
         $inventory->update($data);
+
+        $oldQtyValue = (float) $oldQty;
+        $newQtyValue = (float) $inventory->qty;
+        $quantityChange = $newQtyValue - $oldQtyValue;
+        if (abs($quantityChange) > 0.000001) {
+            InventoryUsageLog::create([
+                'inventory_item_id' => $inventory->id,
+                'item_name' => $inventory->name,
+                'type' => InventoryUsageLog::TYPE_MANUAL_ADJUSTMENT,
+                'quantity_change' => round($quantityChange, 3),
+                'new_balance' => round($newQtyValue, 3),
+                'user_id' => Auth::id(),
+            ]);
+        }
 
         AuditTrail::record(
             Auth::id(),

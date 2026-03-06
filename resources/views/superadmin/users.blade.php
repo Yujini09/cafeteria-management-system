@@ -313,8 +313,8 @@
                 </div>
             </div>
 
-            <div class="mt-4 flex flex-col gap-3 xl:flex-row xl:items-center">
-                <div class="relative flex-1">
+            <div class="mt-4 flex flex-col gap-3">
+                <div class="relative">
                     <input type="text"
                            inputmode="search"
                            autocomplete="off"
@@ -335,11 +335,33 @@
                     </button>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <select id="activitiesActionFilter" class="admin-select min-w-[11rem]" data-admin-select="true" aria-label="Filter activities by action">
-                        <option value="">All Actions</option>
-                    </select>
-                    <x-admin.ui.button.secondary type="button" id="activitiesResetFilters">Reset</x-admin.ui.button.secondary>
+                <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,14rem)_minmax(10rem,1fr)_minmax(10rem,1fr)_auto] xl:items-end">
+                    <div class="flex flex-col gap-1">
+                        <label for="activitiesActionFilter" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Action</label>
+                        <select id="activitiesActionFilter" class="admin-select w-full" data-admin-select="true" aria-label="Filter activities by action">
+                            <option value="">All Actions</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label for="activitiesDateFrom" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Date from</label>
+                        <input type="date"
+                               id="activitiesDateFrom"
+                               class="w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 px-3 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                               aria-label="Activities date from">
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label for="activitiesDateTo" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Date to</label>
+                        <input type="date"
+                               id="activitiesDateTo"
+                               class="w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 px-3 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                               aria-label="Activities date to">
+                    </div>
+
+                    <div class="flex items-end">
+                        <x-admin.ui.button.secondary type="button" id="activitiesResetFilters" class="w-full sm:w-auto sm:shrink-0">Reset</x-admin.ui.button.secondary>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1150,7 +1172,9 @@ function renderActivitiesTable(audits) {
     if (totalItems === 0) {
         const hasFilters = Boolean(
             activityText(document.getElementById('activitiesSearchInput')?.value).length ||
-            activityText(document.getElementById('activitiesActionFilter')?.value).length
+            activityText(document.getElementById('activitiesActionFilter')?.value).length ||
+            activityText(document.getElementById('activitiesDateFrom')?.value).length ||
+            activityText(document.getElementById('activitiesDateTo')?.value).length
         );
 
         tbody.innerHTML = `
@@ -1211,22 +1235,31 @@ function renderActivitiesTable(audits) {
 function applyActivitiesFilters(resetPage = false) {
     const searchInput = document.getElementById('activitiesSearchInput');
     const actionFilter = document.getElementById('activitiesActionFilter');
+    const dateFromInput = document.getElementById('activitiesDateFrom');
+    const dateToInput = document.getElementById('activitiesDateTo');
     const clearButton = document.getElementById('activitiesClearSearch');
 
     const query = activityText(searchInput?.value).toLowerCase();
     const actionValue = activityText(actionFilter?.value);
+    const dateFromValue = activityText(dateFromInput?.value);
+    const dateToValue = activityText(dateToInput?.value);
+    const fromDate = dateFromValue ? new Date(`${dateFromValue}T00:00:00`) : null;
+    const toDate = dateToValue ? new Date(`${dateToValue}T23:59:59.999`) : null;
 
     filteredAudits = allAudits.filter((audit) => {
         const userName = activityText(audit.user && audit.user.name ? audit.user.name : 'System');
         const action = activityText(audit.action);
         const description = activityText(audit.description);
         const dateText = audit.created_at ? new Date(audit.created_at).toLocaleString() : '';
+        const auditDate = audit.created_at ? new Date(audit.created_at) : null;
 
         const haystack = `${userName} ${action} ${description} ${dateText}`.toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
         const matchesAction = !actionValue || action === actionValue;
+        const matchesDateFrom = !fromDate || (auditDate && !Number.isNaN(auditDate.getTime()) && auditDate >= fromDate);
+        const matchesDateTo = !toDate || (auditDate && !Number.isNaN(auditDate.getTime()) && auditDate <= toDate);
 
-        return matchesQuery && matchesAction;
+        return matchesQuery && matchesAction && matchesDateFrom && matchesDateTo;
     });
 
     if (resetPage) {
@@ -1272,6 +1305,8 @@ async function loadActivities() {
 function initActivitiesControls() {
     const searchInput = document.getElementById('activitiesSearchInput');
     const actionFilter = document.getElementById('activitiesActionFilter');
+    const dateFromInput = document.getElementById('activitiesDateFrom');
+    const dateToInput = document.getElementById('activitiesDateTo');
     const clearButton = document.getElementById('activitiesClearSearch');
     const resetButton = document.getElementById('activitiesResetFilters');
 
@@ -1283,6 +1318,16 @@ function initActivitiesControls() {
     if (actionFilter && !actionFilter.dataset.bound) {
         actionFilter.addEventListener('change', () => applyActivitiesFilters(true));
         actionFilter.dataset.bound = 'true';
+    }
+
+    if (dateFromInput && !dateFromInput.dataset.bound) {
+        dateFromInput.addEventListener('change', () => applyActivitiesFilters(true));
+        dateFromInput.dataset.bound = 'true';
+    }
+
+    if (dateToInput && !dateToInput.dataset.bound) {
+        dateToInput.addEventListener('change', () => applyActivitiesFilters(true));
+        dateToInput.dataset.bound = 'true';
     }
 
     if (clearButton && !clearButton.dataset.bound) {
@@ -1302,6 +1347,12 @@ function initActivitiesControls() {
             }
             if (actionFilter) {
                 actionFilter.value = '';
+            }
+            if (dateFromInput) {
+                dateFromInput.value = '';
+            }
+            if (dateToInput) {
+                dateToInput.value = '';
             }
             applyActivitiesFilters(true);
         });

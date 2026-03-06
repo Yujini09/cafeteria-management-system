@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\ReservationAdditional;
 use App\Models\InventoryItem;
+use App\Models\InventoryUsageLog;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -838,7 +839,9 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             ]);
         }
 
-        DB::transaction(function () use ($reservation, $usage) {
+        $performedByUserId = Auth::id();
+
+        DB::transaction(function () use ($reservation, $usage, $performedByUserId) {
             foreach ($usage as $itemId => $row) {
                 $required = (float) ($row['required'] ?? 0);
                 if ($required <= 0) {
@@ -850,8 +853,21 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                     continue;
                 }
 
-                $inventoryItem->qty = max(0, (float) $inventoryItem->qty - $required);
+                $previousBalance = (float) ($inventoryItem->qty ?? 0);
+                $newBalance = max(0, $previousBalance - $required);
+
+                $inventoryItem->qty = $newBalance;
                 $inventoryItem->save();
+
+                InventoryUsageLog::create([
+                    'inventory_item_id' => $inventoryItem->id,
+                    'item_name' => $inventoryItem->name ?? ($row['name'] ?? 'Unknown'),
+                    'type' => InventoryUsageLog::TYPE_AUTO_DEDUCT,
+                    'quantity_change' => round($required * -1, 3),
+                    'new_balance' => round($newBalance, 3),
+                    'reservation_id' => $reservation->id,
+                    'user_id' => $performedByUserId,
+                ]);
             }
 
             $reservation->update([

@@ -156,12 +156,12 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group">
-                <label for="start_date" class="form-label">Start Date</label>
+                <label for="start_date" class="form-label">Date from</label>
                 <input type="date" id="start_date" name="start_date" value="{{ old('start_date', now()->startOfMonth()->format('Y-m-d')) }}" class="form-input @error('start_date') form-error @enderror" required>
                 @error('start_date') <p class="error-message">{{ $message }}</p> @enderror
             </div>
             <div class="form-group">
-                <label for="end_date" class="form-label">End Date</label>
+                <label for="end_date" class="form-label">Date to</label>
                 <input type="date" id="end_date" name="end_date" value="{{ old('end_date', now()->format('Y-m-d')) }}" class="form-input @error('end_date') form-error @enderror" required>
                 @error('end_date') <p class="error-message">{{ $message }}</p> @enderror
             </div>
