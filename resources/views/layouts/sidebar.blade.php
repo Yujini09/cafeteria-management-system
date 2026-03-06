@@ -82,6 +82,7 @@
             top: 0;
             left: 0;
             height: 100vh;
+            height: 100dvh;
             width: var(--sidebar-width);
             background: transparent;
             border-right: none;
@@ -91,6 +92,7 @@
             flex-direction: column;
             box-shadow: none;
             padding: 0.65rem 0.55rem;
+            overflow: hidden;
         }
 
         html.sidebar-prefers-closed .sidebar {
@@ -184,27 +186,39 @@
         }
 
         .sidebar.close .sidebar-brand {
-            justify-content: center;
-            padding: 0.55rem 0.35rem;
-        }
-        .sidebar.close .sidebar-brand img {
-            height: 30px;
+            display: none;
         }
 
         .sidebar.close .sidebar-toggle-row {
-            top: 38px;
-            right: 2px;
+            position: relative;
+            top: auto;
+            right: auto;
+            left: auto;
+            width: 100%;
+            min-height: 78px;
+            margin-bottom: 0.45rem;
+            border: 1px solid var(--sidebar-border);
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
+            pointer-events: auto;
+        }
+
+        .sidebar.close #sidebar-toggle-btn {
+            width: 40px;
+            height: 40px;
         }
 
         /* --- NAVIGATION LIST --- */
         .sidebar-menu {
-            flex: 1;
+            flex: 1 1 auto;
+            min-height: 0;
             overflow-y: auto;
             padding: 0.45rem;
             margin-top: 0.45rem;
+            margin-bottom: 0.45rem;
             scrollbar-width: thin;
             scrollbar-color: var(--sidebar-border) transparent;
-            max-height: calc(100vh - 170px);
+            max-height: none;
             background: var(--sidebar-bg);
             border: 1px solid var(--sidebar-border);
             border-radius: 14px;
@@ -596,13 +610,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 3rem;
+            height: 3rem;
             border-radius: 50%;
             border: 2px solid #ffffff;
             background: linear-gradient(135deg, #00462E 0%, #10b981 100%);
             color: #ffffff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .notification-bell {
+            font-size: 1.375rem;
+            line-height: 1;
         }
 
         .mobile-sidebar-toggle {
@@ -781,7 +800,6 @@
         // Fetch Counts for Notifications
         $unreadMessagesCount = $sidebarUnreadMessagesCount ?? 0;
         $pendingReservationsCount = $sidebarPendingReservationsCount ?? 0;
-        $pendingPaymentsCount = $sidebarPendingPaymentsCount ?? 0;
     @endphp
 
     <aside class="sidebar" :class="!openSidebar ? 'close' : ''">
@@ -833,11 +851,13 @@
                        class="menu-link {{ request()->routeIs('admin.inventory.index') ? 'active' : '' }}">
                         <span class="menu-icon"><i class="fas fa-boxes-stacked"></i></span>
                         <span class="link-text">Inventory</span>
-                        @if(($sidebarInventoryWarningCount ?? 0) > 0)
-                        <span class="inventory-warning-badge" aria-label="{{ $sidebarInventoryWarningCount }} inventory warnings">
+                        <span
+                            id="sidebarInventoryWarningBadge"
+                            class="inventory-warning-badge {{ ($sidebarInventoryWarningCount ?? 0) > 0 ? '' : 'hidden' }}"
+                            aria-label="{{ $sidebarInventoryWarningCount ?? 0 }} inventory warnings"
+                        >
                             {{ $sidebarInventoryWarningCount > 99 ? '99+' : $sidebarInventoryWarningCount }}
                         </span>
-                        @endif
                     </a>
                 </li>
                 <li class="menu-list-item" x-show="openSidebar" x-cloak>
@@ -1004,6 +1024,58 @@
     @endif
     @if(session('warning'))
     <script>document.addEventListener('livewire:navigated', function() { window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: 'warning', message: @json(session('warning')) } })); });</script>
+    @endif
+
+    @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'superadmin'], true))
+        <x-admin.ui.modal name="inventory-alerts" variant="warning" maxWidth="lg">
+            <div>
+                <div class="flex items-start justify-between gap-4 border-b border-admin-neutral-100 pb-4">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-admin bg-admin-warning-light text-admin-warning">
+                            <x-admin.ui.icon name="fa-box-open" size="sm" />
+                        </span>
+                        <div class="min-w-0">
+                            <h2 class="text-lg font-semibold text-admin-neutral-900">Inventory Alerts</h2>
+                            <p class="mt-1 text-sm text-admin-neutral-600">The following inventory items need attention.</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-admin text-admin-neutral-500 transition-colors duration-admin hover:bg-admin-neutral-100 hover:text-admin-neutral-700"
+                        onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'inventory-alerts' }))"
+                        aria-label="Close inventory alerts"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div
+                    id="adminInventoryAlertsList"
+                    class="mt-4 max-h-80 space-y-3 overflow-y-auto"
+                    aria-live="polite"
+                    aria-busy="false"
+                >
+                    <p id="adminInventoryAlertsEmptyState" class="text-sm text-admin-neutral-600">No active inventory alerts.</p>
+                </div>
+            </div>
+
+            <x-slot name="footer">
+                <x-admin.ui.button.secondary
+                    type="button"
+                    onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'inventory-alerts' }))"
+                >
+                    Dismiss
+                </x-admin.ui.button.secondary>
+                <x-admin.ui.button.primary
+                    type="button"
+                    onclick="window.location.href='{{ route('admin.inventory.index') }}'"
+                >
+                    Proceed to Inventory
+                </x-admin.ui.button.primary>
+            </x-slot>
+        </x-admin.ui.modal>
     @endif
 
     <div x-show="confirmLogout"
@@ -1378,6 +1450,258 @@
         }
     });
     </script>
+
+    @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'superadmin'], true))
+        <script>
+            (function () {
+                if (window.__adminInventoryAlertsInitialized) {
+                    return;
+                }
+
+                window.__adminInventoryAlertsInitialized = true;
+
+                const alertsUrl = @json(route('admin.inventory.alerts'));
+                const modalName = 'inventory-alerts';
+                const pollIntervalMs = 20000;
+                const storageKey = @json('inventory_alert_signature_' . auth()->id());
+                const listElementId = 'adminInventoryAlertsList';
+                const emptyStateId = 'adminInventoryAlertsEmptyState';
+                const badgeId = 'sidebarInventoryWarningBadge';
+                let pollingTimer = null;
+                let requestInFlight = false;
+                let fallbackSignature = '';
+
+                function escapeHtml(value) {
+                    return String(value ?? '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                function getStoredSignature() {
+                    try {
+                        return window.sessionStorage.getItem(storageKey) || '';
+                    } catch (error) {
+                        return fallbackSignature;
+                    }
+                }
+
+                function setStoredSignature(signature) {
+                    try {
+                        if (signature) {
+                            window.sessionStorage.setItem(storageKey, signature);
+                        } else {
+                            window.sessionStorage.removeItem(storageKey);
+                        }
+                    } catch (error) {
+                        fallbackSignature = signature;
+                    }
+                }
+
+                function getAlertSignature(alerts) {
+                    return alerts
+                        .map((alert) => `${alert.id}:${alert.status}`)
+                        .sort()
+                        .join('|');
+                }
+
+                function getStatusMeta(status) {
+                    if (status === 'out_of_stock') {
+                        return {
+                            label: 'Out of stock',
+                            classes: 'bg-admin-danger-light text-admin-danger',
+                        };
+                    }
+
+                    if (status === 'low_stock') {
+                        return {
+                            label: 'Low stock',
+                            classes: 'bg-admin-warning-light text-admin-warning',
+                        };
+                    }
+
+                    return {
+                        label: 'Expiring soon',
+                        classes: 'bg-blue-100 text-blue-700',
+                    };
+                }
+
+                function getDetailText(alert) {
+                    if (alert.status === 'out_of_stock') {
+                        return 'Stock: 0';
+                    }
+
+                    if (alert.status === 'low_stock') {
+                        return `Stock: ${alert.current_stock} (min ${alert.min_stock})`;
+                    }
+
+                    return `Exp: ${alert.expiry_date || 'N/A'}`;
+                }
+
+                function updateSidebarInventoryBadge(count) {
+                    const badge = document.getElementById(badgeId);
+
+                    if (!badge) {
+                        return;
+                    }
+
+                    const normalizedCount = Number.isFinite(count) ? Math.max(0, count) : 0;
+
+                    badge.textContent = normalizedCount > 99 ? '99+' : String(normalizedCount);
+                    badge.setAttribute('aria-label', `${normalizedCount} inventory warnings`);
+                    badge.classList.toggle('hidden', normalizedCount === 0);
+                }
+
+                function renderInventoryAlerts(alerts) {
+                    const list = document.getElementById(listElementId);
+
+                    if (!list) {
+                        return;
+                    }
+
+                    list.setAttribute('aria-busy', 'true');
+
+                    if (!Array.isArray(alerts) || alerts.length === 0) {
+                        list.innerHTML = `<p id="${emptyStateId}" class="text-sm text-admin-neutral-600">No active inventory alerts.</p>`;
+                        list.setAttribute('aria-busy', 'false');
+                        return;
+                    }
+
+                    list.innerHTML = alerts.map((alert) => {
+                        const meta = getStatusMeta(alert.status);
+
+                        return `
+                            <div class="rounded-admin-lg border border-admin-neutral-200 bg-admin-neutral-50 px-4 py-3">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-admin-neutral-900">${escapeHtml(alert.name)}</p>
+                                        <p class="mt-1 text-xs text-admin-neutral-600">${escapeHtml(getDetailText(alert))}</p>
+                                    </div>
+                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.classes}">
+                                        ${escapeHtml(meta.label)}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    list.setAttribute('aria-busy', 'false');
+                }
+
+                function closeInventoryAlertsModal() {
+                    window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: modalName }));
+                }
+
+                function openInventoryAlertsModal() {
+                    window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: modalName }));
+                }
+
+                function processInventoryAlerts(alerts, openOnChange) {
+                    const normalizedAlerts = Array.isArray(alerts) ? alerts : [];
+                    const signature = getAlertSignature(normalizedAlerts);
+                    const previousSignature = getStoredSignature();
+
+                    renderInventoryAlerts(normalizedAlerts);
+                    updateSidebarInventoryBadge(normalizedAlerts.length);
+
+                    if (!signature) {
+                        setStoredSignature('');
+                        closeInventoryAlertsModal();
+                        return;
+                    }
+
+                    if (openOnChange && signature !== previousSignature) {
+                        setStoredSignature(signature);
+                        openInventoryAlertsModal();
+                        return;
+                    }
+
+                    if (!previousSignature) {
+                        setStoredSignature(signature);
+                    }
+                }
+
+                function fetchInventoryAlerts(openOnChange = true) {
+                    if (requestInFlight) {
+                        return;
+                    }
+
+                    requestInFlight = true;
+
+                    fetch(alertsUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                    })
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error(`Inventory alerts request failed with status ${response.status}`);
+                            }
+
+                            return response.json();
+                        })
+                        .then((data) => {
+                            processInventoryAlerts(data && Array.isArray(data.alerts) ? data.alerts : [], openOnChange);
+                        })
+                        .catch((error) => {
+                            console.error('Error loading inventory alerts:', error);
+                        })
+                        .finally(() => {
+                            requestInFlight = false;
+                        });
+                }
+
+                function startInventoryAlertPolling() {
+                    if (pollingTimer !== null) {
+                        window.clearInterval(pollingTimer);
+                    }
+
+                    pollingTimer = window.setInterval(() => {
+                        fetchInventoryAlerts(true);
+                    }, pollIntervalMs);
+                }
+
+                window.refreshAdminInventoryAlerts = function (openOnChange = true) {
+                    fetchInventoryAlerts(Boolean(openOnChange));
+                };
+
+                window.addEventListener('refresh-admin-inventory-alerts', () => {
+                    fetchInventoryAlerts(true);
+                });
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        fetchInventoryAlerts(true);
+                    }
+                });
+
+                window.addEventListener('focus', () => {
+                    fetchInventoryAlerts(true);
+                });
+
+                document.addEventListener('livewire:navigated', () => {
+                    fetchInventoryAlerts(true);
+                });
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        fetchInventoryAlerts(true);
+                        startInventoryAlertPolling();
+                    }, { once: true });
+
+                    return;
+                }
+
+                fetchInventoryAlerts(true);
+                startInventoryAlertPolling();
+            })();
+        </script>
+    @endif
 
     @auth
     <script>

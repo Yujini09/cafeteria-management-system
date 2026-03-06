@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditTrail;
 use App\Models\User;
+use App\Support\AuditDictionary;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 
@@ -31,6 +34,13 @@ class ManualVerifyEmailController extends Controller
         }
 
         $user->markEmailAsVerified();
+        AuditTrail::record(
+            $user->id,
+            AuditDictionary::VERIFIED_EMAIL,
+            AuditDictionary::MODULE_AUTH,
+            'verified email address'
+        );
+        event(new Verified($user));
 
         // Clear the session
         session()->forget('verification_user_id');
@@ -62,6 +72,13 @@ class ManualVerifyEmailController extends Controller
         }
 
         $user->markEmailAsVerified();
+        AuditTrail::record(
+            $user->id,
+            AuditDictionary::VERIFIED_EMAIL,
+            AuditDictionary::MODULE_AUTH,
+            'verified email address'
+        );
+        event(new Verified($user));
 
         return redirect()->route('login')->with('status', 'Email verified successfully. You can now log in.');
     }

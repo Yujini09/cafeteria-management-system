@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Inbox')
+@section('page-title', 'Messages')
 
 @section('content')
 <div x-data="inboxSystem()" x-init="init()" x-effect="document.body.classList.toggle('overflow-hidden', viewOpen || replyOpen || deleteOpen)" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto">
@@ -11,24 +11,24 @@
                 <x-admin.ui.icon name="fa-inbox" style="fas" class="text-white w-6 h-6" />
             </div>
             <div class="header-text">
-                <h1 class="header-title">Customer Inbox</h1>
+                <h1 class="header-title">Messages</h1>
                 <p class="header-subtitle">Manage inquiries from the contact form.</p>
             </div>
         </div>
+    </div>
 
-        {{-- Dynamic Stats Container --}}
-        <div id="inbox-stats" class="header-actions w-full md:w-auto flex flex-wrap items-center justify-end gap-3">
-            @if($unreadCount > 0)
-                <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-700">
-                    <x-admin.ui.icon name="fa-envelope-open" size="xs" />
-                    Unread: {{ $unreadCount }}
-                </span>
-            @endif
-            <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
-                <x-admin.ui.icon name="fa-envelope" size="xs" />
-                Total Messages: {{ $messages->total() }}
+    {{-- Dynamic Stats Container --}}
+    <div id="inbox-stats" class="mb-4 flex flex-wrap items-center gap-3">
+        @if($unreadCount > 0)
+            <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-700">
+                <x-admin.ui.icon name="fa-envelope-open" size="xs" />
+                Unread: {{ $unreadCount }}
             </span>
-        </div>
+        @endif
+        <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+            <x-admin.ui.icon name="fa-envelope" size="xs" />
+            Total Messages: {{ $messages->total() }}
+        </span>
     </div>
 
     {{-- Filter & Sort Bar --}}

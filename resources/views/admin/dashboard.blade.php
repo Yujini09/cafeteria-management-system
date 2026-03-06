@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Admin')
+@section('page-title', 'Dashboard')
 
 @section('content')
 <style>
@@ -226,6 +226,7 @@
         $message = "Great work today! Here's your end-of-day summary.";
         $icon = "🌙";
     }
+
 @endphp
 
 <div class="w-full overflow-hidden space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">

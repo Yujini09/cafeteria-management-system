@@ -427,10 +427,6 @@
                                 <span class="text-gray-600">Tax (0%):</span>
                                 <span class="text-right font-semibold">₱0.00</span>
                             </div>
-                            <div class="total-row">
-                                <span class="text-gray-600">Service Fee:</span>
-                                <span class="text-right font-semibold">₱0.00</span>
-                            </div>
                             <div class="total-row border-t border-gray-300 pt-3 mt-2">
                                 <span class="text-gray-900 font-bold text-lg">TOTAL:</span>
                                 <span class="text-right total-amount">₱{{ number_format($totalAmount, 2) }}</span>

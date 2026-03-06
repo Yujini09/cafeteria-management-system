@@ -2,50 +2,117 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AdminReservationsExport;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\ReservationAdditional;
 use App\Models\InventoryItem;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use App\Notifications\ReservationStatusChanged;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AuditTrail;
 use App\Support\AuditDictionary;
+use App\Support\RecipeUnit;
 use App\Services\NotificationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Notifications\ReservationAdditionalAdded;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReservationController extends Controller
 {
-    public function index(Request $request)
+    protected const RESERVATION_CREATE_COOLDOWN_MINUTES = 10;
+    protected const RESERVATION_DAILY_CAP = 5;
+
+    public function showReservationForm()
     {
-        $status = $request->query('status');
-        $createdSort = $request->query('created_sort', 'desc');
-        if (!in_array($createdSort, ['asc', 'desc'], true)) {
-            $createdSort = 'desc';
+        $reservationCreationLimit = null;
+
+        if (Auth::check() && !session()->has('editing_reservation_id')) {
+            $reservationCreationLimit = $this->getReservationCreationLimitState(Auth::id());
         }
 
-        $q = Reservation::with(['user']);
-        if (in_array($status, ['pending','approved','declined', 'cancelled'], true)) {
-            $q->where('status', $status);
-        }
-        $reservations = $q->orderBy('created_at', $createdSort)->paginate(10)->withQueryString();
-        $counts = Reservation::selectRaw('status, COUNT(*) total')->groupBy('status')->pluck('total','status');
-        return view('admin.reservations.index', compact('reservations','status','counts','createdSort'));
+        return view('customer.reservation_form', compact('reservationCreationLimit'));
     }
 
-    public function updateServiceFee(Request $request, Reservation $reservation)
-{
-    $request->validate([
-        'service_fee' => 'required|numeric|min:0'
-    ]);
+    public function index(Request $request)
+    {
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+        $q = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo);
 
-    $reservation->service_fee = $request->service_fee;
-    $reservation->save();
+        $reservations = $q->orderBy('created_at', $createdSort)->paginate(10)->withQueryString();
+        $departmentOptions = $this->getAdminDepartmentOptions();
 
-    return redirect()->back()->with('success', 'Service fee updated successfully.');
-}
+        return view('admin.reservations.index', compact(
+            'reservations',
+            'status',
+            'payment',
+            'department',
+            'createdSort',
+            'departmentOptions',
+            'createdFrom',
+            'createdTo'
+        ));
+    }
+
+    public function exportIndexPdf(Request $request)
+    {
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+
+        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo)
+            ->orderBy('created_at', $createdSort)
+            ->get();
+
+        $exportedBy = Auth::user()?->name ?? 'Unknown';
+        $exportedAt = now();
+        $filename = 'reservations_' . $exportedAt->format('Y-m-d_His') . '.pdf';
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_RESERVATION_PDF,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "exported reservations list as PDF by {$exportedBy}"
+        );
+
+        $pdf = Pdf::loadView('admin.reservations.list-pdf', [
+            'reservations' => $reservations,
+            'status' => $status,
+            'payment' => $payment,
+            'department' => $department,
+            'createdSort' => $createdSort,
+            'createdFrom' => $createdFrom,
+            'createdTo' => $createdTo,
+            'exportedBy' => $exportedBy,
+            'exportedAt' => $exportedAt,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download($filename);
+    }
+
+    public function exportIndexExcel(Request $request)
+    {
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+
+        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo)
+            ->orderBy('created_at', $createdSort)
+            ->get();
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_REPORT_EXCEL,
+            AuditDictionary::MODULE_RESERVATIONS,
+            'exported reservations list as Excel'
+        );
+
+        return Excel::download(
+            new AdminReservationsExport($reservations),
+            'reservations_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
 
 // Add this method to handle the OR Number submission
 public function markPaid(\Illuminate\Http\Request $request, $id)
@@ -71,11 +138,101 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             'user',
             'items.menu.items', // menu items
             'items.menu.items.recipes.inventoryItem', // for inventory checks
-            'payments',
             'additionals'
         ]);
         
         return view('admin.reservations.show', ['r' => $reservation]);
+    }
+
+    public function exportPdf(Reservation $reservation)
+    {
+        $reservation->loadMissing([
+            'user',
+            'items.menu.items',
+            'additionals',
+        ]);
+
+        $menuGroups = [];
+        $menuSubtotal = 0.0;
+
+        foreach ($reservation->items->sortBy(function ($item) {
+            $dayNumber = max(1, (int) ($item->day_number ?? 1));
+            $mealTime = (string) ($item->meal_time ?? '');
+
+            return sprintf('%05d-%s-%05d', $dayNumber, $mealTime, (int) $item->id);
+        }) as $item) {
+            if (!$item->menu) {
+                continue;
+            }
+
+            $dayNumber = max(1, (int) ($item->day_number ?? 1));
+            $price = $this->resolveReservationItemPrice($item);
+            $quantity = (int) ($item->quantity ?? 0);
+            $lineTotal = $quantity * $price;
+            $menuSubtotal += $lineTotal;
+
+            if (!isset($menuGroups[$dayNumber])) {
+                $dayDate = $reservation->event_date
+                    ? $reservation->event_date->copy()->addDays($dayNumber - 1)
+                    : null;
+
+                $menuGroups[$dayNumber] = [
+                    'day_number' => $dayNumber,
+                    'date' => $dayDate,
+                    'items' => [],
+                ];
+            }
+
+            $menuGroups[$dayNumber]['items'][] = [
+                'menu_name' => $item->menu->name ?? 'N/A',
+                'components' => $item->menu->items
+                    ? $item->menu->items->pluck('name')->filter()->values()->all()
+                    : [],
+                'meal_time' => ucwords(str_replace('_', ' ', (string) ($item->meal_time ?? ''))),
+                'quantity' => $quantity,
+                'price' => $price,
+                'total' => $lineTotal,
+            ];
+        }
+
+        ksort($menuGroups);
+
+        $additionals = $reservation->additionals
+            ? $reservation->additionals->map(function ($additional) {
+                return [
+                    'name' => $additional->name ?: 'Additional Charge',
+                    'price' => (float) ($additional->price ?? 0),
+                ];
+            })->values()->all()
+            : [];
+
+        $additionalsTotal = (float) ($reservation->additionals?->sum('price') ?? 0);
+        $grandTotal = $menuSubtotal + $additionalsTotal;
+        $paymentLabel = $this->formatReservationPaymentLabel($reservation);
+
+        $exportedBy = Auth::user()?->name ?? 'Unknown';
+        $filename = 'reservation_' . $reservation->id . '.pdf';
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::EXPORTED_RESERVATION_PDF,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "exported reservation #{$reservation->id} as PDF by {$exportedBy}"
+        );
+
+        $pdf = Pdf::loadView('admin.reservations.pdf', [
+            'reservation' => $reservation,
+            'menuGroups' => $menuGroups,
+            'menuSubtotal' => $menuSubtotal,
+            'additionals' => $additionals,
+            'additionalsTotal' => $additionalsTotal,
+            'grandTotal' => $grandTotal,
+            'paymentLabel' => $paymentLabel,
+            'exportedBy' => $exportedBy,
+            'exportedAt' => now(),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download($filename);
     }
 
     // --- NEW: EDIT METHOD (Fixes your error) ---
@@ -120,7 +277,12 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         $reservationData = session('reservation_data');
 
         // Security check: If no session data exists, send them back to Step 1
-        if (!$reservationData) {
+        if (
+            !$reservationData ||
+            empty($reservationData['start_date']) ||
+            empty($reservationData['end_date']) ||
+            empty($reservationData['day_times'])
+        ) {
             return redirect()->route('reservation_form')
                 ->with('error', 'Please fill out the reservation details first.');
         }
@@ -148,8 +310,16 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
     public function postDetails(Request $request)
     {
+        if (Auth::check() && !session()->has('editing_reservation_id')) {
+            $reservationCreationLimit = $this->getReservationCreationLimitState(Auth::id());
+
+            if ($reservationCreationLimit['blocked']) {
+                return redirect()->route('reservation_form')->withInput();
+            }
+        }
+
         $validated = $request->validate([
-            'start_date' => 'required|date|after_or_equal:today',
+            'start_date' => 'required|date|after:today',
             'end_date'   => 'required|date|after_or_equal:start_date',
             'day_times'  => 'required|json', 
             'name'       => 'required|string',
@@ -165,6 +335,37 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
         // Check for overlaps (excluding current reservation if editing)
         $dayTimes = json_decode($validated['day_times'], true) ?? [];
+        $invalidDayTimes = fn () => redirect()->back()
+            ->withInput()
+            ->withErrors(['day_times' => 'Please set a valid start and end time for every selected day.']);
+
+        if (!is_array($dayTimes)) {
+            return $invalidDayTimes();
+        }
+
+        $currentDate = Carbon::parse($validated['start_date']);
+        $endDate = Carbon::parse($validated['end_date']);
+
+        while ($currentDate->lte($endDate)) {
+            $dateKey = $currentDate->format('Y-m-d');
+            $timeData = $dayTimes[$dateKey] ?? null;
+
+            if (!is_array($timeData)) {
+                return $invalidDayTimes();
+            }
+
+            $startTime = $timeData['start_time'] ?? $timeData['start'] ?? null;
+            $endTime = $timeData['end_time'] ?? $timeData['end'] ?? null;
+            $startMinutes = $this->parseTimeToMinutes($startTime);
+            $endMinutes = $this->parseTimeToMinutes($endTime);
+
+            if ($startMinutes === null || $endMinutes === null || $startMinutes >= $endMinutes) {
+                return $invalidDayTimes();
+            }
+
+            $currentDate->addDay();
+        }
+
         $tempReservation = new Reservation();
         $tempReservation->event_date = $validated['start_date'];
         $tempReservation->end_date = $validated['end_date'];
@@ -193,6 +394,12 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         $editingReservationId = session('editing_reservation_id');
         $isEditing = !empty($editingReservationId);
         $savedReservationId = null;
+        $userId = Auth::id();
+
+        if (empty($reservationData['start_date']) || empty($reservationData['end_date']) || empty($reservationData['day_times'])) {
+            return redirect()->route('reservation_form')
+                ->with('error', 'Please fill out the reservation details first.');
+        }
         
         // Validate items
         $validated = $request->validate([
@@ -202,6 +409,29 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             'reservations.*.*.menu' => 'required|integer|exists:menus,id',
             'reservations.*.*.qty' => 'required|integer|min:0',
         ]);
+
+        $expectedDayCount = Carbon::parse($reservationData['start_date'])
+            ->diffInDays(Carbon::parse($reservationData['end_date'])) + 1;
+
+        for ($day = 1; $day <= $expectedDayCount; $day++) {
+            $dayMeals = $validated['reservations'][$day] ?? $validated['reservations'][(string) $day] ?? null;
+
+            if (!is_array($dayMeals)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'reservations' => 'Please select at least one menu for each selected date before confirming your reservation.',
+                ]);
+            }
+
+            $hasSelectionForDay = collect($dayMeals)->contains(function ($mealData) {
+                return (int) ($mealData['qty'] ?? 0) > 0;
+            });
+
+            if (!$hasSelectionForDay) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'reservations' => 'Please select at least one menu for each selected date before confirming your reservation.',
+                ]);
+            }
+        }
 
         // Compute party size as the highest pax value across all selected day/meal slots.
         $maxPersons = 0;
@@ -224,7 +454,11 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             if (isset($firstDay['start_time'])) $eventTime = $firstDay['start_time'];
         }
 
-        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $maxPersons, $validated, $isEditing, $editingReservationId, &$savedReservationId) {
+        DB::transaction(function () use ($reservationData, $eventTime, $dayTimes, $maxPersons, $validated, $isEditing, $editingReservationId, $userId, &$savedReservationId) {
+            if (!$isEditing && $userId) {
+                $this->enforceReservationCreationLimits($userId);
+            }
+
             
             // CHECK IF EDITING OR CREATING
             if ($isEditing) {
@@ -261,8 +495,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                 $reservation = Reservation::create([
                     'user_id' => Auth::id(),
                     'event_name' => $reservationData['activity'] ?? 'Catering Reservation',
-                    'event_date' => $reservationData['start_date'] ?? now()->format('Y-m-d'),
-                    'end_date' => $reservationData['end_date'] ?? null,
+                    'event_date' => $reservationData['start_date'],
+                    'end_date' => $reservationData['end_date'],
                     'event_time' => $eventTime,
                     'day_times' => $dayTimes,
                     'number_of_persons' => $maxPersons,
@@ -324,6 +558,84 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         return redirect()->route('reservation_details')->with('success', $message);
     }
 
+    protected function enforceReservationCreationLimits(int $userId): void
+    {
+        $this->lockReservationCreationForUser($userId);
+
+        $reservationCreationLimit = $this->getReservationCreationLimitState($userId);
+
+        if ($reservationCreationLimit['blocked']) {
+            throw ValidationException::withMessages([
+                'reservations' => $reservationCreationLimit['message'],
+            ]);
+        }
+    }
+
+    protected function lockReservationCreationForUser(int $userId): void
+    {
+        DB::table('users')
+            ->where('id', $userId)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    protected function getReservationCreationLimitState(int $userId): array
+    {
+        $timezone = config('app.timezone', 'Asia/Manila');
+        $now = Carbon::now($timezone);
+
+        $latestReservation = Reservation::query()
+            ->where('user_id', $userId)
+            ->latest('created_at')
+            ->first(['created_at']);
+
+        if ($latestReservation?->created_at) {
+            $nextAllowedAt = $latestReservation->created_at
+                ->copy()
+                ->timezone($timezone)
+                ->addMinutes(self::RESERVATION_CREATE_COOLDOWN_MINUTES);
+
+            $remainingSeconds = $now->diffInSeconds($nextAllowedAt, false);
+
+            if ($remainingSeconds > 0) {
+                $remainingMinutes = max(1, (int) ceil($remainingSeconds / 60));
+                $minuteLabel = $remainingMinutes === 1 ? 'minute' : 'minutes';
+
+                return [
+                    'blocked' => true,
+                    'type' => 'cooldown',
+                    'message' => "Please wait {$remainingMinutes} {$minuteLabel} before creating another reservation.",
+                    'note' => 'If you placed an incorrect reservation, please cancel the previous one.',
+                ];
+            }
+        }
+
+        $activeReservationsToday = Reservation::query()
+            ->where('user_id', $userId)
+            ->whereBetween('created_at', [
+                $now->copy()->startOfDay(),
+                $now->copy()->endOfDay(),
+            ])
+            ->whereNotIn('status', ['cancelled', 'canceled'])
+            ->count();
+
+        if ($activeReservationsToday >= self::RESERVATION_DAILY_CAP) {
+            return [
+                'blocked' => true,
+                'type' => 'daily_cap',
+                'message' => "You've reached the maximum of ".self::RESERVATION_DAILY_CAP.' reservations for today.',
+                'note' => 'If you placed an incorrect reservation, please cancel the previous one.',
+            ];
+        }
+
+        return [
+            'blocked' => false,
+            'type' => null,
+            'message' => null,
+            'note' => null,
+        ];
+    }
+
     protected function formatTimeForStorage($timeString)
     {
         if (empty($timeString)) return $timeString;
@@ -372,7 +684,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
     {
         $startDate = $reservation->event_date
             ? Carbon::parse($reservation->event_date)
-            : Carbon::parse($reservation->date ?? $reservation->created_at);
+            : Carbon::parse($reservation->created_at);
 
         $endDate = $reservation->end_date
             ? Carbon::parse($reservation->end_date)
@@ -395,7 +707,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             $dayTimes = is_array($decoded) ? $decoded : [];
         }
 
-        $fallbackRange = $reservation->event_time ?? $reservation->time ?? null;
+        $fallbackRange = $reservation->event_time;
         $slots = [];
 
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
@@ -502,9 +814,12 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             return redirect()->back()->with('error', 'Only pending reservations can be approved.');
         }
 
+        $forceApprove = $request->boolean('force_approve');
+        $forceOverlapApprove = $request->boolean('force_overlap_approve');
+
         $overlap = $this->findOverlappingApprovedReservation($reservation);
-        if ($overlap) {
-            return redirect()->back()->with([
+        if ($overlap && !$forceOverlapApprove) {
+            return redirect()->back()->withInput()->with([
                 'overlap_warning' => true,
                 'overlap_reservation_id' => $overlap['reservation']->id ?? null,
                 'overlap_reservation_date' => $overlap['date'] ?? null,
@@ -516,9 +831,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             return ($item['shortage'] ?? 0) > 0;
         }));
 
-        $forceApprove = $request->boolean('force_approve');
         if (!$forceApprove && count($insufficient) > 0) {
-            return redirect()->back()->with([
+            return redirect()->back()->withInput()->with([
                 'inventory_warning' => true,
                 'insufficient_items' => $insufficient,
             ]);
@@ -620,6 +934,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             return redirect()->back()->with('error', 'Additionals can only be added to approved reservations.');
         }
 
+        if (($reservation->payment_status ?? 'pending') === 'paid') {
+            return redirect()->back()->with('error', 'Additionals are locked once a reservation is marked as paid.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:140',
             'price' => 'required|numeric|min:0|max:999999.99',
@@ -638,6 +956,35 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             "added additional charge #{$additional->id} to reservation #{$reservation->id}"
         );
 
+        $reservation->loadMissing(['user']);
+        $updatedGrandTotal = $this->calculateReservationGrandTotal($reservation);
+
+        $user = $reservation->user;
+        if ($user) {
+            NotificationFacade::send($user, new ReservationAdditionalAdded($reservation, $additional, $updatedGrandTotal));
+            (new NotificationService())->createUserNotification(
+                $reservation->user_id,
+                'reservation_additional_added',
+                'reservations',
+                sprintf(
+                    'An additional charge of PHP %s was added to reservation #%d. Updated total: PHP %s.',
+                    number_format((float) $additional->price, 2),
+                    $reservation->id,
+                    number_format($updatedGrandTotal, 2)
+                ),
+                [
+                    'reservation_id' => $reservation->id,
+                    'additional_id' => $additional->id,
+                    'additional_name' => $additional->name,
+                    'additional_amount' => (float) $additional->price,
+                    'updated_total' => $updatedGrandTotal,
+                    'url' => route('reservation.view', $reservation->id),
+                    'link_label' => 'View Details',
+                ],
+                'Reservation Total Updated'
+            );
+        }
+
         return redirect()->back()->with('success', 'Additional item added.');
     }
 
@@ -649,6 +996,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
         if ($reservation->status !== 'approved') {
             return redirect()->back()->with('error', 'Additionals can only be updated for approved reservations.');
+        }
+
+        if (($reservation->payment_status ?? 'pending') === 'paid') {
+            return redirect()->back()->with('error', 'Additionals are locked once a reservation is marked as paid.');
         }
 
         // Price is immutable after creation.
@@ -682,6 +1033,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
         if ($reservation->status !== 'approved') {
             return redirect()->back()->with('error', 'Additionals can only be removed from approved reservations.');
+        }
+
+        if (($reservation->payment_status ?? 'pending') === 'paid') {
+            return redirect()->back()->with('error', 'Additionals are locked once a reservation is marked as paid.');
         }
 
         $additionalId = $additional->id;
@@ -720,7 +1075,13 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                         continue;
                     }
 
-                    $required = (float) ($recipe->quantity_needed ?? 0) * $reservationQty;
+                    $totalNeededRecipe = (float) ($recipe->quantity_needed ?? 0) * $reservationQty;
+                    $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? RecipeUnit::normalize($inventoryItem->unit);
+                    $required = RecipeUnit::convertToStockUnit($totalNeededRecipe, $recipeUnit, $inventoryItem->unit);
+                    if ($required === null) {
+                        continue;
+                    }
+
                     if ($required <= 0) {
                         continue;
                     }
@@ -730,7 +1091,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                         $usage[$id] = [
                             'id' => $id,
                             'name' => $inventoryItem->name ?? 'Unknown',
-                            'unit' => $recipe->unit ?? $inventoryItem->unit ?? '',
+                            'unit' => RecipeUnit::display($inventoryItem->unit) ?: ($inventoryItem->unit ?? ''),
                             'required' => 0.0,
                             'available' => (float) ($inventoryItem->qty ?? 0),
                             'shortage' => 0.0,
@@ -748,6 +1109,28 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         unset($row);
 
         return $usage;
+    }
+
+    protected function calculateReservationGrandTotal(Reservation $reservation): float
+    {
+        $menuTotal = (float) ($reservation->total_amount ?? 0);
+
+        if ($menuTotal <= 0) {
+            $reservation->loadMissing(['items.menu']);
+            $menuTotal = 0.0;
+
+            foreach ($reservation->items as $item) {
+                if (!$item->menu) {
+                    continue;
+                }
+
+                $menuTotal += ((int) ($item->quantity ?? 0)) * $this->resolveReservationItemPrice($item);
+            }
+        }
+
+        $additionalsTotal = (float) $reservation->additionals()->sum('price');
+
+        return $menuTotal + $additionalsTotal;
     }
 
     public function cancel(Request $request, Reservation $reservation)
@@ -774,12 +1157,143 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         return redirect()->back()->with('success', 'Reservation cancelled successfully.');
     }
 
+    protected function resolveReservationItemPrice(ReservationItem $item): float
+    {
+        $price = (float) ($item->price ?? $item->menu->price ?? 150);
+
+        if ($price <= 0) {
+            $price = $item->menu && $item->menu->type === 'special' ? 200.0 : 150.0;
+        }
+
+        return $price;
+    }
+
+    protected function formatReservationPaymentLabel(Reservation $reservation): string
+    {
+        if (in_array($reservation->status, ['declined', 'cancelled'], true)) {
+            return 'N/A';
+        }
+
+        return ($reservation->payment_status ?? 'unpaid') === 'paid' ? 'Paid' : 'Unpaid';
+    }
+
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
         (new NotificationService())->createAdminNotification($action, $module, $description, $metadata);
     }
-public function uploadReceipt(Request $request, Reservation $reservation)
-{
-    return redirect()->back()->with('error', 'Receipt uploads are disabled. Please submit your payment reference number instead.');
-}
+
+    protected function resolveAdminIndexFilters(Request $request): array
+    {
+        $status = $request->input('status');
+        if ($status === '') {
+            $status = null;
+        }
+
+        $payment = $request->input('payment');
+        if ($payment === '') {
+            $payment = null;
+        }
+
+        $department = $request->input('department');
+        if ($department === '') {
+            $department = null;
+        }
+
+        $createdSort = $request->input('created_sort', 'desc');
+        if (!in_array($createdSort, ['asc', 'desc'], true)) {
+            $createdSort = 'desc';
+        }
+
+        $createdFrom = $this->normalizeAdminIndexDateFilter($request->input('created_from'));
+        $createdTo = $this->normalizeAdminIndexDateFilter($request->input('created_to'));
+
+        if ($createdFrom !== null && $createdTo !== null && $createdFrom > $createdTo) {
+            [$createdFrom, $createdTo] = [$createdTo, $createdFrom];
+        }
+
+        return [$status, $payment, $department, $createdSort, $createdFrom, $createdTo];
+    }
+
+    protected function buildAdminIndexQuery(
+        ?string $status,
+        ?string $payment,
+        ?string $department,
+        ?string $createdFrom,
+        ?string $createdTo
+    ): Builder
+    {
+        $q = Reservation::with(['user']);
+
+        if (in_array($status, ['pending', 'approved', 'declined', 'cancelled'], true)) {
+            $q->where('status', $status);
+        }
+
+        if (in_array($payment, ['paid', 'unpaid'], true)) {
+            $q->whereNotIn('status', ['declined', 'cancelled']);
+
+            if ($payment === 'paid') {
+                $q->where('payment_status', 'paid');
+            } else {
+                $q->where(function ($paymentQuery) {
+                    $paymentQuery->whereNull('payment_status')
+                        ->orWhere('payment_status', '!=', 'paid');
+                });
+            }
+        }
+
+        if (is_string($department) && $department !== '') {
+            $q->where(function ($departmentQuery) use ($department) {
+                $departmentQuery->where('department', $department)
+                    ->orWhere(function ($fallbackQuery) use ($department) {
+                        $fallbackQuery->whereNull('department')
+                            ->whereHas('user', function ($userQuery) use ($department) {
+                                $userQuery->where('department', $department);
+                            });
+                });
+            });
+        }
+
+        if ($createdFrom !== null) {
+            $q->whereDate('created_at', '>=', $createdFrom);
+        }
+
+        if ($createdTo !== null) {
+            $q->whereDate('created_at', '<=', $createdTo);
+        }
+
+        return $q;
+    }
+
+    protected function normalizeAdminIndexDateFilter(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function getAdminDepartmentOptions(): array
+    {
+        return Reservation::with(['user:id,department'])
+            ->get(['id', 'user_id', 'department'])
+            ->map(function (Reservation $reservation) {
+                return $reservation->department ?? optional($reservation->user)->department;
+            })
+            ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value) => trim($value))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
 }

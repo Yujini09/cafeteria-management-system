@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\StandardAppMail;
 use App\Models\AuditTrail;
-use Illuminate\Http\Request;
-use App\Models\ContactMessage; 
+use App\Models\ContactMessage;
 use App\Models\User;
 use App\Support\AuditDictionary;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
@@ -23,10 +24,8 @@ class ContactController extends Controller
             'message' => 'required|string|min:20',
         ]);
 
-        // Save to Database
         $contactMessage = ContactMessage::create($validated);
 
-        // Contact form can be submitted by guests; only log when user is authenticated.
         AuditTrail::record(
             Auth::id(),
             AuditDictionary::SUBMITTED_MESSAGE,
@@ -34,7 +33,6 @@ class ContactController extends Controller
             "submitted message #{$contactMessage->id}"
         );
 
-        // Send Email to all admins/superadmins (if mail is configured)
         $recipients = User::whereIn('role', ['admin', 'superadmin'])
             ->pluck('email')
             ->filter()
@@ -47,7 +45,7 @@ class ContactController extends Controller
             if ($expectsJson) {
                 return response()->json([
                     'success' => false,
-                    'message' => $errorMessage
+                    'message' => $errorMessage,
                 ], 500);
             }
 
@@ -57,28 +55,34 @@ class ContactController extends Controller
         $primaryRecipient = $recipients->first();
         $bccRecipients = $recipients->slice(1)->values();
 
-        $mailData = [
-            'app_name' => config('app.name', 'Smart Cafeteria'),
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'user_message' => $validated['message'],
-            'sent_at' => now()->format('M d, Y h:i A'),
-        ];
-
         $emailSent = false;
-        try {
-            Mail::send(
-                ['html' => 'emails.contact_message', 'text' => 'emails.contact_message_plain'],
-                $mailData,
-                function ($message) use ($validated, $primaryRecipient, $bccRecipients) {
-                $message->to($primaryRecipient)
-                    ->subject('New Message from ' . $validated['name'])
-                    ->replyTo($validated['email'], $validated['name']);
 
-                if ($bccRecipients->isNotEmpty()) {
-                    $message->bcc($bccRecipients->all());
-                }
-            });
+        try {
+            $mail = (new StandardAppMail(
+                topic: 'New Contact Message',
+                title: 'A new contact message was submitted',
+                introLines: [
+                    'A new message was submitted through the website contact form.',
+                ],
+                details: [
+                    'Sender' => $validated['name'],
+                    'Sender Email' => $validated['email'],
+                    'Received At' => now()->format('M d, Y h:i A'),
+                ],
+                sections: [[
+                    'title' => 'Message',
+                    'content' => $validated['message'],
+                ]],
+                outroLines: [
+                    'Reply directly to this email to respond to the sender.',
+                ],
+                headerLabel: 'New Message',
+            ))->replyTo($validated['email'], $validated['name']);
+
+            Mail::to($primaryRecipient)
+                ->bcc($bccRecipients->all())
+                ->send($mail);
+
             $emailSent = true;
         } catch (\Throwable $e) {
             Log::warning('Contact message email failed to send.', [
@@ -87,13 +91,13 @@ class ContactController extends Controller
             ]);
         }
 
-        if (!$emailSent) {
+        if (! $emailSent) {
             $errorMessage = 'Your message was saved, but we could not send the notification email. Please try again later.';
 
             if ($expectsJson) {
                 return response()->json([
                     'success' => false,
-                    'message' => $errorMessage
+                    'message' => $errorMessage,
                 ], 500);
             }
 
@@ -105,7 +109,7 @@ class ContactController extends Controller
         if ($expectsJson) {
             return response()->json([
                 'success' => true,
-                'message' => $successMessage
+                'message' => $successMessage,
             ]);
         }
 

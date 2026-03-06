@@ -23,7 +23,7 @@ class CalendarController extends Controller
 
         // Show reservations that overlap the selected month (supports multi-day events)
         $monthlyApproved = $allApproved->filter(function ($res) use ($startDate, $endDate) {
-            $rawStartDate = $res->event_date ?? $res->date;
+            $rawStartDate = $res->event_date ?? $res->created_at;
             if (empty($rawStartDate)) {
                 return false;
             }

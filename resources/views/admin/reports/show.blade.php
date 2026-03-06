@@ -7,6 +7,8 @@
     $kpiCards = $kpiCards ?? [];
     $charts = $charts ?? [];
     $insights = $insights ?? [];
+    $inventoryLowStockItems = $inventoryLowStockItems ?? [];
+    $inventoryOutOfStockItems = $inventoryOutOfStockItems ?? [];
 @endphp
 
 <style>
@@ -32,6 +34,8 @@
 .chart-canvas-wrap { position: relative; height: 210px; width: 100%; display: flex; align-items: center; justify-content: center; }
 .insight-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; }
 .insight-list li { padding: 0.5rem 0.65rem; border: 1px solid var(--neutral-200); border-radius: 8px; background: var(--neutral-50); color: var(--neutral-700); font-size: 0.78rem; line-height: 1.25; }
+.status-list { max-height: 210px; overflow-y: auto; }
+.status-list-meta { display: block; margin-top: 0.2rem; font-size: 0.72rem; color: var(--neutral-500); }
 .table-toolbar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 0.8rem; }
 .table-search { width: min(100%, 260px); border: 1px solid var(--neutral-300); border-radius: 10px; padding: 0.55rem 0.75rem; font-size: 0.82rem; }
 .table-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 70, 46, 0.1); }
@@ -44,6 +48,40 @@
 .compact-table th, .compact-table td { padding: 0.75rem 0.5rem; }
 .compact-table th { font-size: 0.7rem; }
 .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .header-content {
+        min-width: 0;
+    }
+
+    .header-text {
+        min-width: 0;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .export-dropdown {
+        width: 100%;
+    }
+
+    #reportExportToggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .export-menu {
+        left: 0;
+        right: 0;
+        min-width: 0;
+    }
+}
 @media (max-width: 640px) { .kpi-grid { grid-template-columns: 1fr; } }
 </style>
 
@@ -59,18 +97,18 @@
                 <i class="fas fa-chart-bar text-white"></i>
             </div>
             <div class="header-text">
-                <h1 class="header-title">
+                <h1 class="header-title">Reports</h1>
+                <p class="header-subtitle">
                     @if(isset($reportType))
                         @switch($reportType)
                             @case('reservation') Reservations Report @break
-                            @case('sales') Cafeteria Sales Report @break
                             @case('inventory') Current Inventory Stock Report @break
                             @case('crm') Customer Relationship Management Report @break
-                            @default Report
+                            @default Reports
                         @endswitch
-                    @else Report @endif
-                </h1>
-                <p class="header-subtitle">Period: {{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}</p>
+                    @else Reports @endif
+                    - Period: {{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}
+                </p>
             </div>
         </div>
         <div class="header-actions">
@@ -146,8 +184,38 @@
             </div>
             @endif
 
+            @if(isset($reportType) && $reportType === 'inventory')
             <div class="chart-card">
-                <h3 class="chart-title">Key Insights</h3>
+                <h3 class="chart-title">Low Stock / Critical Items</h3>
+                <ul class="insight-list status-list">
+                    @forelse($inventoryLowStockItems as $item)
+                        <li>
+                            <span class="font-semibold text-gray-900">{{ $item['name'] }}</span>
+                            <span class="status-list-meta">{{ number_format((float) $item['stock_left'], 2) }} {{ $item['unit'] }}</span>
+                        </li>
+                    @empty
+                        <li>No low stock items.</li>
+                    @endforelse
+                </ul>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">Out of Stock Items</h3>
+                <ul class="insight-list status-list">
+                    @forelse($inventoryOutOfStockItems as $item)
+                        <li>
+                            <span class="font-semibold text-gray-900">{{ $item['name'] }}</span>
+                            <span class="status-list-meta">{{ number_format((float) $item['stock_left'], 2) }} {{ $item['unit'] }}</span>
+                        </li>
+                    @empty
+                        <li>No out of stock items.</li>
+                    @endforelse
+                </ul>
+            </div>
+            @endif
+
+            <div class="chart-card">
+                <h3 class="chart-title">Summary</h3>
                 <ul class="insight-list">
                     @forelse($insights as $insight) <li>{{ $insight }}</li>
                     @empty <li>No insights available for this period.</li> @endforelse
@@ -162,7 +230,6 @@
                 @if(isset($reportType))
                     @switch($reportType)
                         @case('reservation') Detailed Reservations Report @break
-                        @case('sales') Detailed Sales Report @break
                         @case('inventory') Detailed Inventory Stock Report @break
                         @case('crm') Detailed Customer Relationship Management Report @break
                         @default Detailed Report
@@ -221,59 +288,6 @@
                     </table>
                     @if(method_exists($reservationData, 'hasPages') && $reservationData->hasPages())
                         <div class="mt-6">{{ $reservationData->links('components.pagination') }}</div>
-                    @endif
-                @endif
-
-            @elseif(isset($reportType) && $reportType == 'sales')
-                @if($salesData->isEmpty())
-                    <div class="empty-state">
-                        <div class="empty-state-icon"><i class="fas fa-chart-bar text-gray-400"></i></div>
-                        <p class="text-lg font-semibold text-gray-900 mb-2">No sales data found</p>
-                        <p class="text-sm text-gray-500">Try selecting a different date range</p>
-                    </div>
-                @else
-                    <table id="reportTable" class="modern-table compact-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 120px;">Reservation</th>
-                                <th style="width: 200px;">Event Details</th>
-                                <th style="width: 300px;">Menu Items</th>
-                                <th style="width: 120px;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($salesData as $reservation)
-                            <tr>
-                                <td>
-                                    <div class="font-semibold text-gray-900">#{{ $reservation['reservation_id'] }}</div>
-                                    <div class="text-sm text-gray-600 mt-1 text-truncate" style="max-width: 110px;" title="{{ $reservation['customer_name'] }}">{{ $reservation['customer_name'] }}</div>
-                                </td>
-                                <td>
-                                    <div class="font-medium text-gray-900 text-truncate" style="max-width: 180px;" title="{{ $reservation['event_name'] }}">{{ $reservation['event_name'] }}</div>
-                                    <div class="text-sm text-gray-600 mt-1">{{ $reservation['event_date'] }}</div>
-                                    <div class="text-sm text-gray-500">{{ $reservation['number_of_persons'] }} persons</div>
-                                </td>
-                                <td>
-                                    <div class="space-y-2 max-h-32 overflow-y-auto modern-scrollbar">
-                                        @foreach($reservation['items'] as $item)
-                                        <div class="text-sm p-2 bg-gray-50 rounded-lg border border-gray-200">
-                                            <div class="font-semibold text-gray-900 text-truncate" style="max-width: 250px;" title="{{ $item['menu_name'] }}">{{ $item['menu_name'] }}</div>
-                                            <div class="text-gray-500 text-xs mt-1">({{ $item['type'] }} - {{ $item['meal_time'] }})</div>
-                                            <div class="mt-1 text-gray-600 text-xs">
-                                                Qty: {{ $item['quantity'] }} x &#8369;{{ number_format($item['unit_price'], 2) }} =
-                                                <span class="font-semibold text-green-600">&#8369;{{ number_format($item['total'], 2) }}</span>
-                                            </div>
-                                        </div>
-                                        @endforeach
-                                    </div>
-                                </td>
-                                <td><div class="text-lg font-bold text-green-600">&#8369;{{ number_format($reservation['reservation_total'], 2) }}</div></td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                    @if(method_exists($salesData, 'hasPages') && $salesData->hasPages())
-                        <div class="mt-6">{{ $salesData->links('components.pagination') }}</div>
                     @endif
                 @endif
 

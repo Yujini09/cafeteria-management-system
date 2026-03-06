@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\User;
+use App\Notifications\PasswordChangedNotification;
 use App\Support\AuditDictionary;
 use App\Support\PasswordRules;
 use Illuminate\Auth\Events\PasswordReset;
@@ -56,6 +57,8 @@ class NewPasswordController extends Controller
                     AuditDictionary::MODULE_AUTH,
                     'completed password reset'
                 );
+
+                $user->notify(new PasswordChangedNotification('password-reset'));
 
                 event(new PasswordReset($user));
             }

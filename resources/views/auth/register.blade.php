@@ -1,15 +1,15 @@
 <x-guest-layout>
     {{-- Main Container --}}
-    <div class="min-h-screen flex items-center justify-center bg-admin-neutral-100 relative overflow-hidden font-admin text-admin-neutral-900"> 
+    <div class="min-h-screen flex items-start justify-center bg-admin-neutral-100 relative overflow-hidden px-3 py-4 sm:px-4 sm:py-6 lg:items-center lg:px-6 lg:py-8 font-admin text-admin-neutral-900"> 
         <div class="absolute inset-0 opacity-30">
-            <div class="w-96 h-96 bg-green-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
-            <div class="w-64 h-64 bg-green-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
-            <div class="w-80 h-80 bg-green-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
-            <div class="w-40 h-40 bg-green-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
+            <div class="hidden sm:block w-96 h-96 bg-green-700 rounded-full absolute -top-20 left-1/4 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="w-40 h-40 sm:w-64 sm:h-64 bg-green-700 rounded-full absolute bottom-0 right-0 mix-blend-screen opacity-50 transform translate-x-1/4 translate-y-1/4"></div>
+            <div class="hidden sm:block w-80 h-80 bg-green-700 rounded-full absolute top-1/4 left-0 mix-blend-screen opacity-50 transform -translate-x-1/2"></div>
+            <div class="w-24 h-24 sm:w-40 sm:h-40 bg-green-700 rounded-full absolute -bottom-10 left-1/2 mix-blend-screen opacity-50 transform translate-x-1/4"></div>
         </div>
 
         {{-- Card Container --}}
-        <div class="relative w-full max-w-5xl overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin z-10 mx-4 flex flex-col md:flex-row md:h-[650px]"> 
+        <div class="relative z-10 flex w-full max-w-5xl flex-col overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin md:flex-row lg:min-h-[650px]"> 
             
             {{-- Left side (Logo Display) --}}
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 
@@ -24,31 +24,31 @@
             </div>
 
             {{-- Right side (Form) --}}
-            <div class="w-full md:w-7/12 p-8 pb-16 md:px-12 md:pt-12 md:pb-20 relative bg-green-100 overflow-y-auto overflow-x-hidden scroll-pb-10 md:h-full"> 
+            <div class="relative w-full overflow-x-hidden bg-green-100 px-5 py-6 sm:px-6 sm:py-8 md:w-7/12 md:px-8 md:pt-10 md:pb-12 lg:h-full lg:overflow-y-auto lg:px-12 lg:pt-12 lg:pb-20"> 
                 <div class="absolute inset-0 pointer-events-none">
-                    <div class="w-56 h-56 bg-green-200 rounded-full absolute -top-20 -right-16"></div>
-                    <div class="w-40 h-40 bg-green-200 rounded-full absolute -bottom-16 -left-16"></div>
+                    <div class="h-40 w-40 sm:h-56 sm:w-56 bg-green-200 rounded-full absolute -top-16 sm:-top-20 -right-12 sm:-right-16"></div>
+                    <div class="h-28 w-28 sm:h-40 sm:w-40 bg-green-200 rounded-full absolute -bottom-10 sm:-bottom-16 -left-10 sm:-left-16"></div>
                 </div>
 
                 <div class="relative z-10 flex h-full flex-col">
-                    <div class="flex flex-col gap-3 mb-4">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="md:hidden h-12 w-12 rounded-admin bg-ret-dark/90 flex items-center justify-center">
-                                    <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
-                                         class="h-8 w-8 object-contain"> 
+                    <div class="mb-4 flex flex-col gap-3 sm:mb-5">
+                        <div class="flex items-start justify-between gap-3 sm:items-center">
+                            <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+                                <div class="md:hidden flex h-16 w-16 items-center justify-center">
+                                    <img src="{{ asset('images/Cafeteria-logo.png') }}" alt="RET Cafeteria Logo"
+                                         class="h-16 w-16 object-contain"> 
                                 </div>
-                                <div>
-                                    <h2 class="text-green-900 text-4xl font-extrabold mb-1">Create Account</h2> 
-                                    <p class="text-green-700 text-lg">Join our cafeteria community</p>
+                                <div class="min-w-0">
+                                    <h2 class="mb-1 text-3xl font-extrabold text-green-900 sm:text-4xl">Create Account</h2> 
+                                    <p class="text-base text-green-700 sm:text-lg">Join our cafeteria community</p>
                                 </div>
                             </div>
                             <a href="{{ route('marketing.home') }}"
-                                class="md:hidden inline-flex items-center justify-center gap-2 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold text-admin-neutral-700 transition hover:bg-admin-neutral-100">
+                                class="md:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-admin-neutral-700 transition hover:bg-admin-neutral-100 hover:text-admin-primary"
+                                aria-label="Back to home">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                                 </svg>
-                                 Continue
                             </a>
                         </div>
                     </div>
@@ -155,14 +155,14 @@
                         </div>
                     </form>
                     
-                    <div class="mt-3">
-                        <div class="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-admin-neutral-400">
-                            <span class="h-px flex-1 bg-admin-neutral-200"></span><span>or</span><span class="h-px flex-1 bg-admin-neutral-200"></span>
-                        </div>
-                        <div class="mt-4">
-                            <x-google-oauth-button />
-                        </div>
-                        <div class="flex justify-center text-sm mt-4 pb-8"> 
+                        <div class="mt-4 sm:mt-5">
+                            <div class="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-admin-neutral-400">
+                                <span class="h-px flex-1 bg-admin-neutral-200"></span><span>or</span><span class="h-px flex-1 bg-admin-neutral-200"></span>
+                            </div>
+                            <div class="mt-4">
+                                <x-google-oauth-button />
+                            </div>
+                            <div class="mt-4 flex justify-center pb-2 text-center text-sm sm:pb-4 lg:pb-8"> 
                             <a href="{{ route('login') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
                                 {{ __('Have an account already?') }}
                             </a>
@@ -174,7 +174,7 @@
     </div>
 
     {{-- Verification & Error Modals (Kept Same) --}}
-    <div id="verificationModal" class="hidden fixed inset-0 z-50 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="verificationModal" class="hidden fixed inset-0 z-50 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
         <div class="bg-white rounded-admin-lg shadow-admin-modal border border-admin-neutral-200 p-6 w-full max-w-md">
             <div class="text-center">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-admin bg-admin-success-light mb-4 text-admin-success">
@@ -189,7 +189,7 @@
         </div>
     </div>
 
-    <div id="errorModal" class="hidden fixed inset-0 z-50 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="errorModal" class="hidden fixed inset-0 z-50 bg-admin-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
         <div class="bg-white rounded-admin-lg shadow-admin-modal border border-admin-neutral-200 p-6 w-full max-w-md">
             <div class="text-center">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-admin bg-admin-danger-light mb-4 text-admin-danger">
@@ -247,9 +247,16 @@
             const registerBtn = document.getElementById('registerBtn');
             if (!registerBtn) return;
             const originalText = registerBtn.innerHTML;
+            const usedSharedLoading = Boolean(
+                window.cmsActionButtons
+                && typeof window.cmsActionButtons.start === 'function'
+                && window.cmsActionButtons.start(registerBtn, registerBtn.dataset.loadingText || 'Creating Account...')
+            );
 
-            registerBtn.disabled = true;
-            registerBtn.innerHTML = registerBtn.dataset.loadingText || 'Creating Account...';
+            if (!usedSharedLoading) {
+                registerBtn.disabled = true;
+                registerBtn.innerHTML = registerBtn.dataset.loadingText || 'Creating Account...';
+            }
 
             fetch(this.action, {
                 method: 'POST',
@@ -270,6 +277,12 @@
             .then(data => {
                 if (!data) return;
                 if (data.success) {
+                    const successMessage = data.message || 'Account created successfully! Please check your email to verify your account.';
+                    try {
+                        window.sessionStorage.setItem('cms.register.success', successMessage);
+                    } catch (error) {
+                        console.warn('Unable to persist registration success message.', error);
+                    }
                     document.getElementById('verificationModal').classList.remove('hidden');
                 } else {
                     if (data.errors) {
@@ -294,6 +307,11 @@
                 document.getElementById('errorModal').classList.remove('hidden');
             })
             .finally(() => {
+                if (usedSharedLoading && window.cmsActionButtons && typeof window.cmsActionButtons.stop === 'function') {
+                    window.cmsActionButtons.stop(registerBtn);
+                    return;
+                }
+
                 registerBtn.disabled = false;
                 registerBtn.innerHTML = originalText;
             });

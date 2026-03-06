@@ -58,6 +58,16 @@
     color: white !important; 
     font-weight: 700;
 }
+.calendar-day-pending-time {
+    background-color: #e5e7eb !important;
+    color: #4b5563 !important;
+    box-shadow: inset 0 0 0 2px #9ca3af;
+}
+.calendar-day-pending-time.calendar-day-range-start,
+.calendar-day-pending-time.calendar-day-range-end {
+    background-color: #6b7280 !important;
+    color: white !important;
+}
 .day-tab {
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -70,6 +80,16 @@
     background-color: #16a34a;
     color: white;
     border-color: #15803d;
+}
+.day-tab-pending-time {
+    background-color: #e5e7eb;
+    color: #4b5563;
+    border-color: #9ca3af;
+}
+.day-tab-pending-time.day-tab-active {
+    background-color: #6b7280;
+    color: white;
+    border-color: #4b5563;
 }
 .time-section {
     border: 1px solid #e5e7eb;
@@ -92,6 +112,13 @@
 @php
     $isEditMode = session('editing_reservation_id') ? true : false;
     $data = session('reservation_data', []);
+    $reservationCreationLimit = $reservationCreationLimit ?? [
+        'blocked' => false,
+        'type' => null,
+        'message' => null,
+        'note' => null,
+    ];
+    $reservationFormLocked = !$isEditMode && ($reservationCreationLimit['blocked'] ?? false);
     
     // Helper to get value (Old Input > Session Data > Auth/Default)
     $val = function($key, $default = '') use ($data) {
@@ -138,9 +165,17 @@
             </div>
         </div>
 
-        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10" data-action-loading>
+        <form id="reservation-form" action="{{ route('reservation.post_details') }}" method="POST" class="space-y-10" data-action-loading data-reservation-form-locked="{{ $reservationFormLocked ? 'true' : 'false' }}">
             @csrf
 
+            @if($reservationFormLocked)
+                <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+                    <p class="font-semibold">{{ $reservationCreationLimit['message'] }}</p>
+                    <p class="mt-1 text-sm">{{ $reservationCreationLimit['note'] }}</p>
+                </div>
+            @endif
+
+            <fieldset @disabled($reservationFormLocked) class="{{ $reservationFormLocked ? 'opacity-60 pointer-events-none select-none' : '' }}">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 {{-- PERSONAL & EVENT INFO (Fully Editable except Email) --}}
@@ -228,7 +263,7 @@
                         
                         <div id="selected-date-range-container" class="flex flex-col gap-2 mb-4 min-h-[40px] items-start p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                             <div id="no-dates-selected" class="text-sm text-gray-500 italic">
-                                Select a date range by clicking the start and end dates on the calendar. Double click if you reserve for 1 day event.
+                                Click one date for a 1-day reservation, or click another date to extend the range.
                             </div>
                             <div id="date-range-display" class="hidden">
                                 <div class="flex items-center gap-2">
@@ -283,6 +318,7 @@
             <div class="text-center pt-4">
                 <button type="submit" data-loading-text="Saving Reservation Details..."
                     id="menu-selection-btn"
+                    @disabled($reservationFormLocked)
                     class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold">
                     Proceed to Menu Selection
                 </button>
@@ -290,6 +326,7 @@
                     Please fill up the form, select a valid date range, and ensure the time slot is valid.
                 </div>
             </div>
+            </fieldset>
 
         </form>
     </div>
@@ -358,6 +395,7 @@
     const timeSectionsContainer = document.getElementById('time-sections-container');
     const menuSelectionBtn = document.getElementById('menu-selection-btn');
     const validationMessageEl = document.getElementById('validation-message');
+    const reservationFormLocked = @json($reservationFormLocked);
 
     // Utility function to format date as YYYY-MM-DD
     const formatDate = (date) => {
@@ -382,6 +420,24 @@
             day: 'numeric', 
             year: 'numeric' 
         });
+    };
+
+    const createEmptyDayTime = () => ({ start_time: '', end_time: '' });
+
+    const hasCompleteTime = (day) => Boolean(dayTimes[day]?.start_time && dayTimes[day]?.end_time);
+
+    const normalizeDayTimes = (days, sourceTimes = {}) => {
+        const normalized = {};
+
+        days.forEach((day) => {
+            const timeData = sourceTimes[day] ?? {};
+            normalized[day] = {
+                start_time: timeData.start_time || '',
+                end_time: timeData.end_time || '',
+            };
+        });
+
+        return normalized;
     };
 
     // Utility function to get all dates between start and end
@@ -454,15 +510,19 @@
                 }
             }
             
-            const isPast = dateStr < todayStr;
-            if (isPast) {
+            const isUnavailable = dateStr <= todayStr;
+            if (isUnavailable) {
                 status = 'other-month'; 
             }
             
             const cell = createCalendarDay(day, status, dateStr);
+
+            if (selectedDays.includes(dateStr) && !hasCompleteTime(dateStr)) {
+                cell.classList.add('calendar-day-pending-time');
+            }
             
-            if (!isPast) {
-                cell.addEventListener('click', () => handleDateSelection(dateStr, cell));
+            if (!isUnavailable) {
+                cell.addEventListener('click', () => handleDateSelection(dateStr));
             }
 
             calendarDaysEl.appendChild(cell);
@@ -513,14 +573,24 @@
         return cell;
     };
 
-    const handleDateSelection = (dateStr, cell) => {
+    const handleDateSelection = (dateStr) => {
+        const existingDayTimes = dayTimes;
+
         if (isSelectingStartDate) {
             selectedStartDate = dateStr;
-            selectedEndDate = null; 
+            selectedEndDate = dateStr;
             isSelectingStartDate = false;
             selectedDays = [dateStr];
-            dayTimes = { [dateStr]: { start_time: '07:00', end_time: '10:00' } };
+            dayTimes = normalizeDayTimes(selectedDays, existingDayTimes);
         } else {
+            if (dateStr === selectedStartDate && dateStr === selectedEndDate) {
+                updateDateRangeDisplay();
+                renderDayTabs();
+                renderCalendar();
+                validateForm();
+                return;
+            }
+
             const startDate = parseDateLocal(selectedStartDate);
             const endDate = parseDateLocal(dateStr);
             
@@ -533,18 +603,10 @@
             
             isSelectingStartDate = true; 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
-            
-            // Handle times for new range
-            const newDayTimes = {};
-            selectedDays.forEach(day => {
-                if (dayTimes[day]) {
-                    newDayTimes[day] = dayTimes[day];
-                } else {
-                    newDayTimes[day] = { start_time: '07:00', end_time: '10:00' };
-                }
-            });
-            dayTimes = newDayTimes;
+            dayTimes = normalizeDayTimes(selectedDays, existingDayTimes);
         }
+
+        activeDayTab = 0;
         
         updateDateRangeDisplay();
         renderDayTabs();
@@ -591,14 +653,32 @@
         }
     };
 
+    const updateTimeErrorState = (day, dayIndex) => {
+        const errorEl = document.getElementById(`time-error-${dayIndex}`);
+        const startTime = dayTimes[day]?.start_time;
+        const endTime = dayTimes[day]?.end_time;
+
+        if (!errorEl) {
+            return;
+        }
+
+        if (startTime && endTime && startTime >= endTime) {
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        errorEl.classList.add('hidden');
+    };
+
     const renderDayTabs = () => {
         dayTabsEl.innerHTML = '';
         timeSectionsContainer.innerHTML = '';
         
         selectedDays.forEach((day, index) => {
             const tab = document.createElement('div');
-            tab.className = `day-tab ${index === activeDayTab ? 'day-tab-active' : ''}`;
-            tab.textContent = `Day ${index + 1} (${formatDateDisplay(day)})`;
+            const isTimeComplete = hasCompleteTime(day);
+            tab.className = `day-tab ${index === activeDayTab ? 'day-tab-active' : ''} ${isTimeComplete ? '' : 'day-tab-pending-time'}`.trim();
+            tab.textContent = `Day ${index + 1} (${formatDateDisplay(day)})${isTimeComplete ? '' : ' - Set time'}`;
             tab.dataset.dayIndex = index;
             
             tab.addEventListener('click', () => {
@@ -618,24 +698,25 @@
                     <div>
                         <label for="start_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">Start Time</label>
                         <input type="time" id="start_time_${index}" name="start_time_${index}" 
-                            value="${dayTimes[day]?.start_time || '07:00'}" 
+                            value="${dayTimes[day]?.start_time || ''}" 
                             class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                             data-day="${day}" data-type="start_time">
                     </div>
                     <div>
                         <label for="end_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">End Time</label>
                         <input type="time" id="end_time_${index}" name="end_time_${index}" 
-                            value="${dayTimes[day]?.end_time || '10:00'}" 
+                            value="${dayTimes[day]?.end_time || ''}" 
                             class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                             data-day="${day}" data-type="end_time">
                     </div>
                 </div>
                 <div id="time-error-${index}" class="text-sm text-red-500 hidden mt-2 font-semibold">
-                    Error: End time must be after start time.
+                    Error: Start and end times are required, and end time must be after start time.
                 </div>
             `;
             
             timeSectionsContainer.appendChild(timeSection);
+            updateTimeErrorState(day, index);
         });
         
         document.querySelectorAll('.day-time-input').forEach(input => {
@@ -651,22 +732,12 @@
         const value = e.target.value;
         
         if (!dayTimes[day]) {
-            dayTimes[day] = {};
+            dayTimes[day] = createEmptyDayTime();
         }
         dayTimes[day][type] = value;
-        
-        const dayIndex = selectedDays.indexOf(day);
-        const startTime = dayTimes[day].start_time;
-        const endTime = dayTimes[day].end_time;
-        const errorEl = document.getElementById(`time-error-${dayIndex}`);
-        
-        if (startTime && endTime && startTime >= endTime) {
-            errorEl.classList.remove('hidden');
-        } else {
-            errorEl.classList.add('hidden');
-        }
-        
-        updateDayTimesInput();
+
+        renderDayTabs();
+        renderCalendar();
         validateForm();
     };
 
@@ -697,6 +768,15 @@
     });
 
     const validateForm = () => {
+        if (reservationFormLocked) {
+            menuSelectionBtn.disabled = true;
+            menuSelectionBtn.classList.add('bg-clsu-green/50', 'cursor-not-allowed');
+            menuSelectionBtn.classList.remove('bg-clsu-green', 'hover:bg-green-700');
+            validationMessageEl.classList.add('hidden');
+
+            return false;
+        }
+
         const isDateRangeSelected = selectedStartDate && selectedEndDate;
         const isNativeValid = document.getElementById('reservation-form').checkValidity(); 
         
@@ -729,7 +809,7 @@
             if (!isDateRangeSelected) {
                 validationMessageEl.textContent = 'Please select a complete date range (start and end dates).';
             } else if (!allTimesValid) {
-                validationMessageEl.textContent = 'Please ensure the end time is after the start time for all days.';
+                validationMessageEl.textContent = 'Please set a valid start and end time for every selected day.';
             } else if (!isNativeValid) {
                 const form = document.getElementById('reservation-form');
                 const firstInvalid = Array.from(form.elements).find(el => el.required && !el.value);
@@ -767,6 +847,7 @@
             }
 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
+            dayTimes = normalizeDayTimes(selectedDays, dayTimes);
 
             const startDateObj = parseDateLocal(selectedStartDate);
             if (!isNaN(startDateObj.getTime())) {

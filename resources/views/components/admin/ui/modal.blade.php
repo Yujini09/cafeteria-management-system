@@ -113,7 +113,7 @@ $iconColor = match($variant) {
             {{ $slot }}
         </div>
         @if(isset($footer))
-            <div class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50">
+            <div class="flex flex-col gap-3 px-6 py-4 border-t border-admin-neutral-100 bg-admin-neutral-50 sm:flex-row sm:items-center sm:justify-end">
                 {{ $footer }}
             </div>
         @endif

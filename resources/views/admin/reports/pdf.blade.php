@@ -1,7 +1,6 @@
 @php
     $reportTitle = match($reportType) {
         'reservation' => 'Reservations Report',
-        'sales' => 'Sales Report',
         'inventory' => 'Inventory Report',
         'crm' => 'CRM Report',
         default => ucfirst($reportType) . ' Report',
@@ -26,24 +25,10 @@
         .header { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; }
         .header h1 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 700; }
         .header p { margin: 3px 0; color: var(--neutral-600); font-size: 11px; }
-        .summary { margin-bottom: 20px; background: var(--neutral-50); padding: 10px; border-radius: 8px; border: 1px solid var(--neutral-200); }
-        .summary-table { width: 100%; border-collapse: separate; border-spacing: 10px 0; margin: 0; }
-        .summary-table td { border: none; background: transparent; width: 50%; padding: 0; text-align: center; vertical-align: top; }
-        .summary-item { text-align: center; border: 1px solid var(--neutral-200); border-radius: 8px; background: white; padding: 10px 12px; }
-        .summary-line { margin: 0; display: inline-flex; align-items: baseline; justify-content: center; gap: 6px; white-space: nowrap; }
-        .summary-label { font-size: 10px; color: var(--neutral-600); text-transform: uppercase; font-weight: 700; letter-spacing: 0.02em; }
-        .summary-value { font-size: 16px; font-weight: 800; color: var(--primary); }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; border-radius: 6px; overflow: hidden; }
-        .sales-table { table-layout: fixed; font-size: 10px; }
-        .sales-table th { font-size: 9px; }
-        .sales-table td { word-break: break-word; }
-        .sales-table-section { page-break-before: always; }
         th, td { border: 0.5px solid var(--neutral-300); padding: 6px 8px; text-align: left; vertical-align: top; }
         th { background-color: var(--primary); color: white; font-weight: 600; font-size: 10px; text-transform: uppercase; }
         tr:nth-child(even) { background-color: var(--neutral-50); }
-        .reservation-header { background-color: #e8f5e8 !important; font-weight: 600; }
-        .total-row { background-color: var(--neutral-100) !important; font-weight: bold; }
-        .total-row td { border-top: 1px solid var(--primary); }
         .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--neutral-300); text-align: center; font-size: 10px; color: var(--neutral-500); }
         .currency { font-weight: bold; color: var(--success); }
         .no-data { text-align: center; padding: 30px; color: var(--neutral-500); font-style: italic; font-size: 12px; background: var(--neutral-50); border-radius: 6px; border: 1px solid var(--neutral-200); }
@@ -78,7 +63,25 @@
                             $diagramCards[] = ['type' => 'chart', 'label' => $chart['label'] ?? 'Chart', 'svg' => $chart['svg'] ?? null];
                         }
                         if (!empty($insights)) {
-                            $diagramCards[] = ['type' => 'insights', 'label' => 'Key Insights', 'items' => $insights];
+                            $diagramCards[] = ['type' => 'insights', 'label' => 'Summary', 'items' => $insights];
+                        }
+                        if (($reportType ?? null) === 'inventory') {
+                            $lowStockItems = array_map(function ($item) {
+                                $name = $item['name'] ?? 'Unknown Item';
+                                $stock = number_format((float) ($item['stock_left'] ?? 0), 2);
+                                $unit = $item['unit'] ?? 'unit';
+                                return "{$name} ({$stock} {$unit})";
+                            }, $inventoryLowStockItems ?? []);
+
+                            $outOfStockItems = array_map(function ($item) {
+                                $name = $item['name'] ?? 'Unknown Item';
+                                $stock = number_format((float) ($item['stock_left'] ?? 0), 2);
+                                $unit = $item['unit'] ?? 'unit';
+                                return "{$name} ({$stock} {$unit})";
+                            }, $inventoryOutOfStockItems ?? []);
+
+                            $diagramCards[] = ['type' => 'insights', 'label' => 'Low Stock / Critical Items', 'items' => !empty($lowStockItems) ? $lowStockItems : ['No low stock items.']];
+                            $diagramCards[] = ['type' => 'insights', 'label' => 'Out of Stock Items', 'items' => !empty($outOfStockItems) ? $outOfStockItems : ['No out of stock items.']];
                         }
                         $chartChunks = array_chunk($diagramCards, 2);
                     @endphp
@@ -88,7 +91,7 @@
                                 <td>
                                     @if(($card['type'] ?? '') === 'insights')
                                         <div class="diagram-card insight-card">
-                                            <h4>{{ $card['label'] ?? 'Key Insights' }}</h4>
+                                            <h4>{{ $card['label'] ?? 'Summary' }}</h4>
                                             <ul class="insight-list">
                                                 @foreach(($card['items'] ?? []) as $insight) <li>{{ $insight }}</li> @endforeach
                                             </ul>
@@ -109,90 +112,7 @@
         </div>
     @endif
 
-    @if($reportType === 'sales')
-        <div class="summary">
-            <table class="summary-table">
-                <tbody>
-                    <tr>
-                        <td>
-                            <div class="summary-item">
-                                <p class="summary-line">
-                                    <span class="summary-label">Total Reservations:</span>
-                                    <span class="summary-value">{{ $totalReservations ?? 0 }}</span>
-                                </p>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="summary-item">
-                                <p class="summary-line">
-                                    <span class="summary-label">Total Sales:</span>
-                                    <span class="summary-value currency">PHP {{ number_format($totalRevenue ?? 0, 2) }}</span>
-                                </p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        @if($salesData->isEmpty())
-            <div class="no-data"><p>No sales data found for the selected period.</p></div>
-        @else
-            <div class="sales-table-section">
-                <table class="sales-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 6%;">Res. ID</th>
-                            <th style="width: 12%;">Event Name</th>
-                            <th style="width: 9%;">Event Date</th>
-                            <th style="width: 12%;">Customer</th>
-                            <th style="width: 6%;">Persons</th>
-                            <th style="width: 15%;">Menu Item</th>
-                            <th style="width: 6%;">Type</th>
-                            <th style="width: 8%;">Meal Time</th>
-                            <th style="width: 5%;">Qty</th>
-                            <th style="width: 8%;">Unit Price</th>
-                            <th style="width: 7%;">Item Total</th>
-                            <th style="width: 6%;">Res. Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $currentReservationId = null; @endphp
-                        @foreach($salesData as $reservation)
-                            @foreach($reservation['items'] as $index => $item)
-                            <tr @if($currentReservationId !== $reservation['reservation_id']) class="reservation-header" @endif>
-                                @if($currentReservationId !== $reservation['reservation_id'])
-                                    <td rowspan="{{ count($reservation['items']) }}">{{ $reservation['reservation_id'] }}</td>
-                                    <td rowspan="{{ count($reservation['items']) }}">{{ $reservation['event_name'] }}</td>
-                                    <td rowspan="{{ count($reservation['items']) }}">{{ $reservation['event_date'] }}</td>
-                                    <td rowspan="{{ count($reservation['items']) }}">{{ $reservation['customer_name'] }}</td>
-                                    <td rowspan="{{ count($reservation['items']) }}">{{ $reservation['number_of_persons'] }}</td>
-                                    @php $currentReservationId = $reservation['reservation_id']; @endphp
-                                @endif
-                                <td>{{ $item['menu_name'] }}</td>
-                                <td>{{ $item['type'] }}</td>
-                                <td>{{ $item['meal_time'] }}</td>
-                                <td style="text-align: center;">{{ $item['quantity'] }}</td>
-                                <td style="text-align: right;">PHP {{ number_format($item['unit_price'], 2) }}</td>
-                                <td style="text-align: right;">PHP {{ number_format($item['total'], 2) }}</td>
-                                @if($index === 0)
-                                    <td rowspan="{{ count($reservation['items']) }}" style="text-align: right; font-weight: bold;" class="currency">PHP {{ number_format($reservation['reservation_total'], 2) }}</td>
-                                @endif
-                            </tr>
-                            @endforeach
-                        @endforeach
-                        <tr class="total-row">
-                            <td colspan="11" style="text-align: right; font-weight: bold;">GRAND TOTAL:</td>
-                            <td style="text-align: right; font-weight: bold;" class="currency">PHP {{ number_format($totalRevenue ?? 0, 2) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        @endif
-
-        <div class="footer"><p>This report was generated automatically by the Smart Cafeteria Management System.</p><p>Report covers approved reservations only.</p></div>
-
-    @elseif($reportType === 'reservation')
+    @if($reportType === 'reservation')
         @if($reservationData->isEmpty())
             <div class="no-data"><p>No reservation data found for the selected period.</p></div>
         @else

@@ -9,10 +9,6 @@ use App\Models\InventoryItem;
 use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\SalesReportExport;
-use App\Exports\InventoryReportExport;
-use App\Exports\ReservationReportExport;
-use App\Exports\CrmReportExport;
 use Carbon\Carbon;
 use App\Models\AuditTrail;
 use App\Support\AuditDictionary;
@@ -34,7 +30,7 @@ class ReportsController extends Controller
         }
 
         $validated = $request->validate([
-            'report_type' => 'required|in:reservation,sales,inventory,crm',
+            'report_type' => 'required|in:reservation,inventory,crm',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -68,8 +64,6 @@ class ReportsController extends Controller
         switch ($reportType) {
             case 'reservation':
                 return $this->generateReservationReport($startDate, $endDate, $request);
-            case 'sales':
-                return $this->generateSalesReport($startDate, $endDate, $request);
             case 'inventory':
                 return $this->generateInventoryReport($startDate, $endDate, $request);
             case 'crm':
@@ -88,6 +82,7 @@ class ReportsController extends Controller
             ->orderBy('event_date')
             ->get();
 
+        $totalReservations = $reservations->count();
         $totalParticipants = 0;
         $totalExpectedRevenue = 0;
         $highestPax = 0;
@@ -130,11 +125,11 @@ class ReportsController extends Controller
             ];
         });
 
-        $reservationsByDay = $reservationData->groupBy('event_date')->map(fn ($rows) => $rows->sum('participants'))->sortKeys();
+        $reservationsByMonth = $this->buildReservationCountsByMonth($reservations);
         $revenueByDay = $reservationData->groupBy('event_date')->map(fn ($rows) => $rows->sum('expected_revenue'))->sortKeys();
 
         $kpiCards = [
-            $this->buildKpiCard('Total Participants', number_format($totalParticipants, 0), 'fas fa-users', 'kpi-primary', null),
+            $this->buildKpiCard('Total Number of Reservations', number_format($totalReservations, 0), 'fas fa-calendar-check', 'kpi-primary', null),
             $this->buildKpiCard('Expected Revenue', $this->formatCurrencyWithPesoSign($totalExpectedRevenue), 'fas fa-money-bill-wave', 'kpi-success', null),
             $this->buildKpiCard('Highest Pax in a Res.', number_format($highestPax, 0), 'fas fa-user-plus', 'kpi-neutral', null),
         ];
@@ -142,9 +137,9 @@ class ReportsController extends Controller
         $charts = [
             'trend' => [
                 'type' => 'line',
-                'label' => 'Participants per Day',
-                'labels' => $reservationsByDay->keys()->values()->all(),
-                'values' => $reservationsByDay->values()->all(),
+                'label' => 'Number of Reservations per Month',
+                'labels' => $this->formatMonthChartLabels($reservationsByMonth),
+                'values' => $reservationsByMonth->values()->all(),
             ],
             'breakdown' => [
                 'type' => 'line',
@@ -157,7 +152,7 @@ class ReportsController extends Controller
         $insights = [
             'Total expected revenue: ' . $this->formatCurrencyWithPesoSign($totalExpectedRevenue),
             'Total participants across all events: ' . number_format($totalParticipants, 0),
-            'Highest number of pax in a single reservation: ' . number_format($highestPax, 0),
+            'Total number of reservations: ' . number_format($totalReservations, 0),
         ];
 
         $reservationData = $this->paginateCollection($reservationData, $request);
@@ -172,173 +167,48 @@ class ReportsController extends Controller
         ))->with('reportType', 'reservation');
     }
 
-    private function generateSalesReport($startDate, $endDate, Request $request)
-    {
-        $reservations = Reservation::with(['items.menu', 'user'])
-            ->where('status', 'approved')
-            ->whereNotNull('event_date')
-            ->whereBetween('event_date', [$startDate, $endDate])
-            ->get();
-
-        $salesData = [];
-        $totalRevenue = 0;
-        $totalReservations = $reservations->count();
-
-        foreach ($reservations as $reservation) {
-            $reservationTotal = 0;
-            $items = [];
-
-            foreach ($reservation->items as $item) {
-                if (!$item->menu) {
-                    continue;
-                }
-                $price = MenuPrice::getPriceMap()[$item->menu->type][$item->menu->meal_time] ?? 0;
-                $itemTotal = $price * $item->quantity;
-                $reservationTotal += $itemTotal;
-
-                $items[] = [
-                    'menu_name' => $item->menu->name ?? 'N/A',
-                    'type' => ucfirst($item->menu->type ?? 'standard'),
-                    'meal_time' => ucfirst(str_replace('_', ' ', $item->menu->meal_time ?? 'lunch')),
-                    'quantity' => $item->quantity ?? 0,
-                    'unit_price' => $price,
-                    'total' => $itemTotal,
-                ];
-            }
-
-            $salesData[] = [
-                'reservation_id' => $reservation->id,
-                'event_name' => $reservation->event_name ?? 'N/A',
-                'event_date' => $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A',
-                'customer_name' => $reservation->user ? $reservation->user->name : 'N/A',
-                'number_of_persons' => $reservation->number_of_persons ?? 0,
-                'items' => $items,
-                'reservation_total' => $reservationTotal,
-            ];
-
-            $totalRevenue += $reservationTotal;
-        }
-
-        $salesData = collect($salesData);
-
-        $currentAverageOrderValue = $totalReservations > 0 ? $totalRevenue / $totalReservations : 0;
-        $currentAverageGuests = (float) ($reservations->avg('number_of_persons') ?? 0);
-
-        $dailyRevenue = [];
-        $mealTimeRevenue = [];
-        $menuRevenue = [];
-
-        foreach ($salesData as $reservation) {
-            $eventDate = $reservation['event_date'] ?? 'N/A';
-            $dailyRevenue[$eventDate] = ($dailyRevenue[$eventDate] ?? 0) + (float) ($reservation['reservation_total'] ?? 0);
-
-            foreach (($reservation['items'] ?? []) as $item) {
-                $mealKey = $item['meal_time'] ?? 'Unknown';
-                $mealTimeRevenue[$mealKey] = ($mealTimeRevenue[$mealKey] ?? 0) + (float) ($item['total'] ?? 0);
-
-                $menuKey = $item['menu_name'] ?? 'Unknown Item';
-                $menuRevenue[$menuKey] = ($menuRevenue[$menuKey] ?? 0) + (float) ($item['total'] ?? 0);
-            }
-        }
-
-        ksort($dailyRevenue);
-        arsort($mealTimeRevenue);
-        arsort($menuRevenue);
-        $topMenuRevenue = collect($menuRevenue)->take(7);
-
-        $highestRevenueDay = 'N/A';
-        if (!empty($dailyRevenue)) {
-            $maxRevenueInDay = max($dailyRevenue);
-            $maxRevenueDay = array_search($maxRevenueInDay, $dailyRevenue, true);
-            if ($maxRevenueDay !== false) {
-                $highestRevenueDay = $maxRevenueDay . ' (' . $this->formatCurrencyWithPesoSign($maxRevenueInDay) . ')';
-            }
-        }
-
-        $topMenuLabel = $topMenuRevenue->isNotEmpty()
-            ? ($topMenuRevenue->keys()->first() . ' (' . $this->formatCurrencyWithPesoSign((float) $topMenuRevenue->first()) . ')')
-            : 'N/A';
-
-        $kpiCards = [
-            $this->buildKpiCard('Total Revenue', $this->formatCurrencyWithPesoSign((float) $totalRevenue), 'fas fa-money-bill-wave', 'kpi-success', null),
-            $this->buildKpiCard('Approved Reservations', number_format($totalReservations, 0), 'fas fa-calendar-check', 'kpi-primary', null),
-            $this->buildKpiCard('Avg Order Value', $this->formatCurrencyWithPesoSign((float) $currentAverageOrderValue), 'fas fa-receipt', 'kpi-warning', null),
-            $this->buildKpiCard('Avg Guests / Reservation', number_format($currentAverageGuests, 1), 'fas fa-users', 'kpi-neutral', null),
-        ];
-
-        $charts = [
-            'trend' => [
-                'type' => 'line',
-                'label' => 'Revenue per Day',
-                'labels' => array_values(array_keys($dailyRevenue)),
-                'values' => array_values($dailyRevenue),
-            ],
-            'breakdown' => [
-                'type' => 'doughnut',
-                'label' => 'Revenue by Meal Time',
-                'labels' => array_values(array_keys($mealTimeRevenue)),
-                'values' => array_values($mealTimeRevenue),
-            ],
-            'topContributors' => [
-                'type' => 'bar',
-                'label' => 'Top Menu Items',
-                'labels' => $topMenuRevenue->keys()->values()->all(),
-                'values' => $topMenuRevenue->values()->all(),
-            ],
-        ];
-
-        $insights = [
-            'Highest revenue day: ' . $highestRevenueDay,
-            'Top menu item: ' . $topMenuLabel,
-            'Average order value: ' . $this->formatCurrencyWithPesoSign((float) $currentAverageOrderValue),
-        ];
-
-        $salesData = $this->paginateCollection($salesData, $request);
-
-        return view('admin.reports.show', compact('salesData', 'totalRevenue', 'totalReservations', 'startDate', 'endDate', 'kpiCards', 'charts', 'insights'))->with('reportType', 'sales');
-    }
-
     private function generateInventoryReport($startDate, $endDate, Request $request)
     {
-        $items = InventoryItem::orderBy('name')->get();
-
-        $inventoryData = $items->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name ?? 'N/A',
-                'unit' => $item->unit ?? 'N/A',
-                'stock_left' => (float) ($item->qty ?? 0),
-            ];
-        });
-
-        $totalStock = $inventoryData->sum('stock_left');
-        $lowStockCount = $inventoryData->filter(fn($item) => $item['stock_left'] <= 10)->count();
+        $inventoryMetrics = $this->buildInventoryReportMetrics();
+        $inventoryData = $inventoryMetrics['inventoryData'];
+        $inventoryLowStockItems = $inventoryMetrics['lowStockItems'];
+        $inventoryOutOfStockItems = $inventoryMetrics['outOfStockItems'];
 
         $kpiCards = [
-            $this->buildKpiCard('Total Items', number_format($items->count(), 0), 'fas fa-boxes', 'kpi-primary', null),
-            $this->buildKpiCard('Total Stock Quantity', number_format($totalStock, 2), 'fas fa-layer-group', 'kpi-success', null),
-            $this->buildKpiCard('Low Stock Items', number_format($lowStockCount, 0), 'fas fa-exclamation-triangle', 'kpi-warning', null),
+            $this->buildKpiCard('Low Stock / Critical Items', number_format($inventoryMetrics['lowStockCriticalCount'], 0), 'fas fa-exclamation-triangle', 'kpi-warning', null),
+            $this->buildKpiCard('Out of Stock Items', number_format($inventoryMetrics['outOfStockCount'], 0), 'fas fa-ban', 'kpi-neutral', null),
+            $this->buildKpiCard('Total Items', number_format($inventoryMetrics['totalItems'], 0), 'fas fa-boxes', 'kpi-primary', null),
+            $this->buildKpiCard('Commonly Used Items', number_format($inventoryMetrics['commonlyUsedCount'], 0), 'fas fa-list-ol', 'kpi-success', null),
         ];
-
-        $topStockItems = $inventoryData->sortByDesc('stock_left')->take(7)->mapWithKeys(fn ($item) => [$item['name'] => $item['stock_left']]);
 
         $charts = [
             'topContributors' => [
                 'type' => 'bar',
-                'label' => 'Highest Stock Items',
-                'labels' => $topStockItems->keys()->values()->all(),
-                'values' => $topStockItems->values()->all(),
+                'label' => 'Top 5 Commonly Used Items',
+                'labels' => $inventoryMetrics['topCommonItems']->keys()->values()->all(),
+                'values' => $inventoryMetrics['topCommonItems']->values()->all(),
             ]
         ];
 
         $insights = [
-            'Total overall stock count: ' . number_format($totalStock, 2),
-            'Items currently running low: ' . number_format($lowStockCount, 0),
+            'Low stock / critical items: ' . number_format($inventoryMetrics['lowStockCriticalCount'], 0),
+            'Out of stock items: ' . number_format($inventoryMetrics['outOfStockCount'], 0),
+            'Total items: ' . number_format($inventoryMetrics['totalItems'], 0),
+            'Commonly used items: ' . number_format($inventoryMetrics['commonlyUsedCount'], 0),
         ];
 
         $inventoryData = $this->paginateCollection($inventoryData, $request);
 
-        return view('admin.reports.show', compact('inventoryData', 'startDate', 'endDate', 'kpiCards', 'charts', 'insights'))->with('reportType', 'inventory');
+        return view('admin.reports.show', compact(
+            'inventoryData',
+            'startDate',
+            'endDate',
+            'kpiCards',
+            'charts',
+            'insights',
+            'inventoryLowStockItems',
+            'inventoryOutOfStockItems'
+        ))->with('reportType', 'inventory');
     }
 
     private function generateCrmReport($startDate, $endDate, Request $request)
@@ -352,45 +222,11 @@ class ReportsController extends Controller
             ->get();
 
         $crmMetrics = $this->calculateCrmMetrics($customers);
+        $crmPresentation = $this->buildCrmReportPresentation($crmMetrics);
         $crmData = $crmMetrics['crmData'];
-
-        $topCustomerLabel = $crmMetrics['topCustomers']->isNotEmpty()
-            ? ($crmMetrics['topCustomers']->keys()->first() . ' (' . $this->formatCurrencyWithPesoSign((float) $crmMetrics['topCustomers']->first()) . ')')
-            : 'N/A';
-
-        $kpiCards = [
-            $this->buildKpiCard('Active Customers', number_format((float) $crmMetrics['activeCustomers'], 0), 'fas fa-user-friends', 'kpi-primary', null),
-            $this->buildKpiCard('Repeat Customer Rate', $this->formatPercent($crmMetrics['repeatRate']), 'fas fa-redo', 'kpi-success', null),
-            $this->buildKpiCard('Total Customer Spend', $this->formatCurrencyWithPesoSign($crmMetrics['totalSpend']), 'fas fa-wallet', 'kpi-warning', null),
-            $this->buildKpiCard('Avg Spend / Customer', $this->formatCurrencyWithPesoSign($crmMetrics['averageSpend']), 'fas fa-chart-line', 'kpi-neutral', null),
-        ];
-
-        $charts = [
-            'trend' => [
-                'type' => 'line',
-                'label' => 'Customer Activity per Day',
-                'labels' => $crmMetrics['dailyCustomerActivity']->keys()->values()->all(),
-                'values' => $crmMetrics['dailyCustomerActivity']->values()->all(),
-            ],
-            'breakdown' => [
-                'type' => 'doughnut',
-                'label' => 'One-time vs Repeat Customers',
-                'labels' => ['One-time', 'Repeat'],
-                'values' => [$crmMetrics['oneTimeCustomers'], $crmMetrics['repeatCustomers']],
-            ],
-            'topContributors' => [
-                'type' => 'bar',
-                'label' => 'Top Customers by Spend',
-                'labels' => $crmMetrics['topCustomers']->keys()->values()->all(),
-                'values' => $crmMetrics['topCustomers']->values()->all(),
-            ],
-        ];
-
-        $insights = [
-            'Top customer by spend: ' . $topCustomerLabel,
-            'Repeat customers: ' . number_format((float) $crmMetrics['repeatCustomers'], 0),
-            'Average spend per customer: ' . $this->formatCurrencyWithPesoSign($crmMetrics['averageSpend']),
-        ];
+        $kpiCards = $crmPresentation['kpiCards'];
+        $charts = $crmPresentation['charts'];
+        $insights = $crmPresentation['insights'];
 
         $crmData = $this->paginateCollection($crmData, $request);
 
@@ -399,9 +235,7 @@ class ReportsController extends Controller
 
     private function calculateCrmMetrics(Collection $customers): array
     {
-        $dailyCustomerActivity = [];
-
-        $crmData = $customers->map(function ($customer) use (&$dailyCustomerActivity) {
+        $crmData = $customers->map(function ($customer) {
             $totalReservations = $customer->reservations->count();
             $approvedReservations = $customer->reservations->where('status', 'approved')->count();
             $totalSpent = $customer->reservations->where('status', 'approved')->sum(function ($reservation) {
@@ -412,14 +246,10 @@ class ReportsController extends Controller
                 });
             });
 
-            foreach ($customer->reservations as $reservation) {
-                $eventDate = $reservation->event_date?->format('Y-m-d');
-                if ($eventDate) $dailyCustomerActivity[$eventDate] = ($dailyCustomerActivity[$eventDate] ?? 0) + 1;
-            }
-
             return [
                 'name' => $customer->name ?? 'N/A',
                 'email' => $customer->email ?? 'N/A',
+                'department' => $customer->department ?? 'N/A',
                 'total_reservations' => $totalReservations,
                 'approved_reservations' => $approvedReservations,
                 'total_spent' => $totalSpent,
@@ -429,27 +259,73 @@ class ReportsController extends Controller
             return $customer['total_reservations'] > 0;
         })->values();
 
-        ksort($dailyCustomerActivity);
-
         $activeCustomers = $crmData->count();
-        $repeatCustomers = $crmData->filter(fn ($row) => ($row['total_reservations'] ?? 0) >= 2)->count();
-        $oneTimeCustomers = max($activeCustomers - $repeatCustomers, 0);
-        $repeatRate = $activeCustomers > 0 ? ((float) $repeatCustomers / (float) $activeCustomers) * 100 : 0.0;
+        $activeOffices = $crmData
+            ->pluck('department')
+            ->filter(fn ($value) => is_string($value) && trim($value) !== '' && strtoupper(trim($value)) !== 'N/A')
+            ->map(fn (string $value) => trim($value))
+            ->unique()
+            ->count();
         $totalSpend = (float) $crmData->sum('total_spent');
-        $averageSpend = $activeCustomers > 0 ? $totalSpend / (float) $activeCustomers : 0.0;
+        $topCustomersByRevenue = $crmData
+            ->sortByDesc('total_spent')
+            ->take(5)
+            ->mapWithKeys(fn ($row) => [$row['name'] => (float) $row['total_spent']]);
 
-        $topCustomers = $crmData->sortByDesc('total_spent')->take(7)->mapWithKeys(fn ($row) => [$row['name'] => (float) $row['total_spent']]);
+        $topCustomersByReservations = $crmData
+            ->sortByDesc('total_reservations')
+            ->take(5)
+            ->mapWithKeys(fn ($row) => [$row['name'] => (int) $row['total_reservations']]);
 
         return [
             'crmData' => $crmData,
-            'dailyCustomerActivity' => collect($dailyCustomerActivity),
             'activeCustomers' => $activeCustomers,
-            'repeatCustomers' => $repeatCustomers,
-            'oneTimeCustomers' => $oneTimeCustomers,
-            'repeatRate' => $repeatRate,
+            'activeOffices' => $activeOffices,
             'totalSpend' => $totalSpend,
-            'averageSpend' => $averageSpend,
-            'topCustomers' => $topCustomers,
+            'topCustomersByRevenue' => $topCustomersByRevenue,
+            'topCustomersByReservations' => $topCustomersByReservations,
+        ];
+    }
+
+    private function buildCrmReportPresentation(array $crmMetrics): array
+    {
+        $topRevenueCustomerLabel = $crmMetrics['topCustomersByRevenue']->isNotEmpty()
+            ? ($crmMetrics['topCustomersByRevenue']->keys()->first() . ' (' . $this->formatCurrencyWithPesoSign((float) $crmMetrics['topCustomersByRevenue']->first()) . ')')
+            : 'N/A';
+
+        $topReservationCustomerLabel = $crmMetrics['topCustomersByReservations']->isNotEmpty()
+            ? ($crmMetrics['topCustomersByReservations']->keys()->first() . ' (' . number_format((int) $crmMetrics['topCustomersByReservations']->first(), 0) . ' reservations)')
+            : 'N/A';
+
+        return [
+            'kpiCards' => [
+                $this->buildKpiCard(
+                    'Total Customers / Offices',
+                    number_format((float) ($crmMetrics['activeCustomers'] ?? 0), 0) . ' / ' . number_format((float) ($crmMetrics['activeOffices'] ?? 0), 0),
+                    'fas fa-users',
+                    'kpi-primary',
+                    null
+                ),
+            ],
+            'charts' => [
+                'trend' => [
+                    'type' => 'bar',
+                    'label' => 'Top 5 Customers by Revenue',
+                    'labels' => ($crmMetrics['topCustomersByRevenue'] ?? collect())->keys()->values()->all(),
+                    'values' => ($crmMetrics['topCustomersByRevenue'] ?? collect())->values()->all(),
+                ],
+                'topContributors' => [
+                    'type' => 'bar',
+                    'label' => 'Top 5 Customers by Reservations',
+                    'labels' => ($crmMetrics['topCustomersByReservations'] ?? collect())->keys()->values()->all(),
+                    'values' => ($crmMetrics['topCustomersByReservations'] ?? collect())->values()->all(),
+                ],
+            ],
+            'insights' => [
+                'Total customers / offices: ' . number_format((float) ($crmMetrics['activeCustomers'] ?? 0), 0) . ' / ' . number_format((float) ($crmMetrics['activeOffices'] ?? 0), 0),
+                'Top customer by revenue: ' . $topRevenueCustomerLabel,
+                'Top customer by reservations: ' . $topReservationCustomerLabel,
+            ],
         ];
     }
 
@@ -465,19 +341,86 @@ class ReportsController extends Controller
         ]);
     }
 
+    private function buildReservationCountsByMonth(Collection $reservations): Collection
+    {
+        return $reservations
+            ->filter(fn ($reservation) => !empty($reservation->event_date))
+            ->groupBy(function ($reservation) {
+                $eventDate = $reservation->event_date instanceof Carbon
+                    ? $reservation->event_date
+                    : Carbon::parse($reservation->event_date);
+
+                return $eventDate->format('Y-m');
+            })
+            ->map(fn (Collection $rows) => $rows->count())
+            ->sortKeys();
+    }
+
+    private function formatMonthChartLabels(Collection $monthlyCounts): array
+    {
+        return $monthlyCounts
+            ->keys()
+            ->map(function (string $monthKey) {
+                return Carbon::createFromFormat('Y-m', $monthKey)->format('M Y');
+            })
+            ->values()
+            ->all();
+    }
+
+    private function buildInventoryReportMetrics(): array
+    {
+        $items = InventoryItem::withCount('recipes')->orderBy('name')->get();
+
+        $inventoryData = $items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name ?? 'N/A',
+                'unit' => $item->unit ?? 'N/A',
+                'stock_left' => (float) ($item->qty ?? 0),
+                'recipe_links' => (int) ($item->recipes_count ?? 0),
+            ];
+        });
+
+        $lowStockItems = $inventoryData->filter(function (array $item) {
+            return $item['stock_left'] > 0 && $item['stock_left'] <= 10;
+        })->values();
+
+        $outOfStockItems = $inventoryData->filter(fn (array $item) => $item['stock_left'] <= 0)->values();
+
+        $lowStockCriticalCount = $lowStockItems->count();
+        $outOfStockCount = $outOfStockItems->count();
+        $commonlyUsedCount = $inventoryData->filter(fn (array $item) => $item['recipe_links'] > 0)->count();
+
+        $topCommonItems = $inventoryData
+            ->filter(fn (array $item) => $item['recipe_links'] > 0)
+            ->sortByDesc('recipe_links')
+            ->take(5)
+            ->mapWithKeys(fn (array $item) => [$item['name'] => $item['recipe_links']]);
+
+        return [
+            'inventoryData' => $inventoryData,
+            'totalItems' => $items->count(),
+            'lowStockCriticalCount' => $lowStockCriticalCount,
+            'outOfStockCount' => $outOfStockCount,
+            'commonlyUsedCount' => $commonlyUsedCount,
+            'topCommonItems' => $topCommonItems,
+            'lowStockItems' => $lowStockItems->all(),
+            'outOfStockItems' => $outOfStockItems->all(),
+        ];
+    }
+
     private function buildKpiCard(string $label, string $value, string $icon, string $tone, ?float $delta): array
     {
         return ['label' => $label, 'value' => $value, 'icon' => $icon, 'tone' => $tone, 'delta' => $delta];
     }
 
     private function formatPercent(float $value): string { return number_format($value, 1) . '%'; }
-    private function formatCurrency(float $value): string { return 'PHP ' . number_format($value, 2); }
     private function formatCurrencyWithPesoSign(float $value): string { return "\u{20B1}" . number_format($value, 2); }
 
     public function exportPdf(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|in:reservation,sales,inventory,crm',
+            'report_type' => 'required|in:reservation,inventory,crm',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -499,6 +442,7 @@ class ReportsController extends Controller
                     ->orderBy('event_date')
                     ->get();
 
+                $totalReservations = $reservations->count();
                 $totalParticipants = 0;
                 $totalExpectedRevenue = 0;
                 $highestPax = 0;
@@ -538,18 +482,18 @@ class ReportsController extends Controller
                     ];
                 });
 
-                $reservationsByDay = $reservationData->groupBy('event_date')->map(fn ($rows) => $rows->sum('participants'))->sortKeys();
+                $reservationsByMonth = $this->buildReservationCountsByMonth($reservations);
                 $revenueByDay = $reservationData->groupBy('event_date')->map(fn ($rows) => $rows->sum('expected_revenue'))->sortKeys();
 
                 $charts = [
-                    'trend' => ['type' => 'line', 'label' => 'Participants per Day', 'labels' => $reservationsByDay->keys()->values()->all(), 'values' => $reservationsByDay->values()->all()],
+                    'trend' => ['type' => 'line', 'label' => 'Number of Reservations per Month', 'labels' => $this->formatMonthChartLabels($reservationsByMonth), 'values' => $reservationsByMonth->values()->all()],
                     'breakdown' => ['type' => 'line', 'label' => 'Revenue per Day (PHP)', 'labels' => $revenueByDay->keys()->values()->all(), 'values' => $revenueByDay->values()->all()]
                 ];
 
                 $insights = [
                     'Total expected revenue: ' . $this->formatCurrencyWithPesoSign($totalExpectedRevenue),
                     'Total participants across all events: ' . number_format($totalParticipants, 0),
-                    'Highest number of pax in a single reservation: ' . number_format($highestPax, 0),
+                    'Total number of reservations: ' . number_format($totalReservations, 0),
                 ];
 
                 $viewData['reservationData'] = $reservationData;
@@ -560,54 +504,26 @@ class ReportsController extends Controller
                 $viewData['reportType'] = 'reservation';
                 break;
 
-            case 'sales':
-                $reservations = Reservation::with(['items.menu', 'user'])->where('status', 'approved')->whereNotNull('event_date')->whereBetween('event_date', [$startDate, $endDate])->get();
-                $salesData = []; $totalRevenue = 0; $totalReservations = $reservations->count();
-                foreach ($reservations as $reservation) {
-                    $reservationTotal = 0; $items = [];
-                    foreach ($reservation->items as $item) {
-                        if (!$item->menu) continue;
-                        $price = MenuPrice::getPriceMap()[$item->menu->type][$item->menu->meal_time] ?? 0;
-                        $itemTotal = $price * $item->quantity; $reservationTotal += $itemTotal;
-                        $items[] = ['menu_name' => $item->menu->name ?? 'N/A', 'type' => ucfirst($item->menu->type ?? 'standard'), 'meal_time' => ucfirst(str_replace('_', ' ', $item->menu->meal_time ?? 'lunch')), 'quantity' => $item->quantity ?? 0, 'unit_price' => $price, 'total' => $itemTotal];
-                    }
-                    $salesData[] = ['reservation_id' => $reservation->id, 'event_name' => $reservation->event_name ?? 'N/A', 'event_date' => $reservation->event_date ? $reservation->event_date->format('Y-m-d') : 'N/A', 'customer_name' => $reservation->user ? $reservation->user->name : 'N/A', 'number_of_persons' => $reservation->number_of_persons ?? 0, 'items' => $items, 'reservation_total' => $reservationTotal];
-                    $totalRevenue += $reservationTotal;
-                }
-                $salesData = collect($salesData);
-                $currentAverageOrderValue = $totalReservations > 0 ? $totalRevenue / $totalReservations : 0;
-                $dailyRevenue = []; $mealTimeRevenue = []; $menuRevenue = [];
-                foreach ($salesData as $reservation) {
-                    $eventDate = $reservation['event_date'] ?? 'N/A'; $dailyRevenue[$eventDate] = ($dailyRevenue[$eventDate] ?? 0) + (float) ($reservation['reservation_total'] ?? 0);
-                    foreach (($reservation['items'] ?? []) as $item) {
-                        $mealKey = $item['meal_time'] ?? 'Unknown'; $mealTimeRevenue[$mealKey] = ($mealTimeRevenue[$mealKey] ?? 0) + (float) ($item['total'] ?? 0);
-                        $menuKey = $item['menu_name'] ?? 'Unknown Item'; $menuRevenue[$menuKey] = ($menuRevenue[$menuKey] ?? 0) + (float) ($item['total'] ?? 0);
-                    }
-                }
-                ksort($dailyRevenue); arsort($mealTimeRevenue); arsort($menuRevenue); $topMenuRevenue = collect($menuRevenue)->take(7);
-                $highestRevenueDay = 'N/A'; if (!empty($dailyRevenue)) { $maxRevenueInDay = max($dailyRevenue); $maxRevenueDay = array_search($maxRevenueInDay, $dailyRevenue, true); if ($maxRevenueDay !== false) { $highestRevenueDay = $maxRevenueDay . ' (' . $this->formatCurrency($maxRevenueInDay) . ')'; } }
-                $topMenuLabel = $topMenuRevenue->isNotEmpty() ? ($topMenuRevenue->keys()->first() . ' (' . $this->formatCurrency((float) $topMenuRevenue->first()) . ')') : 'N/A';
-                $charts = ['trend' => ['type' => 'line', 'label' => 'Revenue per Day', 'labels' => array_values(array_keys($dailyRevenue)), 'values' => array_values($dailyRevenue)], 'breakdown' => ['type' => 'doughnut', 'label' => 'Revenue by Meal Time', 'labels' => array_values(array_keys($mealTimeRevenue)), 'values' => array_values($mealTimeRevenue)], 'topContributors' => ['type' => 'bar', 'label' => 'Top Menu Items', 'labels' => $topMenuRevenue->keys()->values()->all(), 'values' => $topMenuRevenue->values()->all()]];
-                $insights = ['Highest revenue day: ' . $highestRevenueDay, 'Top menu item: ' . $topMenuLabel, 'Average order value: ' . $this->formatCurrency((float) $currentAverageOrderValue)];
-                $viewData['salesData'] = $salesData; $viewData['totalRevenue'] = $totalRevenue; $viewData['totalReservations'] = $totalReservations; $viewData['chartSvgs'] = $this->buildPdfChartSvgs($charts); $viewData['insights'] = $insights; $viewData['reportType'] = 'sales';
-                break;
-
             case 'inventory':
-                $items = InventoryItem::orderBy('name')->get();
-                $inventoryData = $items->map(function ($item) { return ['name' => $item->name ?? 'N/A', 'unit' => $item->unit ?? 'N/A', 'stock_left' => (float) ($item->qty ?? 0)]; });
-                $totalStock = $inventoryData->sum('stock_left'); $topStockItems = $inventoryData->sortByDesc('stock_left')->take(7)->mapWithKeys(fn ($item) => [$item['name'] => $item['stock_left']]);
-                $charts = ['topContributors' => ['type' => 'bar', 'label' => 'Highest Stock Items', 'labels' => $topStockItems->keys()->values()->all(), 'values' => $topStockItems->values()->all()]];
-                $insights = ['Total overall stock count: ' . number_format($totalStock, 2), 'Total unique items: ' . $inventoryData->count()];
-                $viewData['inventoryData'] = $inventoryData; $viewData['chartSvgs'] = $this->buildPdfChartSvgs($charts); $viewData['insights'] = $insights; $viewData['reportType'] = 'inventory';
+                $inventoryMetrics = $this->buildInventoryReportMetrics();
+                $charts = ['topContributors' => ['type' => 'bar', 'label' => 'Top 5 Commonly Used Items', 'labels' => $inventoryMetrics['topCommonItems']->keys()->values()->all(), 'values' => $inventoryMetrics['topCommonItems']->values()->all()]];
+                $insights = [
+                    'Low stock / critical items: ' . number_format($inventoryMetrics['lowStockCriticalCount'], 0),
+                    'Out of stock items: ' . number_format($inventoryMetrics['outOfStockCount'], 0),
+                    'Total items: ' . number_format($inventoryMetrics['totalItems'], 0),
+                    'Commonly used items: ' . number_format($inventoryMetrics['commonlyUsedCount'], 0),
+                ];
+                $viewData['inventoryData'] = $inventoryMetrics['inventoryData']; $viewData['inventoryLowStockItems'] = $inventoryMetrics['lowStockItems']; $viewData['inventoryOutOfStockItems'] = $inventoryMetrics['outOfStockItems']; $viewData['chartSvgs'] = $this->buildPdfChartSvgs($charts); $viewData['insights'] = $insights; $viewData['reportType'] = 'inventory';
                 break;
 
             case 'crm':
                 $customers = \App\Models\User::where('role', 'customer')->with(['reservations' => function ($query) use ($startDate, $endDate) { $query->whereNotNull('event_date')->whereBetween('event_date', [$startDate, $endDate])->with(['items.menu']); }])->get();
-                $crmMetrics = $this->calculateCrmMetrics($customers); $crmData = $crmMetrics['crmData'];
-                $charts = ['trend' => ['type' => 'line', 'label' => 'Customer Activity per Day', 'labels' => $crmMetrics['dailyCustomerActivity']->keys()->values()->all(), 'values' => $crmMetrics['dailyCustomerActivity']->values()->all()], 'breakdown' => ['type' => 'doughnut', 'label' => 'One-time vs Repeat Customers', 'labels' => ['One-time', 'Repeat'], 'values' => [$crmMetrics['oneTimeCustomers'], $crmMetrics['repeatCustomers']]], 'topContributors' => ['type' => 'bar', 'label' => 'Top Customers by Spend', 'labels' => $crmMetrics['topCustomers']->keys()->values()->all(), 'values' => $crmMetrics['topCustomers']->values()->all()]];
-                $topCustomerLabel = $crmMetrics['topCustomers']->isNotEmpty() ? ($crmMetrics['topCustomers']->keys()->first() . ' (' . $this->formatCurrency((float) $crmMetrics['topCustomers']->first()) . ')') : 'N/A';
-                $insights = ['Top customer by spend: ' . $topCustomerLabel, 'Repeat customers: ' . number_format((float) $crmMetrics['repeatCustomers'], 0), 'Average spend per customer: ' . $this->formatCurrency((float) $crmMetrics['averageSpend'])];
-                $viewData['crmData'] = $crmData; $viewData['chartSvgs'] = $this->buildPdfChartSvgs($charts); $viewData['insights'] = $insights; $viewData['reportType'] = 'crm';
+                $crmMetrics = $this->calculateCrmMetrics($customers);
+                $crmPresentation = $this->buildCrmReportPresentation($crmMetrics);
+                $viewData['crmData'] = $crmMetrics['crmData'];
+                $viewData['chartSvgs'] = $this->buildPdfChartSvgs($crmPresentation['charts']);
+                $viewData['insights'] = $crmPresentation['insights'];
+                $viewData['reportType'] = 'crm';
                 break;
         }
 
@@ -618,14 +534,13 @@ class ReportsController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $request->validate(['report_type' => 'required|in:reservation,sales,inventory,crm', 'start_date' => 'required|date', 'end_date' => 'required|date|after_or_equal:start_date']);
+        $request->validate(['report_type' => 'required|in:reservation,inventory,crm', 'start_date' => 'required|date', 'end_date' => 'required|date|after_or_equal:start_date']);
         $reportType = $request->report_type; $startDate = Carbon::parse($request->start_date); $endDate = Carbon::parse($request->end_date);
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.xlsx';
         AuditTrail::record(Auth::id(), AuditDictionary::EXPORTED_REPORT_EXCEL, AuditDictionary::MODULE_REPORTS, "exported {$reportType} report as Excel");
 
         switch ($reportType) {
             case 'reservation': return Excel::download(new \App\Exports\ReservationReportExport($startDate, $endDate), $filename);
-            case 'sales': return Excel::download(new SalesReportExport($startDate, $endDate), $filename);
             case 'inventory': return Excel::download(new \App\Exports\InventoryReportExport($startDate, $endDate), $filename);
             case 'crm': return Excel::download(new \App\Exports\CrmReportExport($startDate, $endDate), $filename);
             default: abort(400, 'Invalid report type');

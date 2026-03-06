@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title', 'Read Message')
+@section('page-title', 'Messages')
 
 @section('content')
 
@@ -36,7 +36,7 @@
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        Back to Inbox
+        Back to Messages
     </a>
 
     <div class="bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 overflow-hidden">

@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title','Menu Bundles')
+@section('page-title','Manage Menus')
 
 @section('content')
 @php
@@ -20,21 +20,31 @@
     [x-cloak] { display: none !important; }
     
     .type-tab {
-        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0.625rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--neutral-300);
+        background: #ffffff;
+        color: var(--neutral-700);
         font-weight: 600;
-        border: 2px solid transparent;
         font-size: 0.875rem;
+        line-height: 1.2;
+        text-align: center;
+        transition: all 0.2s ease;
     }
     
     .type-tab.active {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-        color: white;
+        background: var(--primary);
+        color: #ffffff;
         border-color: var(--primary);
     }
     
     .type-tab:not(.active):hover {
         background: var(--neutral-100);
-        border-color: var(--neutral-200);
+        border-color: var(--neutral-300);
     }
     
     .meal-badge {
@@ -144,6 +154,71 @@
     .form-select {
         appearance: none;
     }
+
+    .recipe-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .recipe-field {
+        min-width: 0;
+    }
+
+    .recipe-control-wrap {
+        position: relative;
+    }
+
+    .recipe-control-wrap .form-input,
+    .recipe-control-wrap .form-select {
+        padding-right: 2.5rem;
+    }
+
+    .recipe-control-chevron {
+        width: 1rem;
+        height: 1rem;
+        color: #6b7280;
+        pointer-events: none;
+    }
+
+    .recipe-trigger-button {
+        position: absolute;
+        inset-y: 0;
+        right: 0;
+        width: 2.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        border-radius: 0.5rem;
+        transition: color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .recipe-trigger-button:hover {
+        color: #374151;
+        background: rgba(243, 244, 246, 0.9);
+    }
+
+    .recipe-field-meta {
+        min-height: 1rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+    }
+
+    @media (min-width: 640px) {
+        .recipe-row {
+            display: grid;
+            grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.65fr) minmax(0, 0.9fr) auto;
+            gap: 0.75rem;
+            align-items: start;
+        }
+
+        .recipe-remove-button {
+            margin-top: 1.45rem;
+        }
+    }
     
     .form-input:focus, .form-select:focus, .form-textarea:focus {
         outline: none;
@@ -190,38 +265,22 @@
     }
 
     .toolbar-group {
-        border: 1px solid #e3ede7;
+        border: 1px solid var(--neutral-200);
         border-radius: 12px;
-        background: #f9fcfa;
-        padding: 0.5rem;
+        background: var(--neutral-50);
+        padding: 1.25rem;
     }
 
-    .meal-quick-link {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 34px;
-        padding: 0 0.75rem;
-        border-radius: 9999px;
-        border: 1px solid #dde8e2;
-        color: #335145;
-        font-size: 0.78rem;
-        font-weight: 600;
-        text-decoration: none;
-        background: #ffffff;
-        transition: all 0.2s ease;
+    .menu-type-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
 
-    .meal-quick-link:hover {
-        border-color: #059669;
-        color: #064e3b;
-        background: #f0fdf4;
-    }
-
-    .meal-quick-link.active {
-        border-color: #057c3c;
-        background: #057c3c;
-        color: #ffffff;
+    @media (max-width: 639px) {
+        .menu-type-tabs .type-tab {
+            flex: 1 1 0;
+        }
     }
 
     .menus-grid {
@@ -318,6 +377,17 @@
      @keydown.escape.window="isCreateOpen = false; isEditOpen = false; closeDelete()"
      class="admin-page-shell menus-index-surface border-0 shadow-none p-0 space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
 
+@if($errors->any())
+<div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+  <p class="font-semibold text-red-900">Unable to save the menu.</p>
+  <ul class="mt-2 space-y-1">
+    @foreach($errors->all() as $error)
+      <li>{{ $error }}</li>
+    @endforeach
+  </ul>
+</div>
+@endif
+
 {{-- Header --}}
 <div class="menus-hero">
   <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -329,7 +399,7 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Menu Bundles</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Manage Menus</h1>
           <p class="text-gray-600 mt-1 text-sm">Manage available menus and adjust pricing.</p>
         </div>
       </div>
@@ -353,64 +423,73 @@
     </div>
   </div>
 
-  <div class="toolbar-group mt-5 flex flex-col gap-4">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-2 overflow-x-auto min-w-0 whitespace-nowrap">
-        @foreach($types as $key => $label)
-          <a href="{{ route('admin.menus.index', ['type'=>$key,'meal'=>'all']) }}"
-             wire:navigate
-             class="px-4 py-2 rounded-lg border-2 transition-all duration-300 type-tab {{ $type === $key ? 'active' : '' }}">
-            {{ $label }}
-          </a>
-        @endforeach
+  <div class="toolbar-group mt-5 space-y-4">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="menu-type-tabs">
+          @foreach($types as $key => $label)
+            <a href="{{ route('admin.menus.index', ['type' => $key, 'meal' => 'all']) }}"
+               wire:navigate
+               class="type-tab {{ $type === $key ? 'active' : '' }}">
+              {{ $label }}
+            </a>
+          @endforeach
       </div>
-      <button type="button" @click="openCreate()"
-              class="primary-gradient hover:shadow-xl text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-md inline-flex items-center justify-center">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        Add Menu
-      </button>
+
+      <div class="hidden sm:flex sm:w-auto sm:justify-end">
+        <x-admin.ui.button.primary type="button" @click="openCreate()">
+          <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
+          Add Menu
+        </x-admin.ui.button.primary>
+      </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <a href="{{ route('admin.menus.index', ['type' => $type, 'meal' => 'all']) }}"
-         wire:navigate
-         class="meal-quick-link {{ $meal === 'all' ? 'active' : '' }}">
-        All Meals
-      </a>
-      @foreach($meals as $key => $label)
-        <a href="{{ route('admin.menus.index', ['type' => $type, 'meal' => $key]) }}"
-           wire:navigate
-           class="meal-quick-link {{ $meal === $key ? 'active' : '' }}">
-          {{ $label }}
-        </a>
-      @endforeach
-    </div>
-
-    @if($meal !== 'all' && !is_null($activePrice))
-      <div class="flex items-center justify-start">
-        <div class="price-pill">
-          <div class="leading-tight">
-            <div class="price-pill-label">
-              {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
-            </div>
-            <div class="mt-0.5 flex items-baseline gap-1">
-              <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
-              <span class="price-pill-unit">/ head</span>
-            </div>
+    <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col gap-4">
+      <input type="hidden" name="type" value="{{ $type }}">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label for="meal" class="text-sm font-semibold text-admin-neutral-700">Filter by Meal</label>
+          <div class="w-full sm:w-64">
+            <select name="meal" id="meal" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
+              <option value="all" {{ $meal === 'all' ? 'selected' : '' }}>All Meals</option>
+              @foreach($meals as $key => $label)
+                <option value="{{ $key }}" {{ $meal === $key ? 'selected' : '' }}>{{ $label }}</option>
+              @endforeach
+            </select>
           </div>
-          <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
-             wire:navigate
-             class="price-pill-edit"
-             aria-label="Update menu prices">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-          </a>
+        </div>
+
+        <div class="flex w-full items-center gap-3 {{ $meal !== 'all' && !is_null($activePrice) ? 'justify-between' : 'justify-end' }} sm:w-auto sm:justify-end">
+          @if($meal !== 'all' && !is_null($activePrice))
+            <div class="price-pill">
+              <div class="leading-tight">
+                <div class="price-pill-label">
+                  {{ ucfirst($type) }} &bull; {{ data_get($meals, $meal, 'Meal') }}
+                </div>
+                <div class="mt-0.5 flex items-baseline gap-1">
+                  <strong class="price-pill-value">&#8369;{{ number_format($activePrice,2) }}</strong>
+                  <span class="price-pill-unit">/ head</span>
+                </div>
+              </div>
+              <a href="{{ route('admin.menus.prices', ['type' => $type, 'meal' => $meal]) }}"
+                 wire:navigate
+                 class="price-pill-edit"
+                 aria-label="Update menu prices">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </a>
+            </div>
+          @endif
+
+          <div class="flex shrink-0 sm:hidden">
+            <x-admin.ui.button.primary type="button" @click="openCreate()">
+              <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
+              Add Menu
+            </x-admin.ui.button.primary>
+          </div>
         </div>
       </div>
-    @endif
+    </form>
   </div>
 
   <div class="mt-5 border-t border-[#e6efe9] pt-5">
@@ -639,10 +718,7 @@
 
               <div class="bg-green-50 border border-green-200 rounded-lg p-3">
                 <div class="text-green-800 flex items-center text-xs">
-                  <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                  </svg>
-                  Fixed price per head: <span class="font-semibold ml-1" x-text="priceText"></span>
+                  Price: <span class="font-semibold ml-1" x-text="priceText"></span>
                   <span class="text-green-600 ml-1">(auto-applied on save)</span>
                 </div>
               </div>
@@ -752,31 +828,42 @@
                       </template>
 
                       <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end bg-white p-3 rounded-lg">
-                          <div class="flex-1 relative">
+                        <div class="recipe-row bg-white p-3 rounded-lg">
+                          <div class="recipe-field relative">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient <span class="text-red-500">*</span></label>
                             <div class="relative" @click.outside="form.openDropdowns[index + '_' + rIndex] = false">
-                              <input type="text"
-                                     x-model="form.searchTerms[index + '_' + rIndex]"
-                                     x-init="if (!form.searchTerms[index + '_' + rIndex] && recipe.inventory_item_id) { form.searchTerms[index + '_' + rIndex] = getIngredientLabel(recipe.inventory_item_id); }"
-                                     @focus="form.openDropdowns[index + '_' + rIndex] = true"
-                                     @blur="form.openDropdowns[index + '_' + rIndex] = false"
-                                     @input="
-                                      form.openDropdowns[index + '_' + rIndex] = true;
-                                      const key = index + '_' + rIndex;
-                                      const typed = (form.searchTerms[key] || '').toLowerCase();
-                                      const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
-                                      if (!typed) { recipe.inventory_item_id = ''; }
-                                      else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
-                                     "
-                                     @keydown.escape="form.openDropdowns[index + '_' + rIndex] = false"
-                                     placeholder="Search ingredient..."
-                                     autocomplete="off"
-                                     class="form-input w-full bg-white"
-                                     role="combobox"
-                                     aria-autocomplete="list"
-                                     :aria-expanded="form.openDropdowns[index + '_' + rIndex] ? 'true' : 'false'"
-                                     :aria-controls="'ingredient-list-' + index + '-' + rIndex">
+                              <div class="recipe-control-wrap">
+                                <input type="text"
+                                       x-model="form.searchTerms[index + '_' + rIndex]"
+                                       x-init="if (!form.searchTerms[index + '_' + rIndex] && recipe.inventory_item_id) { form.searchTerms[index + '_' + rIndex] = getIngredientLabel(recipe.inventory_item_id); }"
+                                       @focus="form.openDropdowns[index + '_' + rIndex] = true"
+                                       @blur="form.openDropdowns[index + '_' + rIndex] = false"
+                                       @input="
+                                       form.openDropdowns[index + '_' + rIndex] = true;
+                                        const key = index + '_' + rIndex;
+                                        const typed = (form.searchTerms[key] || '').toLowerCase();
+                                        const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
+                                        if (!typed) { recipe.inventory_item_id = ''; }
+                                        else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
+                                       "
+                                       @keydown.escape="form.openDropdowns[index + '_' + rIndex] = false"
+                                       placeholder="Search ingredient..."
+                                       autocomplete="off"
+                                       class="form-input w-full bg-white"
+                                       role="combobox"
+                                       aria-autocomplete="list"
+                                       :aria-expanded="form.openDropdowns[index + '_' + rIndex] ? 'true' : 'false'"
+                                       :aria-controls="'ingredient-list-' + index + '-' + rIndex">
+                                <button type="button"
+                                        class="recipe-trigger-button"
+                                        @mousedown.prevent
+                                        @click="form.openDropdowns[index + '_' + rIndex] = !form.openDropdowns[index + '_' + rIndex]"
+                                        :aria-label="(form.openDropdowns[index + '_' + rIndex] ? 'Close' : 'Open') + ' ingredient dropdown'">
+                                  <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                  </svg>
+                                </button>
+                              </div>
 
                               <div x-show="form.openDropdowns[index + '_' + rIndex]" 
                                    class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-[100] w-full flex flex-col max-h-72">
@@ -784,7 +871,7 @@
                                   <template x-for="inv in getAvailableIngredients(item, rIndex, form.searchTerms[index + '_' + rIndex])" :key="inv.id">
                                     <button type="button" 
                                             @mousedown.prevent
-                                            @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = inv.name;"
+                                            @click="recipe.inventory_item_id = inv.id; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = inv.name;"
                                             class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
                                       <span x-text="inv.name"></span>
                                     </button>
@@ -803,26 +890,37 @@
                               </div>
                             </div>
                             <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
-                            <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
+                            <p class="recipe-field-meta text-xs text-red-600" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
                           </div>
-                          <div class="w-full sm:w-24">
-                            <label class="text-xs font-medium text-gray-700 mb-1 block">Quantity</label>
+                          <div class="recipe-field">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Qty / 1 pax</label>
                             <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" 
-                                   x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="form-input" required>
+                                   x-model="recipe.quantity_needed" placeholder="Qty" step="0.001" min="0.001" class="form-input" required>
+                            <p class="recipe-field-meta text-xs text-transparent select-none" aria-hidden="true">.</p>
                           </div>
-                          <div class="w-full sm:w-24">
-                            <label class="text-xs font-medium text-gray-700 mb-1 block">Unit</label>
-                            <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" 
-                                    x-model="recipe.unit" class="form-select" data-admin-select="true" required>
-                              <option value="">Select unit</option>
-                              <option value="Pieces">Pieces</option>
-                              <option value="Packs">Packs</option>
-                              <option value="Kgs">Kgs</option>
-                              <option value="Liters">Liters</option>
-                            </select>
+                          <div class="recipe-field">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Recipe Unit</label>
+                            <div class="recipe-control-wrap">
+                              <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" required>
+                                <option value="">Select unit</option>
+                                <option value="ml">ml</option>
+                                <option value="liters">liters</option>
+                                <option value="g">g</option>
+                                <option value="kgs">kgs</option>
+                                <option value="pc">pc</option>
+                                <option value="pieces">pieces</option>
+                                <option value="packs">packs</option>
+                              </select>
+                              <span class="pointer-events-none recipe-trigger-button" aria-hidden="true">
+                                <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              </span>
+                            </div>
+                            <p class="recipe-field-meta text-[11px] text-gray-500" x-text="'Stock unit: ' + (getIngredientUnit(recipe.inventory_item_id) || '-')"></p>
                           </div>
                           <button type="button" @click="item.recipes.splice(rIndex, 1)" 
-                                  class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+                                  class="recipe-remove-button self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -991,60 +1089,101 @@
                       </template>
 
                       <template x-for="(recipe, rIndex) in item.recipes" :key="rIndex">
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end bg-white p-3 rounded-lg border border-gray-100">
-                          <div class="flex-1 relative" x-data="{ dropdownOpen: false, searchTerm: '' }">
-                            <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient</label>
-                            <button type="button" @click="dropdownOpen = !dropdownOpen"
-                                    class="form-input flex items-center justify-between hover:border-[#057C3C] text-left text-xs">
-                              <span class="truncate">
-                                <template x-if="recipe.inventory_item_id">
-                                  <span x-text="getIngredientLabel(recipe.inventory_item_id)"></span>
-                                </template>
-                                <template x-if="!recipe.inventory_item_id">
-                                  <span class="text-gray-400">Select Ingredient</span>
-                                </template>
-                              </span>
-                              <svg class="w-3 h-3 text-gray-400 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                              </svg>
-                            </button>
-
-                            <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-72" style="display: none;">
-                              <div class="sticky top-0 bg-white border-b border-gray-300 p-1.5 z-50">
-                                <input type="text" x-model="searchTerm" @keydown.escape="dropdownOpen = false"
-                                       placeholder="Search..." class="form-input" style="font-size: 0.75rem;">
+                        <div class="recipe-row bg-white p-3 rounded-lg">
+                          <div class="recipe-field relative">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Ingredient <span class="text-red-500">*</span></label>
+                            <div class="relative" @click.outside="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false">
+                              <div class="recipe-control-wrap">
+                                <input type="text"
+                                       x-model="editForm.searchTerms['edit_' + index + '_' + rIndex]"
+                                       x-init="if (!editForm.searchTerms['edit_' + index + '_' + rIndex] && recipe.inventory_item_id) { editForm.searchTerms['edit_' + index + '_' + rIndex] = getIngredientLabel(recipe.inventory_item_id); }"
+                                       @focus="editForm.openDropdowns['edit_' + index + '_' + rIndex] = true"
+                                       @blur="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false"
+                                       @input="
+                                        const key = 'edit_' + index + '_' + rIndex;
+                                        editForm.openDropdowns[key] = true;
+                                        const typed = (editForm.searchTerms[key] || '').toLowerCase();
+                                        const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
+                                        if (!typed) { recipe.inventory_item_id = ''; }
+                                        else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
+                                       "
+                                       @keydown.escape="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false"
+                                       placeholder="Search ingredient..."
+                                       autocomplete="off"
+                                       class="form-input w-full bg-white"
+                                       role="combobox"
+                                       aria-autocomplete="list"
+                                       :aria-expanded="editForm.openDropdowns['edit_' + index + '_' + rIndex] ? 'true' : 'false'"
+                                       :aria-controls="'edit-ingredient-list-' + index + '-' + rIndex">
+                                <button type="button"
+                                        class="recipe-trigger-button"
+                                        @mousedown.prevent
+                                        @click="editForm.openDropdowns['edit_' + index + '_' + rIndex] = !editForm.openDropdowns['edit_' + index + '_' + rIndex]"
+                                        :aria-label="(editForm.openDropdowns['edit_' + index + '_' + rIndex] ? 'Close' : 'Open') + ' ingredient dropdown'">
+                                  <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                  </svg>
+                                </button>
                               </div>
-                              <div class="overflow-y-auto max-h-60">
-                                <template x-for="inv in getAvailableIngredients(item, rIndex, searchTerm)" :key="inv.id">
-                                  <button type="button" @click="recipe.inventory_item_id = inv.id; recipe.unit = inv.unit || ''; dropdownOpen = false; searchTerm = '';"
-                                          class="w-full text-left px-2 py-1.5 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-xs">
-                                    <span x-text="inv.name"></span>
-                                  </button>
-                                </template>
-                                <template x-if="getAvailableIngredients(item, rIndex, searchTerm).length === 0">
-                                  <div class="px-2 py-2 text-center text-gray-500 text-xs">No ingredients found</div>
-                                </template>
+
+                              <div x-show="editForm.openDropdowns['edit_' + index + '_' + rIndex]"
+                                   class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-[100] w-full flex flex-col max-h-72">
+                                <div class="overflow-y-auto flex-1" :id="'edit-ingredient-list-' + index + '-' + rIndex">
+                                  <template x-for="inv in getAvailableIngredients(item, rIndex, editForm.searchTerms['edit_' + index + '_' + rIndex])" :key="inv.id">
+                                    <button type="button"
+                                            @mousedown.prevent
+                                            @click="
+                                              recipe.inventory_item_id = inv.id;
+                                              editForm.openDropdowns['edit_' + index + '_' + rIndex] = false;
+                                              editForm.searchTerms['edit_' + index + '_' + rIndex] = inv.name;
+                                            "
+                                            class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
+                                      <span x-text="inv.name"></span>
+                                    </button>
+                                  </template>
+                                  <template x-if="getAvailableIngredients(item, rIndex, editForm.searchTerms['edit_' + index + '_' + rIndex]).length === 0">
+                                    <div class="px-3 py-4 text-center text-gray-500 text-sm">
+                                      <template x-if="allInventoryItems.length === 0">
+                                        <span>No ingredients available in inventory</span>
+                                      </template>
+                                      <template x-if="allInventoryItems.length > 0">
+                                        <span>No ingredients matching your search</span>
+                                      </template>
+                                    </div>
+                                  </template>
+                                </div>
                               </div>
                             </div>
-
                             <input type="hidden" :name="'items[' + index + '][recipes][' + rIndex + '][inventory_item_id]'" :value="recipe.inventory_item_id" required>
-                            <p class="text-xs text-red-600 mt-1" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
+                            <p class="recipe-field-meta text-xs text-red-600" x-show="isRecipeDuplicate(item, rIndex)" x-text="getDuplicateIngredientMessage(item, rIndex)"></p>
                           </div>
-                          <div class="w-full sm:w-24">
-                            <label class="text-xs font-medium text-gray-700 mb-1 block">Quantity</label>
-                            <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.01" min="0.01" class="form-input" required>
+                          <div class="recipe-field">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Qty / 1 pax</label>
+                            <input type="number" :name="'items[' + index + '][recipes][' + rIndex + '][quantity_needed]'" x-model="recipe.quantity_needed" placeholder="Qty" step="0.001" min="0.001" class="form-input" required>
+                            <p class="recipe-field-meta text-xs text-transparent select-none" aria-hidden="true">.</p>
                           </div>
-                          <div class="w-full sm:w-24">
-                            <label class="text-xs font-medium text-gray-700 mb-1 block">Unit</label>
-                            <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" data-admin-select="true" required>
-                              <option value="">Select unit</option>
-                              <option value="Pieces">Pieces</option>
-                              <option value="Packs">Packs</option>
-                              <option value="Kgs">Kgs</option>
-                              <option value="Liters">Liters</option>
-                            </select>
+                          <div class="recipe-field">
+                            <label class="text-xs font-medium text-gray-700 mb-1 block">Recipe Unit</label>
+                            <div class="recipe-control-wrap">
+                              <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" required>
+                                <option value="">Select unit</option>
+                                <option value="ml">ml</option>
+                                <option value="liters">liters</option>
+                                <option value="g">g</option>
+                                <option value="kgs">kgs</option>
+                                <option value="pc">pc</option>
+                                <option value="pieces">pieces</option>
+                                <option value="packs">packs</option>
+                              </select>
+                              <span class="pointer-events-none recipe-trigger-button" aria-hidden="true">
+                                <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              </span>
+                            </div>
+                            <p class="recipe-field-meta text-[11px] text-gray-500" x-text="'Stock unit: ' + (getIngredientUnit(recipe.inventory_item_id) || '-')"></p>
                           </div>
-                          <button type="button" @click="item.recipes.splice(rIndex, 1)" class="self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+                          <button type="button" @click="item.recipes.splice(rIndex, 1)" class="recipe-remove-button self-end sm:self-auto p-2 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -1081,10 +1220,7 @@
 
             <div class="bg-green-50 border border-green-200 rounded-lg p-3">
               <div class="text-green-800 flex items-center text-xs">
-                <svg class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                </svg>
-                Fixed price per head: <span class="font-semibold ml-1" x-text="editPriceText"></span>
+                Price: <span class="font-semibold ml-1" x-text="editPriceText"></span>
                 <span class="text-green-700 ml-1">(auto-applied on save)</span>
               </div>
             </div>
@@ -1206,4 +1342,3 @@
 @endif
 
 @endsection
-

@@ -9,7 +9,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\{
-    MenuController, RecipeController, ReservationController, CalendarController, InventoryItemController, ReportsController, PaymentController, CustomerNotificationController
+    MenuController, RecipeController, ReservationController, CalendarController, InventoryItemController, ReportsController, CustomerNotificationController
 };
 use App\Http\Controllers\Admin\MessageController;
 
@@ -91,6 +91,7 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
 
+        Route::get('/inventory-alerts', [InventoryItemController::class, 'alerts'])->name('inventory.alerts');
         Route::resource('inventory', InventoryItemController::class);
         Route::get('/menus/prices', [MenuController::class,'prices'])->name('menus.prices');
         Route::post('/menus/prices', [MenuController::class,'updatePrices'])->name('menus.prices.update');
@@ -102,7 +103,10 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/menu-items/{menuItem}/recipes/{recipe}', [RecipeController::class,'destroy'])->name('recipes.destroy');
 
         Route::get  ('/reservations',                       [ReservationController::class,'index'])->name('reservations');
+        Route::post ('/reservations/export/pdf',            [ReservationController::class,'exportIndexPdf'])->name('reservations.export.list.pdf');
+        Route::post ('/reservations/export/excel',          [ReservationController::class,'exportIndexExcel'])->name('reservations.export.list.excel');
         Route::get  ('/reservations/{reservation}',         [ReservationController::class,'show'])->name('reservations.show');
+        Route::get  ('/reservations/{reservation}/export-pdf', [ReservationController::class,'exportPdf'])->name('reservations.export.pdf');
         Route::post ('/reservations/{reservation}/check-inventory', [ReservationController::class,'checkInventory'])->name('reservations.check-inventory');
         Route::patch('/reservations/{reservation}/approve', [ReservationController::class,'approve'])->name('reservations.approve');
         Route::patch('/reservations/{reservation}/decline', [ReservationController::class,'decline'])->name('reservations.decline');
@@ -110,12 +114,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'updateAdditional'])->name('reservations.additionals.update');
         Route::delete('/reservations/{reservation}/additionals/{additional}', [ReservationController::class, 'deleteAdditional'])->name('reservations.additionals.destroy');
         Route::post('/reservations/{id}/mark-paid', [\App\Http\Controllers\ReservationController::class, 'markPaid'])->name('reservations.mark_paid');
-        Route::patch('reservations/{reservation}/service-fee', [\App\Http\Controllers\ReservationController::class, 'updateServiceFee'])->name('reservations.service_fee.update');
-        // Payments
-        Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-        Route::get('/payments/{payment}', [PaymentController::class, 'showAdmin'])->name('payments.show');
-        Route::patch('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('payments.approve');
-        Route::patch('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
 
         // Reports
         Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
@@ -137,9 +135,6 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::post('/customer/notifications/mark-all-read', [CustomerNotificationController::class, 'markAllRead'])->name('customer.notifications.mark-all-read');
     Route::patch('/customer/notifications/{notification}/read', [CustomerNotificationController::class, 'setRead'])->name('customer.notifications.set-read');
 
-    Route::get('/customer/payment-due', [PaymentController::class, 'due'])->name('customer.payment-due');
-    Route::get('/payments/{reservation}', [PaymentController::class, 'show'])->name('payments.show');
-    Route::post('/payments/{reservation}', [PaymentController::class, 'store'])->name('payments.store');
 });
 
 Route::get('/menu', [MenuController::class, 'customerIndex'])->name('menu');
@@ -158,9 +153,7 @@ Route::post('/contact', [ContactController::class, 'send'])->name('contact.send'
 // Group routes that require the user to be logged in (authenticated)
 Route::middleware(['auth'])->group(function () {
     // 1. Initial reservation form (GET)
-    Route::get('/reservation_form', function () {
-        return view('customer.reservation_form');
-    })->name('reservation_form');
+    Route::get('/reservation_form', [ReservationController::class, 'showReservationForm'])->name('reservation_form');
 
     Route::post('/reservation/step1', [ReservationController::class, 'postDetails'])->name('reservation.post_details');
 
@@ -194,8 +187,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/billing_info/{id?}', function ($id = null) {
         return view('customer.billing_info', ['id' => $id]);
     })->name('billing_info');
-
-    Route::post('/reservations/{reservation}/upload-receipt', [ReservationController::class, 'uploadReceipt'])->name('reservation.upload-receipt');
 
     // 7. Route for cancelling a reservation
     Route::patch('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservation.cancel');

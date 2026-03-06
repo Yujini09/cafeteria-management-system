@@ -1,5 +1,5 @@
 @extends('layouts.sidebar')
-@section('page-title','Manage Menu Prices')
+@section('page-title','Prices')
 
 @section('content')
 <style>
@@ -47,6 +47,8 @@
 
 /* Meal Time Badge */
 .meal-time-badge {
+    display: inline-flex;
+    align-items: center;
     padding: 0.5rem 0.75rem;
     background: var(--neutral-50);
     border: 1px solid var(--neutral-200);
@@ -54,6 +56,7 @@
     font-weight: 600;
     color: var(--neutral-800);
     text-transform: capitalize;
+    white-space: nowrap;
 }
 
 /* Highlight Animation */
@@ -96,7 +99,7 @@
                 <i class="fas fa-peso-sign"></i>
             </div>
             <div class="header-text">
-                <h1 class="header-title">Manage Menu Prices</h1>
+                <h1 class="header-title">Prices</h1>
             </div>
         </div>
     </div>

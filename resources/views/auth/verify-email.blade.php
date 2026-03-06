@@ -28,6 +28,10 @@
                     <p class="text-gray-600">One last step to complete your registration</p>
                 </div>
 
+                <div id="registeredSuccessMessage" class="mb-6 font-medium text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200 animate-fade-in @if(!session('registered')) hidden @endif">
+                    <span id="registeredSuccessMessageText">{{ session('registered') }}</span>
+                </div>
+
                 <div class="mb-6 text-sm text-gray-600 bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500 animate-pulse">
                     {{ __('Before proceeding, please check your email for a verification link.') }}
                     {{ __('If you did not receive the email, we will gladly send you another.') }}
@@ -69,6 +73,21 @@
     <script>
         // Automatically send verification email on page load
         document.addEventListener('DOMContentLoaded', function() {
+            const registrationSuccessKey = 'cms.register.success';
+            const registeredSuccessMessage = document.getElementById('registeredSuccessMessage');
+            const registeredSuccessMessageText = document.getElementById('registeredSuccessMessageText');
+
+            try {
+                const storedSuccessMessage = window.sessionStorage.getItem(registrationSuccessKey);
+                if (storedSuccessMessage && registeredSuccessMessage && registeredSuccessMessageText) {
+                    registeredSuccessMessageText.textContent = storedSuccessMessage;
+                    registeredSuccessMessage.classList.remove('hidden');
+                    window.sessionStorage.removeItem(registrationSuccessKey);
+                }
+            } catch (error) {
+                console.warn('Unable to read persisted registration success message.', error);
+            }
+
             fetch('{{ route("verification.send") }}', {
                 method: 'POST',
                 headers: {

@@ -66,9 +66,28 @@ const restoreLoadingLabel = (control) => {
     }
 };
 
+const isSubmitControl = (control) => {
+    if (!control || typeof control.tagName !== 'string') return false;
+
+    if (control.tagName === 'BUTTON') {
+        return (control.type || 'submit').toLowerCase() === 'submit';
+    }
+
+    if (control.tagName === 'INPUT') {
+        return (control.type || '').toLowerCase() === 'submit';
+    }
+
+    return false;
+};
+
 const getFormSubmitControls = (form) => {
-    if (!form) return [];
-    return Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+    if (!form || !form.elements) return [];
+    return Array.from(form.elements).filter((control) => isSubmitControl(control));
+};
+
+const isAssociatedSubmitter = (form, submitter) => {
+    if (!form || !submitter) return false;
+    return form.contains(submitter) || submitter.form === form;
 };
 
 const startButtonLoading = (button, fallbackText = null) => {
@@ -97,7 +116,7 @@ const startFormLoading = (form, submitter = null, fallbackText = null) => {
     const controls = getFormSubmitControls(form);
     controls.forEach((control) => markDisabled(control));
 
-    const target = submitter && form.contains(submitter)
+    const target = isAssociatedSubmitter(form, submitter)
         ? submitter
         : (controls[0] || null);
 
@@ -557,16 +576,50 @@ document.addEventListener('alpine:init', () => {
         meal: 'breakfast',
         name: '',
         description: '',
-        items: []
+        items: [],
+        openDropdowns: {},
+        searchTerms: {}
       },
       getAllInventoryItems() { return this.allInventoryItems; },
+      normalizeUnit(unit) {
+        const value = String(unit || '').trim().toLowerCase();
+        if (!value) return '';
+
+        const aliases = {
+          ml: 'ml',
+          milliliter: 'ml',
+          milliliters: 'ml',
+          millilitre: 'ml',
+          millilitres: 'ml',
+          liter: 'liters',
+          liters: 'liters',
+          litre: 'liters',
+          litres: 'liters',
+          l: 'liters',
+          g: 'g',
+          gram: 'g',
+          grams: 'g',
+          kg: 'kgs',
+          kgs: 'kgs',
+          kilogram: 'kgs',
+          kilograms: 'kgs',
+          pc: 'pc',
+          pcs: 'pc',
+          piece: 'pieces',
+          pieces: 'pieces',
+          pack: 'packs',
+          packs: 'packs',
+        };
+
+        return aliases[value] || value;
+      },
       getIngredientLabel(id) {
         const item = this.allInventoryItems.find(i => i.id == id);
         return item ? item.name : '';
       },
       getIngredientUnit(id) {
         const item = this.allInventoryItems.find(i => i.id == id);
-        return item ? (item.unit || '') : '';
+        return item ? this.normalizeUnit(item.unit) : '';
       },
       normalizeIngredientId(id) {
         if (id === null || id === undefined || id === '') return null;
@@ -727,18 +780,29 @@ document.addEventListener('alpine:init', () => {
         this.editForm.description = description || '';
         this.editForm.type = type || 'standard';
         this.editForm.meal = meal || 'breakfast';
-        this.editForm.items = (items || []).map(i => ({
+        this.editForm.openDropdowns = {};
+        this.editForm.searchTerms = {};
+        this.editForm.items = (items || []).map((i, itemIndex) => ({
           name: i.name,
           type: i.type,
-          recipes: (i.recipes || []).map(recipe => ({
-            ...recipe,
-            unit: recipe.unit || this.getIngredientUnit(recipe.inventory_item_id) || ''
-          }))
+          recipes: (i.recipes || []).map((recipe, recipeIndex) => {
+            const normalizedRecipe = {
+              ...recipe,
+              unit: this.normalizeUnit(recipe.unit) || ''
+            };
+            const key = `edit_${itemIndex}_${recipeIndex}`;
+            this.editForm.searchTerms[key] = this.getIngredientLabel(normalizedRecipe.inventory_item_id) || '';
+            return normalizedRecipe;
+          })
         }));
         this.$refs.editForm.action = `/admin/menus/${id}`;
         this.isEditOpen = true;
       },
-      closeEdit() { this.isEditOpen = false; },
+      closeEdit() {
+        this.isEditOpen = false;
+        this.editForm.openDropdowns = {};
+        this.editForm.searchTerms = {};
+      },
       openDelete(id, name = 'this menu') {
         this.deleteId = id;
         this.deleteName = name || 'this menu';
