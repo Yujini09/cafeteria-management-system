@@ -30,7 +30,6 @@
                                   d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </div>
-                    <p class="text-gray-600">We're here to help! Send us your questions or concerns.</p>
                 </div>
 
                 <form id="contactForm" method="POST" action="{{ route('contact.send') }}" class="space-y-6 flex-grow">
@@ -97,13 +96,17 @@
                     
                     <!-- Message - Increased Height -->
                     <div class="space-y-3 flex-grow">
-                        <label for="message" class="block text-sm font-semibold text-gray-700 flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                            </svg>
-                            Your Message
-                            <span class="ml-auto text-xs text-gray-500 font-normal">Minimum 20 characters</span>
+                        <label for="message" class="block text-sm font-semibold text-gray-700">
+                            <span class="flex items-center justify-between gap-2">
+                                <span class="inline-flex items-center whitespace-nowrap">
+                                    <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                                    </svg>
+                                    <span class="whitespace-nowrap">Your Message</span>
+                                </span>
+                                <span class="ml-auto text-xs text-gray-500 font-normal whitespace-nowrap">Minimum 20 characters</span>
+                            </span>
                         </label>
                         <div class="relative h-full">
                             <textarea
