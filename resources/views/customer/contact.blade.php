@@ -30,7 +30,6 @@
                                   d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     </div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Contact Support</h2>
                     <p class="text-gray-600">We're here to help! Send us your questions or concerns.</p>
                 </div>
 
@@ -205,10 +204,9 @@
                                           d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
                             </div>
-                            <div class="ml-4">
+                            <div class="ml-4 min-w-0">
                                 <h4 class="font-semibold text-gray-800">Email Address</h4>
-                                <p class="text-gray-600">food.lodgingservices@clsu.edu.ph</p>
-                                <p class="text-sm text-gray-500">For general inquiries and support</p>
+                                <p class="text-gray-600 break-all">food.lodgingservices@clsu.edu.ph</p>
                             </div>
                         </div>
 
