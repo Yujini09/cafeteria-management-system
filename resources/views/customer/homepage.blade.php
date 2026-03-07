@@ -368,7 +368,7 @@ body {
     </div>
 </section>
 
-<section id="testimonials" class="py-20 bg-white relative" 
+<section id="testimonials" class="py-20 bg-white relative overflow-x-hidden" 
          x-data="{ 
             showFeedbackModal: false, 
             active: 0, 
@@ -535,7 +535,7 @@ body {
                 </div>
             @else
                 {{-- Original 3D slider logic for 3+ items --}}
-                <div class="relative w-full h-[450px] flex items-center justify-center mt-8" style="perspective: 1000px;">
+                <div class="relative w-full h-[450px] flex items-center justify-center mt-8 overflow-hidden md:overflow-visible" style="perspective: 1000px;">
                     
                     {{-- Left Arrow --}}
                     <button @click="prev()" class="absolute left-0 md:left-8 z-40 bg-clsu-green hover:bg-green-700 text-white w-12 h-12 rounded-lg shadow-lg flex items-center justify-center transition-all hover:scale-110">
@@ -550,8 +550,8 @@ body {
                                  style="will-change: transform, opacity;"
                                  :class="{
                                      'z-30 scale-100 opacity-100 translate-x-0 shadow-2xl': active === {{ $index }},
-                                     'z-20 scale-[0.85] opacity-50 -translate-x-[65%] md:-translate-x-[85%] blur-[1px] hover:opacity-100 hover:blur-none': active === {{ ($index + 1) % count($feedbacks) }},
-                                     'z-20 scale-[0.85] opacity-50 translate-x-[65%] md:translate-x-[85%] blur-[1px] hover:opacity-100 hover:blur-none': active === {{ ($index - 1 + count($feedbacks)) % count($feedbacks) }},
+                                     'z-20 scale-[0.85] opacity-0 md:opacity-50 -translate-x-[110%] md:-translate-x-[85%] blur-0 md:blur-[1px] pointer-events-none md:pointer-events-auto md:hover:opacity-100 md:hover:blur-none': active === {{ ($index + 1) % count($feedbacks) }},
+                                     'z-20 scale-[0.85] opacity-0 md:opacity-50 translate-x-[110%] md:translate-x-[85%] blur-0 md:blur-[1px] pointer-events-none md:pointer-events-auto md:hover:opacity-100 md:hover:blur-none': active === {{ ($index - 1 + count($feedbacks)) % count($feedbacks) }},
                                      'z-10 scale-75 opacity-0 pointer-events-none': active !== {{ $index }} && active !== {{ ($index + 1) % count($feedbacks) }} && active !== {{ ($index - 1 + count($feedbacks)) % count($feedbacks) }}
                                  }"
                                  @click="active = {{ $index }}">
