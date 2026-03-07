@@ -9,7 +9,7 @@
         </div>
 
         {{-- Card Container --}}
-        <div class="relative z-10 flex w-full max-w-5xl flex-col overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin md:flex-row lg:min-h-[650px]"> 
+        <div class="relative z-10 flex w-full max-w-5xl flex-col overflow-hidden rounded-admin-lg border border-admin-neutral-200 bg-white shadow-admin md:flex-row lg:h-[560px]"> 
             
             {{-- Left side (Logo Display) --}}
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 

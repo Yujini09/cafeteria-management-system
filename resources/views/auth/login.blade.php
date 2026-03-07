@@ -122,13 +122,13 @@
                         </div>
 
                         {{-- Remember + Forgot --}}
-                        <div class="flex flex-col items-start gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                            <label for="remember_me" class="flex items-center gap-2 text-admin-neutral-600">
+                        <div class="flex w-full items-center justify-between gap-3 text-sm">
+                            <label for="remember_me" class="flex items-center gap-2 text-admin-neutral-600 whitespace-nowrap">
                                 <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 text-admin-primary focus:ring-admin-primary/20 border-admin-neutral-300 rounded">
                                 <span>Remember me</span>
                             </label>
                             @if (Route::has('password.request'))
-                                <a id="openForgotPassword" href="{{ route('password.request') }}" class="text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200 sm:self-auto">
+                                <a id="openForgotPassword" href="{{ route('password.request') }}" class="ml-auto whitespace-nowrap text-right text-admin-primary hover:text-admin-primary-hover hover:underline transition duration-200">
                                     {{ __('Forgot Password?') }}
                                 </a>
                             @endif
