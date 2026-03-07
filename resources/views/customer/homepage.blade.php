@@ -343,31 +343,6 @@ body {
     </div>
 </section>
 
-<section id="reservation" class="bg-white">
-    <div class="py-20 bg-gray-900 relative overflow-hidden text-center text-white">
-        <div class="absolute inset-0 opacity-30 reservation-bg"></div>
-        
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-poppins">
-            <h2 class="text-4xl font-bold mb-6">Reserve Your Spot at RET Cafeteria</h2>
-            <p class="text-xl mb-8">Don't miss out. Reserve ahead and roll up when it's time to eat.</p>
-
-            @auth
-                <a href="{{ route('reservation_form') }}" class="inline-block">
-                    <button class="bg-clsu-green px-8 py-3 rounded-lg font-semibold text-white text-base hover:bg-green-700 transition duration-300">
-                        Reserve Now
-                    </button>
-                </a>
-            @else
-                <a href="{{ route('reservation_form') }}" class="inline-block">
-                    <button class="bg-clsu-green px-8 py-3 rounded-lg font-semibold text-white text-base hover:bg-green-700 transition duration-300">
-                        Reserve Now
-                    </button>
-                </a>
-            @endauth
-        </div>
-    </div>
-</section>
-
 <section id="testimonials" class="py-20 bg-white relative overflow-x-hidden" 
          x-data="{ 
             showFeedbackModal: false, 
