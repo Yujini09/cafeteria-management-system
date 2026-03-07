@@ -489,26 +489,26 @@
 <section class="py-10 bg-gray-50 text-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-8">
-            <div class="flex items-center justify-center">
-                <div class="flex items-center">
+            <div class="flex w-full max-w-3xl mx-auto items-start sm:items-center justify-between sm:justify-center">
+                <div class="flex flex-1 sm:flex-none flex-col sm:flex-row items-center text-center sm:text-left min-w-0">
                     <div class="flex items-center justify-center w-10 h-10 bg-clsu-green rounded-full">
                         <span class="text-white font-bold">1</span>
                     </div>
-                    <div class="ml-2 text-sm font-medium text-clsu-green">Reservation Details</div>
+                    <div class="mt-2 sm:mt-0 sm:ml-2 text-[11px] sm:text-sm leading-tight font-medium text-clsu-green">Reservation Details</div>
                 </div>
-                <div class="w-16 h-1 bg-clsu-green mx-2"></div>
-                <div class="flex items-center">
+                <div class="hidden sm:block w-16 h-1 bg-clsu-green mx-2"></div>
+                <div class="flex flex-1 sm:flex-none flex-col sm:flex-row items-center text-center sm:text-left min-w-0">
                     <div class="flex items-center justify-center w-10 h-10 bg-clsu-green rounded-full">
                         <span class="text-white font-bold">2</span>
                     </div>
-                    <div class="ml-2 text-sm font-medium text-clsu-green">Menu Selection</div>
+                    <div class="mt-2 sm:mt-0 sm:ml-2 text-[11px] sm:text-sm leading-tight font-medium text-clsu-green">Menu Selection</div>
                 </div>
-                <div class="w-16 h-1 bg-gray-300 mx-2"></div>
-                <div class="flex items-center">
+                <div class="hidden sm:block w-16 h-1 bg-gray-300 mx-2"></div>
+                <div class="flex flex-1 sm:flex-none flex-col sm:flex-row items-center text-center sm:text-left min-w-0">
                     <div class="flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full">
                         <span class="text-gray-500 font-bold">3</span>
                     </div>
-                    <div class="ml-2 text-sm font-medium text-gray-500">Confirmation</div>
+                    <div class="mt-2 sm:mt-0 sm:ml-2 text-[11px] sm:text-sm leading-tight font-medium text-gray-500">Confirmation</div>
                 </div>
             </div>
         </div>
