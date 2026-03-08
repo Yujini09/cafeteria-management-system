@@ -319,7 +319,7 @@
                 <button type="submit" data-loading-text="Saving Reservation Details..."
                     id="menu-selection-btn"
                     @disabled($reservationFormLocked)
-                    class="px-8 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold">
+                    class="inline-flex min-w-[220px] items-center justify-center px-10 py-4 bg-clsu-green text-white text-base rounded-xl hover:bg-green-700 transition duration-150 shadow-2xl font-bold tracking-wide disabled:opacity-55 disabled:cursor-not-allowed">
                     Proceed to Menu Selection
                 </button>
                 <div id="validation-message" class="mt-4 text-sm font-semibold text-red-600 hidden">

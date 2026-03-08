@@ -167,9 +167,36 @@
     }
 
     .menu-header-guidance {
-        padding: 14px 16px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+    .menu-guidance-accordion {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.14);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+    .menu-guidance-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        padding: 16px 18px;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        text-align: left;
+    }
+    .menu-guidance-trigger-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
     }
     .menu-header-guidance-header {
         display: flex;
@@ -184,35 +211,65 @@
         align-items: center;
         justify-content: center;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
+        background: rgba(22, 101, 52, 0.12);
+        color: #166534;
         flex-shrink: 0;
+        font-size: 0.95rem;
+        font-weight: 800;
+        text-transform: lowercase;
     }
     .menu-header-guidance-title {
-        color: #ffffff;
+        color: #14532d;
         font-size: 1rem;
         font-weight: 700;
         line-height: 1.25;
     }
+    .menu-guidance-panel {
+        padding: 0 18px 18px;
+        border-top: 1px solid #e5e7eb;
+    }
     .menu-header-guidance-subtext {
         margin: 0 0 10px;
-        color: rgba(255, 255, 255, 0.88);
+        color: #4b5563;
         font-size: 0.82rem;
         line-height: 1.4;
     }
     .menu-header-guidance-list {
-        margin: 0;
-        padding-left: 1.2rem;
-        color: rgba(255, 255, 255, 0.92);
+        margin: 8px 0 0;
+        padding-left: 0;
+        color: #4b5563;
         font-size: 0.84rem;
         line-height: 1.6;
+        list-style: none;
+    }
+    .menu-header-guidance-list li {
+        position: relative;
+        padding-left: 1rem;
+    }
+    .menu-header-guidance-list li::before {
+        content: "\2022";
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: #166534;
+        font-weight: 700;
     }
     .menu-header-guidance-list li + li {
         margin-top: 8px;
     }
     .menu-header-guidance-list strong {
-        color: #ffffff;
+        color: #14532d;
         font-weight: 700;
+    }
+    .menu-guidance-chevron {
+        width: 18px;
+        height: 18px;
+        color: #6b7280;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+    .menu-guidance-accordion.is-open .menu-guidance-chevron {
+        transform: rotate(180deg);
     }
 
     .green-menu-list {
@@ -226,9 +283,10 @@
         overflow: hidden;
     }
     .green-menu-header {
-        background: linear-gradient(135deg, #1a5e3d 0%, #2d7a52 100%);
-        color: #ffffff;
-        padding: 18px 20px;
+        background: #ffffff;
+        color: inherit;
+        padding: 18px;
+        border-bottom: 1px solid #e5e7eb;
         flex-shrink: 0;
     }
     .green-menu-header-layout {
@@ -359,9 +417,9 @@
         cursor: pointer;
     }
     .menu-browser-item.is-selected {
-        border-left-color: #15803d;
-        box-shadow: 0 16px 28px rgba(26, 94, 61, 0.14);
-        background: linear-gradient(180deg, #ffffff 0%, #f4fff7 100%);
+        border-left-color: #166534;
+        box-shadow: 0 16px 28px rgba(21, 128, 61, 0.18), inset 0 0 0 1px rgba(22, 101, 52, 0.08);
+        background: linear-gradient(180deg, #f3fff7 0%, #dcfce7 100%);
     }
     .menu-browser-item.is-expanded {
         box-shadow: 0 16px 28px rgba(26, 94, 61, 0.14);
@@ -394,6 +452,15 @@
         font-weight: 700;
         white-space: nowrap;
     }
+    .menu-card-side-column {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 0.9rem;
+        align-self: stretch;
+        flex: 0 0 auto;
+    }
     .selection-chip {
         display: inline-flex;
         align-items: center;
@@ -409,6 +476,44 @@
     .selection-chip-muted {
         background: #eef2ff;
         color: #475569;
+    }
+    .menu-card-items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        margin-top: 0.9rem;
+        font-size: 0.875rem;
+        line-height: 1.2;
+        color: #374151;
+    }
+    .menu-card-items-entry {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        line-height: 1.2;
+        min-width: 0;
+    }
+    .menu-card-items-bullet {
+        color: #16a34a;
+        margin-top: 0.1rem;
+        line-height: 1;
+        flex: 0 0 auto;
+    }
+    .menu-card-items-empty {
+        color: #6b7280;
+        line-height: 1.2;
+    }
+    .menu-card-inline-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 999px;
+        background: rgba(22, 163, 74, 0.14);
+        color: #15803d;
+        border: 1px solid rgba(22, 163, 74, 0.22);
+        flex: 0 0 auto;
     }
     .menu-card-overlay {
         position: absolute;
@@ -453,9 +558,12 @@
         }
     }
     .menu-browser-footer {
+        margin: 0;
         padding: 16px 18px;
-        background: rgba(255, 255, 255, 0.6);
-        border-top: 1px solid #d8ead9;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        border-radius: 0;
+        box-shadow: none;
         flex-shrink: 0;
     }
     .no-results {
@@ -644,6 +752,34 @@
     .navigation-button[disabled] {
         opacity: 0.55;
         cursor: not-allowed;
+    }
+    .menu-navigation-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    .menu-nav-action {
+        width: 220px;
+        min-height: 56px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 1.5rem;
+        text-align: center;
+    }
+
+    @media (max-width: 640px) {
+        .menu-navigation-actions {
+            gap: 0.5rem;
+        }
+        .menu-nav-action {
+            width: calc(50% - 0.25rem);
+            max-width: 168px;
+            min-height: 52px;
+            padding: 0 1rem;
+        }
     }
 
     .notification {
@@ -1178,36 +1314,42 @@
             const selection = getSelection(currentDay, menu.meal_time);
             const isSelected = selection && String(selection.menuId) === String(menu.id);
             const isExpanded = String(expandedMenuId) === String(menu.id);
-            const itemMarkup = Array.isArray(menu.items) && menu.items.length
-                ? menu.items.map((item) => `
-                    <li class="flex items-start gap-2">
-                        <span class="text-green-600 mt-0.5">&bull;</span>
-                        <span>${escapeHtml(item.name)}</span>
-                    </li>
-                `).join('')
-                : '<li class="text-gray-500">No items listed yet.</li>';
+            const menuItems = Array.isArray(menu.items) ? menu.items : [];
+            const renderMenuItemEntry = (item) => `
+                <div class="menu-card-items-entry">
+                    <span class="menu-card-items-bullet">&bull;</span>
+                    <span>${escapeHtml(item.name)}</span>
+                </div>
+            `;
+            const itemMarkup = menuItems.length
+                ? menuItems.map(renderMenuItemEntry).join('')
+                : '<div class="menu-card-items-empty">No items listed yet.</div>';
 
             return `
                 <article class="menu-list-item compact-menu-item menu-browser-item ${isSelected ? 'is-selected' : ''} ${isExpanded ? 'is-expanded' : ''}" data-menu-id="${menu.id}">
                     <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0 space-y-2">
+                        <div class="min-w-0 flex-1 space-y-2">
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="menu-card-tag">${escapeHtml(menu.meal_label)}</span>
                                 <span class="menu-card-tag ${menu.category === 'special' ? 'menu-card-tag-premium' : ''}">${escapeHtml(menu.category === 'special' ? 'Special' : 'Standard')}</span>
-                                ${isSelected ? '<span class="selection-chip">Selected</span>' : ''}
                             </div>
                             <div>
                                 <h3 class="text-xl font-bold text-green-900">${escapeHtml(menu.menu_label)}</h3>
                             </div>
+                            <div class="menu-card-items-list">
+                                ${itemMarkup}
+                            </div>
                         </div>
-                        <div class="price-badge">${formatCurrency(menu.price)} / pax</div>
-                    </div>
-
-                    <div class="mt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Included items</p>
-                        <ul class="space-y-1 text-sm text-gray-700">
-                            ${itemMarkup}
-                        </ul>
+                        <div class="menu-card-side-column">
+                            <div class="price-badge">${formatCurrency(menu.price)} / pax</div>
+                            ${isSelected
+                                ? `<span class="menu-card-inline-check" title="Added to order" aria-label="Added to order">
+                                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                       </svg>
+                                   </span>`
+                                : ''}
+                        </div>
                     </div>
 
                     <div class="menu-card-overlay">
@@ -1327,7 +1469,7 @@
         if (dayTotalsContainer) {
             dayTotalsContainer.innerHTML = dayTotals.map(({ day, total }) => `
                 <div class="flex justify-between text-sm">
-                    <span class="order-summary-day-label">${escapeHtml(getDayLabel(day))}:</span>
+                    <span class="order-summary-day-label">${escapeHtml(getDayLabel(day))} subtotal:</span>
                     <span class="order-summary-day-value">${formatCurrency(total)}</span>
                 </div>
             `).join('');
@@ -1342,12 +1484,14 @@
         const confirmButton = document.getElementById('confirm-button');
         const currentDayReady = dayIsReady(currentDay);
         const allDaysReady = everySelectedDayHasValidMenu();
+        const nextDayNumber = currentDay + 1;
 
         backButton.classList.toggle('hidden', currentDay === 1);
 
         if (currentDay < totalDays) {
             nextDayButton.classList.remove('hidden');
             confirmButton.classList.add('hidden');
+            nextDayButton.textContent = `${getDayLabel(nextDayNumber)} >`;
             nextDayButton.disabled = !currentDayReady;
             nextDayButton.setAttribute('aria-disabled', String(!currentDayReady));
             nextDayButton.title = currentDayReady
@@ -1398,9 +1542,10 @@
             return;
         }
 
+        const nextExpandedMenuId = usesHoverOverlay() ? null : menu.id;
         const currentSelection = getSelection(currentDay, menu.meal_time);
         if (currentSelection && String(currentSelection.menuId) === String(menu.id)) {
-            expandedMenuId = menu.id;
+            expandedMenuId = nextExpandedMenuId;
             renderAll();
             return;
         }
@@ -1412,7 +1557,7 @@
             qty: nextQty
         };
 
-        expandedMenuId = menu.id;
+        expandedMenuId = nextExpandedMenuId;
         renderAll();
 
         showNotification(
@@ -1624,6 +1769,18 @@
         initializeDayTabs();
         updateDayInfo(currentDay);
         renderAll();
+
+        const guidanceAccordion = document.querySelector('[data-menu-guidance-accordion]');
+        const guidanceTrigger = document.querySelector('[data-menu-guidance-trigger]');
+        const guidancePanel = document.querySelector('[data-menu-guidance-panel]');
+
+        if (guidanceAccordion && guidanceTrigger && guidancePanel) {
+            guidanceTrigger.addEventListener('click', () => {
+                const isOpen = guidanceAccordion.classList.toggle('is-open');
+                guidanceTrigger.setAttribute('aria-expanded', String(isOpen));
+                guidancePanel.classList.toggle('hidden', !isOpen);
+            });
+        }
 
         document.getElementById('day-tabs').addEventListener('click', (event) => {
             const button = event.target.closest('.day-tab');
@@ -1858,30 +2015,36 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-8">
-                    <div class="green-menu-list w-full lg:sticky lg:top-6">
-                        <div class="green-menu-header">
-                            <div class="green-menu-header-layout">
-                                <div class="menu-header-guidance">
-                                    <div class="menu-header-guidance-header">
-                                        <span class="menu-header-guidance-icon" aria-hidden="true">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </span>
-                                        <h3 class="menu-header-guidance-title">How to select your preferred menus?</h3>
-                                    </div>
-                                    <p class="menu-header-guidance-subtext">You don’t need to order for every mealtime! Just pick the ones you want.</p>
-                                    <ol class="menu-header-guidance-list">
-                                        <li><strong>Step 1:</strong> Choose Your Meal Times - Select the meals you’d like to receive (e.g., just Lunch, or Breakfast and Dinner). Feel free to skip any you don't need.</li>
-                                        <li><strong>Step 2:</strong> Select a Menu Type - Choose between Standard or Special. (Note: Prices vary by selection).</li>
-                                        <li><strong>Step 3:</strong> Pick Your Bundle - Click the "Add to Order" button on the menu you like best.</li>
-                                        <li><strong>Step 4:</strong> Set Your Guest Count - In the "Selected Order Preview" section, enter how many people you are ordering for.</li>
-                                    </ol>
-                                </div>
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="menu-guidance-accordion is-open" data-menu-guidance-accordion>
+                        <button
+                            type="button"
+                            class="menu-guidance-trigger"
+                            data-menu-guidance-trigger
+                            aria-expanded="true"
+                            aria-controls="menu-guidance-panel"
+                        >
+                            <span class="menu-guidance-trigger-main">
+                                <span class="menu-header-guidance-icon" aria-hidden="true">i</span>
+                                <span class="menu-header-guidance-title">How to select menus?</span>
+                            </span>
+                            <svg class="menu-guidance-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="menu-guidance-panel" id="menu-guidance-panel" data-menu-guidance-panel>
+                            <div class="menu-header-guidance">
+                                <ul class="menu-header-guidance-list">
+                                    <li><strong>Pick a Meal Time:</strong> Select Breakfast, Lunch, or Snacks.</li>
+                                    <li><strong>Choose a Menu:</strong> Toggle between Standard or Special.</li>
+                                    <li><strong>Add to Order:</strong> Click your preferred menu card.</li>
+                                    <li><strong>Adjust Pax:</strong> Set the number of guests in the Order Preview.</li>
+                                </ul>
                             </div>
                         </div>
+                    </div>
 
+                    <div class="green-menu-list w-full lg:sticky lg:top-6">
                         <div class="menu-search-container">
                             <div class="space-y-4">
                                 <div class="meal-filters" id="meal-type-buttons">
@@ -1923,7 +2086,7 @@
 
                         <div class="menu-browser-footer">
                             <p class="text-sm text-gray-600">
-                                Use the summary panel to adjust pax after adding a menu. Selecting another menu for the same meal category automatically replaces the earlier choice.
+                                Use the Order Preview Panel to adjust pax after adding a menu. Selecting another menu for the same meal category automatically replaces the earlier choice.
                             </p>
                         </div>
                     </div>
@@ -1931,63 +2094,64 @@
 
                 <div class="lg:col-span-4">
                     <div class="space-y-6 lg:sticky lg:top-6">
-                        <div class="card p-6">
-                            <div class="flex items-start justify-between gap-4 mb-4">
-                                <div>
-                                    <h3 class="text-xl font-bold text-clsu-green">Selected Order Preview</h3>
+                        <div class="card p-6 space-y-6">
+                            <div>
+                                <div class="flex items-start justify-between gap-4 mb-4">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-clsu-green">Order Preview</h3>
+                                    </div>
+                                    <span class="selection-chip" id="current-day-selection-count">0 selected</span>
                                 </div>
-                                <span class="selection-chip" id="current-day-selection-count">0 selected</span>
-                            </div>
 
-                            <div id="selected-order-list" class="space-y-3"></div>
-                            <div id="selected-order-empty" class="selected-order-empty">
-                                Choose a menu from the left panel to start building the order for this day.
-                            </div>
-                        </div>
-
-                        <div class="card p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Order Summary</h3>
-                            <div id="order-summary-day-totals" class="space-y-3"></div>
-
-                            <div class="border-t border-gray-300 pt-3 mt-4 space-y-2">
-                                <div class="flex justify-between font-bold">
-                                    <span>Estimated Reservation Total:</span>
-                                    <span id="estimated-total">&#8369;0.00</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card p-6">
-                            <div class="flex items-start justify-between gap-4 mb-4">
-                                <div>
-                                    <h3 class="text-xl font-bold text-clsu-green">Special Request <span class="text-sm font-semibold text-gray-500">(Optional)</span></h3>
+                                <div id="selected-order-list" class="space-y-3"></div>
+                                <div id="selected-order-empty" class="selected-order-empty">
+                                    Choose a menu from the left panel to start building the order for this day.
                                 </div>
                             </div>
 
-                            <textarea
-                                name="notes"
-                                id="special-request-field"
-                                rows="6"
-                                class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-clsu-green focus:border-clsu-green"
-                                placeholder="Add special instructions, allergy notes, or dietary restrictions..."
-                            >{{ old('notes') }}</textarea>
+                            <div class="border-t border-gray-200 pt-6">
+                                <div id="order-summary-day-totals" class="space-y-3"></div>
+
+                                <div class="border-t border-gray-300 pt-3 mt-4 space-y-2">
+                                    <div class="flex justify-between font-bold">
+                                        <span>Estimated Reservation Total:</span>
+                                        <span id="estimated-total">&#8369;0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-200 pt-6">
+                                <div class="flex items-start justify-between gap-4 mb-4">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-clsu-green">Special Request <span class="text-sm font-semibold text-gray-500">(Optional)</span></h3>
+                                    </div>
+                                </div>
+
+                                <textarea
+                                    name="notes"
+                                    id="special-request-field"
+                                    rows="6"
+                                    class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-clsu-green focus:border-clsu-green"
+                                    placeholder="Add special instructions, allergy notes, or dietary restrictions..."
+                                >{{ old('notes') }}</textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
+            <div class="menu-navigation-actions pt-2">
                 <button
                     type="button"
                     id="back-button"
-                    class="navigation-button px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 shadow-lg font-semibold hidden"
+                    class="navigation-button menu-nav-action bg-gray-500 text-white text-base rounded-xl hover:bg-gray-600 transition duration-150 shadow-lg font-semibold hidden"
                 >
                     Back
                 </button>
                 <button
                     type="button"
                     id="next-day-button"
-                    class="navigation-button px-6 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold"
+                    class="navigation-button menu-nav-action bg-clsu-green text-white text-base rounded-xl hover:bg-green-700 transition duration-150 shadow-2xl font-bold tracking-wide"
                 >
                     Next Day
                 </button>
@@ -1995,7 +2159,7 @@
                     type="button"
                     id="confirm-button"
                     data-loading-text="Submitting..."
-                    class="navigation-button px-6 py-3 bg-clsu-green text-white rounded-lg transition duration-150 shadow-lg font-semibold hidden"
+                    class="navigation-button menu-nav-action bg-clsu-green text-white text-base rounded-xl hover:bg-green-700 transition duration-150 shadow-2xl font-bold tracking-wide hidden"
                     disabled
                     aria-disabled="true"
                 >

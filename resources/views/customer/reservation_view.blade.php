@@ -351,7 +351,7 @@
                     @endif
                 @endif
 
-                <p class="text-gray-600 mb-2">For inquiries: retcafeteria@clsu.edu.ph</p>
+                <p class="text-gray-600 mb-2">For inquiries: food.lodgingservices@clsu.edu.ph</p>
                 <p class="text-xs text-gray-400">Generated on {{ now()->format('M d, Y h:i A') }}</p>
 
                 @if($reservation->status == 'pending')
