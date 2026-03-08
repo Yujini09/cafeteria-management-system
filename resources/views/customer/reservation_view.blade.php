@@ -3,59 +3,92 @@
 @section('title', 'View Reservation - CLSU RET Cafeteria')
 
 @section('styles')
-    .receipt-hero-bg { background-image: url('/images/banner1.jpg'); background-size: cover; background-position: top; }
-    .receipt-container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e0e0e0; }
-    .receipt-header { background: #f8fafc; color: #1f2937; padding: 30px; border-bottom: 2px solid #e5e7eb; }
-    
-    .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    .status-approved { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
-    .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-    .status-declined { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-    .status-cancelled { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
+    .reservation-view-page .reservation-hero-bg { background-image: url('/images/banner1.jpg'); background-size: cover; background-position: top; }
+    .reservation-view-page .receipt-hero-bg { background-image: url('/images/banner1.jpg'); background-size: cover; background-position: top; }
+    .reservation-view-page .receipt-container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e0e0e0; }
+    .reservation-view-page .receipt-header { background: #f8fafc; color: #1f2937; padding: 30px; border-bottom: 2px solid #e5e7eb; }
 
-    .payment-unpaid { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-    .payment-paid { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-    .payment-na { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
-    
-    .receipt-section { padding: 25px 30px; border-bottom: 1px solid #f0f0f0; }
-    .receipt-section:last-child { border-bottom: none; }
-    .section-title { font-size: 1rem; font-weight: 700; color: #00462E; margin-bottom: 15px; }
+    .reservation-view-page .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .reservation-view-page .status-approved { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
+    .reservation-view-page .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .reservation-view-page .status-declined { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .reservation-view-page .status-cancelled { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
 
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-    .info-label { font-size: 0.8rem; color: #6b7280; font-weight: 500; text-transform: uppercase; margin-bottom: 4px; }
-    
-    .download-btn { background: linear-gradient(135deg, #00462E 0%, #057C3C 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
-    .download-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 70, 46, 0.3); }
-    .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+    .reservation-view-page .payment-unpaid { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .reservation-view-page .payment-paid { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .reservation-view-page .payment-na { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
 
-    .header-content { display: flex; justify-content: space-between; align-items: flex-start; }
-    .header-left { flex: 1; }
-    .header-right { text-align: right; }
-    
-    .day-group { background: #f8fafc; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #e5e7eb; }
-    .day-header { font-size: 1.1rem; font-weight: 700; color: #00462E; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb; }
-    
-    .menu-items-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .menu-items-table th { background: #f8fafc; padding: 8px; text-align: left; font-weight: 600; color: #00462E; border-bottom: 2px solid #e5e7eb; }
-    .menu-items-table td { padding: 8px; border-bottom: 1px solid #e5e7eb; }
-    .days-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; align-items: start; }
+    .reservation-view-page .receipt-section { padding: 25px 30px; border-bottom: 1px solid #f0f0f0; }
+    .reservation-view-page .receipt-section:last-child { border-bottom: none; }
 
-    @media (max-width: 768px) { .days-grid { grid-template-columns: 1fr; } }
+    .reservation-view-page .download-btn { background: linear-gradient(135deg, #00462E 0%, #057C3C 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+    .reservation-view-page .download-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 70, 46, 0.3); }
+    .reservation-view-page .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .reservation-view-page .header-content { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+    .reservation-view-page .header-left { flex: 1; }
+    .reservation-view-page .header-right { text-align: right; }
+
+    .reservation-view-page .customer-detail-card { border: 1px solid #e5e7eb; border-radius: 14px; background: #ffffff; overflow: hidden; }
+    .reservation-view-page .customer-detail-card-header { display: flex; align-items: center; gap: 10px; padding: 18px 22px 0; }
+    .reservation-view-page .customer-detail-card-title { font-size: 1rem; font-weight: 700; color: #111827; }
+    .reservation-view-page .customer-detail-card-body { padding: 18px 22px 22px; }
+
+    .reservation-view-page .customer-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 40px; }
+    .reservation-view-page .customer-detail-row { min-width: 0; color: #111827; font-size: 0.95rem; line-height: 1.6; }
+    .reservation-view-page .customer-detail-label { font-weight: 700; color: #111827; }
+    .reservation-view-page .customer-detail-time-list { margin-top: 4px; display: grid; gap: 4px; }
+    .reservation-view-page .customer-detail-divider { margin: 18px 0; border-top: 1px solid #e5e7eb; }
+
+    .reservation-view-page .customer-menu-day-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .reservation-view-page .customer-menu-day-title { font-size: 1.05rem; font-weight: 700; color: #111827; margin-bottom: 14px; }
+    .reservation-view-page .customer-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .reservation-view-page .customer-menu-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.9rem; }
+    .reservation-view-page .customer-menu-table th { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; text-align: left; white-space: nowrap; }
+    .reservation-view-page .customer-menu-table td { padding: 14px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #111827; }
+    .reservation-view-page .customer-menu-table tbody tr:last-child td { border-bottom: none; }
+    .reservation-view-page .customer-menu-name { font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .reservation-view-page .customer-menu-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .reservation-view-page .customer-menu-tag { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; background: #f3f4f6; color: #4b5563; font-size: 0.72rem; line-height: 1.2; }
+    .reservation-view-page .customer-menu-total { text-align: right; font-weight: 700; color: #15803d; white-space: nowrap; }
+
+    .reservation-view-page .customer-total-card { margin-top: 8px; border: 1px solid #bbf7d0; border-radius: 10px; background: #f0fdf4; padding: 16px 18px; }
+    .reservation-view-page .customer-total-row { display: flex; justify-content: space-between; gap: 16px; font-size: 0.95rem; color: #14532d; }
+    .reservation-view-page .customer-total-row + .customer-total-row { margin-top: 4px; }
+    .reservation-view-page .customer-total-row-grand { margin-top: 10px; padding-top: 10px; border-top: 1px solid #86efac; font-weight: 700; font-size: 1.05rem; }
+
+    @media (max-width: 768px) {
+        .reservation-view-page .header-content { flex-direction: column; }
+        .reservation-view-page .header-right { text-align: left; }
+        .reservation-view-page .customer-detail-card-header { padding: 16px 18px 0; }
+        .reservation-view-page .customer-detail-card-body { padding: 16px 18px 18px; }
+        .reservation-view-page .customer-detail-grid { grid-template-columns: 1fr; gap: 12px; }
+        .reservation-view-page .customer-menu-day-card { padding: 14px; }
+        .reservation-view-page .customer-menu-table { min-width: 680px; }
+    }
+
     @media print {
         body { background: white !important; margin: 0; padding: 0; }
-        .no-print, footer, .footer { display: none !important; }
-        .receipt-container { box-shadow: none !important; border: none !important; max-width: 100% !important; width: 100% !important; margin: 0 !important; }
-        .days-grid { display: block !important; }
-        .day-group { page-break-inside: avoid; height: auto !important; margin-bottom: 20px !important; border: 1px solid #eee !important; }
-        .receipt-section { padding: 15px 0 !important; }
-        .receipt-header { padding: 10px 0 !important; border-bottom: 1px solid #333 !important; }
+        .reservation-view-page .no-print, footer, .footer { display: none !important; }
+        .reservation-view-page .receipt-container { box-shadow: none !important; border: none !important; max-width: 100% !important; width: 100% !important; margin: 0 !important; }
+        .reservation-view-page .customer-menu-day-card { page-break-inside: avoid; }
+        .reservation-view-page .receipt-section { padding: 15px 0 !important; }
+        .reservation-view-page .receipt-header { padding: 10px 0 !important; border-bottom: 1px solid #333 !important; }
     }
 @endsection
 
 @section('content')
-<section class="py-10 bg-gray-50 no-print">
+<div class="reservation-view-page">
+<section class="reservation-hero-bg py-20 lg:py-20 bg-gray-900 text-white relative overflow-hidden">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl lg:text-5xl font-extrabold mb-3 tracking-wide">Reservation Details</h1>
+    </div>
+</section>
+
+<section class="py-10 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-6 no-print">
             <a href="{{ route('reservation_details') }}" class="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">
                 &larr; Back to Reservations
             </a>
@@ -104,111 +137,205 @@
                 </div>
             </div>
 
+            @php
+                $startDate = \Carbon\Carbon::parse($reservation->event_date);
+                $endDate = $reservation->end_date ? \Carbon\Carbon::parse($reservation->end_date) : $startDate;
+                $dayTimes = $reservation->day_times ?? [];
+                $days = $startDate->diffInDays($endDate) + 1;
+
+                $formatTimeForDisplay = function ($timeString) {
+                    if (empty($timeString) || trim($timeString) === '') {
+                        return '';
+                    }
+
+                    $timeString = trim($timeString);
+
+                    if (preg_match('/\d{1,2}:\d{2}\s*(AM|PM|am|pm)/i', $timeString)) {
+                        return strtoupper($timeString);
+                    }
+
+                    try {
+                        return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:iA');
+                    } catch (\Exception $e) {
+                        return $timeString;
+                    }
+                };
+
+                $dateRange = [];
+                for ($i = 0; $i < $days; $i++) {
+                    $currentDate = $startDate->copy()->addDays($i);
+                    $dateKey = $currentDate->format('Y-m-d');
+                    $dateRange[$dateKey] = $currentDate;
+                }
+
+                $reservation->load(['items.menu.items']);
+                $groupedItems = [];
+                foreach ($reservation->items ?? [] as $item) {
+                    $dayNumber = $item->day_number ?? 1;
+                    $groupedItems[$dayNumber][] = $item;
+                }
+                ksort($groupedItems);
+            @endphp
+
             <div class="receipt-section">
-                <div class="info-grid">
-                    <div>
-                        <div class="info-label">EVENT INFORMATION</div>
-                        <div class="space-y-4 mt-3">
-                            <div><span class="font-medium">Event Name:</span> <span class="font-semibold text-gray-900">{{ $reservation->event_name }}</span></div>
-                            <div>
-                                <span class="font-medium">Date & Time:</span>
-                                @php
-                                    $startDate = \Carbon\Carbon::parse($reservation->event_date);
-                                    $endDate = $reservation->end_date ? \Carbon\Carbon::parse($reservation->end_date) : $startDate;
-                                    $days = $startDate->diffInDays($endDate) + 1;
-                                @endphp
-                                <div class="font-bold text-sm">
-                                    @if($days > 1) {{ $startDate->format('M d') }} - {{ $endDate->format('M d, Y') }} ({{ $days }} days)
-                                    @else {{ $startDate->format('M d, Y') }} @endif
+                <div class="customer-detail-card">
+                    <div class="customer-detail-card-header">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <h3 class="customer-detail-card-title">Event Details</h3>
+                    </div>
+                    <div class="customer-detail-card-body">
+                        <div class="customer-detail-grid">
+                            <div class="customer-detail-row"><span class="customer-detail-label">Event Name:</span> {{ $reservation->event_name ?: 'N/A' }}</div>
+                            <div class="customer-detail-row"><span class="customer-detail-label">Number of Persons:</span> {{ $reservation->number_of_persons ?: 'N/A' }}</div>
+                            <div class="customer-detail-row">
+                                <div class="customer-detail-label">Date &amp; Time:</div>
+                                <div class="customer-detail-time-list">
+                                    @foreach($dateRange as $dateKey => $currentDate)
+                                        @php
+                                            $formattedDate = $currentDate->format('M d, Y');
+                                            $startTime = '';
+                                            $endTime = '';
+
+                                            if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
+                                                $timeData = $dayTimes[$dateKey];
+                                                if (is_array($timeData)) {
+                                                    $startTime = $timeData['start_time'] ?? $timeData['start'] ?? '';
+                                                    $endTime = $timeData['end_time'] ?? $timeData['end'] ?? '';
+                                                } elseif (is_string($timeData)) {
+                                                    $parts = explode(' - ', $timeData);
+                                                    $startTime = trim($parts[0] ?? '');
+                                                    $endTime = trim($parts[1] ?? '');
+                                                }
+                                            } elseif (is_string($dayTimes) && $days === 1) {
+                                                $parts = explode(' - ', $dayTimes);
+                                                $startTime = trim($parts[0] ?? '');
+                                                $endTime = trim($parts[1] ?? '');
+                                            }
+
+                                            if (empty($startTime) && $days === 1 && !empty($reservation->event_time)) {
+                                                $parts = explode(' - ', $reservation->event_time);
+                                                $startTime = trim($parts[0] ?? '');
+                                                $endTime = trim($parts[1] ?? '');
+                                            }
+
+                                            $formattedStartTime = $formatTimeForDisplay($startTime);
+                                            $formattedEndTime = $formatTimeForDisplay($endTime);
+                                        @endphp
+                                        <div>
+                                            {{ $formattedDate }}:
+                                            @if($formattedStartTime !== '')
+                                                {{ $formattedStartTime }}{{ $formattedEndTime !== '' ? ' - ' . $formattedEndTime : '' }}
+                                            @else
+                                                No time specified
+                                            @endif
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
-                            <div><span class="font-medium">Venue:</span> <span class="font-semibold text-gray-900">{{ $reservation->venue ?? 'Not specified' }}</span></div>
-                            <div><span class="font-medium">Persons:</span> <span class="font-bold text-xl text-clsu-green">{{ $reservation->number_of_persons }}</span></div>
-                            <div><span class="font-medium">Special Request:</span> <span class="text-gray-900">{{ $reservation->special_requests ?? 'None' }}</span></div>
+                            <div class="customer-detail-row"><span class="customer-detail-label">Special Requests:</span> {{ $reservation->special_requests ?: 'None' }}</div>
+                            <div class="customer-detail-row"><span class="customer-detail-label">Venue:</span> {{ $reservation->venue ?: 'Not specified' }}</div>
                         </div>
-                    </div>
-                    
-                    <div>
-                        <div class="info-label">CONTACT INFORMATION</div>
-                        <div class="space-y-3 mt-3">
-                            <div><span class="font-medium">Contact:</span> <span class="font-semibold text-gray-900">{{ $reservation->contact_person ?? $reservation->user->name ?? 'N/A' }}</span></div>
-                            <div><span class="font-medium">Department:</span> <span class="font-semibold text-gray-900">{{ $reservation->department ?? 'N/A' }}</span></div>
-                            <div><span class="font-medium">Email:</span> <span class="font-semibold text-gray-900">{{ $reservation->email ?? 'N/A' }}</span></div>
-                            <div><span class="font-medium">Phone:</span> <span class="font-semibold text-gray-900">{{ $reservation->contact_number ?? 'N/A' }}</span></div>
+
+                        <div class="customer-detail-divider"></div>
+
+                        <div class="customer-detail-grid">
+                            <div class="customer-detail-row"><span class="customer-detail-label">Contact Person:</span> {{ $reservation->contact_person ?? optional($reservation->user)->name ?? 'N/A' }}</div>
+                            <div class="customer-detail-row"><span class="customer-detail-label">Email:</span> {{ $reservation->email ?? optional($reservation->user)->email ?? 'N/A' }}</div>
+                            <div class="customer-detail-row"><span class="customer-detail-label">Department:</span> {{ $reservation->department ?? 'N/A' }}</div>
+                            <div class="customer-detail-row"><span class="customer-detail-label">Phone:</span> {{ $reservation->contact_number ?? optional($reservation->user)->phone ?? 'N/A' }}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="receipt-section">
-                <h3 class="text-xl font-bold text-gray-900 mb-6">SELECTED MENU ITEMS</h3>
-                @php $reservation->load(['items.menu.items']); $totalAmount = 0; @endphp
-                @if($reservation->items && $reservation->items->count() > 0)
-                    @php
-                        $groupedItems = [];
-                        foreach ($reservation->items as $item) {
-                            $dayNumber = $item->day_number ?? 1;
-                            $groupedItems[$dayNumber][] = $item;
-                        }
-                        ksort($groupedItems);
-                    @endphp
-                    <div class="days-grid">
-                        @foreach($groupedItems as $dayNumber => $dayItems)
-                            <div class="day-group">
-                                <div class="day-header">
-                                    Day {{ $dayNumber }} <span class="text-sm font-normal text-gray-500">({{ $startDate->copy()->addDays($dayNumber - 1)->format('M d, Y') }})</span>
-                                </div>
-                                <table class="menu-items-table">
-                                    <thead><tr><th>Meal</th><th>Item</th><th>Total</th></tr></thead>
-                                    <tbody>
-                                        @foreach($dayItems as $item)
-                                            @if($item->menu)
-                                                @php
-                                                    $price = $item->menu->price > 0 ? $item->menu->price : ($item->menu->type == 'special' ? 200 : 150);
-                                                    $itemTotal = $item->quantity * $price;
-                                                    $totalAmount += $itemTotal;
-                                                @endphp
+                <div class="customer-detail-card">
+                    <div class="customer-detail-card-header">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <h3 class="customer-detail-card-title">Selected Menus</h3>
+                    </div>
+                    <div class="customer-detail-card-body">
+                        @php
+                            $totalAmount = 0;
+                            $additionalsTotal = $reservation->additionals ? $reservation->additionals->sum('price') : 0;
+                        @endphp
+
+                        @if($reservation->items && $reservation->items->count() > 0)
+                            @foreach($groupedItems as $dayNumber => $dayItems)
+                                @php $dayDate = $startDate->copy()->addDays($dayNumber - 1); @endphp
+                                <div class="customer-menu-day-card">
+                                    <div class="customer-menu-day-title">Day {{ $dayNumber }}: {{ $dayDate->format('M d, Y') }}</div>
+                                    <div class="customer-table-wrap">
+                                        <table class="customer-menu-table">
+                                            <thead>
                                                 <tr>
-                                                    <td class="text-xs uppercase font-bold">{{ str_replace('_', ' ', $item->meal_time ?? 'lunch') }}</td>
-                                                    <td>
-                                                        <div class="font-semibold">{{ $item->menu->name }}</div>
-                                                        <div class="text-xs text-gray-500">{{ $item->quantity }} pax × ₱{{ number_format($price, 2) }}</div>
-                                                    </td>
-                                                    <td class="font-bold text-clsu-green">₱{{ number_format($itemTotal, 2) }}</td>
+                                                    <th>Menu Item</th>
+                                                    <th>Meal</th>
+                                                    <th>Quantity</th>
+                                                    <th>Price</th>
+                                                    <th class="text-right">Total</th>
                                                 </tr>
-                                            @endif
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endforeach
-                    </div>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($dayItems as $item)
+                                                    @if($item->menu)
+                                                        @php
+                                                            $price = $item->price ?? $item->menu->price ?? 150;
+                                                            if ($price <= 0) {
+                                                                $price = ($item->menu->type == 'special' ? 200 : 150);
+                                                            }
+                                                            $itemTotal = $item->quantity * $price;
+                                                            $totalAmount += $itemTotal;
+                                                        @endphp
+                                                        <tr>
+                                                            <td>
+                                                                <div class="customer-menu-name">{{ $item->menu->name }}</div>
+                                                                @if($item->menu->items && $item->menu->items->count() > 0)
+                                                                    <div class="customer-menu-tags">
+                                                                        @foreach($item->menu->items as $menuItem)
+                                                                            <span class="customer-menu-tag">{{ $menuItem->name }}</span>
+                                                                        @endforeach
+                                                                    </div>
+                                                                @endif
+                                                            </td>
+                                                            <td class="capitalize">{{ str_replace('_', ' ', $item->meal_time) }}</td>
+                                                            <td class="font-semibold">{{ $item->quantity }}</td>
+                                                            <td>&#8369;{{ number_format($price, 2) }}</td>
+                                                            <td class="customer-menu-total">&#8369;{{ number_format($itemTotal, 2) }}</td>
+                                                        </tr>
+                                                    @endif
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endforeach
 
-                    @php
-                        $additionalsTotal = $reservation->additionals ? $reservation->additionals->sum('price') : 0;
-                        $grandTotal = $totalAmount + $additionalsTotal;
-                    @endphp
+                            @php $grandTotal = $totalAmount + $additionalsTotal; @endphp
 
-                    <div class="mt-6 border-t border-gray-200 pt-4 flex flex-col items-end">
-                        <div class="w-full sm:w-1/2 md:w-1/3 text-gray-700 mb-2">
-                            <div class="flex justify-between py-1">
-                                <span>Subtotal:</span>
-                                <span class="font-medium">&#8369;{{ number_format($totalAmount, 2) }}</span>
+                            <div class="customer-total-card">
+                                <div class="customer-total-row">
+                                    <span>Subtotal:</span>
+                                    <span>&#8369;{{ number_format($totalAmount, 2) }}</span>
+                                </div>
+                                <div class="customer-total-row">
+                                    <span>Additionals:</span>
+                                    <span>&#8369;{{ number_format($additionalsTotal, 2) }}</span>
+                                </div>
+                                <div class="customer-total-row customer-total-row-grand">
+                                    <span>Total:</span>
+                                    <span>&#8369;{{ number_format($grandTotal, 2) }}</span>
+                                </div>
                             </div>
-                            @if($additionalsTotal > 0)
-                            <div class="flex justify-between py-1">
-                                <span>Additionals:</span>
-                                <span class="font-medium">&#8369;{{ number_format($additionalsTotal, 2) }}</span>
-                            </div>
-                            @endif
-                        </div>
-                        
-                        <div class="w-full sm:w-1/2 md:w-1/3 flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <span class="text-gray-600 font-semibold uppercase tracking-wider text-sm">Total Amount</span>
-                            <span class="text-2xl font-bold text-clsu-green">&#8369;{{ number_format($grandTotal, 2) }}</span>
-                        </div>
+                        @else
+                            <div class="text-center py-8 text-gray-500">No menus selected for this reservation.</div>
+                        @endif
                     </div>
-                @endif
+                </div>
             </div>
 
             <div class="receipt-section bg-gray-50 text-center">
@@ -226,7 +353,7 @@
 
                 <p class="text-gray-600 mb-2">For inquiries: retcafeteria@clsu.edu.ph</p>
                 <p class="text-xs text-gray-400">Generated on {{ now()->format('M d, Y h:i A') }}</p>
-                
+
                 @if($reservation->status == 'pending')
                     <div class="mt-6 pt-6 border-t border-gray-200 flex justify-center gap-4">
                         <a href="{{ route('reservation.edit', $reservation->id) }}" class="px-6 py-2.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-semibold shadow-sm">
@@ -244,6 +371,7 @@
         </div>
     </div>
 </section>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>

@@ -50,6 +50,81 @@
     min-width: 640px;
 }
 
+.reservation-show-view .details-inline-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.reservation-show-view .details-inline-row-center {
+    align-items: center;
+}
+
+.reservation-show-view .details-inline-row > dt {
+    flex: 0 0 120px;
+    max-width: 120px;
+    white-space: nowrap;
+}
+
+.reservation-show-view .details-inline-row > dd {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+}
+
+.reservation-show-view .event-details-list {
+    margin-top: 1rem;
+}
+
+.reservation-show-view .event-details-grid,
+.reservation-show-view .event-details-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1.5rem;
+}
+
+.reservation-show-view .event-detail-row {
+    min-width: 0;
+    font-size: 0.96rem;
+    line-height: 1.6;
+    color: #111827;
+}
+
+.reservation-show-view .event-detail-row-wide {
+    grid-column: 1 / -1;
+}
+
+.reservation-show-view .event-detail-label {
+    color: #111827;
+    font-weight: 700;
+    display: inline;
+    margin: 0;
+}
+
+.reservation-show-view .event-detail-value {
+    margin: 0;
+    color: #111827;
+    font-weight: 400;
+    line-height: 1.6;
+    word-break: break-word;
+    display: inline;
+}
+
+.reservation-show-view .event-detail-divider {
+    margin: 1rem 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.reservation-show-view .event-detail-time-list {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0.15rem;
+}
+
+.reservation-show-view .event-detail-time-row {
+    color: #111827;
+}
+
 @media (min-width: 1024px) {
     .reservation-show-view .reservation-right-rail {
         align-self: start;
@@ -166,6 +241,25 @@
 
     .reservation-show-view .additionals-item .additionals-item-action {
         align-self: flex-start;
+    }
+
+    .reservation-show-view .details-inline-row {
+        gap: 0.375rem;
+    }
+
+    .reservation-show-view .details-inline-row > dt {
+        flex-basis: 110px;
+        max-width: 110px;
+    }
+
+    .reservation-show-view .event-details-grid,
+    .reservation-show-view .event-details-contact-grid {
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+    }
+
+    .reservation-show-view .event-detail-time-list {
+        margin-top: 0.1rem;
     }
 }
 
@@ -359,16 +453,140 @@
                     </svg>
                     <h2 class="info-card-title">Event Details</h2>
                 </div>
-                <dl class="space-y-6 ">
+                <div class="event-details-list">
+                    @php
+                        $startDate = \Carbon\Carbon::parse($r->event_date);
+                        $endDate = $r->end_date ? \Carbon\Carbon::parse($r->end_date) : $startDate;
+                        $dayTimes = $r->day_times ?? [];
+                        $days = $startDate->diffInDays($endDate) + 1;
+
+                        $formatTimeForDisplay = function ($timeString) {
+                            if (empty($timeString) || trim($timeString) === '') {
+                                return '';
+                            }
+
+                            $timeString = trim($timeString);
+
+                            if (preg_match('/\d{1,2}:\d{2}\s*(AM|PM|am|pm)/i', $timeString)) {
+                                return strtoupper($timeString);
+                            }
+
+                            try {
+                                return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:iA');
+                            } catch (\Exception $e) {
+                                return $timeString;
+                            }
+                        };
+
+                        $dateRange = [];
+                        for ($i = 0; $i < $days; $i++) {
+                            $currentDate = $startDate->copy()->addDays($i);
+                            $dateKey = $currentDate->format('Y-m-d');
+                            $dateRange[$dateKey] = $currentDate;
+                        }
+                    @endphp
+
+                    <dl class="event-details-grid text-sm">
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Event Name:</dt>
+                            <dd class="event-detail-value"> {{ $r->event_name ?: '-' }}</dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Number of Persons:</dt>
+                            <dd class="event-detail-value"> {{ $r->number_of_persons ?: '-' }}</dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Date &amp; Time:</dt>
+                            <dd class="event-detail-value">
+                                <div class="event-detail-time-list">
+                                    @foreach($dateRange as $dateKey => $currentDate)
+                                        @php
+                                            $formattedDate = $currentDate->format('M d, Y');
+                                            $startTime = '';
+                                            $endTime = '';
+
+                                            if (is_array($dayTimes) && isset($dayTimes[$dateKey])) {
+                                                $timeData = $dayTimes[$dateKey];
+                                                if (is_array($timeData)) {
+                                                    $startTime = $timeData['start_time'] ?? $timeData['start'] ?? '';
+                                                    $endTime = $timeData['end_time'] ?? $timeData['end'] ?? '';
+                                                } elseif (is_string($timeData)) {
+                                                    $parts = explode(' - ', $timeData);
+                                                    $startTime = trim($parts[0] ?? '');
+                                                    $endTime = trim($parts[1] ?? '');
+                                                }
+                                            } elseif (is_string($dayTimes) && $days === 1) {
+                                                $parts = explode(' - ', $dayTimes);
+                                                $startTime = trim($parts[0] ?? '');
+                                                $endTime = trim($parts[1] ?? '');
+                                            }
+
+                                            if (empty($startTime) && $days === 1 && !empty($r->event_time)) {
+                                                $parts = explode(' - ', $r->event_time);
+                                                $startTime = trim($parts[0] ?? '');
+                                                $endTime = trim($parts[1] ?? '');
+                                            }
+
+                                            $formattedStartTime = $formatTimeForDisplay($startTime);
+                                            $formattedEndTime = $formatTimeForDisplay($endTime);
+                                        @endphp
+
+                                        <div class="event-detail-time-row">
+                                            <span>{{ $formattedDate }}:</span>
+                                            <span>
+                                                @if($formattedStartTime !== '')
+                                                    {{ $formattedStartTime }}{{ $formattedEndTime !== '' ? ' - ' . $formattedEndTime : '' }}
+                                                @else
+                                                    No time specified
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Special Requests:</dt>
+                            <dd class="event-detail-value"> {{ $r->special_requests ?: 'None' }}</dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Venue:</dt>
+                            <dd class="event-detail-value"> {{ $r->venue ?: '-' }}</dd>
+                        </div>
+                    </dl>
+
+                    <div class="event-detail-divider"></div>
+
+                    <dl class="event-details-contact-grid text-sm">
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Contact Person:</dt>
+                            <dd class="event-detail-value"> {{ $r->contact_person ?: optional($r->user)->name ?: '-' }}</dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Email:</dt>
+                            <dd class="event-detail-value break-all"> {{ $r->email ?: optional($r->user)->email ?: '-' }}</dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Department:</dt>
+                            <dd class="event-detail-value"> {{ $r->department ?: '-' }}</dd>
+                        </div>
+                        <div class="event-detail-row">
+                            <dt class="event-detail-label">Phone:</dt>
+                            <dd class="event-detail-value"> {{ $r->contact_number ?: optional($r->user)->phone ?: '-' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+                @if(false)
+                <dl class="space-y-6 event-details-list">
                     <div>
-                        <div class="space-y-4 mt-3 grid grid-cols-1 md:grid-cols-2 text-sm">
-                            <div class="space-y-4">
-                                <div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 text-sm event-details-layout">
+                            <div class="event-details-column">
+                                <div class="details-inline-row">
                                     <dt class="text-gray-500 font-medium">Event Name:</dt>
                                     <dd class="mt-1 font-semibold text-gray-900">{{ $r->event_name ?? '—' }}</dd>
                                 </div>
                                 
-                                <div>
+                                <div class="details-inline-row">
                                     <dt class="text-gray-500 font-medium">Date & Time:</dt>
                                     <dd class="mt-1 text-gray-900">
                                         @php
@@ -395,13 +613,11 @@
                                         @endphp
                                         
                                         <div class="reservation-period">
-                                            <div class="period-summary mb-2 font-medium text-gray-900">
-                                                @if($days > 1)
+                                            @if($days > 1)
+                                                <div class="period-summary font-medium text-gray-900">
                                                     {{ $startDate->format('M d') }} - {{ $endDate->format('M d, Y') }} ({{ $days }} days)
-                                                @else
-                                                    {{ $startDate->format('M d, Y') }}
-                                                @endif
-                                            </div>
+                                                </div>
+                                            @endif
                                             
                                             <div class="datetime-display space-y-1">
                                                 @foreach($dateRange as $dateKey => $currentDate)
@@ -453,39 +669,39 @@
                                 </div>
                             </div>
                             
-                            <div class="space-y-4">
-                                <div>
+                            <div class="event-details-column">
+                                <div class="details-inline-row details-inline-row-center">
                                     <dt class="text-gray-500 font-medium">Number of Persons:</dt>
                                     <dd class="mt-1 font-bold text-xl text-green-600">{{ $r->number_of_persons ?? '—' }}</dd>
                                 </div>
-                                <div>
+                                <div class="details-inline-row">
                                     <dt class="text-gray-500 font-medium">Venue:</dt>
                                     <dd class="mt-1 font-semibold text-gray-900">{{ $r->venue ?? '—' }}</dd>
                                 </div>
-                                <div>
+                                <div class="details-inline-row">
                                     <dt class="text-gray-500 font-medium">Special Requests:</dt>
                                     <dd class="mt-1 text-gray-900">{{ $r->special_requests ?? 'None' }}</dd>
                                 </div>
                                 </div>
 
-                                <div class="pt-2 mt-2 border-t border-gray-100 md:col-span-2">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div class="space-y-4">
-                                            <div>
+                                <div class="md:col-span-2 event-details-contact">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 event-details-contact-grid">
+                                        <div class="event-details-column">
+                                            <div class="details-inline-row">
                                         <dt class="text-gray-500 font-medium">Contact Person:</dt>
                                         <dd class="mt-1 font-semibold text-gray-900">{{ $r->contact_person ?? optional($r->user)->name ?? 'â€”' }}</dd>
                                     </div>
-                                    <div>
+                                    <div class="details-inline-row">
                                         <dt class="text-gray-500 font-medium">Department:</dt>
                                         <dd class="mt-1 text-gray-900">{{ $r->department ?? 'â€”' }}</dd>
                                     </div>
                                         </div>
-                                        <div class="space-y-4 min-w-0">
-                                            <div>
+                                        <div class="event-details-column min-w-0">
+                                            <div class="details-inline-row">
                                                 <dt class="text-gray-500 font-medium">Email:</dt>
                                         <dd class="mt-1 text-gray-900 break-all">{{ $r->email ?? optional($r->user)->email ?? 'â€”' }}</dd>
                                     </div>
-                                    <div>
+                                    <div class="details-inline-row">
                                         <dt class="text-gray-500 font-medium">Phone:</dt>
                                         <dd class="mt-1 text-gray-900">{{ $r->contact_number ?? optional($r->user)->phone ?? 'â€”' }}</dd>
                                     </div>
@@ -494,6 +710,7 @@
                         </div>
                         </div>
                 </dl>
+                @endif
             </div>
 
             {{-- 1. ISOLATED COMPONENT: Selected Menus --}}
@@ -689,20 +906,20 @@
                     <h2 class="info-card-title">Customer Information</h2>
                 </div>
                 <dl class="space-y-3 text-sm">
-                    <div>
-                        <dt class="text-gray-500 font-medium">Contact Person</dt>
+                    <div class="details-inline-row">
+                        <dt class="text-gray-500 font-medium">Contact Person:</dt>
                         <dd class="text-gray-900 font-medium">{{ $r->contact_person ?? optional($r->user)->name ?? '—' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-500 font-medium">Department</dt>
+                    <div class="details-inline-row">
+                        <dt class="text-gray-500 font-medium">Department:</dt>
                         <dd class="text-gray-900">{{ $r->department ?? '—' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-500 font-medium">Email</dt>
+                    <div class="details-inline-row">
+                        <dt class="text-gray-500 font-medium">Email:</dt>
                         <dd class="text-gray-900">{{ $r->email ?? optional($r->user)->email ?? '—' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-500 font-medium">Phone</dt>
+                    <div class="details-inline-row">
+                        <dt class="text-gray-500 font-medium">Phone:</dt>
                         <dd class="text-gray-900">{{ $r->contact_number ?? optional($r->user)->phone ?? '—' }}</dd>
                     </div>
                 </dl>
@@ -715,14 +932,14 @@
                     </svg>
                     <h2 class="info-card-title">Reservation & Payment</h2>
                 </div>
-                <dl class="space-y-2 text-sm">
-                    <div class="reservation-stack-sm flex justify-between">
+                <dl class="space-y-3 text-sm">
+                    <div class="details-inline-row">
                         <dt class="text-gray-500">Created:</dt>
                         <dd class="text-gray-900">{{ $r->created_at->format('M d, Y h:i A') }}</dd>
                     </div>
                     
                     <div class="pt-4 mt-4 border-t border-gray-100">
-                        <div class="reservation-stack-sm flex justify-between items-center mb-3">
+                        <div class="details-inline-row details-inline-row-center mb-3">
                             <dt class="text-gray-500 font-medium">Payment Status:</dt>
                             <dd>
                                 @if(($r->payment_status ?? 'unpaid') === 'paid')
@@ -738,7 +955,7 @@
                         </div>
 
                         @if(($r->payment_status ?? 'unpaid') === 'paid' && !empty($r->or_number))
-                            <div class="reservation-stack-sm flex justify-between items-center mb-4">
+                            <div class="details-inline-row details-inline-row-center mb-4">
                                 <dt class="text-gray-500 font-medium">OR Number:</dt>
                                 <dd class="text-gray-900 font-bold bg-gray-100 px-3 py-1 rounded border border-gray-200 break-all">
                                     {{ $r->or_number }}

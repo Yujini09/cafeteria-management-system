@@ -12,50 +12,32 @@
             margin-right: 8mm;
         }
 
-        :root {
-            --primary: #00462E;
-            --primary-light: #057C3C;
-            --neutral-50: #fafafa;
-            --neutral-100: #f5f5f5;
-            --neutral-200: #e5e5e5;
-            --neutral-300: #d4d4d4;
-            --neutral-400: #a3a3a3;
-            --neutral-500: #737373;
-            --neutral-600: #525252;
-            --neutral-700: #404040;
-            --neutral-800: #262626;
-            --neutral-900: #171717;
-            --success: #059669;
-            --warning: #b45309;
-        }
-
         body {
             margin: 0;
             padding: 0;
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 12px;
             line-height: 1.45;
-            color: var(--neutral-800);
+            color: #262626;
             background: #ffffff;
         }
 
         .header-table,
-        .layout-table,
-        .contact-table,
-        .table {
+        .details-layout,
+        .table,
+        .amount-table {
             width: 100%;
             border-collapse: collapse;
         }
 
         .header-table td,
-        .layout-table td,
-        .contact-table td {
+        .details-layout td {
             vertical-align: top;
         }
 
         .page-header {
             margin-bottom: 16px;
-            border-bottom: 2px solid var(--primary);
+            border-bottom: 2px solid #00462E;
             padding-bottom: 12px;
         }
 
@@ -64,13 +46,13 @@
             font-size: 18px;
             font-weight: 700;
             line-height: 1.2;
-            color: var(--primary);
+            color: #00462E;
         }
 
         .header-subtitle,
         .header-meta {
             margin-top: 3px;
-            color: var(--neutral-600);
+            color: #525252;
             font-size: 11px;
         }
 
@@ -79,9 +61,9 @@
         }
 
         .card {
-            border: 1px solid var(--neutral-200);
+            border: 1px solid #e5e5e5;
             border-radius: 10px;
-            background: var(--neutral-50);
+            background: #fafafa;
             padding: 12px;
             margin-bottom: 12px;
         }
@@ -90,7 +72,7 @@
             margin: 0 0 10px;
             font-size: 13px;
             font-weight: 700;
-            color: var(--neutral-800);
+            color: #171717;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
@@ -99,7 +81,7 @@
             display: inline-block;
             width: 10px;
             height: 10px;
-            border: 2px solid var(--primary-light);
+            border: 2px solid #057C3C;
             border-radius: 3px;
             margin-right: 6px;
             vertical-align: 0;
@@ -107,70 +89,52 @@
         }
 
         .section-separator {
-            border-top: 1px solid var(--neutral-200);
+            border-top: 1px solid #e5e5e5;
             margin-top: 12px;
             padding-top: 12px;
         }
 
-        .content-block {
-            padding-right: 10px;
+        .details-layout td {
+            width: 50%;
         }
 
-        .field {
-            margin-bottom: 12px;
+        .details-pad {
+            padding-right: 12px;
         }
 
-        .field:last-child {
+        .detail-line,
+        .detail-block {
+            margin-bottom: 10px;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #111827;
+        }
+
+        .detail-line:last-child,
+        .detail-block:last-child {
             margin-bottom: 0;
         }
 
-        .field-label {
-            margin-bottom: 3px;
-            color: var(--neutral-600);
+        .detail-label {
             font-weight: 700;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
+            color: #111827;
         }
 
-        .field-value {
-            color: var(--neutral-900);
-            font-size: 12px;
+        .detail-label-block {
+            display: block;
+            margin-bottom: 2px;
         }
 
-        .field-value.emphasis {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--primary);
+        .detail-value {
+            color: #111827;
         }
 
-        .field-value.strong {
-            font-weight: 700;
-        }
-
-        .timeline-summary {
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .timeline-row {
-            margin-bottom: 4px;
-        }
-
-        .timeline-date {
-            display: inline-block;
-            width: 128px;
-            color: var(--neutral-700);
-            font-weight: 600;
-        }
-
-        .timeline-time {
-            display: inline-block;
-            color: var(--neutral-900);
+        .detail-time-list {
+            margin-top: 3px;
         }
 
         .muted {
-            color: var(--neutral-500);
+            color: #737373;
         }
 
         .break-all {
@@ -188,9 +152,9 @@
         }
 
         .badge-status {
-            background: var(--neutral-100);
-            color: var(--neutral-700);
-            border-color: var(--neutral-200);
+            background: #f5f5f5;
+            color: #404040;
+            border-color: #e5e5e5;
         }
 
         .badge-paid {
@@ -201,29 +165,29 @@
 
         .badge-unpaid {
             background: #fef3c7;
-            color: var(--warning);
+            color: #b45309;
             border-color: #fcd34d;
         }
 
         .badge-na {
-            background: var(--neutral-100);
-            color: var(--neutral-600);
-            border-color: var(--neutral-200);
+            background: #f5f5f5;
+            color: #525252;
+            border-color: #e5e5e5;
         }
 
         .table th,
         .table td {
-            border: 0.5px solid var(--neutral-300);
+            border: 0.5px solid #d4d4d4;
             padding: 6px 8px;
             text-align: left;
             vertical-align: top;
         }
 
         .table th {
-            background: var(--primary);
-            color: #ffffff;
+            background: #f5f5f5;
+            color: #000000;
             font-size: 10px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
@@ -236,45 +200,40 @@
             margin: 10px 0 6px;
             font-size: 11px;
             font-weight: 700;
-            color: var(--neutral-700);
+            color: #404040;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }
 
         .component-list {
             margin-top: 3px;
-            color: var(--neutral-600);
+            color: #525252;
             font-size: 10px;
         }
 
-        .amount-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
         .amount-table td {
-            border: 0.5px solid var(--neutral-300);
+            border: 0.5px solid #d4d4d4;
             padding: 7px 10px;
             background: #ffffff;
         }
 
         .amount-table .total-row td {
-            background: var(--neutral-100);
+            background: #f5f5f5;
             font-weight: 700;
-            border-top: 1px solid var(--primary);
+            border-top: 1px solid #00462E;
         }
 
         .amount-table tr:nth-child(even) td {
-            background: var(--neutral-50);
+            background: #fafafa;
         }
 
         .footer {
             margin-top: 18px;
             padding-top: 10px;
-            border-top: 1px solid var(--neutral-300);
+            border-top: 1px solid #d4d4d4;
             text-align: center;
             font-size: 10px;
-            color: var(--neutral-500);
+            color: #737373;
         }
     </style>
 </head>
@@ -352,18 +311,26 @@
             Event Details
         </div>
 
-        <table class="layout-table">
+        <table class="details-layout">
             <tr>
-                <td style="width: 50%;" class="content-block">
-                    <div class="field">
-                        <div class="field-label">Event Name:</div>
-                        <div class="field-value strong">{{ $reservation->event_name ?? '—' }}</div>
+                <td class="details-pad">
+                    <div class="detail-line">
+                        <span class="detail-label">Event Name:</span>
+                        <span class="detail-value">{{ $reservation->event_name ?: '-' }}</span>
                     </div>
-
-                    <div class="field">
-                        <div class="field-label">Date &amp; Time:</div>
-                        <div class="field-value">
-                            <div class="timeline-summary">{{ $dateSummary }}</div>
+                </td>
+                <td>
+                    <div class="detail-line">
+                        <span class="detail-label">Number of Persons:</span>
+                        <span class="detail-value">{{ $reservation->number_of_persons ?: '-' }}</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="details-pad">
+                    <div class="detail-block">
+                        <span class="detail-label detail-label-block">Date &amp; Time:</span>
+                        <div class="detail-time-list">
                             @if(!empty($dateRange))
                                 @foreach($dateRange as $dateKey => $currentDate)
                                     @php
@@ -396,9 +363,9 @@
                                         $formattedStartTime = $formatTimeForDisplay($startTime);
                                         $formattedEndTime = $formatTimeForDisplay($endTime);
                                     @endphp
-                                    <div class="timeline-row">
-                                        <span class="timeline-date">{{ $formattedDate }}</span>
-                                        <span class="timeline-time">
+                                    <div class="detail-line" style="margin-bottom: 3px;">
+                                        <span class="detail-value">{{ $formattedDate }}:</span>
+                                        <span class="detail-value">
                                             @if($formattedStartTime !== '')
                                                 {{ $formattedStartTime }}{{ $formattedEndTime !== '' ? ' - ' . $formattedEndTime : '' }}
                                             @else
@@ -408,67 +375,67 @@
                                     </div>
                                 @endforeach
                             @elseif(!empty($reservation->event_time))
-                                <div>{{ $reservation->event_time }}</div>
+                                <div class="detail-value">{{ $reservation->event_time }}</div>
                             @else
                                 <div class="muted">No time specified</div>
                             @endif
                         </div>
                     </div>
                 </td>
-
-                <td style="width: 50%;">
-                    <div class="field">
-                        <div class="field-label">Number of Persons:</div>
-                        <div class="field-value emphasis">{{ $reservation->number_of_persons ?? '—' }}</div>
+                <td>
+                    <div class="detail-line">
+                        <span class="detail-label">Special Requests:</span>
+                        <span class="detail-value">{{ $reservation->special_requests ?: 'None' }}</span>
                     </div>
-
-                    <div class="field">
-                        <div class="field-label">Venue:</div>
-                        <div class="field-value strong">{{ $reservation->venue ?? '—' }}</div>
-                    </div>
-
-                    <div class="field">
-                        <div class="field-label">Special Requests:</div>
-                        <div class="field-value">{{ $reservation->special_requests ?? 'None' }}</div>
+                    <div class="detail-line">
+                        <span class="detail-label">Venue:</span>
+                        <span class="detail-value">{{ $reservation->venue ?: '-' }}</span>
                     </div>
                 </td>
             </tr>
         </table>
 
         <div class="section-separator">
-            <table class="contact-table">
+            <table class="details-layout">
                 <tr>
-                    <td style="width: 50%;" class="content-block">
-                        <div class="field">
-                            <div class="field-label">Contact Person:</div>
-                            <div class="field-value strong">{{ $reservation->contact_person ?? optional($reservation->user)->name ?? '—' }}</div>
-                        </div>
-
-                        <div class="field">
-                            <div class="field-label">Department:</div>
-                            <div class="field-value">{{ $reservation->department ?? '—' }}</div>
-                        </div>
-
-                        <div class="field">
-                            <div class="field-label">Address:</div>
-                            <div class="field-value break-all">{{ $reservation->address ?? '—' }}</div>
+                    <td class="details-pad">
+                        <div class="detail-line">
+                            <span class="detail-label">Contact Person:</span>
+                            <span class="detail-value">{{ $reservation->contact_person ?: optional($reservation->user)->name ?: '-' }}</span>
                         </div>
                     </td>
-
-                    <td style="width: 50%;">
-                        <div class="field">
-                            <div class="field-label">Email:</div>
-                            <div class="field-value break-all">{{ $reservation->email ?? optional($reservation->user)->email ?? '—' }}</div>
+                    <td>
+                        <div class="detail-line">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value break-all">{{ $reservation->email ?: optional($reservation->user)->email ?: '-' }}</span>
                         </div>
-
-                        <div class="field">
-                            <div class="field-label">Phone:</div>
-                            <div class="field-value">{{ $reservation->contact_number ?? optional($reservation->user)->phone ?? '—' }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="details-pad">
+                        <div class="detail-line">
+                            <span class="detail-label">Department:</span>
+                            <span class="detail-value">{{ $reservation->department ?: '-' }}</span>
                         </div>
-
-                        <div class="field">
-                            <div class="field-label">OR Number:</div>
-                            <div class="field-value">{{ $reservation->or_number ?? 'N/A' }}</div>
+                    </td>
+                    <td>
+                        <div class="detail-line">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value">{{ $reservation->contact_number ?: optional($reservation->user)->phone ?: '-' }}</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="details-pad">
+                        <div class="detail-line">
+                            <span class="detail-label">Address:</span>
+                            <span class="detail-value break-all">{{ $reservation->address ?: '-' }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="detail-line">
+                            <span class="detail-label">OR Number:</span>
+                            <span class="detail-value">{{ $reservation->or_number ?: 'N/A' }}</span>
                         </div>
                     </td>
                 </tr>

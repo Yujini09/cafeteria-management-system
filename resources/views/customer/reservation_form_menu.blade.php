@@ -2,6 +2,90 @@
 
 @section('title', 'Menu Selection - CLSU RET Cafeteria')
 
+@php
+    $mealTimes = [
+        'breakfast' => 'Breakfast',
+        'am_snacks' => 'A.M. Snacks',
+        'lunch' => 'Lunch',
+        'pm_snacks' => 'P.M. Snacks',
+        'dinner' => 'Dinner',
+    ];
+    $categories = [
+        'standard' => 'Standard Menu',
+        'special' => 'Special Menu',
+    ];
+
+    $defaultStandardPrice = 150;
+    $defaultSpecialPrice = 200;
+
+    $startDate = $reservationData['start_date'] ?? null;
+    $endDate = $reservationData['end_date'] ?? null;
+    $dayTimes = !empty($reservationData['day_times'])
+        ? (json_decode($reservationData['day_times'], true) ?? [])
+        : [];
+
+    $numberOfDays = 0;
+    if ($startDate && $endDate) {
+        $start = new DateTime($startDate);
+        $end = new DateTime($endDate);
+        $numberOfDays = $end->diff($start)->days + 1;
+    }
+
+    $menuRateMap = [];
+    foreach ($mealTimes as $mealKey => $mealLabel) {
+        $menuRateMap[$mealKey] = [
+            'standard' => isset($menuPrices['standard'][$mealKey][0]) && is_numeric($menuPrices['standard'][$mealKey][0]->price)
+                ? (float) $menuPrices['standard'][$mealKey][0]->price
+                : (float) $defaultStandardPrice,
+            'special' => isset($menuPrices['special'][$mealKey][0]) && is_numeric($menuPrices['special'][$mealKey][0]->price)
+                ? (float) $menuPrices['special'][$mealKey][0]->price
+                : (float) $defaultSpecialPrice,
+        ];
+    }
+
+    $menuLibrary = [];
+    foreach ($mealTimes as $mealKey => $mealLabel) {
+        foreach ($categories as $categoryKey => $categoryLabel) {
+            $menuCollection = $menus[$mealKey][$categoryKey] ?? collect();
+
+            foreach ($menuCollection as $menu) {
+                $items = collect($menu->items ?? []);
+                $featuredItem = $items->firstWhere('type', 'food') ?? $items->first();
+                $menuLabel = trim((string) ($menu->name ?? ''));
+
+                if (preg_match('/(Menu\s*\d+|Day\s*\d+)/i', $menuLabel, $matches)) {
+                    $menuLabel = trim($matches[1]);
+                }
+
+                $menuLibrary[] = [
+                    'id' => (int) $menu->id,
+                    'name' => (string) ($menu->name ?? ''),
+                    'menu_label' => $menuLabel,
+                    'featured_title' => (string) ($featuredItem->name ?? 'Featured Menu'),
+                    'meal_time' => $mealKey,
+                    'meal_label' => $mealLabel,
+                    'category' => $categoryKey,
+                    'category_label' => $categoryLabel,
+                    'price' => $menuRateMap[$mealKey][$categoryKey],
+                    'description' => (string) ($menu->description ?? ''),
+                    'items' => $items->map(function ($item) {
+                        return [
+                            'name' => (string) ($item->name ?? ''),
+                            'type' => (string) ($item->type ?? ''),
+                        ];
+                    })->values()->all(),
+                    'searchable' => strtolower(trim(implode(' ', array_filter([
+                        (string) ($menu->name ?? ''),
+                        $mealLabel,
+                        $categoryLabel,
+                        $items->pluck('name')->implode(' '),
+                    ])))),
+                ];
+            }
+        }
+    }
+@endphp
+
 @section('styles')
     .menu_selection-hero-bg {
         background-image: url('/images/banner1.jpg');
@@ -9,18 +93,9 @@
         background-position: top;
     }
     .card {
-        background-color: white;
+        background-color: #ffffff;
         border-radius: 12px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    .menu-header {
-        background-color: #1a5e3d;
-        color: white;
-        padding: 20px;
-        border-radius: 12px 12px 0 0;
-    }
-    .qty-btn {
-        transition: background-color 0.15s ease;
     }
     .bg-clsu-green {
         background-color: #1a5e3d;
@@ -38,397 +113,552 @@
         border-color: #1a5e3d;
     }
 
-    /* Day Navigation Styles */
     .day-nav-container {
         background: linear-gradient(135deg, #1a5e3d 0%, #2d7a52 100%);
-        padding: 15px 20px;
-        border-radius: 10px;
+        padding: 16px 18px;
+        border-radius: 12px;
         margin-bottom: 20px;
     }
     .day-tabs {
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: stretch;
         gap: 8px;
         flex-wrap: wrap;
     }
     .day-tab {
-        padding: 10px 16px;
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 108px;
+        padding: 11px 16px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
         border: 2px solid transparent;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
-        transition: all 0.3s ease;
-        min-width: 80px;
+        transition: all 0.25s ease;
         text-align: center;
     }
     .day-tab:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
     }
     .day-tab.active {
-        background: white;
+        background: #ffffff;
         color: #1a5e3d;
         border-color: #1a5e3d;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+    .day-tab.has-selection:not(.active) {
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    }
+    .day-tab-title {
+        display: block;
+        font-size: 0.95rem;
     }
     .day-info {
-        color: white;
-        font-size: 0.9rem;
-        margin-top: 8px;
+        color: #ffffff;
+        font-size: 0.92rem;
+        margin-top: 10px;
         text-align: center;
     }
 
-    /* Style for the Menu Selection Tabs */
-    .menu-tab {
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 6px;
-        font-weight: 600;
-        margin-right: 5px;
-        transition: all 0.2s;
-        border: 2px solid transparent;
-        color: #333;
-        font-size: 0.875rem;
-        flex: 1;
-        text-align: center;
+    .menu-header-guidance {
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.14);
     }
-    .menu-tab.active {
-        background-color: #1a5e3d;
-        color: white;
-        border-color: #1a5e3d;
-        box-shadow: 0 2px 4px rgba(26, 94, 61, 0.4);
-    }
-    .menu-tab:not(.active):hover {
-        background-color: #f0f0f0;
-    }
-
-    /* Meal Type Buttons */
-    .meal-type-btn {
-        padding: 6px 10px;
-        cursor: pointer;
-        border-radius: 4px;
-        font-weight: 500;
-        margin: 2px;
-        transition: all 0.2s;
-        border: 1px solid #d1d5db;
-        color: #4b5563;
-        font-size: 0.75rem;
-        background-color: #f9fafb;
-        text-align: center;
-        flex: 1;
-        min-width: 80px;
-    }
-    .meal-type-btn.active {
-        background-color: #1a5e3d;
-        color: white;
-        border-color: #1a5e3d;
-        box-shadow: 0 1px 2px rgba(26, 94, 61, 0.3);
-    }
-    .meal-type-btn:not(.active):hover {
-        background-color: #e5e7eb;
-        border-color: #9ca3af;
-    }
-
-    /* Enhanced styles */
-    .meal-card {
-        transition: all 0.3s ease;
-        border-left: 4px solid transparent;
-    }
-    .meal-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
-    }
-    .meal-card.has-quantity {
-        border-left-color: #1a5e3d;
-        background-color: #f8fff9;
-    }
-    .quantity-indicator {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 24px;
-        height: 24px;
-        background-color: #1a5e3d;
-        color: white;
-        border-radius: 50%;
+    .menu-header-guidance-header {
         display: flex;
         align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+    .menu-header-guidance-icon {
+        display: inline-flex;
+        width: 24px;
+        height: 24px;
+        align-items: center;
         justify-content: center;
-        font-size: 0.75rem;
-        font-weight: bold;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        flex-shrink: 0;
     }
-    .menu-item-highlight {
-        background: linear-gradient(90deg, #f0f9f0 0%, #ffffff 100%);
-        border: 1px solid #1a5e3d;
+    .menu-header-guidance-title {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+    .menu-header-guidance-subtext {
+        margin: 0 0 10px;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.82rem;
+        line-height: 1.4;
+    }
+    .menu-header-guidance-list {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 0.84rem;
+        line-height: 1.6;
+    }
+    .menu-header-guidance-list li + li {
+        margin-top: 8px;
+    }
+    .menu-header-guidance-list strong {
+        color: #ffffff;
+        font-weight: 700;
     }
 
-    /* Day content management */
-    .day-content {
-        display: none;
-    }
-    .day-content.active {
-        display: block;
-    }
-
-    /* Green menu list styles - UPDATED HEIGHT */
     .green-menu-list {
         background: linear-gradient(135deg, #f0f9f0 0%, #e8f5e8 100%);
         border: 2px solid #1a5e3d;
-        border-radius: 10px;
-        height: 800px; /* Increased height */
-        display: flex; /* Changed to flex to manage children */
-        flex-direction: column; 
+        border-radius: 12px;
+        min-height: 720px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
     .green-menu-header {
         background: linear-gradient(135deg, #1a5e3d 0%, #2d7a52 100%);
-        color: white;
-        padding: 12px 16px;
-        border-radius: 8px 8px 0 0;
-        flex-shrink: 0; /* Prevent header from shrinking */
+        color: #ffffff;
+        padding: 18px 20px;
+        flex-shrink: 0;
     }
     .green-menu-header-layout {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 12px;
+        gap: 16px;
     }
-    .green-menu-header-copy {
-        flex: 1 1 auto;
-        min-width: 0;
+    .menu-search-container {
+        padding: 16px 18px;
+        background: #f8fff9;
+        border-bottom: 1px solid #d8ead9;
+        flex-shrink: 0;
+    }
+    .menu-tabs-container {
+        display: flex;
+        gap: 8px;
+        padding: 6px;
+        background: #e8f5e8;
+        border-radius: 10px;
+    }
+    .menu-tab {
+        padding: 9px 12px;
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        color: #374151;
+        font-size: 0.9rem;
+        flex: 1 1 0;
+        text-align: center;
+        background: transparent;
+    }
+    .menu-tab.active {
+        background-color: #1a5e3d;
+        color: #ffffff;
+        border-color: #1a5e3d;
+        box-shadow: 0 2px 4px rgba(26, 94, 61, 0.35);
+    }
+    .menu-tab:not(.active):hover {
+        background-color: #ffffff;
+    }
+
+    .meal-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .meal-type-btn {
+        padding: 10px 12px;
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border: 1px solid #d1d5db;
+        color: #4b5563;
+        font-size: 0.8rem;
+        background-color: #ffffff;
+        text-align: left;
+        flex: 1 1 110px;
+        min-width: 110px;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-    .menu-price-preview-box {
-        flex: 0 0 auto;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        width: auto;
-        max-width: 100%;
-        min-width: 0;
-        align-self: center;
-        padding-top: 0;
+        gap: 2px;
     }
-    .menu-price-preview-context {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        min-width: 0;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.82);
+    .meal-type-btn.active {
+        background-color: #1a5e3d;
+        color: #ffffff;
+        border-color: #1a5e3d;
+        box-shadow: 0 1px 2px rgba(26, 94, 61, 0.25);
     }
-    .menu-price-preview-line {
-        display: block;
-        width: auto;
-        white-space: nowrap;
-        font-size: 0.84rem;
-        font-weight: 600;
-        line-height: 1.1;
+    .meal-type-btn.has-selection:not(.active) {
+        background-color: #f0fdf4;
+        border-color: #86efac;
     }
-    .menu-price-preview-meal {
-        margin-top: 0;
-        opacity: 0.95;
+    .meal-type-btn:not(.active):hover {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
     }
-    .menu-price-preview-divider {
-        display: inline-block;
-        font-size: 0.7rem;
-        line-height: 1;
-        opacity: 0.75;
-    }
-    .menu-price-preview-price-row {
-        display: flex;
-        align-items: baseline;
-        justify-content: center;
-        gap: 4px;
-        min-width: 0;
-    }
-    .menu-price-preview-price-unit {
+    .meal-type-btn-label {
         display: block;
         font-size: 0.8rem;
-        font-weight: 600;
-        line-height: 1;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .meal-type-btn-status {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.68rem;
+        line-height: 1.2;
+        color: #6b7280;
+    }
+    .meal-type-btn.active .meal-type-btn-status {
         color: rgba(255, 255, 255, 0.82);
     }
-    .menu-price-preview-value {
+
+    .menu-preview-container {
+        flex: 0 0 auto;
+        min-height: auto;
         display: block;
-        width: auto;
-        margin-top: 0;
-        color: #ffffff;
-        font-size: 1.4rem;
-        font-weight: 800;
-        line-height: 1;
-        text-align: center;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
     }
-    @media (max-width: 420px) {
-        .menu-price-preview-box {
-            gap: 5px;
-        }
-        .menu-price-preview-value {
-            font-size: 1.2rem;
-        }
+    .menu-content-area {
+        padding: 18px;
+        overflow: visible;
+        flex: 0 0 auto;
+    }
+
+    .filter-caption {
+        color: #4b5563;
+        font-size: 0.86rem;
+        font-weight: 600;
+        margin-bottom: 12px;
     }
     .menu-list-item {
         border-left: 4px solid #1a5e3d;
-        background-color: #ffffff;
-        transition: all 0.3s ease;
-        margin-bottom: 12px;
+        background: #ffffff;
+        transition: all 0.25s ease;
     }
-    .menu-list-item:hover {
-        background-color: #f0f9f0;
-        transform: translateX(5px);
+    .menu-browser-item {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        cursor: pointer;
     }
-
-    /* Fixed menu preview styles */
-    .menu-preview-container {
-        padding: 0;
-        flex-grow: 1; /* Allow container to fill remaining space */
-        display: flex;
-        flex-direction: column;
-        overflow: hidden; /* Contain scroll area */
+    .menu-browser-item.is-selected {
+        border-left-color: #15803d;
+        box-shadow: 0 16px 28px rgba(26, 94, 61, 0.14);
+        background: linear-gradient(180deg, #ffffff 0%, #f4fff7 100%);
     }
-    .menu-tabs-container {
-        padding: 8px;
-        margin: 0;
-        background-color: #e8f5e8;
-        border-radius: 6px;
-        flex-shrink: 0;
+    .menu-browser-item.is-expanded {
+        box-shadow: 0 16px 28px rgba(26, 94, 61, 0.14);
     }
-    .menu-content-area {
-        padding: 0 12px 12px 12px;
-        margin: 8px 0 0 0;
-        /* Removed max-height, let flexbox handle it */
-        overflow-y: auto;
-        flex-grow: 1;
-        scrollbar-width: thin;
-        scrollbar-color: #1a5e3d #f0f0f0;
-    }
-    /* Webkit scrollbar styling */
-    .menu-content-area::-webkit-scrollbar {
-        width: 8px;
-    }
-    .menu-content-area::-webkit-scrollbar-track {
-        background: #f0f0f0;
-        border-radius: 4px;
-    }
-    .menu-content-area::-webkit-scrollbar-thumb {
-        background-color: #1a5e3d;
-        border-radius: 4px;
-        border: 2px solid #f0f0f0;
-    }
-
     .compact-menu-item {
-        padding: 12px;
-        margin-bottom: 10px;
+        padding: 16px;
+        border-radius: 12px;
     }
-    
-    /* Search bar styles */
-    .menu-search-container {
-        padding: 12px 16px;
-        background-color: #f8fff9;
-        border-bottom: 1px solid #e8f5e8;
-        flex-shrink: 0;
+    .menu-card-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #ecfdf3;
+        color: #166534;
+        font-size: 0.74rem;
+        font-weight: 700;
     }
-    .menu-search-input {
-        border: 1px solid #1a5e3d;
+    .menu-card-tag-premium {
+        background: #fff7d6;
+        color: #92400e;
+    }
+    .price-badge {
+        background-color: #1a5e3d;
+        color: #ffffff;
+        padding: 6px 10px;
         border-radius: 8px;
-        padding: 8px 12px;
-        font-size: 0.875rem;
-        width: 100%;
-        background-color: white;
+        font-size: 0.82rem;
+        font-weight: 700;
+        white-space: nowrap;
     }
-    .menu-search-input:focus {
-        outline: none;
-        ring: 2px;
-        ring-color: #1a5e3d;
-        border-color: #1a5e3d;
+    .selection-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(26, 94, 61, 0.1);
+        color: #166534;
+        font-size: 0.74rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .selection-chip-muted {
+        background: #eef2ff;
+        color: #475569;
+    }
+    .menu-card-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        padding: 16px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.04) 5%, rgba(15, 23, 42, 0.62) 100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+    .menu-card-overlay-panel {
+        width: 100%;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.98);
+        padding: 14px 16px;
+        box-shadow: 0 18px 28px rgba(15, 23, 42, 0.16);
+        transform: translateY(14px);
+        transition: transform 0.22s ease;
+    }
+    .menu-browser-item:focus-within .menu-card-overlay,
+    .menu-browser-item.is-expanded .menu-card-overlay {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .menu-browser-item:focus-within .menu-card-overlay-panel,
+    .menu-browser-item.is-expanded .menu-card-overlay-panel {
+        transform: translateY(0);
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .menu-browser-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        }
+        .menu-browser-item:hover .menu-card-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .menu-browser-item:hover .menu-card-overlay-panel {
+            transform: translateY(0);
+        }
+    }
+    .menu-browser-footer {
+        padding: 16px 18px;
+        background: rgba(255, 255, 255, 0.6);
+        border-top: 1px solid #d8ead9;
+        flex-shrink: 0;
     }
     .no-results {
         text-align: center;
-        padding: 20px;
-        color: #666;
+        padding: 28px 18px;
+        color: #6b7280;
         font-style: italic;
     }
-    .search-highlight {
-        background-color: #ffeb3b;
-        padding: 1px 2px;
-        border-radius: 2px;
-    }
-    .qty-error {
-        border-color: #ef4444 !important;
-        background-color: #fef2f2;
-    }
 
-    /* Price badge styles */
-    .price-badge {
-        background-color: #1a5e3d;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
+    .selected-order-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+        background: #ffffff;
     }
-
-    /* Confirmation Modal Styles */
-    .confirmation-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
+    .selected-order-item-shell {
+        display: block;
+    }
+    .selected-order-item-content {
+        min-width: 0;
+    }
+    .selected-order-item-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .selected-order-item-heading {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+    .selected-order-item-meal {
+        color: #14532d;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+    .selected-order-item-price {
+        flex-shrink: 0;
+        color: #1f2937;
+        font-size: 0.85rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .selected-order-item-detail {
+        margin-top: 6px;
+        color: #374151;
+        font-size: 0.82rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .selected-order-item-list {
+        margin-top: 6px;
+        display: grid;
+        gap: 3px;
+    }
+    .selected-order-item-list-entry {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        color: #4b5563;
+        font-size: 0.84rem;
+        line-height: 1.2;
+    }
+    .selected-order-item-list-bullet {
+        color: #15803d;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .selected-order-item-pax-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+    .selected-order-item-pax {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .selected-order-item-remove {
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
         align-items: center;
         justify-content: center;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #dc2626;
+        transition: background-color 0.15s ease;
     }
-    .confirmation-modal-content {
-        background: white;
-        padding: 30px;
+    .selected-order-item-remove:hover {
+        background: #fee2e2;
+    }
+    .selected-order-item-pax-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #6b7280;
+        line-height: 1.1;
+    }
+    .selected-order-empty {
+        border: 1px dashed #cbd5e1;
         border-radius: 12px;
-        max-width: 700px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-    }
-    .summary-item {
-        border-bottom: 1px solid #e5e7eb;
-        padding: 12px 0;
-    }
-    .summary-item:last-child {
-        border-bottom: none;
-    }
-    .total-section {
+        padding: 22px 16px;
+        text-align: center;
+        color: #6b7280;
         background: #f8fafc;
-        border-radius: 8px;
-        padding: 20px;
-        margin-top: 20px;
+    }
+    .summary-qty-group {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    .summary-qty-btn {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .summary-qty-btn:hover {
+        background: #e5e7eb;
+    }
+    .summary-qty-input {
+        width: 58px;
+        height: 34px;
+        border: 0;
+        border-left: 1px solid #d1d5db;
+        border-right: 1px solid #d1d5db;
+        text-align: center;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #111827;
+    }
+    .summary-qty-input:focus {
+        outline: none;
+        background: #f8fff9;
+    }
+    .summary-qty-error {
+        display: none;
+        margin-top: 10px;
+        color: #dc2626;
+        font-size: 0.76rem;
+        font-weight: 600;
+    }
+    .summary-qty-error.visible {
+        display: block;
+    }
+    .summary-apply-all-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 12px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(26, 94, 61, 0.16);
+        background: #f0f9f0;
+        color: #166534;
+        font-size: 0.78rem;
+        font-weight: 700;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .summary-apply-all-btn:hover {
+        background: #e5f6e6;
+        border-color: rgba(26, 94, 61, 0.28);
+    }
+    .order-summary-day-label {
+        color: #374151;
+        font-weight: 700;
+    }
+    .order-summary-day-value {
+        color: #111827;
+        font-weight: 700;
     }
 
-    /* Notification Styles */
+    .navigation-button[disabled] {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
     .notification {
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 16px 20px;
-        border-radius: 8px;
-        color: white;
+        border-radius: 10px;
+        color: #ffffff;
         font-weight: 600;
         z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
         transform: translateX(150%);
         transition: transform 0.3s ease-in-out;
-        max-width: 400px;
+        max-width: 420px;
     }
     .notification.show {
         transform: translateX(0);
@@ -450,31 +680,1099 @@
         flex-shrink: 0;
     }
 
-    /* Meal type sections */
-    .meal-type-section {
+    .confirmation-modal {
         display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
     }
-    .meal-type-section.active {
-        display: block;
+    .confirmation-modal-content {
+        background: #ffffff;
+        padding: 28px;
+        border-radius: 14px;
+        max-width: 760px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+    .summary-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 12px 0;
+    }
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    .total-section {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 18px;
+        margin-top: 20px;
     }
 
-    /* Day summary badge */
-    .day-summary-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #1a5e3d;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
+    @media (min-width: 1024px) {
+        .green-menu-list {
+            min-height: 0;
+            height: auto;
+        }
+        .green-menu-header-layout {
+            display: block;
+        }
     }
 
+    @media (max-width: 1023px) {
+        .green-menu-list {
+            min-height: 0;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .day-tabs {
+            flex-wrap: nowrap;
+            gap: 6px;
+        }
+        .day-tab {
+            min-width: 0;
+            flex: 1 1 0;
+            padding: 10px 8px;
+        }
+        .day-tab-title {
+            font-size: 0.82rem;
+        }
+        .menu-tabs-container {
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+        .meal-type-btn {
+            min-width: calc(50% - 8px);
+        }
+        .confirmation-modal-content {
+            padding: 22px 18px;
+        }
+    }
+@endsection
+
+@section('scripts')
+<script>
+    let currentDay = 1;
+    let totalDays = 1;
+    let activeCategory = 'standard';
+    let activeMealType = 'breakfast';
+    let expandedMenuId = null;
+    let selectionState = {};
+
+    const mealTimes = @json($mealTimes);
+    const mealOrder = Object.keys(mealTimes);
+    const menuPrices = @json($menuRateMap);
+    const menuLibrary = @json($menuLibrary);
+    const reservationDayTimes = @json($dayTimes);
+    const initialReservations = @json(old('reservations', []));
+    const menuIndex = menuLibrary.reduce((accumulator, menu) => {
+        accumulator[String(menu.id)] = menu;
+        return accumulator;
+    }, {});
+    const maxPax = 100;
+
+    window.closeConfirmationModal = closeConfirmationModal;
+    window.submitReservation = submitReservation;
+    window.redirectToReservationDetails = redirectToReservationDetails;
+    window.closeSuccessModal = closeSuccessModal;
+
+    function closeConfirmationModal() {
+        const modal = document.getElementById('confirmationModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function closeSuccessModal() {
+        const modal = document.getElementById('successModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function redirectToReservationDetails() {
+        closeSuccessModal();
+        window.location.href = '{{ route('reservation_details') }}';
+    }
+
+    function submitReservation(triggerButton = null) {
+        syncHiddenInputs();
+
+        if (triggerButton && window.cmsActionButtons) {
+            const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Submitting Reservation...');
+            if (!started) {
+                return;
+            }
+        }
+
+        const confirmButton = document.getElementById('confirm-button');
+        if (confirmButton && window.cmsActionButtons) {
+            window.cmsActionButtons.start(confirmButton, confirmButton.dataset.loadingText || 'Submitting...');
+        }
+
+        closeConfirmationModal();
+        document.getElementById('reservation-form').submit();
+    }
+
+    function showNotification(message, type = 'success', duration = 4500) {
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+
+        const icon = type === 'success'
+            ? '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            : '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+
+        notification.innerHTML = `
+            <div class="notification-content">
+                ${icon}
+                <span>${escapeHtml(message)}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 50);
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, duration);
+    }
+
+    function escapeHtml(value) {
+        const text = String(value ?? '');
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getPesoSign() {
+        return String.fromCharCode(0x20B1);
+    }
+
+    function formatCurrency(value) {
+        return `${getPesoSign()}${Number(value || 0).toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    }
+
+    function getDayLabel(day) {
+        return `Day ${day}`;
+    }
+
+    function createLocalDate(dateString) {
+        const parts = String(dateString || '').split('-').map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) {
+            return new Date();
+        }
+
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function toIsoDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function formatShortDate(date) {
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function formatLongDate(date) {
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    function formatTimeForDisplay(timeValue) {
+        if (!timeValue) {
+            return '';
+        }
+
+        const match = String(timeValue).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+        if (!match) {
+            return String(timeValue);
+        }
+
+        const hours = parseInt(match[1], 10);
+        const minutes = match[2];
+
+        if (Number.isNaN(hours) || hours < 0 || hours > 23) {
+            return String(timeValue);
+        }
+
+        const meridiem = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        return `${displayHours}:${minutes} ${meridiem}`;
+    }
+
+    function ensureDaySelectionState(day) {
+        const key = String(day);
+        if (!selectionState[key]) {
+            selectionState[key] = {};
+        }
+        return selectionState[key];
+    }
+
+    function getSelection(day, mealTime) {
+        return ensureDaySelectionState(day)[mealTime] || null;
+    }
+
+    function getSelectionsForDay(day) {
+        const selections = ensureDaySelectionState(day);
+
+        return mealOrder
+            .map((mealTime) => {
+                const selection = selections[mealTime];
+                if (!selection) {
+                    return null;
+                }
+
+                const menu = menuIndex[String(selection.menuId)];
+                if (!menu) {
+                    return null;
+                }
+
+                return {
+                    mealTime,
+                    menu,
+                    category: selection.category || menu.category,
+                    qty: Number(selection.qty) || 0
+                };
+            })
+            .filter(Boolean);
+    }
+
+    function dayHasSelectedMenu(day) {
+        return getSelectionsForDay(day).length > 0;
+    }
+
+    function dayHasInvalidQuantities(day) {
+        return getSelectionsForDay(day).some((selection) => selection.qty < 10);
+    }
+
+    function dayIsReady(day) {
+        return dayHasSelectedMenu(day) && !dayHasInvalidQuantities(day);
+    }
+
+    function everySelectedDayHasValidMenu() {
+        if (totalDays < 1) {
+            return false;
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            if (!dayIsReady(day)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function syncHiddenInputs() {
+        const container = document.getElementById('reservation-hidden-inputs');
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+
+        for (let day = 1; day <= totalDays; day++) {
+            const selections = getSelectionsForDay(day);
+
+            selections.forEach((selection) => {
+                appendHiddenInput(container, `reservations[${day}][${selection.mealTime}][category]`, selection.category);
+                appendHiddenInput(container, `reservations[${day}][${selection.mealTime}][menu]`, selection.menu.id);
+                appendHiddenInput(container, `reservations[${day}][${selection.mealTime}][qty]`, selection.qty);
+            });
+        }
+    }
+
+    function appendHiddenInput(container, name, value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        container.appendChild(input);
+    }
+
+    function hydrateInitialSelections() {
+        selectionState = {};
+
+        for (let day = 1; day <= totalDays; day++) {
+            ensureDaySelectionState(day);
+        }
+
+        Object.entries(initialReservations || {}).forEach(([dayKey, meals]) => {
+            const day = parseInt(dayKey, 10);
+
+            if (Number.isNaN(day) || !meals || typeof meals !== 'object') {
+                return;
+            }
+
+            Object.entries(meals).forEach(([mealTime, data]) => {
+                const menuId = String(data.menu || '');
+                const menu = menuIndex[menuId];
+                const qty = Math.min(Math.max(parseInt(data.qty, 10) || 0, 0), maxPax);
+
+                if (!menu || qty <= 0) {
+                    return;
+                }
+
+                ensureDaySelectionState(day)[mealTime] = {
+                    menuId,
+                    category: data.category || menu.category,
+                    qty: qty < 10 ? 10 : qty
+                };
+            });
+        });
+    }
+
+    function initializeDayTabs() {
+        const tabsContainer = document.getElementById('day-tabs');
+        const startDate = document.getElementById('start-date').value;
+        const start = createLocalDate(startDate);
+        tabsContainer.innerHTML = '';
+
+        for (let day = 1; day <= totalDays; day++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + day - 1);
+            const dateKey = toIsoDate(date);
+
+            const tab = document.createElement('button');
+            tab.type = 'button';
+            tab.className = `day-tab ${day === currentDay ? 'active' : ''}`;
+            tab.dataset.day = day;
+            tab.dataset.date = dateKey;
+
+            const dayTime = reservationDayTimes[dateKey] || {};
+            tab.dataset.startTime = dayTime.start_time || '';
+            tab.dataset.endTime = dayTime.end_time || '';
+
+            tab.innerHTML = `<span class="day-tab-title">${getDayLabel(day)}</span>`;
+
+            tabsContainer.appendChild(tab);
+        }
+    }
+
+    function updateDayTabsSelectionState() {
+        document.querySelectorAll('.day-tab').forEach((tab) => {
+            const day = parseInt(tab.dataset.day, 10);
+            const count = getSelectionsForDay(day).length;
+
+            tab.classList.toggle('has-selection', count > 0);
+        });
+    }
+
+    function updateDayInfo(day) {
+        const dayInfo = document.getElementById('day-info');
+        const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+        if (!dayInfo || !activeTab) {
+            return;
+        }
+
+        const date = createLocalDate(activeTab.dataset.date);
+        let info = `Currently viewing: <strong>${formatLongDate(date)}</strong>`;
+
+        if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
+            info += ` | Time: ${formatTimeForDisplay(activeTab.dataset.startTime)} to ${formatTimeForDisplay(activeTab.dataset.endTime)}`;
+        }
+
+        dayInfo.innerHTML = info;
+    }
+
+    function switchToDay(day) {
+        if (day < 1 || day > totalDays) {
+            return;
+        }
+
+        currentDay = day;
+        document.querySelectorAll('.day-tab').forEach((tab) => {
+            tab.classList.toggle('active', parseInt(tab.dataset.day, 10) === day);
+        });
+
+        updateDayInfo(day);
+        renderAll();
+    }
+
+    function updateDayContext() {
+        const label = getDayLabel(currentDay);
+    }
+
+    function updateMealFilterSelectionState() {
+        document.querySelectorAll('.meal-type-btn').forEach((button) => {
+            const mealTime = button.dataset.mealType;
+            const selection = getSelection(currentDay, mealTime);
+            const status = button.querySelector('[data-meal-filter-status]');
+            const selectedMenu = selection ? menuIndex[String(selection.menuId)] : null;
+
+            button.classList.toggle('has-selection', Boolean(selection));
+
+            if (status) {
+                status.textContent = selectedMenu
+                    ? `${selectedMenu.menu_label || 'Selected'} selected`
+                    : 'Not selected';
+            }
+        });
+    }
+
+    function updateMenuPricePreview() {
+    }
+
+    function renderMenuGrid() {
+        updateMenuPricePreview();
+
+            const grid = document.getElementById('menu-browser-grid');
+            const emptyState = document.getElementById('menu-empty-state');
+
+            const filteredMenus = menuLibrary.filter((menu) => {
+                if (menu.category !== activeCategory) {
+                return false;
+            }
+
+                if (menu.meal_time !== activeMealType) {
+                    return false;
+                }
+                return true;
+            });
+
+        if (!filteredMenus.length) {
+            grid.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            emptyState.textContent = `No ${activeCategory} menus found for ${mealTimes[activeMealType]}.`;
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        grid.innerHTML = filteredMenus.map((menu) => {
+            const selection = getSelection(currentDay, menu.meal_time);
+            const isSelected = selection && String(selection.menuId) === String(menu.id);
+            const isExpanded = String(expandedMenuId) === String(menu.id);
+            const itemMarkup = Array.isArray(menu.items) && menu.items.length
+                ? menu.items.map((item) => `
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 mt-0.5">&bull;</span>
+                        <span>${escapeHtml(item.name)}</span>
+                    </li>
+                `).join('')
+                : '<li class="text-gray-500">No items listed yet.</li>';
+
+            return `
+                <article class="menu-list-item compact-menu-item menu-browser-item ${isSelected ? 'is-selected' : ''} ${isExpanded ? 'is-expanded' : ''}" data-menu-id="${menu.id}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 space-y-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="menu-card-tag">${escapeHtml(menu.meal_label)}</span>
+                                <span class="menu-card-tag ${menu.category === 'special' ? 'menu-card-tag-premium' : ''}">${escapeHtml(menu.category === 'special' ? 'Special' : 'Standard')}</span>
+                                ${isSelected ? '<span class="selection-chip">Selected</span>' : ''}
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-green-900">${escapeHtml(menu.menu_label)}</h3>
+                            </div>
+                        </div>
+                        <div class="price-badge">${formatCurrency(menu.price)} / pax</div>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Included items</p>
+                        <ul class="space-y-1 text-sm text-gray-700">
+                            ${itemMarkup}
+                        </ul>
+                    </div>
+
+                    <div class="menu-card-overlay">
+                        <div class="menu-card-overlay-panel">
+                            ${isSelected
+                                ? `<button type="button" class="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition text-sm font-semibold" data-remove-selection="${menu.meal_time}">
+                                       Remove
+                                   </button>`
+                                : `<button type="button" class="px-4 py-2 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold" data-add-menu="${menu.id}">
+                                       Add to Order
+                                   </button>`}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function renderSelectedOrderPanel() {
+        const list = document.getElementById('selected-order-list');
+        const emptyState = document.getElementById('selected-order-empty');
+        const countChip = document.getElementById('current-day-selection-count');
+        const selections = getSelectionsForDay(currentDay);
+
+        countChip.textContent = `${selections.length} selected`;
+
+        if (!selections.length) {
+            list.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        list.innerHTML = selections.map((selection, index) => {
+            const canApplyToAll = index === 0 && selections.length > 1 && selection.qty > 0;
+            const menuTypeLabel = selection.menu.category === 'special' ? 'Special' : 'Standard';
+            const selectedItemsMarkup = Array.isArray(selection.menu.items) && selection.menu.items.length
+                ? selection.menu.items.map((item) => `
+                    <div class="selected-order-item-list-entry">
+                        <span class="selected-order-item-list-bullet">&bull;</span>
+                        <span>${escapeHtml(item.name)}</span>
+                    </div>
+                `).join('')
+                : '<div class="text-sm text-gray-500">No items listed yet.</div>';
+            return `
+                <div class="selected-order-item" data-selected-meal="${selection.mealTime}">
+                    <div class="selected-order-item-shell">
+                        <div class="selected-order-item-content">
+                            <div class="selected-order-item-top">
+                                <div class="selected-order-item-heading">
+                                    <p class="selected-order-item-meal">${escapeHtml(selection.menu.meal_label)}</p>
+                                    <p class="selected-order-item-price">${formatCurrency(selection.menu.price)} / pax</p>
+                                </div>
+                                <button type="button" class="selected-order-item-remove" data-remove-selection="${selection.mealTime}" title="Remove">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="selected-order-item-detail">
+                                ${escapeHtml(menuTypeLabel)} - ${escapeHtml(selection.menu.menu_label)}
+                            </div>
+                            <div class="selected-order-item-list">
+                                ${selectedItemsMarkup}
+                            </div>
+                            <div class="selected-order-item-pax-row">
+                                <div class="selected-order-item-pax">
+                                    <span class="selected-order-item-pax-label"># of Guests</span>
+                                    <div class="summary-qty-group">
+                                        <button type="button" class="summary-qty-btn" data-qty-action="decrement" data-meal-time="${selection.mealTime}">-</button>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="${maxPax}"
+                                            class="summary-qty-input"
+                                            data-summary-qty="${selection.mealTime}"
+                                            value="${selection.qty}"
+                                        >
+                                        <button type="button" class="summary-qty-btn" data-qty-action="increment" data-meal-time="${selection.mealTime}">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="summary-qty-error ${selection.qty > 0 && selection.qty < 10 ? 'visible' : ''}" data-qty-error="${selection.mealTime}">
+                        Minimum 10 pax per selected menu.
+                    </p>
+                    ${canApplyToAll
+                        ? `<button type="button" class="summary-apply-all-btn" data-apply-qty-all="${selection.mealTime}">
+                               Apply quantity to all ordered meals
+                           </button>`
+                        : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateSummaryMetrics() {
+        let estimatedTotal = 0;
+        const dayTotals = [];
+
+        for (let day = 1; day <= totalDays; day++) {
+            const selections = getSelectionsForDay(day);
+            let dayTotal = 0;
+
+            selections.forEach((selection) => {
+                dayTotal += selection.qty * Number(selection.menu.price || 0);
+            });
+
+            estimatedTotal += dayTotal;
+            dayTotals.push({ day, total: dayTotal });
+        }
+
+        const dayTotalsContainer = document.getElementById('order-summary-day-totals');
+        if (dayTotalsContainer) {
+            dayTotalsContainer.innerHTML = dayTotals.map(({ day, total }) => `
+                <div class="flex justify-between text-sm">
+                    <span class="order-summary-day-label">${escapeHtml(getDayLabel(day))}:</span>
+                    <span class="order-summary-day-value">${formatCurrency(total)}</span>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('estimated-total').textContent = formatCurrency(estimatedTotal);
+    }
+
+    function updateNavigationButtons() {
+        const backButton = document.getElementById('back-button');
+        const nextDayButton = document.getElementById('next-day-button');
+        const confirmButton = document.getElementById('confirm-button');
+        const currentDayReady = dayIsReady(currentDay);
+        const allDaysReady = everySelectedDayHasValidMenu();
+
+        backButton.classList.toggle('hidden', currentDay === 1);
+
+        if (currentDay < totalDays) {
+            nextDayButton.classList.remove('hidden');
+            confirmButton.classList.add('hidden');
+            nextDayButton.disabled = !currentDayReady;
+            nextDayButton.setAttribute('aria-disabled', String(!currentDayReady));
+            nextDayButton.title = currentDayReady
+                ? ''
+                : 'Select at least one menu with at least 10 pax before moving to the next day.';
+        } else {
+            nextDayButton.classList.add('hidden');
+            confirmButton.classList.remove('hidden');
+            confirmButton.disabled = !allDaysReady;
+            confirmButton.setAttribute('aria-disabled', String(!allDaysReady));
+            confirmButton.title = allDaysReady
+                ? ''
+                : 'Finish selecting at least one valid menu for every day before confirming.';
+        }
+    }
+
+    function renderAll() {
+        updateDayContext();
+        updateDayTabsSelectionState();
+        updateMealFilterSelectionState();
+        renderMenuGrid();
+        renderSelectedOrderPanel();
+        updateSummaryMetrics();
+        updateNavigationButtons();
+        syncHiddenInputs();
+    }
+
+    function usesHoverOverlay() {
+        return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    }
+
+    function selectMenu(menuId) {
+        const menu = menuIndex[String(menuId)];
+        if (!menu) {
+            return;
+        }
+
+        const currentSelection = getSelection(currentDay, menu.meal_time);
+        if (currentSelection && String(currentSelection.menuId) === String(menu.id)) {
+            expandedMenuId = menu.id;
+            renderAll();
+            return;
+        }
+
+        const nextQty = currentSelection && Number(currentSelection.qty) > 0 ? Number(currentSelection.qty) : 10;
+        ensureDaySelectionState(currentDay)[menu.meal_time] = {
+            menuId: String(menu.id),
+            category: menu.category,
+            qty: nextQty
+        };
+
+        expandedMenuId = menu.id;
+        renderAll();
+
+        showNotification(
+            currentSelection
+                ? `${menu.meal_label} updated for ${getDayLabel(currentDay)}.`
+                : `${menu.menu_label} added to ${getDayLabel(currentDay)}.`,
+            'success'
+        );
+    }
+
+    function removeSelection(day, mealTime, notify = true) {
+        const daySelections = ensureDaySelectionState(day);
+        if (!daySelections[mealTime]) {
+            return;
+        }
+
+        delete daySelections[mealTime];
+
+        if (activeMealType === mealTime) {
+            expandedMenuId = null;
+        }
+
+        renderAll();
+
+        if (notify) {
+            showNotification(`${mealTimes[mealTime]} removed from ${getDayLabel(day)}.`, 'success');
+        }
+    }
+
+    function adjustSelectionQuantity(day, mealTime, action) {
+        const selection = getSelection(day, mealTime);
+        if (!selection) {
+            return;
+        }
+
+        let nextQty = Number(selection.qty) || 0;
+
+        if (action === 'increment') {
+            nextQty = nextQty === 0 ? 10 : Math.min(nextQty + 1, maxPax);
+        } else if (action === 'decrement') {
+            if (nextQty <= 10) {
+                removeSelection(day, mealTime, true);
+                return;
+            }
+            nextQty = Math.max(nextQty - 1, 0);
+        }
+
+        ensureDaySelectionState(day)[mealTime].qty = nextQty;
+        renderAll();
+    }
+
+    function commitManualQuantity(day, mealTime, rawValue) {
+        const selection = getSelection(day, mealTime);
+        if (!selection) {
+            return;
+        }
+
+        let nextQty = parseInt(rawValue, 10);
+
+        if (Number.isNaN(nextQty) || nextQty <= 0) {
+            removeSelection(day, mealTime, true);
+            return;
+        }
+
+        if (nextQty > maxPax) {
+            nextQty = maxPax;
+        }
+
+        if (nextQty > 0 && nextQty < 10) {
+            nextQty = 10;
+        }
+
+        ensureDaySelectionState(day)[mealTime].qty = nextQty;
+        renderAll();
+    }
+
+    function toggleQuantityError(mealTime, value) {
+        const errorElement = document.querySelector(`[data-qty-error="${mealTime}"]`);
+        if (!errorElement) {
+            return;
+        }
+
+        const numericValue = parseInt(value, 10) || 0;
+        errorElement.classList.toggle('visible', numericValue > 0 && numericValue < 10);
+    }
+
+    function applyQuantityToAllOrderedMeals(day, sourceMealTime) {
+        const sourceSelection = getSelection(day, sourceMealTime);
+        if (!sourceSelection) {
+            return;
+        }
+
+        const nextQty = Math.min(Math.max(parseInt(sourceSelection.qty, 10) || 0, 0), maxPax);
+        const selections = getSelectionsForDay(day);
+
+        if (nextQty <= 0 || selections.length < 2) {
+            return;
+        }
+
+        selections.forEach((selection) => {
+            ensureDaySelectionState(day)[selection.mealTime].qty = nextQty > 0 && nextQty < 10 ? 10 : nextQty;
+        });
+
+        renderAll();
+        showNotification(`${nextQty} pax applied to all ordered meals for ${getDayLabel(day)}.`, 'success');
+    }
+
+    function focusFirstProblemDay(problemDay, message) {
+        switchToDay(problemDay);
+        showNotification(message, 'error', 5000);
+    }
+
+    function validateForm() {
+        for (let day = 1; day <= totalDays; day++) {
+            if (!dayHasSelectedMenu(day)) {
+                focusFirstProblemDay(day, `Please select at least one menu for ${getDayLabel(day)} before continuing.`);
+                return false;
+            }
+
+            if (dayHasInvalidQuantities(day)) {
+                focusFirstProblemDay(day, `Please set at least 10 pax for every selected menu on ${getDayLabel(day)}.`);
+                return false;
+            }
+        }
+
+        syncHiddenInputs();
+        return true;
+    }
+
+    function showConfirmationModal() {
+        const modal = document.getElementById('confirmationModal');
+        const summaryContainer = document.getElementById('modal-reservation-summary');
+        let totalAmount = 0;
+
+        summaryContainer.innerHTML = '';
+
+        for (let day = 1; day <= totalDays; day++) {
+            const selections = getSelectionsForDay(day);
+            if (!selections.length) {
+                continue;
+            }
+
+            const dayTab = document.querySelector(`.day-tab[data-day="${day}"]`);
+            const dayDate = dayTab ? formatShortDate(createLocalDate(dayTab.dataset.date)) : '';
+            let dayTotal = 0;
+
+            const itemsMarkup = selections.map((selection) => {
+                const lineTotal = selection.qty * Number(selection.menu.price || 0);
+                dayTotal += lineTotal;
+
+                return `
+                    <div class="summary-item">
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">${escapeHtml(selection.menu.meal_label)}</div>
+                                <div class="text-sm text-gray-600">${escapeHtml(selection.menu.menu_label)} - ${escapeHtml(selection.menu.category_label)}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-medium text-gray-900">${selection.qty} pax x ${formatCurrency(selection.menu.price)}</div>
+                                <div class="font-bold text-clsu-green">${formatCurrency(lineTotal)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const daySection = document.createElement('div');
+            daySection.className = 'mb-4';
+            daySection.innerHTML = `
+                <div class="font-bold text-lg text-clsu-green mb-2 border-b pb-2">${escapeHtml(getDayLabel(day))}${dayDate ? ` (${escapeHtml(dayDate)})` : ''}</div>
+                ${itemsMarkup}
+                <div class="summary-item font-semibold border-t">
+                    <div class="flex justify-between">
+                        <span>${escapeHtml(getDayLabel(day))} Subtotal:</span>
+                        <span class="text-clsu-green">${formatCurrency(dayTotal)}</span>
+                    </div>
+                </div>
+            `;
+            summaryContainer.appendChild(daySection);
+
+            totalAmount += dayTotal;
+        }
+
+        const requestValue = document.getElementById('special-request-field').value.trim();
+        if (requestValue) {
+            const requestSection = document.createElement('div');
+            requestSection.className = 'mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4';
+            requestSection.innerHTML = `
+                <div class="font-semibold text-gray-900 mb-2">Special Request</div>
+                <p class="text-sm text-gray-600 whitespace-pre-line">${escapeHtml(requestValue)}</p>
+            `;
+            summaryContainer.appendChild(requestSection);
+        }
+
+        document.getElementById('modal-total-amount').textContent = formatCurrency(totalAmount);
+        modal.style.display = 'flex';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        totalDays = parseInt(document.getElementById('number-of-days').value, 10) || 1;
+
+        activeMealType = mealOrder.find((mealTime) => {
+            return menuLibrary.some((menu) => menu.meal_time === mealTime);
+        }) || 'breakfast';
+
+        activeCategory = menuLibrary.some((menu) => menu.category === 'standard') ? 'standard' : 'special';
+
+        hydrateInitialSelections();
+        initializeDayTabs();
+        updateDayInfo(currentDay);
+        renderAll();
+
+        document.getElementById('day-tabs').addEventListener('click', (event) => {
+            const button = event.target.closest('.day-tab');
+            if (!button) {
+                return;
+            }
+
+            switchToDay(parseInt(button.dataset.day, 10));
+        });
+
+        document.getElementById('menu-tabs-container').addEventListener('click', (event) => {
+            const button = event.target.closest('.menu-tab');
+            if (!button) {
+                return;
+            }
+
+            activeCategory = button.dataset.menuCategory;
+            document.querySelectorAll('.menu-tab').forEach((tab) => {
+                tab.classList.toggle('active', tab.dataset.menuCategory === activeCategory);
+            });
+
+            expandedMenuId = null;
+            renderMenuGrid();
+        });
+
+        document.getElementById('meal-type-buttons').addEventListener('click', (event) => {
+            const button = event.target.closest('.meal-type-btn');
+            if (!button) {
+                return;
+            }
+
+            activeMealType = button.dataset.mealType;
+            document.querySelectorAll('.meal-type-btn').forEach((tab) => {
+                tab.classList.toggle('active', tab.dataset.mealType === activeMealType);
+            });
+
+            expandedMenuId = null;
+            renderMenuGrid();
+        });
+
+        document.getElementById('menu-browser-grid').addEventListener('click', (event) => {
+            const addButton = event.target.closest('[data-add-menu]');
+            if (addButton) {
+                selectMenu(addButton.getAttribute('data-add-menu'));
+                return;
+            }
+
+            const removeButton = event.target.closest('[data-remove-selection]');
+            if (removeButton) {
+                removeSelection(currentDay, removeButton.getAttribute('data-remove-selection'));
+                return;
+            }
+
+            const card = event.target.closest('[data-menu-id]');
+            if (card && !usesHoverOverlay()) {
+                const menuId = card.getAttribute('data-menu-id');
+                expandedMenuId = String(expandedMenuId) === String(menuId) ? null : menuId;
+                renderMenuGrid();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (usesHoverOverlay() || !expandedMenuId) {
+                return;
+            }
+
+            if (event.target.closest('#menu-browser-grid [data-menu-id]')) {
+                return;
+            }
+
+            expandedMenuId = null;
+            renderMenuGrid();
+        });
+
+        document.getElementById('selected-order-list').addEventListener('click', (event) => {
+            const removeButton = event.target.closest('[data-remove-selection]');
+            if (removeButton) {
+                removeSelection(currentDay, removeButton.getAttribute('data-remove-selection'));
+                return;
+            }
+
+            const applyButton = event.target.closest('[data-apply-qty-all]');
+            if (applyButton) {
+                applyQuantityToAllOrderedMeals(currentDay, applyButton.getAttribute('data-apply-qty-all'));
+                return;
+            }
+
+            const qtyButton = event.target.closest('[data-qty-action]');
+            if (qtyButton) {
+                adjustSelectionQuantity(currentDay, qtyButton.getAttribute('data-meal-time'), qtyButton.getAttribute('data-qty-action'));
+            }
+        });
+
+        document.getElementById('selected-order-list').addEventListener('input', (event) => {
+            const input = event.target.closest('[data-summary-qty]');
+            if (!input) {
+                return;
+            }
+
+            toggleQuantityError(input.getAttribute('data-summary-qty'), input.value);
+        });
+
+        document.getElementById('selected-order-list').addEventListener('blur', (event) => {
+            const input = event.target.closest('[data-summary-qty]');
+            if (!input) {
+                return;
+            }
+
+            commitManualQuantity(currentDay, input.getAttribute('data-summary-qty'), input.value);
+        }, true);
+
+        document.getElementById('back-button').addEventListener('click', () => {
+            if (currentDay > 1) {
+                switchToDay(currentDay - 1);
+            }
+        });
+
+        document.getElementById('next-day-button').addEventListener('click', () => {
+            if (!dayHasSelectedMenu(currentDay)) {
+                showNotification(`Please select at least one menu for ${getDayLabel(currentDay)} before moving on.`, 'error');
+                return;
+            }
+
+            if (dayHasInvalidQuantities(currentDay)) {
+                showNotification(`Please set at least 10 pax for every selected menu on ${getDayLabel(currentDay)}.`, 'error');
+                return;
+            }
+
+            switchToDay(currentDay + 1);
+        });
+
+        document.getElementById('confirm-button').addEventListener('click', () => {
+            if (validateForm()) {
+                showConfirmationModal();
+            }
+        });
+
+        document.getElementById('reservation-form').addEventListener('submit', (event) => {
+            if (!validateForm()) {
+                event.preventDefault();
+                return;
+            }
+
+            syncHiddenInputs();
+        });
+    });
+
+    document.getElementById('confirmationModal').addEventListener('click', function (event) {
+        if (event.target === this) {
+            closeConfirmationModal();
+        }
+    });
+
+    document.getElementById('successModal').addEventListener('click', function (event) {
+        if (event.target === this) {
+            closeSuccessModal();
+        }
+    });
+</script>
 @endsection
 
 @section('content')
-
 <section class="menu_selection-hero-bg py-20 lg:py-20 bg-gray-900 text-white relative overflow-hidden">
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl lg:text-5xl font-extrabold mb-2 tracking-wider">
@@ -513,324 +1811,185 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <form action="{{ route('reservation.store') }}" method="POST" class="space-y-6" id="reservation-form">
+            @csrf
 
-            {{-- Main Form (Menu Selection) - Occupies 8/12 columns on large screens --}}
-            <div class="lg:col-span-8">
-                <form action="{{ route('reservation.store') }}" method="POST" class="space-y-6" id="reservation-form">
-                    @csrf
+            @if ($errors->any())
+                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    @foreach ($errors->all() as $message)
+                        <p>{{ $message }}</p>
+                    @endforeach
+                </div>
+            @endif
 
-                    @if ($errors->any())
-                        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                            @foreach ($errors->all() as $message)
-                                <p>{{ $message }}</p>
-                            @endforeach
-                        </div>
-                    @endif
-                    
-                    {{-- CRITICAL: Hidden fields to capture Session Data from Step 1 --}}
-                    @if(session('reservation_data'))
-                        <input type="hidden" name="name" value="{{ session('reservation_data.name') }}">
-                        <input type="hidden" name="department" value="{{ session('reservation_data.department') }}">
-                        <input type="hidden" name="address" value="{{ session('reservation_data.address') }}">
-                        <input type="hidden" name="email" value="{{ session('reservation_data.email') }}">
-                        <input type="hidden" name="phone" value="{{ session('reservation_data.phone') }}">
-                        <input type="hidden" name="activity" value="{{ session('reservation_data.activity') }}">
-                        <input type="hidden" name="venue" value="{{ session('reservation_data.venue') }}">
-                        <input type="hidden" name="project_name" value="{{ session('reservation_data.project_name') }}">
-                        <input type="hidden" name="account_code" value="{{ session('reservation_data.account_code') }}">
-                    @endif
+            @if(session('reservation_data'))
+                <input type="hidden" name="name" value="{{ session('reservation_data.name') }}">
+                <input type="hidden" name="department" value="{{ session('reservation_data.department') }}">
+                <input type="hidden" name="address" value="{{ session('reservation_data.address') }}">
+                <input type="hidden" name="email" value="{{ session('reservation_data.email') }}">
+                <input type="hidden" name="phone" value="{{ session('reservation_data.phone') }}">
+                <input type="hidden" name="activity" value="{{ session('reservation_data.activity') }}">
+                <input type="hidden" name="venue" value="{{ session('reservation_data.venue') }}">
+                <input type="hidden" name="project_name" value="{{ session('reservation_data.project_name') }}">
+                <input type="hidden" name="account_code" value="{{ session('reservation_data.account_code') }}">
+            @endif
 
-                    {{-- Day Navigation --}}
-                    <div class="day-nav-container">
-                        <div class="day-tabs" id="day-tabs">
-                            </div>
-                        <div class="day-info" id="day-info">
-                            </div>
-                    </div>
+            <input type="hidden" id="start-date" value="{{ $startDate }}">
+            <input type="hidden" id="end-date" value="{{ $endDate }}">
+            <input type="hidden" id="number-of-days" value="{{ $numberOfDays }}">
+            <div id="reservation-hidden-inputs" class="hidden" aria-hidden="true"></div>
 
-                    {{-- Menu Selection Grid --}}
-                    <div class="card p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-clsu-green">Select Your Meals</h2>
-                            <div class="text-sm text-gray-600">
-                                <span id="total-pax-count" class="font-bold text-clsu-green">0</span> total pax selected
-                                <span class="text-xs text-red-500 ml-2">(Minimum 10 pax per meal)</span>
-                            </div>
-                        </div>
-
-                        @php
-                            $meal_times = ['breakfast' => 'Breakfast', 'am_snacks' => 'A.M. Snacks', 'lunch' => 'Lunch', 'pm_snacks' => 'P.M. Snacks', 'dinner' => 'Dinner'];
-                            $categories = ['standard' => 'Standard Menu', 'special' => 'Special Menu'];
-                            
-                            // Get default prices for fallback
-                            $defaultStandardPrice = 150;
-                            $defaultSpecialPrice = 200;
-
-                            // Get date range from the validated reservation details
-                            $startDate = $reservationData['start_date'] ?? null;
-                            $endDate = $reservationData['end_date'] ?? null;
-
-                            // Parse day_times JSON if available
-                            $dayTimes = !empty($reservationData['day_times'])
-                                ? (json_decode($reservationData['day_times'], true) ?? [])
-                                : [];
-
-                            // Calculate number of days
-                            $numberOfDays = 0;
-                            if ($startDate && $endDate) {
-                                $start = new DateTime($startDate);
-                                $end = new DateTime($endDate);
-                                $numberOfDays = $end->diff($start)->days + 1;
-                            }
-                        @endphp
-
-                        {{-- Hidden fields for date range --}}
-                        <input type="hidden" id="start-date" value="{{ $startDate }}">
-                        <input type="hidden" id="end-date" value="{{ $endDate }}">
-                        <input type="hidden" id="number-of-days" value="{{ $numberOfDays }}">
-
-                        {{-- Hidden fields for all menu prices --}}
-                        <div id="menu-prices-data" style="display: none;">
-                            @foreach($meal_times as $meal_key => $meal_label)
-                                @php
-                                    $standardPrice = isset($menuPrices['standard'][$meal_key][0]) && is_numeric($menuPrices['standard'][$meal_key][0]->price) 
-                                            ? $menuPrices['standard'][$meal_key][0]->price 
-                                            : $defaultStandardPrice;
-                                    
-                                    $specialPrice = isset($menuPrices['special'][$meal_key][0]) && is_numeric($menuPrices['special'][$meal_key][0]->price)
-                                            ? $menuPrices['special'][$meal_key][0]->price
-                                            : $defaultSpecialPrice;
-                                @endphp
-                                <div data-meal-time="{{ $meal_key }}" 
-                                     data-standard-price="{{ number_format($standardPrice, 2, '.', '') }}" 
-                                     data-special-price="{{ number_format($specialPrice, 2, '.', '') }}">
-                                </div>
-                            @endforeach
-                        </div>
-
-                        {{-- Day Content Areas --}}
-                        <div id="day-content-container">
-                            </div>
-
-                        {{-- Quick Actions --}}
-                        <div class="mt-6 pt-4 border-t border-gray-200">
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" id="clear-current-day" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
-                                    Clear Current Day
-                                </button>
-                                <button type="button" id="clear-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
-                                    Clear All Days
-                                </button>
-                                <button type="button" id="set-standard-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
-                                    Set 10 Pax for All Days
-                                </button>
-                                <button type="button" id="copy-to-all-days" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-clsu-green focus-visible:ring-offset-1 transition text-sm font-medium">
-                                    Copy to All Days
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Notes and Summary Section --}}
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {{-- Notes Section --}}
-                        <div class="card p-6 lg:col-span-2">
-                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Special Request:</h3>
-                            <textarea name="notes" rows="6" class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-clsu-green focus:border-clsu-green" placeholder="Add special instructions, allergy notes, or dietary restrictions..."></textarea>
-                        </div>
-
-                        {{-- Order Summary --}}
-                        <div class="card p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Order Summary</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span>Standard Menu Rate:</span>
-                                    <span class="font-semibold" id="summary-standard-rate">
-                                        @php
-                                            $breakfastStandard = isset($menuPrices['standard']['breakfast'][0]) ? $menuPrices['standard']['breakfast'][0]->price : $defaultStandardPrice;
-                                        @endphp
-                                        ₱{{ number_format($breakfastStandard, 2) }} /head
-                                    </span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span>Special Menu Rate:</span>
-                                    <span class="font-semibold" id="summary-special-rate">
-                                        @php
-                                            $breakfastSpecial = isset($menuPrices['special']['breakfast'][0]) ? $menuPrices['special']['breakfast'][0]->price : $defaultSpecialPrice;
-                                        @endphp
-                                        ₱{{ number_format($breakfastSpecial, 2) }} /head
-                                    </span>
-                                </div>
-                                <div class="border-t border-gray-300 pt-2 mt-2">
-                                    <div class="flex justify-between font-bold">
-                                        <span>Estimated Total:</span>
-                                        <span id="estimated-total">₱0.00</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4 text-xs text-gray-600">
-                                <p>Final pricing may vary based on final selections and any additional requirements.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Form Actions (Back/Confirm) - Aligned with right sidebar --}}
-                    <div class="flex justify-end pt-8">
-                        <div class="w-full lg:w-1/3 flex justify-between space-x-4">
-                            <button type="button" id="back-button" class="px-8 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 shadow-lg font-semibold">
-                                Back
-                            </button>
-                            <button type="button" id="confirm-button" data-loading-text="Submitting..." class="px-8 py-3 bg-clsu-green text-white rounded-lg transition duration-150 shadow-lg font-semibold flex items-center opacity-50 cursor-not-allowed" disabled aria-disabled="true" title="Select at least one menu for each selected date to continue.">
-                                Confirm
-                            </button>
-                        </div>
-                    </div>
-
-                </form>
+            <div class="day-nav-container">
+                <div class="day-tabs" id="day-tabs"></div>
+                <div class="day-info" id="day-info"></div>
             </div>
 
-            {{-- Right Column (Menu Details and Payment) - Occupies 4/12 columns --}}
-            <div class="lg:col-span-4 py-6 space-y-8">
-
-                {{-- Menu Details Card - Fixed with compact layout and search --}}
-                <div class="green-menu-list">
-                    <div class="green-menu-header">
-                        <div class="green-menu-header-layout">
-                            <div class="green-menu-header-copy">
-                                <h2 class="text-2xl font-bold">Available Menus</h2>
-                                <p class="text-sm mt-1 opacity-90">Browse our delicious meal options</p>
-                            </div>
-                            <div class="menu-price-preview-box" id="active-menu-price-container">
-                                <div id="active-menu-price-context" class="menu-price-preview-context">
-                                    <span id="active-menu-price-category" class="menu-price-preview-line">Standard Menu</span>
-                                    <span class="menu-price-preview-divider" aria-hidden="true">|</span>
-                                    <span id="active-menu-price-meal" class="menu-price-preview-line menu-price-preview-meal">Breakfast</span>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-8">
+                    <div class="green-menu-list w-full lg:sticky lg:top-6">
+                        <div class="green-menu-header">
+                            <div class="green-menu-header-layout">
+                                <div class="menu-header-guidance">
+                                    <div class="menu-header-guidance-header">
+                                        <span class="menu-header-guidance-icon" aria-hidden="true">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        </span>
+                                        <h3 class="menu-header-guidance-title">How to select your preferred menus?</h3>
+                                    </div>
+                                    <p class="menu-header-guidance-subtext">You don’t need to order for every mealtime! Just pick the ones you want.</p>
+                                    <ol class="menu-header-guidance-list">
+                                        <li><strong>Step 1:</strong> Choose Your Meal Times - Select the meals you’d like to receive (e.g., just Lunch, or Breakfast and Dinner). Feel free to skip any you don't need.</li>
+                                        <li><strong>Step 2:</strong> Select a Menu Type - Choose between Standard or Special. (Note: Prices vary by selection).</li>
+                                        <li><strong>Step 3:</strong> Pick Your Bundle - Click the "Add to Order" button on the menu you like best.</li>
+                                        <li><strong>Step 4:</strong> Set Your Guest Count - In the "Selected Order Preview" section, enter how many people you are ordering for.</li>
+                                    </ol>
                                 </div>
-                                <div class="menu-price-preview-price-row" aria-label="Current price per pax">
-                                    <div id="active-menu-price-preview" class="menu-price-preview-value">&#8369;{{ number_format($defaultStandardPrice, 2) }}</div>
-                                    <span class="menu-price-preview-price-unit">/ pax</span>
+                            </div>
+                        </div>
+
+                        <div class="menu-search-container">
+                            <div class="space-y-4">
+                                <div class="meal-filters" id="meal-type-buttons">
+                                    <button type="button" class="meal-type-btn active" data-meal-type="breakfast">
+                                        <span class="meal-type-btn-label">Breakfast</span>
+                                        <span class="meal-type-btn-status" data-meal-filter-status>Not selected</span>
+                                    </button>
+                                    <button type="button" class="meal-type-btn" data-meal-type="am_snacks">
+                                        <span class="meal-type-btn-label">A.M. Snacks</span>
+                                        <span class="meal-type-btn-status" data-meal-filter-status>Not selected</span>
+                                    </button>
+                                    <button type="button" class="meal-type-btn" data-meal-type="lunch">
+                                        <span class="meal-type-btn-label">Lunch</span>
+                                        <span class="meal-type-btn-status" data-meal-filter-status>Not selected</span>
+                                    </button>
+                                    <button type="button" class="meal-type-btn" data-meal-type="pm_snacks">
+                                        <span class="meal-type-btn-label">P.M. Snacks</span>
+                                        <span class="meal-type-btn-status" data-meal-filter-status>Not selected</span>
+                                    </button>
+                                    <button type="button" class="meal-type-btn" data-meal-type="dinner">
+                                        <span class="meal-type-btn-label">Dinner</span>
+                                        <span class="meal-type-btn-status" data-meal-filter-status>Not selected</span>
+                                    </button>
+                                </div>
+
+                                <div class="menu-tabs-container" id="menu-tabs-container">
+                                    <button type="button" class="menu-tab active" data-menu-category="standard">Standard</button>
+                                    <button type="button" class="menu-tab" data-menu-category="special">Special</button>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Search Bar --}}
-                    <div class="menu-search-container">
-                        <div class="relative">
-                            <input type="text" 
-                                   id="menu-search" 
-                                   placeholder="Search menus and items..." 
-                                   class="menu-search-input">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="menu-preview-container">
-                        {{-- Menu Tabs - Compact --}}
-                        <div class="menu-tabs-container flex" id="menu-tabs-container">
-                            <button type="button" class="menu-tab active" data-menu-category="standard">Standard Menu</button>
-                            <button type="button" class="menu-tab" data-menu-category="special">Special Menu</button>
-                        </div>
-
-                        {{-- Meal Type Buttons --}}
-                        <div class="flex flex-wrap p-2 bg-white border-b" id="meal-type-buttons">
-                            <button type="button" class="meal-type-btn active" data-meal-type="all">All Meals</button>
-                            <button type="button" class="meal-type-btn" data-meal-type="breakfast">Breakfast</button>
-                            <button type="button" class="meal-type-btn" data-meal-type="am_snacks">AM Snacks</button>
-                            <button type="button" class="meal-type-btn" data-meal-type="lunch">Lunch</button>
-                            <button type="button" class="meal-type-btn" data-meal-type="pm_snacks">PM Snacks</button>
-                            <button type="button" class="meal-type-btn" data-meal-type="dinner">Dinner</button>
-                        </div>
-
-                        {{-- Menu Details Containers - Fixed --}}
-                        <div id="standard-menu-details" class="menu-content-area">
-                            @if(isset($menus))
-                                @foreach($menus as $meal_time => $types)
-                                    @if(isset($types['standard']))
-                                        <div class="meal-type-section {{ $loop->first ? 'active' : '' }}" data-meal-type="{{ $meal_time }}">
-                                            @foreach($types['standard'] as $menu)
-                                                <div class="menu-list-item compact-menu-item rounded-lg shadow-sm" data-searchable="{{ strtolower($menu->name) }} {{ strtolower($meal_time) }} @if($menu->items) @foreach($menu->items as $item) {{ strtolower($item->name) }} @endforeach @endif">
-                                                    <h4 class="text-lg font-bold text-green-800 mb-2 menu-item-name">{{ $menu->name }}</h4>
-                                                    <div class="text-xs text-green-600 mb-2 font-medium capitalize bg-green-50 px-2 py-1 rounded inline-block meal-time">{{ $meal_time }}</div>
-                                                    <ul class="text-sm space-y-1 mt-2 menu-items-list">
-                                                        @if($menu->items && count($menu->items) > 0)
-                                                            @foreach($menu->items as $item)
-                                                                <li class="flex items-center menu-item">
-                                                                    <span class="text-green-500 mr-2">•</span>
-                                                                    <span class="text-gray-700 item-name">{{ $item->name }}</span>
-                                                                    @if($item->type)
-                                                                        <span class="text-xs text-gray-500 ml-2">({{ $item->type }})</span>
-                                                                    @endif
-                                                                </li>
-                                                            @endforeach
-                                                        @else
-                                                            <li class="text-gray-500 text-sm">No items available</li>
-                                                        @endif
-                                                    </ul>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                @endforeach
-                            @else
-                                <div class="menu-list-item compact-menu-item rounded-lg">
-                                    <p class="text-sm text-gray-600 text-center">No standard menus available.</p>
-                                </div>
-                            @endif
-                            <div id="standard-no-results" class="no-results hidden">
-                                No matching menus found in Standard Menu
+                        <div class="menu-preview-container">
+                            <div class="menu-content-area">
+                                <div id="menu-browser-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+                                <div id="menu-empty-state" class="no-results hidden"></div>
                             </div>
                         </div>
 
-                        <div id="special-menu-details" class="menu-content-area hidden">
-                            @if(isset($menus))
-                                @foreach($menus as $meal_time => $types)
-                                    @if(isset($types['special']))
-                                        <div class="meal-type-section {{ $loop->first ? 'active' : '' }}" data-meal-type="{{ $meal_time }}">
-                                            @foreach($types['special'] as $menu)
-                                                <div class="menu-list-item compact-menu-item rounded-lg shadow-sm border-green-300" data-searchable="{{ strtolower($menu->name) }} {{ strtolower($meal_time) }} @if($menu->items) @foreach($menu->items as $item) {{ strtolower($item->name) }} @endforeach @endif">
-                                                    <h4 class="text-lg font-bold text-green-800 mb-2 menu-item-name">{{ $menu->name }}</h4>
-                                                    <div class="text-xs text-green-600 mb-2 font-medium capitalize bg-green-50 px-2 py-1 rounded inline-block meal-time">{{ $meal_time }}</div>
-                                                    <div class="text-xs font-semibold text-green-700 mb-2 bg-yellow-100 px-2 py-1 rounded inline-block">Premium Selection</div>
-                                                    <ul class="text-sm space-y-1 mt-2 menu-items-list">
-                                                        @if($menu->items && count($menu->items) > 0)
-                                                            @foreach($menu->items as $item)
-                                                                <li class="flex items-center menu-item">
-                                                                    <span class="text-green-500 mr-2">•</span>
-                                                                    <span class="text-gray-700 item-name">{{ $item->name }}</span>
-                                                                    @if($item->type)
-                                                                        <span class="text-xs text-gray-500 ml-2">({{ $item->type }})</span>
-                                                                    @endif
-                                                                </li>
-                                                            @endforeach
-                                                        @else
-                                                            <li class="text-gray-500 text-sm">No items available</li>
-                                                        @endif
-                                                    </ul>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                @endforeach
-                            @else
-                                <div class="menu-list-item compact-menu-item rounded-lg">
-                                    <p class="text-sm text-gray-600 text-center">No special menus available.</p>
-                                </div>
-                            @endif
-                            <div id="special-no-results" class="no-results hidden">
-                                No matching menus found in Special Menu
-                            </div>
+                        <div class="menu-browser-footer">
+                            <p class="text-sm text-gray-600">
+                                Use the summary panel to adjust pax after adding a menu. Selecting another menu for the same meal category automatically replaces the earlier choice.
+                            </p>
                         </div>
                     </div>
                 </div>
 
+                <div class="lg:col-span-4">
+                    <div class="space-y-6 lg:sticky lg:top-6">
+                        <div class="card p-6">
+                            <div class="flex items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-clsu-green">Selected Order Preview</h3>
+                                </div>
+                                <span class="selection-chip" id="current-day-selection-count">0 selected</span>
+                            </div>
+
+                            <div id="selected-order-list" class="space-y-3"></div>
+                            <div id="selected-order-empty" class="selected-order-empty">
+                                Choose a menu from the left panel to start building the order for this day.
+                            </div>
+                        </div>
+
+                        <div class="card p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+                            <h3 class="text-xl font-bold mb-4 border-b pb-2">Order Summary</h3>
+                            <div id="order-summary-day-totals" class="space-y-3"></div>
+
+                            <div class="border-t border-gray-300 pt-3 mt-4 space-y-2">
+                                <div class="flex justify-between font-bold">
+                                    <span>Estimated Reservation Total:</span>
+                                    <span id="estimated-total">&#8369;0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-6">
+                            <div class="flex items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-clsu-green">Special Request <span class="text-sm font-semibold text-gray-500">(Optional)</span></h3>
+                                </div>
+                            </div>
+
+                            <textarea
+                                name="notes"
+                                id="special-request-field"
+                                rows="6"
+                                class="w-full border-gray-300 rounded-lg shadow-sm p-3 focus:ring-clsu-green focus:border-clsu-green"
+                                placeholder="Add special instructions, allergy notes, or dietary restrictions..."
+                            >{{ old('notes') }}</textarea>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
+                <button
+                    type="button"
+                    id="back-button"
+                    class="navigation-button px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 shadow-lg font-semibold hidden"
+                >
+                    Back
+                </button>
+                <button
+                    type="button"
+                    id="next-day-button"
+                    class="navigation-button px-6 py-3 bg-clsu-green text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-lg font-semibold"
+                >
+                    Next Day
+                </button>
+                <button
+                    type="button"
+                    id="confirm-button"
+                    data-loading-text="Submitting..."
+                    class="navigation-button px-6 py-3 bg-clsu-green text-white rounded-lg transition duration-150 shadow-lg font-semibold hidden"
+                    disabled
+                    aria-disabled="true"
+                >
+                    Confirm
+                </button>
+            </div>
+        </form>
     </div>
 </section>
 
@@ -843,19 +2002,16 @@
                 </svg>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-2">Confirm Your Reservation</h3>
-            <p class="text-sm text-gray-600">Please review your order summary before confirming</p>
+            <p class="text-sm text-gray-600">Please review your day-by-day order summary before confirming.</p>
         </div>
 
         <div class="border border-gray-200 rounded-lg p-6 mb-6">
             <h4 class="text-lg font-bold text-clsu-green mb-4">Reservation Summary</h4>
-            
-            <div id="modal-reservation-summary">
-                </div>
-
+            <div id="modal-reservation-summary"></div>
             <div class="total-section">
                 <div class="flex justify-between items-center">
                     <span class="text-lg font-bold text-gray-900">Total Amount:</span>
-                    <span id="modal-total-amount" class="text-2xl font-bold text-clsu-green">₱0.00</span>
+                    <span id="modal-total-amount" class="text-2xl font-bold text-clsu-green">&#8369;0.00</span>
                 </div>
             </div>
         </div>
@@ -903,9 +2059,9 @@
                 <div class="text-sm text-green-800">
                     <p class="font-semibold">What happens next?</p>
                     <ul class="mt-2 space-y-1">
-                        <li>• You will be redirected to your reservation details</li>
-                        <li>• You'll receive a confirmation email</li>
-                        <li>• Please proceed with payment within 3 days</li>
+                        <li>- You will be redirected to your reservation details</li>
+                        <li>- You will receive a confirmation email</li>
+                        <li>- Please proceed with payment within 3 days</li>
                     </ul>
                 </div>
             </div>
@@ -918,1041 +2074,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    // Global variables for day management
-    let currentDay = 1;
-    let totalDays = 1;
-    let dayData = {};
-    let menuPrices = {};
-
-    // Make functions globally available first
-    window.closeConfirmationModal = closeConfirmationModal;
-    window.submitReservation = submitReservation;
-    window.redirectToReservationDetails = redirectToReservationDetails;
-    window.closeSuccessModal = closeSuccessModal;
-
-    // Define global functions
-    function closeConfirmationModal() {
-        const modal = document.getElementById('confirmationModal');
-        modal.style.display = 'none';
-    }
-
-    function submitReservation(triggerButton = null) {
-        if (triggerButton && window.cmsActionButtons) {
-            const started = window.cmsActionButtons.start(triggerButton, triggerButton.dataset.loadingText || 'Submitting Reservation...');
-            if (!started) return;
-        }
-
-        const confirmButton = document.getElementById('confirm-button');
-        if (confirmButton && window.cmsActionButtons) {
-            window.cmsActionButtons.start(confirmButton, confirmButton.dataset.loadingText || 'Submitting...');
-        }
-
-        // Close confirmation modal first
-        closeConfirmationModal();
-        
-        // Actually submit the form
-        document.getElementById('reservation-form').submit();
-    }
-
-    function showSuccessModal() {
-        const modal = document.getElementById('successModal');
-        modal.style.display = 'flex';
-    }
-
-    function closeSuccessModal() {
-        const modal = document.getElementById('successModal');
-        modal.style.display = 'none';
-    }
-
-    function redirectToReservationDetails() {
-        // Close success modal
-        closeSuccessModal();
-        
-        // Simply redirect to the reservation details page using Laravel route
-        window.location.href = '{{ route('reservation_details') }}';
-    }
-
-    function dayHasSelectedMenu(day) {
-        return Array.from(document.querySelectorAll(`.quantity-input[data-day="${day}"]`)).some((input) => {
-            return (parseInt(input.value, 10) || 0) > 0;
-        });
-    }
-
-    function everySelectedDayHasMenu() {
-        if (totalDays < 1) {
-            return false;
-        }
-
-        for (let day = 1; day <= totalDays; day++) {
-            if (!dayHasSelectedMenu(day)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    function updateConfirmButtonState() {
-        const confirmButton = document.getElementById('confirm-button');
-        if (!confirmButton) {
-            return;
-        }
-
-        const canConfirm = everySelectedDayHasMenu();
-
-        confirmButton.disabled = !canConfirm;
-        confirmButton.setAttribute('aria-disabled', String(!canConfirm));
-        confirmButton.classList.toggle('opacity-50', !canConfirm);
-        confirmButton.classList.toggle('cursor-not-allowed', !canConfirm);
-        confirmButton.classList.toggle('hover:bg-green-700', canConfirm);
-
-        if (canConfirm) {
-            confirmButton.removeAttribute('title');
-            return;
-        }
-
-        confirmButton.title = 'Select at least one menu for each selected date to continue.';
-    }
-
-    // Notification system
-    function showNotification(message, type = 'success', duration = 5000) {
-        // Remove existing notifications
-        const existingNotification = document.querySelector('.notification');
-        if (existingNotification) {
-            existingNotification.remove();
-        }
-
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        
-        const icon = type === 'success' ? 
-            '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
-            '<svg class="notification-icon w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
-
-        notification.innerHTML = `
-            <div class="notification-content">
-                ${icon}
-                <span>${message}</span>
-            </div>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Trigger animation
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-
-        // Auto remove after duration
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 300);
-        }, duration);
-
-        return notification;
-    }
-
-    // Get all menu prices from hidden data - improved version
-    function initializeMenuPrices() {
-        const menuPricesData = document.getElementById('menu-prices-data');
-        const prices = {};
-        
-        menuPricesData.querySelectorAll('div[data-meal-time]').forEach(priceElement => {
-            const mealTime = priceElement.getAttribute('data-meal-time');
-            const standardPrice = parseFloat(priceElement.getAttribute('data-standard-price')) || 150;
-            const specialPrice = parseFloat(priceElement.getAttribute('data-special-price')) || 200;
-            
-            prices[mealTime] = {
-                standard: standardPrice,
-                special: specialPrice
-            };
-        });
-        
-        return prices;
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // Initialize day system
-        initializeDaySystem();
-
-        // Get menu prices
-        menuPrices = initializeMenuPrices();
-        const activeMenuPriceCategory = document.getElementById('active-menu-price-category');
-        const activeMenuPriceMeal = document.getElementById('active-menu-price-meal');
-        const activeMenuPricePreview = document.getElementById('active-menu-price-preview');
-
-        function formatPricePreview(value) {
-            const pesoSign = String.fromCharCode(0x20B1);
-
-            return pesoSign + Number(value || 0).toLocaleString('en-PH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-
-        function formatMealLabel(mealTime) {
-            return String(mealTime || '')
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, char => char.toUpperCase());
-        }
-
-        function getActiveMenuCategory() {
-            const activeMenuTab = document.querySelector('.menu-tab.active');
-            return activeMenuTab ? activeMenuTab.dataset.menuCategory : 'standard';
-        }
-
-        function getActivePreviewState() {
-            const activeMealButton = document.querySelector('.meal-type-btn.active');
-            const selectedMealType = activeMealButton ? activeMealButton.dataset.mealType : 'all';
-
-            if (selectedMealType !== 'all') {
-                return {
-                    mealTime: selectedMealType
-                };
-            }
-
-            const activeCategory = getActiveMenuCategory();
-            const activeContainer = document.getElementById(`${activeCategory}-menu-details`);
-            const firstSection = activeContainer
-                ? activeContainer.querySelector('.meal-type-section')
-                : null;
-
-            return {
-                mealTime: firstSection ? firstSection.dataset.mealType : 'breakfast'
-            };
-        }
-
-        function getMenuPriceForCategory(mealTime, category) {
-            if (menuPrices[mealTime] && typeof menuPrices[mealTime][category] !== 'undefined') {
-                return menuPrices[mealTime][category];
-            }
-
-            return category === 'special' ? 200 : 150;
-        }
-
-        function updateMenuPricePreview() {
-            if (!activeMenuPriceCategory || !activeMenuPriceMeal || !activeMenuPricePreview) {
-                return;
-            }
-
-            const category = getActiveMenuCategory();
-            const previewState = getActivePreviewState();
-            const mealLabel = formatMealLabel(previewState.mealTime);
-            const categoryLabel = category === 'special' ? 'Special Menu' : 'Standard Menu';
-            const price = getMenuPriceForCategory(previewState.mealTime, category);
-
-            activeMenuPriceCategory.textContent = categoryLabel;
-            activeMenuPriceMeal.textContent = mealLabel;
-            activeMenuPricePreview.textContent = formatPricePreview(price);
-        }
-
-        // --- DAY SYSTEM FUNCTIONS ---
-        function initializeDaySystem() {
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-            totalDays = parseInt(document.getElementById('number-of-days').value);
-            
-            // Generate day tabs
-            generateDayTabs(startDate, totalDays);
-            
-            // Generate day content areas
-            generateDayContentAreas(totalDays);
-            
-            // Initialize first day
-            switchToDay(1);
-        }
-
-        function generateDayTabs(startDate, totalDays) {
-            const dayTabsContainer = document.getElementById('day-tabs');
-            const dayInfo = document.getElementById('day-info');
-            const start = new Date(startDate);
-            
-            dayTabsContainer.innerHTML = '';
-            
-            for (let i = 1; i <= totalDays; i++) {
-                const currentDate = new Date(start);
-                currentDate.setDate(start.getDate() + i - 1);
-                
-                const tab = document.createElement('button');
-                tab.type = 'button';
-                tab.className = `day-tab ${i === 1 ? 'active' : ''}`;
-                tab.textContent = `Day ${i}`;
-                tab.dataset.day = i;
-                tab.dataset.date = currentDate.toISOString().split('T')[0];
-                
-                // Add time information if available from dayTimes
-                const dateKey = currentDate.toISOString().split('T')[0];
-                @if(!empty($dayTimes) && is_array($dayTimes))
-                    @foreach($dayTimes as $date => $times)
-                        if (dateKey === '{{ $date }}') {
-                            tab.dataset.startTime = '{{ $times["start_time"] ?? "" }}';
-                            tab.dataset.endTime = '{{ $times["end_time"] ?? "" }}';
-                        }
-                    @endforeach
-                @endif
-                
-                tab.addEventListener('click', () => switchToDay(i));
-                dayTabsContainer.appendChild(tab);
-            }
-    
-            updateDayInfo(1);
-        }
-
-        function formatTimeForDisplay(timeValue) {
-            if (!timeValue) {
-                return '';
-            }
-
-            const match = String(timeValue).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-            if (!match) {
-                return timeValue;
-            }
-
-            const hours = parseInt(match[1], 10);
-            const minutes = match[2];
-
-            if (Number.isNaN(hours) || hours < 0 || hours > 23) {
-                return timeValue;
-            }
-
-            const meridiem = hours >= 12 ? 'PM' : 'AM';
-            const displayHours = hours % 12 || 12;
-
-            return `${displayHours}:${minutes} ${meridiem}`;
-        }
-
-        function updateDayInfo(day) {
-            const dayInfo = document.getElementById('day-info');
-            const activeTab = document.querySelector(`.day-tab[data-day="${day}"]`);
-            
-            if (activeTab) {
-                const date = new Date(activeTab.dataset.date);
-                const formattedDate = date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
-                
-                let timeInfo = '';
-                if (activeTab.dataset.startTime && activeTab.dataset.endTime) {
-                    const formattedStartTime = formatTimeForDisplay(activeTab.dataset.startTime);
-                    const formattedEndTime = formatTimeForDisplay(activeTab.dataset.endTime);
-                    timeInfo = ` | Time: ${formattedStartTime} to ${formattedEndTime}`;
-                }
-                
-                dayInfo.innerHTML = `Currently viewing: <strong>${formattedDate}</strong>${timeInfo}`;
-            }
-        }
-
-        function generateDayContentAreas(totalDays) {
-            const container = document.getElementById('day-content-container');
-            container.innerHTML = '';
-            
-            @php
-                $meal_times = ['breakfast' => 'Breakfast', 'am_snacks' => 'A.M. Snacks', 'lunch' => 'Lunch', 'pm_snacks' => 'P.M. Snacks', 'dinner' => 'Dinner'];
-                $categories = ['standard' => 'Standard Menu', 'special' => 'Special Menu'];
-            @endphp
-            
-            for (let day = 1; day <= totalDays; day++) {
-                const dayContent = document.createElement('div');
-                dayContent.className = `day-content ${day === 1 ? 'active' : ''}`;
-                dayContent.id = `day-${day}-content`;
-                dayContent.dataset.day = day;
-                
-                let html = `<div class="space-y-4">`;
-                
-                @foreach ($meal_times as $meal_key => $meal_label)
-                    @php
-                        $standardPrice = isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice;
-                        $specialPrice = isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice;
-                    @endphp
-                    
-                    html += `
-                    <div class="meal-card bg-white p-4 rounded-lg border border-gray-200 relative" id="day-${day}-{{ $meal_key }}-card">
-                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                            <div class="md:col-span-3">
-                                <div class="flex items-center">
-                                    <div class="w-3 h-3 bg-clsu-green rounded-full mr-3"></div>
-                                    <label class="font-bold text-lg text-gray-800">{{ $meal_label }}</label>
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-3">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
-                                <select name="reservations[${day}][{{ $meal_key }}][category]" class="category-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
-                                    @foreach ($categories as $cat_key => $cat_label)
-                                        <option value="{{ $cat_key }}" 
-                                                @if($cat_key === 'standard' && $meal_key === 'breakfast') selected @endif>
-                                            {{ $cat_label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-4">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Menu Choice</label>
-                                <select name="reservations[${day}][{{ $meal_key }}][menu]" class="menu-select w-full border-gray-300 rounded-lg shadow-sm text-sm p-2.5 focus:ring-clsu-green focus:border-clsu-green bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
-                                    </select>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Pax Quantity</label>
-                                <div class="flex items-center">
-                                    <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-l-md flex items-center justify-center text-lg font-bold" data-action="decrement" data-day="${day}" data-meal-time="{{ $meal_key }}">-</button>
-                                    
-                                    {{-- Allow user to type here --}}
-                                    <input type="number" name="reservations[${day}][{{ $meal_key }}][qty]" value="0" min="0" max="100" class="quantity-input w-12 h-8 text-center border-t border-b border-gray-300 p-0 text-sm focus:ring-0 focus:border-gray-300 bg-white" data-day="${day}" data-meal-time="{{ $meal_key }}">
-                                    
-                                    <button type="button" class="qty-btn bg-gray-200 text-gray-700 hover:bg-gray-300 w-8 h-8 rounded-r-md flex items-center justify-center text-lg font-bold" data-action="increment" data-day="${day}" data-meal-time="{{ $meal_key }}">+</button>
-                                </div>
-                                <div class="text-xs text-red-500 mt-1 min-h-4 quantity-error" style="display: none;">
-                                    Minimum 10 pax required
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-                @endforeach
-                
-                html += `</div>`;
-                dayContent.innerHTML = html;
-                container.appendChild(dayContent);
-            }
-            
-            // Initialize event listeners for dynamically created elements
-            initializeEventListeners();
-            
-            // Initialize menu options for all selects
-            initializeMenuOptions();
-        }
-
-        function initializeMenuOptions() {
-            // Initialize menu options for all category selects
-            document.querySelectorAll('.category-select').forEach(select => {
-                updateMenuOptions(select);
-            });
-        }
-
-        function updateMenuOptions(categorySelect) {
-            const day = categorySelect.dataset.day;
-            const mealTime = categorySelect.dataset.mealTime;
-            const selectedCategory = categorySelect.value;
-            const menuSelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].menu-select`);
-            
-            // Clear existing options
-            menuSelect.innerHTML = '';
-            
-            // Get the appropriate menu data based on category and meal time
-            const menuData = getMenuData(mealTime, selectedCategory);
-            
-            if (menuData && menuData.length > 0) {
-                // Add options from the selected category
-                menuData.forEach(menu => {
-                    const option = document.createElement('option');
-                    option.value = menu.id;
-                    option.textContent = menu.name;
-                    option.setAttribute('data-price', menu.price);
-                    option.setAttribute('data-category', selectedCategory);
-                    option.setAttribute('data-menu-name', menu.name);
-                    menuSelect.appendChild(option);
-                });
-            } else {
-                // No menus available
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = `No ${selectedCategory} menus available`;
-                menuSelect.appendChild(option);
-            }
-            
-            // Trigger summary update
-            updateSummary();
-        }
-
-        function getMenuData(mealTime, category) {
-            // This function should return the appropriate menu data
-            // You'll need to adjust this based on your actual data structure
-            @php
-                $menuData = [];
-                foreach ($meal_times as $meal_key => $meal_label) {
-                    if (isset($menus[$meal_key])) {
-                        foreach ($categories as $cat_key => $cat_label) {
-                            if (isset($menus[$meal_key][$cat_key])) {
-                                foreach ($menus[$meal_key][$cat_key] as $menu) {
-                                    $price = $cat_key === 'standard' ? 
-                                        (isset($menuPrices['standard'][$meal_key][0]) ? $menuPrices['standard'][$meal_key][0]->price : $defaultStandardPrice) :
-                                        (isset($menuPrices['special'][$meal_key][0]) ? $menuPrices['special'][$meal_key][0]->price : $defaultSpecialPrice);
-                                    
-                                    $menuData[$meal_key][$cat_key][] = [
-                                        'id' => $menu->id,
-                                        'name' => $menu->name,
-                                        'price' => $price
-                                    ];
-                                }
-                            }
-                        }
-                    }
-                }
-            @endphp
-
-            // Return the appropriate menu data based on mealTime and category
-            const menuData = @json($menuData);
-            return menuData[mealTime] && menuData[mealTime][category] ? menuData[mealTime][category] : [];
-        }
-
-        function switchToDay(day) {
-            // Update active tab
-            document.querySelectorAll('.day-tab').forEach(tab => {
-                tab.classList.toggle('active', parseInt(tab.dataset.day) === day);
-            });
-            
-            // Update content visibility
-            document.querySelectorAll('.day-content').forEach(content => {
-                content.classList.toggle('active', parseInt(content.dataset.day) === day);
-            });
-            
-            // Update current day
-            currentDay = day;
-            
-            // Update day info
-            updateDayInfo(day);
-            
-            // Update summary for current day
-            updateSummary();
-        }
-
-        function initializeEventListeners() {
-            // Quantity buttons
-            document.querySelectorAll('.qty-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const action = e.currentTarget.dataset.action;
-                    const day = e.currentTarget.dataset.day;
-                    const mealTime = e.currentTarget.dataset.mealTime;
-                    
-                    const input = document.querySelector(`input[data-day="${day}"][data-meal-time="${mealTime}"]`);
-                    let value = parseInt(input.value) || 0; // Handle NaN
-
-                    if (action === 'increment') {
-                        // If current is 0, jump to 10 immediately
-                        if (value === 0) {
-                            value = 10;
-                        } else {
-                            value = value < 100 ? value + 1 : 100;
-                        }
-                    } else if (action === 'decrement') {
-                        // If current is 10, drop to 0 immediately
-                        if (value === 10) {
-                            value = 0;
-                        } else if (value > 10) {
-                            value = value - 1;
-                        } else {
-                            value = 0; // If somehow between 0 and 10, reset to 0
-                        }
-                    }
-                    input.value = value;
-                    
-                    updateCardStyling(day, mealTime);
-                    updateSummary();
-                    validateQuantity(input);
-                });
-            });
-
-            // Input manual typing listener
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.addEventListener('input', function() {
-                    const day = this.dataset.day;
-                    const mealTime = this.dataset.mealTime;
-                    updateCardStyling(day, mealTime);
-                    updateSummary();
-                    // Live validation can show error but allow typing
-                    validateQuantity(this); 
-                });
-
-                // Enforce rules on blur (when user leaves the field)
-                input.addEventListener('blur', function() {
-                    let val = parseInt(this.value);
-                    if (isNaN(val) || val < 0) val = 0;
-                    
-                    // If between 1 and 9, force up to 10 or down to 0? 
-                    // Usually better to force to minimum if they tried to enter something
-                    if (val > 0 && val < 10) {
-                        this.value = 10; // Auto-correct to minimum
-                        validateQuantity(this); // Re-validate to clear error
-                        updateSummary();
-                    } else if (val > 100) {
-                        this.value = 100;
-                        updateSummary();
-                    }
-                });
-            });
-
-            // Category change handlers - UPDATED
-            document.querySelectorAll('.category-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    updateMenuOptions(this);
-                });
-            });
-
-            // Menu selection change handlers
-            document.querySelectorAll('.menu-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    updateSummary();
-                });
-            });
-        }
-
-        // Update card styling based on quantity
-        function updateCardStyling(day, mealTime) {
-            const input = document.querySelector(`input[data-day="${day}"][data-meal-time="${mealTime}"]`);
-            const card = input.closest('.meal-card');
-            if (parseInt(input.value) > 0) {
-                card.classList.add('has-quantity');
-            } else {
-                card.classList.remove('has-quantity');
-            }
-        }
-
-        // Validate quantity (minimum 10 pax)
-        function validateQuantity(input) {
-            const value = parseInt(input.value);
-            const errorElement = input.closest('.md\\:col-span-2').querySelector('.quantity-error');
-            
-            if (value < 10 && value > 0) {
-                input.classList.add('qty-error');
-                errorElement.style.display = 'block';
-                return false;
-            } else {
-                input.classList.remove('qty-error');
-                errorElement.style.display = 'none';
-                return true;
-            }
-        }
-
-        // --- QUICK ACTION BUTTONS ---
-        document.getElementById('clear-current-day').addEventListener('click', () => {
-            document.querySelectorAll(`.day-content.active .quantity-input`).forEach(input => {
-                input.value = 0;
-                const day = input.dataset.day;
-                const mealTime = input.dataset.mealTime;
-                updateCardStyling(day, mealTime);
-                validateQuantity(input);
-            });
-            updateSummary();
-            showNotification('Current day cleared successfully!', 'success');
-        });
-
-        document.getElementById('clear-all-days').addEventListener('click', () => {
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.value = 0;
-                const day = input.dataset.day;
-                const mealTime = input.dataset.mealTime;
-                updateCardStyling(day, mealTime);
-                validateQuantity(input);
-            });
-            updateSummary();
-            showNotification('All days cleared successfully!', 'success');
-        });
-
-        document.getElementById('set-standard-all-days').addEventListener('click', () => {
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                input.value = 10;
-                const day = input.dataset.day;
-                const mealTime = input.dataset.mealTime;
-                updateCardStyling(day, mealTime);
-                validateQuantity(input);
-            });
-            updateSummary();
-            showNotification('10 pax set for all meals across all days!', 'success');
-        });
-
-        document.getElementById('copy-to-all-days').addEventListener('click', () => {
-            const currentDayData = getCurrentDayData();
-            
-            // Apply to all other days
-            for (let day = 1; day <= totalDays; day++) {
-                if (day !== currentDay) {
-                    applyDayData(day, currentDayData);
-                }
-            }
-            
-            updateSummary();
-            showNotification('Current day selections copied to all other days!', 'success');
-        });
-
-        function getCurrentDayData() {
-            const data = {};
-            document.querySelectorAll(`.day-content.active .meal-card`).forEach(card => {
-                const mealTime = card.id.replace(`day-${currentDay}-`, '').replace('-card', '');
-                const categorySelect = card.querySelector('.category-select');
-                const menuSelect = card.querySelector('.menu-select');
-                const quantityInput = card.querySelector('.quantity-input');
-                
-                data[mealTime] = {
-                    category: categorySelect.value,
-                    menu: menuSelect.value,
-                    quantity: quantityInput.value
-                };
-            });
-            return data;
-        }
-
-        function applyDayData(targetDay, data) {
-            Object.keys(data).forEach(mealTime => {
-                const categorySelect = document.querySelector(`select[data-day="${targetDay}"][data-meal-time="${mealTime}"]`);
-                const menuSelect = document.querySelector(`select[data-day="${targetDay}"][data-meal-time="${mealTime}"].menu-select`);
-                const quantityInput = document.querySelector(`input[data-day="${targetDay}"][data-meal-time="${mealTime}"]`);
-                
-                if (categorySelect && menuSelect && quantityInput) {
-                    categorySelect.value = data[mealTime].category;
-                    // Update menu options first
-                    updateMenuOptions(categorySelect);
-                    
-                    // Then set the menu value after a short delay to ensure options are populated
-                    setTimeout(() => {
-                        menuSelect.value = data[mealTime].menu;
-                        quantityInput.value = data[mealTime].quantity;
-                        
-                        updateCardStyling(targetDay, mealTime);
-                        validateQuantity(quantityInput);
-                        updateSummary();
-                    }, 100);
-                }
-            });
-        }
-
-        // Update summary information with correct pricing for all days - FIXED VERSION
-        function updateSummary() {
-            let totalPax = 0;
-            let selectedMeals = 0;
-            let estimatedTotal = 0;
-            let standardSubtotal = 0;
-            let specialSubtotal = 0;
-            
-            // Format currency helper
-            const formatCurrency = (val) => '₱' + val.toLocaleString('en-PH', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            });
-
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                const value = parseInt(input.value);
-                if (value > 0) {
-                    totalPax += value;
-                    selectedMeals++;
-                    
-                    const day = input.dataset.day;
-                    const mealTime = input.dataset.mealTime;
-                    const categorySelect = document.querySelector(`select[data-day="${day}"][data-meal-time="${mealTime}"].category-select`);
-                    
-                    if (categorySelect) {
-                        const category = categorySelect.value;
-                        // Get price from menuPrices based on meal time and category
-                        const price = menuPrices[mealTime] ? 
-                            menuPrices[mealTime][category] : 
-                            (category === 'special' ? 200 : 150);
-                        
-                        const lineTotal = value * price;
-                        estimatedTotal += lineTotal;
-                        
-                        // Add to respective subtotal based on category
-                        if (category === 'standard') {
-                            standardSubtotal += lineTotal;
-                        } else {
-                            specialSubtotal += lineTotal;
-                        }
-                    }
-                }
-            });
-            
-            // Update UI elements
-            document.getElementById('total-pax-count').textContent = totalPax;
-            document.getElementById('estimated-total').textContent = formatCurrency(estimatedTotal);
-            
-            // Update rate displays (show per head rate for first meal time as example)
-            const firstMealTime = 'breakfast';
-            const standardRate = menuPrices[firstMealTime] ? menuPrices[firstMealTime]['standard'] : 150;
-            const specialRate = menuPrices[firstMealTime] ? menuPrices[firstMealTime]['special'] : 200;
-            
-            document.getElementById('summary-standard-rate').textContent = formatCurrency(standardRate) + ' /head';
-            document.getElementById('summary-special-rate').textContent = formatCurrency(specialRate) + ' /head';
-            updateConfirmButtonState();
-        }
-
-        // --- MEAL TYPE BUTTONS FUNCTIONALITY ---
-        document.querySelectorAll('.meal-type-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Update active meal type button
-                document.querySelectorAll('.meal-type-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                const selectedMealType = this.dataset.mealType;
-                const activeTab = document.querySelector('.menu-tab.active').dataset.menuCategory;
-                const activeContainer = document.getElementById(`${activeTab}-menu-details`);
-                
-                // Show/hide meal type sections
-                activeContainer.querySelectorAll('.meal-type-section').forEach(section => {
-                    if (selectedMealType === 'all' || section.dataset.mealType === selectedMealType) {
-                        section.classList.add('active');
-                    } else {
-                        section.classList.remove('active');
-                    }
-                });
-
-                updateMenuPricePreview();
-                
-                // Trigger search to apply current filter
-                performSearch();
-            });
-        });
-
-        // --- MENU TABS LOGIC ---
-        const standardDetails = document.getElementById('standard-menu-details');
-        const specialDetails = document.getElementById('special-menu-details');
-        const menuTabs = document.querySelectorAll('.menu-tab');
-
-        menuTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                menuTabs.forEach(t => {
-                    t.classList.remove('active', 'bg-green-500', 'text-white');
-                    t.classList.add('bg-green-200', 'text-green-800');
-                });
-                tab.classList.add('active', 'bg-green-500', 'text-white');
-                tab.classList.remove('bg-green-200', 'text-green-800');
-
-                if (tab.dataset.menuCategory === 'standard') {
-                    standardDetails.classList.remove('hidden');
-                    specialDetails.classList.add('hidden');
-                } else {
-                    standardDetails.classList.add('hidden');
-                    specialDetails.classList.remove('hidden');
-                }
-
-                updateMenuPricePreview();
-                
-                // Trigger search on tab change to apply current filter
-                performSearch();
-            });
-        });
-
-        // --- SEARCH FUNCTIONALITY ---
-        const searchInput = document.getElementById('menu-search');
-        
-        searchInput.addEventListener('input', performSearch);
-        
-        function performSearch() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            const activeTab = document.querySelector('.menu-tab.active').dataset.menuCategory;
-            const activeContainer = activeTab === 'standard' ? standardDetails : specialDetails;
-            const noResultsElement = document.getElementById(`${activeTab}-no-results`);
-            
-            let hasVisibleItems = false;
-            
-            // Get active meal type filter
-            const activeMealType = document.querySelector('.meal-type-btn.active').dataset.mealType;
-            
-            // Search through all menu items in the active tab and meal type
-            activeContainer.querySelectorAll('.meal-type-section').forEach(section => {
-                // Skip sections that are not active based on meal type filter
-                if (activeMealType !== 'all' && section.dataset.mealType !== activeMealType) {
-                    return;
-                }
-                
-                section.querySelectorAll('.menu-list-item').forEach(item => {
-                    const searchableText = item.dataset.searchable.toLowerCase();
-                    const menuName = item.querySelector('.menu-item-name');
-                    const menuItems = item.querySelectorAll('.item-name');
-                    const mealTime = item.querySelector('.meal-time');
-                    
-                    // Remove previous highlights
-                    if (menuName) {
-                        menuName.innerHTML = menuName.textContent;
-                    }
-                    menuItems.forEach(menuItem => {
-                        menuItem.innerHTML = menuItem.textContent;
-                    });
-                    
-                    // Check if item matches search
-                    if (searchTerm === '' || searchableText.includes(searchTerm)) {
-                        item.style.display = 'block';
-                        hasVisibleItems = true;
-                        
-                        // Highlight matching text
-                        if (searchTerm !== '') {
-                            highlightText(menuName, searchTerm);
-                            menuItems.forEach(menuItem => {
-                                highlightText(menuItem, searchTerm);
-                            });
-                            if (mealTime) {
-                                highlightText(mealTime, searchTerm);
-                            }
-                        }
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-            
-            // Show/hide no results message
-            if (hasVisibleItems || searchTerm === '') {
-                noResultsElement.classList.add('hidden');
-            } else {
-                noResultsElement.classList.remove('hidden');
-            }
-        }
-        
-        function highlightText(element, searchTerm) {
-            if (!element) return;
-            
-            const text = element.textContent;
-            const regex = new RegExp(`(${searchTerm})`, 'gi');
-            const highlightedText = text.replace(regex, '<span class="search-highlight">$1</span>');
-            element.innerHTML = highlightedText;
-        }
-
-        // --- FORM VALIDATION ---
-        function validateForm() {
-            let hasErrors = false;
-
-            if (!everySelectedDayHasMenu()) {
-                showNotification('Please select at least one menu for each selected date before confirming.', 'error', 5000);
-                return false;
-            }
-            
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                const quantity = parseInt(input.value, 10) || 0;
-
-                if (!validateQuantity(input) && quantity > 0) {
-                    hasErrors = true;
-                }
-            });
-            
-            if (hasErrors) {
-                showNotification('Please ensure all selected meals have at least 10 pax.', 'error', 5000);
-                return false;
-            }
-            
-            return true;
-        }
-
-        // --- CONFIRMATION MODAL LOGIC ---
-        document.getElementById('confirm-button').addEventListener('click', function() {
-            if (validateForm()) {
-                showConfirmationModal();
-            }
-        });
-
-        function showConfirmationModal() {
-            const modal = document.getElementById('confirmationModal');
-            const summaryContainer = document.getElementById('modal-reservation-summary');
-            let totalAmount = 0;
-            
-            // Clear previous summary
-            summaryContainer.innerHTML = '';
-            
-            // Build reservation summary for all days
-            for (let day = 1; day <= totalDays; day++) {
-                let dayHasMeals = false;
-                let dayContent = '';
-                let dayTotal = 0;
-                
-                document.querySelectorAll(`.day-content[data-day="${day}"] .meal-card`).forEach(card => {
-                    const mealTime = card.id.replace(`day-${day}-`, '').replace('-card', '');
-                    const quantityInput = card.querySelector('.quantity-input');
-                    const quantity = parseInt(quantityInput.value);
-                    
-                    if (quantity > 0) {
-                        dayHasMeals = true;
-                        const menuSelect = card.querySelector('.menu-select');
-                        const selectedOption = menuSelect.options[menuSelect.selectedIndex];
-                        const menuName = selectedOption.textContent;
-                        const categorySelect = card.querySelector('.category-select');
-                        const category = categorySelect ? categorySelect.value : 'standard';
-                        // Get price from menuPrices
-                        const price = menuPrices[mealTime] ? 
-                            menuPrices[mealTime][category] : 
-                            (category === 'special' ? 200 : 150);
-                        const mealTotal = quantity * price;
-                        dayTotal += mealTotal;
-                        
-                        dayContent += `
-                            <div class="summary-item">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <div class="font-semibold text-gray-900 capitalize">${mealTime.replace('_', ' ')}</div>
-                                        <div class="text-sm text-gray-600">${menuName} (${category})</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="font-medium text-gray-900">${quantity} pax × ₱${price.toFixed(2)}</div>
-                                        <div class="font-bold text-clsu-green">₱${mealTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
-                
-                if (dayHasMeals) {
-                    const dayTab = document.querySelector(`.day-tab[data-day="${day}"]`);
-                    const dayDate = new Date(dayTab.dataset.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                    });
-                    
-                    const daySection = document.createElement('div');
-                    daySection.className = 'mb-4';
-                    daySection.innerHTML = `
-                        <div class="font-bold text-lg text-clsu-green mb-2 border-b pb-2">Day ${day} (${dayDate})</div>
-                        ${dayContent}
-                        <div class="summary-item font-semibold border-t">
-                            <div class="flex justify-between">
-                                <span>Day ${day} Subtotal:</span>
-                                <span class="text-clsu-green">₱${dayTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                        </div>
-                    `;
-                    summaryContainer.appendChild(daySection);
-                    
-                    totalAmount += dayTotal;
-                }
-            }
-            
-            // Update total amount in modal
-            document.getElementById('modal-total-amount').textContent = `₱${totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            
-            // Show modal
-            modal.style.display = 'flex';
-        }
-
-        // --- BACK BUTTON FUNCTIONALITY ---
-        document.getElementById('back-button').addEventListener('click', function() {
-            window.history.back();
-        });
-
-        // Initialize category filters and summary
-        document.querySelectorAll('.category-select').forEach(select => {
-            select.dispatchEvent(new Event('change'));
-        });
-        updateMenuPricePreview();
-        updateSummary();
-    });
-
-    // Close modals when clicking outside
-    document.getElementById('confirmationModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeConfirmationModal();
-        }
-    });
-
-    document.getElementById('successModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeSuccessModal();
-        }
-    });
-</script>
 @endsection

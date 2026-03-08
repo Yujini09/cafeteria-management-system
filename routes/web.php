@@ -155,6 +155,9 @@ Route::post('/contact', [ContactController::class, 'send'])->name('contact.send'
 Route::middleware(['auth'])->group(function () {
     // 1. Initial reservation form (GET)
     Route::get('/reservation_form', [ReservationController::class, 'showReservationForm'])->name('reservation_form');
+    Route::get('/reservation/step1', function () {
+        return redirect()->route('reservation_form');
+    })->name('reservation.step1');
 
     Route::post('/reservation/step1', [ReservationController::class, 'postDetails'])->name('reservation.post_details');
 
