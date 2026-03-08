@@ -285,24 +285,26 @@
                 <p class="header-subtitle">Manage and review all reservation requests</p>
             </div>
         </div>
-        <div class="header-actions w-full md:w-auto flex flex-col items-stretch md:items-end gap-3">
-            <div class="relative w-full sm:w-64 md:w-72">
-                <input type="text"
-                       inputmode="search"
-                       autocomplete="off"
-                       id="searchInput"
-                       placeholder="Search reservations..."
-                       class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                       oninput="filterTable(this.value)"
-                       aria-label="Search reservations">
-                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    <div class="header-actions w-full md:w-auto flex flex-col items-stretch md:items-end gap-3">
+        <div class="relative w-full sm:w-64 md:w-72">
+            <input type="text"
+                   inputmode="search"
+                   autocomplete="off"
+                   id="reservationsSearchInput"
+                   name="search"
+                   form="reservationsFiltersForm"
+                   value="{{ $search }}"
+                   placeholder="Search reservations..."
+                   class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                   aria-label="Search reservations">
+            <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <button id="reservationsClearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600 {{ filled($search) ? '' : 'hidden' }}" aria-label="Clear reservations search">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
-                <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+            </button>
             </div>
         </div>
     </div>
@@ -321,6 +323,9 @@
             <div id="reservationsExportMenu" class="export-menu" hidden>
                 <form action="{{ route('admin.reservations.export.list.pdf') }}" method="POST">
                     @csrf
+                    @if($search !== null && $search !== '')
+                        <input type="hidden" name="search" value="{{ $search }}">
+                    @endif
                     @if($status !== null)
                         <input type="hidden" name="status" value="{{ $status }}">
                     @endif
@@ -344,6 +349,9 @@
 
                 <form action="{{ route('admin.reservations.export.list.excel') }}" method="POST">
                     @csrf
+                    @if($search !== null && $search !== '')
+                        <input type="hidden" name="search" value="{{ $search }}">
+                    @endif
                     @if($status !== null)
                         <input type="hidden" name="status" value="{{ $status }}">
                     @endif
@@ -369,7 +377,7 @@
     </div>
 
     <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
-        <form method="GET" action="{{ route('admin.reservations') }}" class="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,14rem)_minmax(12rem,14rem)_minmax(10rem,1fr)_minmax(10rem,1fr)_auto] xl:items-end">
+        <form method="GET" action="{{ route('admin.reservations') }}" id="reservationsFiltersForm" class="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,14rem)_minmax(12rem,14rem)_minmax(10rem,1fr)_minmax(10rem,1fr)_auto] xl:items-end">
             <input type="hidden" name="created_sort" value="{{ $createdSort }}">
             @if($department !== null)
                 <input type="hidden" name="department" value="{{ $department }}">
@@ -462,6 +470,9 @@
                     <th class="column-department text-left px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         <form method="GET" action="{{ route('admin.reservations') }}" class="payment-filter-control">
                             <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+                            @if($search !== null && $search !== '')
+                                <input type="hidden" name="search" value="{{ $search }}">
+                            @endif
                             @if($status !== null)
                                 <input type="hidden" name="status" value="{{ $status }}">
                             @endif
@@ -616,35 +627,38 @@
 
 <script>
 (() => {
-    function filterTable(query) {
-        const lowerQuery = query.toLowerCase();
-        const rows = document.querySelectorAll('.reservation-row');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(lowerQuery)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
+    const reservationsFiltersForm = document.getElementById('reservationsFiltersForm');
+    const searchInput = document.getElementById('reservationsSearchInput');
+    const clearSearch = document.getElementById('reservationsClearSearch');
+
+    if (reservationsFiltersForm && searchInput) {
+        let submitTimer = null;
+        const submitReservationsFilters = () => {
+            reservationsFiltersForm.requestSubmit();
+        };
+
+        searchInput.addEventListener('input', () => {
+            window.clearTimeout(submitTimer);
+            submitTimer = window.setTimeout(submitReservationsFilters, 300);
+        });
+
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                window.clearTimeout(submitTimer);
+                submitReservationsFilters();
             }
         });
-        
-        const clearBtn = document.getElementById('clearSearch');
-        if(clearBtn) {
-            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
-        }
+
+        reservationsFiltersForm.addEventListener('submit', () => {
+            window.clearTimeout(submitTimer);
+        });
     }
 
-    // Bind global function so HTML input can trigger it
-    window.filterTable = filterTable;
-
-    const searchInput = document.getElementById('searchInput');
-    const clearSearch = document.getElementById('clearSearch');
-    
-    if(clearSearch && searchInput) {
+    if (clearSearch && searchInput && reservationsFiltersForm) {
         clearSearch.addEventListener('click', () => {
             searchInput.value = '';
-            filterTable('');
+            reservationsFiltersForm.requestSubmit();
         });
     }
 

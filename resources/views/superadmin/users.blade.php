@@ -1,159 +1,265 @@
 @extends('layouts.sidebar')
 @section('page-title', 'Manage Users')
-@php($disableAdminSuccessToast = true)
+@php
+    $disableAdminSuccessToast = true;
+@endphp
 
 @section('content')
+@php
+    $hasActiveUserFilters = filled($search ?? '') || filled($roleFilter ?? '');
+@endphp
+<style>
+.table-view-overlay-host {
+    position: relative;
+}
+
+.table-floating-actions {
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transform: translateX(8px);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+    z-index: 30;
+}
+
+.table-floating-actions.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.table-floating-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    padding: 0.35rem 0.65rem;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background 0.16s ease;
+}
+
+.table-floating-action-edit {
+    background: var(--primary);
+}
+
+.table-floating-action-edit:hover {
+    background: #003824;
+}
+
+.table-floating-action-delete {
+    background: #dc2626;
+}
+
+.table-floating-action-delete:hover {
+    background: #b91c1c;
+}
+</style>
 {{-- Design system: admin tokens from tailwind (admin-primary, rounded-admin, etc.). No inline overrides. --}}
 <div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-4 sm:p-5 lg:p-6 max-w-full overflow-hidden flex flex-col">
     {{-- Success handled via success modal; no duplicate inline messages. --}}
 
-    <div class="page-header items-start flex-col justify-start gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div class="header-content w-full min-w-0">
-            <div class="header-icon">
-                <x-admin.ui.icon name="fa-users" style="fas" class="text-white w-6 h-6" />
-            </div>
-            <div class="header-text min-w-0">
-                <h1 class="header-title">Manage Users</h1>
-                <p class="header-subtitle">Manage admin accounts and access</p>
-            </div>
-        </div>
+    <form method="GET" action="{{ route('superadmin.users') }}" id="usersFiltersForm">
+        <input type="hidden" name="created_sort" value="{{ $createdSort }}">
+        <button type="submit" class="sr-only">Apply user filters</button>
 
-        <div class="header-actions w-full lg:w-auto flex flex-col items-stretch lg:items-end">
-            <div class="relative w-full sm:w-64 md:w-72">
-                <input type="text"
-                       inputmode="search"
-                       autocomplete="off"
-                       id="searchInput"
-                       placeholder="Search users..."
-                       class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                       oninput="filterTable(this.value)"
-                       aria-label="Search users">
-                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
-            <x-admin.ui.icon name="fa-user-check" size="xs" />
-            Total Users: {{ $users->total() }}
-        </span>
-        <div class="flex w-full sm:w-auto sm:justify-end">
-            <x-admin.ui.button.secondary type="button" class="w-full justify-center sm:w-auto" onclick="openRecentActivitiesModal()">
-                <x-admin.ui.icon name="fa-file-lines" size="sm" />
-                Recent Activities
-            </x-admin.ui.button.secondary>
-        </div>
-    </div>
-
-    <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <label for="roleFilter" class="text-sm font-semibold text-admin-neutral-700">Filter by Role</label>
-                <div class="w-full sm:w-64">
-                    <select name="roleFilter" id="roleFilter" class="admin-select w-full" data-admin-select="true">
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="customer">Customer</option>
-                    </select>
+        <div class="page-header items-start flex-col justify-start gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="header-content w-full min-w-0">
+                <div class="header-icon">
+                    <x-admin.ui.icon name="fa-users" style="fas" class="text-white w-6 h-6" />
+                </div>
+                <div class="header-text min-w-0">
+                    <h1 class="header-title">Manage Users</h1>
+                    <p class="header-subtitle">Manage admin accounts and access</p>
                 </div>
             </div>
-            <div class="flex w-full sm:w-auto sm:justify-end">
-                <x-admin.ui.button.primary type="button" @click="$dispatch('open-admin-modal', 'addAdmin')">
-                    <x-admin.ui.icon name="fa-plus" size="sm" />
-                    Add Admin
-                </x-admin.ui.button.primary>
+
+            <div class="header-actions w-full lg:w-auto flex flex-col items-stretch lg:items-end">
+                <div class="relative w-full sm:w-64 md:w-72">
+                    <input type="text"
+                           inputmode="search"
+                           autocomplete="off"
+                           id="searchInput"
+                           name="search"
+                           value="{{ $search }}"
+                           placeholder="Search users..."
+                           class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                           aria-label="Search users">
+                    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    @if($hasActiveUserFilters)
+                        <a href="{{ route('superadmin.users', ['created_sort' => $createdSort]) }}"
+                           class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600"
+                           aria-label="Clear search and filters">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
-        <table class="modern-table table-fixed min-w-[64rem]">
-            <colgroup>
-                <col class="w-14">
-                <col class="w-48">
-                <col class="w-72">
-                <col class="w-40">
-                <col class="w-36">
-                <col class="w-64">
-            </colgroup>
-            <thead>
-                <tr>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14 whitespace-nowrap overflow-hidden text-ellipsis">#</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                        <button type="button" class="group inline-flex items-center gap-2" onclick="toggleUserNameSort()" aria-label="Sort by name">
-                            <span>Name</span>
-                            <x-admin.ui.icon id="nameSortIcon" name="fa-arrow-down" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
-                        </button>
-                    </th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Email</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Role</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Status</th>
-                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="usersTableBody">
-            @forelse($users as $user)
-                <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin" data-user-row="true" data-user-name="{{ strtolower($user->name) }}" data-user-role="{{ $user->role_filter_value }}" data-user-status="{{ strtolower($user->account_status_label) }}">
-                    <td class="text-admin-neutral-500 py-4 px-4 border-b border-admin-neutral-100 font-semibold">
-                        {{ ($users->firstItem() ?? 0) + $loop->index }}
-                    </td>
-                    <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->name }}</td>
-                    <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->email }}</td>
-                    <td class="py-4 px-4 border-b border-admin-neutral-100">
-                        <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->role_filter_value === 'admin' ? 'bg-admin-primary-light text-admin-primary' : 'bg-admin-neutral-100 text-admin-neutral-600' }}">
-                            {{ $user->role_label }}
-                        </span>
-                    </td>
-                    <td class="py-4 px-4 border-b border-admin-neutral-100">
-                        <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->isPendingAccount() ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700' }}">
-                            {{ $user->account_status_label }}
-                        </span>
-                    </td>
-                    <td class="py-4 px-4 border-b border-admin-neutral-100">
-                        <div class="flex flex-wrap gap-2">
-                            @if($user->role === 'admin')
-                                <x-admin.ui.button.secondary type="button" class="!py-2 !px-3 text-xs" onclick="openEditModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}', '{{ addslashes(e($user->email)) }}')">
-                                    <x-admin.ui.icon name="fa-pen" size="sm" /> Edit
-                                </x-admin.ui.button.secondary>
-                            @endif
-                            <form method="POST" action="{{ route('superadmin.users.destroy', $user) }}" class="inline" id="deleteForm{{ $user->id }}">
-                                @csrf @method('DELETE')
-                                <x-admin.ui.button.danger type="button" class="!py-2 !px-3 text-xs" onclick="openDeleteModal({{ $user->id }}, '{{ addslashes(e($user->name)) }}')">
-                                    <x-admin.ui.icon name="fa-trash-can" size="sm" /> Delete
-                                </x-admin.ui.button.danger>
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                <x-admin.ui.icon name="fa-user-check" size="xs" />
+                Total Users: {{ $users->total() }}
+            </span>
+            <div class="flex w-full sm:w-auto sm:justify-end">
+                <x-admin.ui.button.secondary type="button" class="w-full justify-center sm:w-auto" onclick="openRecentActivitiesModal()">
+                    <x-admin.ui.icon name="fa-file-lines" size="sm" />
+                    Recent Activities
+                </x-admin.ui.button.secondary>
+            </div>
+        </div>
+
+        <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <label for="roleFilter" class="text-sm font-semibold text-admin-neutral-700">Filter by Role</label>
+                    <div class="w-full sm:w-64">
+                        <select name="role" id="roleFilter" class="admin-select w-full" data-admin-select="true">
+                            <option value="" @selected($roleFilter === '')>All Roles</option>
+                            <option value="admin" @selected($roleFilter === 'admin')>Admin</option>
+                            <option value="customer" @selected($roleFilter === 'customer')>Customer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex w-full sm:w-auto sm:justify-end">
+                    <x-admin.ui.button.primary type="button" @click="$dispatch('open-admin-modal', 'addAdmin')">
+                        <x-admin.ui.icon name="fa-plus" size="sm" />
+                        Add Admin
+                    </x-admin.ui.button.primary>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div id="usersTableHost" class="table-view-overlay-host">
+        <div id="usersTableScroll" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+            <table class="modern-table table-fixed min-w-[68rem]">
+                <colgroup>
+                    <col class="w-14">
+                    <col class="w-48">
+                    <col class="w-72">
+                    <col class="w-40">
+                    <col class="w-36">
+                    <col class="w-44">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14 whitespace-nowrap overflow-hidden text-ellipsis">#</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                            <button type="button" class="group inline-flex items-center gap-2" onclick="toggleUserNameSort()" aria-label="Sort by name">
+                                <span>Name</span>
+                                <x-admin.ui.icon id="nameSortIcon" name="fa-arrow-down" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
+                            </button>
+                        </th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Email</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Role</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Status</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wider">
+                            <a href="{{ request()->fullUrlWithQuery(['created_sort' => $createdSort === 'asc' ? 'desc' : 'asc', 'page' => null]) }}"
+                               class="group inline-flex items-center gap-2 hover:text-gray-700"
+                               aria-label="Sort by created date">
+                                <span>Created</span>
+                                <x-admin.ui.icon name="{{ $createdSort === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down' }}" style="fas" size="sm" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
+                            </a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                @forelse($users as $user)
+                    @php
+                        $userPayload = json_encode([
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'can_edit' => $user->role === 'admin',
+                        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+                    @endphp
+                    <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin"
+                        data-user-row="true"
+                        data-user="{{ $userPayload }}"
+                        data-user-id="{{ $user->id }}"
+                        data-user-name="{{ strtolower($user->name) }}"
+                        data-user-role="{{ $user->role_filter_value }}"
+                        data-user-status="{{ strtolower($user->account_status_label) }}">
+                        <td class="text-admin-neutral-500 py-4 px-4 border-b border-admin-neutral-100 font-semibold">
+                            {{ ($users->firstItem() ?? 0) + $loop->index }}
+                        </td>
+                        <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->name }}</td>
+                        <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->email }}</td>
+                        <td class="py-4 px-4 border-b border-admin-neutral-100">
+                            <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->role_filter_value === 'admin' ? 'bg-admin-primary-light text-admin-primary' : 'bg-admin-neutral-100 text-admin-neutral-600' }}">
+                                {{ $user->role_label }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 border-b border-admin-neutral-100">
+                            <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->isPendingAccount() ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700' }}">
+                                {{ $user->account_status_label }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 border-b border-admin-neutral-100 text-sm text-admin-neutral-600 whitespace-nowrap">
+                            {{ $user->created_at->format('M d, Y H:i') }}
+                        </td>
+                        <td class="hidden">
+                            <form method="POST" action="{{ route('superadmin.users.destroy', $user) }}" id="deleteForm{{ $user->id }}">
+                                @csrf
+                                @method('DELETE')
                             </form>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="py-12 px-4 text-center">
-                        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-admin-neutral-100 flex items-center justify-center">
-                            <x-admin.ui.icon name="fa-triangle-exclamation" class="text-admin-neutral-400 w-8 h-8" />
-                        </div>
-                        <p class="font-semibold text-admin-neutral-900 mb-1">No users found</p>
-                        <p class="text-sm text-admin-neutral-500">Start by adding your first user to the system</p>
-                    </td>
-                </tr>
-            @endforelse
-                <tr id="usersEmptyState" class="hidden">
-                    <td colspan="6" class="py-10 px-4 text-center">
-                        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-admin-neutral-100 flex items-center justify-center">
-                            <x-admin.ui.icon name="fa-filter" class="text-admin-neutral-400 w-6 h-6" />
-                        </div>
-                        <p class="font-semibold text-admin-neutral-900 mb-1">No users match this filter</p>
-                        <p class="text-sm text-admin-neutral-500">Try adjusting the role filter or search.</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="py-12 px-4 text-center">
+                            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-admin-neutral-100 flex items-center justify-center">
+                                <x-admin.ui.icon name="fa-triangle-exclamation" class="text-admin-neutral-400 w-8 h-8" />
+                            </div>
+                            @if($hasActiveUserFilters)
+                                <p class="font-semibold text-admin-neutral-900 mb-1">No users match the current search or filters</p>
+                                <p class="text-sm text-admin-neutral-500">Try adjusting the search term or role filter.</p>
+                            @else
+                                <p class="font-semibold text-admin-neutral-900 mb-1">No users found</p>
+                                <p class="text-sm text-admin-neutral-500">Start by adding your first user to the system</p>
+                            @endif
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div id="usersFloatingActions" class="table-floating-actions" aria-hidden="true">
+            <button id="usersFloatingEditBtn"
+                    type="button"
+                    class="table-floating-action-btn table-floating-action-edit"
+                    data-user=""
+                    onclick="handleFloatingUserEdit(this)"
+                    aria-label="Edit user">
+                <x-admin.ui.icon name="fa-pen" style="fas" size="sm" class="text-white" />
+                Edit
+            </button>
+            <button id="usersFloatingDeleteBtn"
+                    type="button"
+                    class="table-floating-action-btn table-floating-action-delete"
+                    data-user=""
+                    onclick="handleFloatingUserDelete(this)"
+                    aria-label="Delete user">
+                <x-admin.ui.icon name="fa-trash-can" style="fas" size="sm" class="text-white" />
+                Delete
+            </button>
+        </div>
     </div>
 
     @if($users->hasPages())
@@ -794,6 +900,30 @@ function submitEditUserForm(triggerButton = null) {
 }
 
 var deleteUserId = null;
+var hideUsersFloatingActions = function() {};
+
+function parseFloatingUserPayload(payload) {
+    if (!payload) return null;
+    try {
+        return JSON.parse(payload);
+    } catch (error) {
+        return null;
+    }
+}
+
+function handleFloatingUserEdit(button) {
+    const payload = parseFloatingUserPayload(button ? button.dataset.user : '');
+    if (!payload || !payload.can_edit) return;
+    hideUsersFloatingActions();
+    openEditModal(payload.id, payload.name, payload.email);
+}
+
+function handleFloatingUserDelete(button) {
+    const payload = parseFloatingUserPayload(button ? button.dataset.user : '');
+    if (!payload) return;
+    hideUsersFloatingActions();
+    openDeleteModal(payload.id, payload.name);
+}
 
 function openDeleteModal(userId, userName) {
     deleteUserId = userId;
@@ -812,9 +942,15 @@ function confirmDelete(triggerButton = null) {
 }
 
 var userSortDirection = 'desc';
+var userSortField = null;
 
 function toggleUserNameSort() {
-    userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
+    if (userSortField !== 'name') {
+        userSortField = 'name';
+        userSortDirection = 'asc';
+    } else {
+        userSortDirection = userSortDirection === 'asc' ? 'desc' : 'asc';
+    }
     sortUserRows();
     updateNameSortIcon();
 }
@@ -822,8 +958,13 @@ function toggleUserNameSort() {
 function sortUserRows() {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
+    hideUsersFloatingActions();
 
     const rows = Array.from(tbody.querySelectorAll('tr[data-user-row="true"]'));
+    if (userSortField !== 'name') {
+        return;
+    }
+
     rows.sort((a, b) => {
         const aName = (a.dataset.userName || '').toLowerCase();
         const bName = (b.dataset.userName || '').toLowerCase();
@@ -842,32 +983,117 @@ function updateNameSortIcon() {
     icon.classList.add(userSortDirection === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down');
 }
 
-function applyUserFilters() {
-    const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
-    const role = document.getElementById('roleFilter')?.value || '';
-    const rows = document.querySelectorAll('#usersTableBody tr[data-user-row="true"]');
-    const emptyState = document.getElementById('usersEmptyState');
-    let visibleCount = 0;
+function initUsersFloatingActions() {
+    const host = document.getElementById('usersTableHost');
+    const scrollArea = document.getElementById('usersTableScroll');
+    const actions = document.getElementById('usersFloatingActions');
+    const editBtn = document.getElementById('usersFloatingEditBtn');
+    const deleteBtn = document.getElementById('usersFloatingDeleteBtn');
+    if (!host || !scrollArea || !actions || !editBtn || !deleteBtn) return;
 
-    rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        const roleMatch = !role || row.dataset.userRole === role;
-        const searchMatch = text.includes(query);
-        const isVisible = roleMatch && searchMatch;
-        row.style.display = isVisible ? '' : 'none';
-        if (isVisible) {
-            visibleCount += 1;
+    let activeRow = null;
+
+    const clearActionData = () => {
+        editBtn.dataset.user = '';
+        deleteBtn.dataset.user = '';
+        editBtn.hidden = false;
+    };
+
+    const hideActions = () => {
+        activeRow = null;
+        clearActionData();
+        actions.classList.remove('is-visible');
+        actions.setAttribute('aria-hidden', 'true');
+    };
+
+    hideUsersFloatingActions = hideActions;
+
+    if (host.dataset.floatingActionsBound === 'true') {
+        return;
+    }
+
+    host.dataset.floatingActionsBound = 'true';
+
+    const updateActionsPosition = () => {
+        if (!activeRow || !scrollArea.contains(activeRow) || activeRow.offsetParent === null) {
+            hideActions();
+            return;
+        }
+
+        const hostRect = host.getBoundingClientRect();
+        const scrollRect = scrollArea.getBoundingClientRect();
+        const rowRect = activeRow.getBoundingClientRect();
+        if (rowRect.bottom <= scrollRect.top || rowRect.top >= scrollRect.bottom) {
+            hideActions();
+            return;
+        }
+
+        const actionsHeight = actions.offsetHeight || 32;
+        const proposedTop = rowRect.top - hostRect.top + ((rowRect.height - actionsHeight) / 2);
+        const minTop = scrollRect.top - hostRect.top + 6;
+        const maxTop = scrollRect.bottom - hostRect.top - actionsHeight - 6;
+        const clampedTop = Math.max(minTop, Math.min(proposedTop, maxTop));
+        actions.style.top = `${clampedTop}px`;
+    };
+
+    const showForRow = (row) => {
+        if (!row) return;
+
+        const userPayload = row.dataset.user || '';
+        const parsedUser = parseFloatingUserPayload(userPayload);
+        if (!parsedUser) {
+            hideActions();
+            return;
+        }
+
+        activeRow = row;
+        editBtn.dataset.user = userPayload;
+        deleteBtn.dataset.user = userPayload;
+        editBtn.hidden = !parsedUser.can_edit;
+        editBtn.style.display = parsedUser.can_edit ? '' : 'none';
+        actions.classList.add('is-visible');
+        actions.setAttribute('aria-hidden', 'false');
+        updateActionsPosition();
+    };
+
+    scrollArea.addEventListener('pointermove', (event) => {
+        const row = event.target.closest('tr[data-user]')
+            || document.elementsFromPoint(event.clientX, event.clientY)
+                .find((element) => element instanceof HTMLElement && element.matches('tr[data-user]'));
+        if (row && scrollArea.contains(row)) {
+            if (activeRow !== row) {
+                showForRow(row);
+            } else {
+                updateActionsPosition();
+            }
+            return;
+        }
+
+        if (!actions.matches(':hover')) {
+            hideActions();
         }
     });
 
-    if (emptyState && rows.length > 0) {
-        emptyState.classList.toggle('hidden', visibleCount !== 0);
-    }
+    host.addEventListener('mouseleave', hideActions);
 
-    const clearButton = document.getElementById('clearSearch');
-    if (clearButton) {
-        clearButton.style.display = query.length > 0 ? 'block' : 'none';
-    }
+    scrollArea.addEventListener('scroll', () => {
+        if (activeRow) {
+            updateActionsPosition();
+        }
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+        if (activeRow) {
+            updateActionsPosition();
+        }
+    });
+
+    scrollArea.addEventListener('focusin', (event) => {
+        const row = event.target.closest('tr[data-user]');
+        if (row) {
+            showForRow(row);
+        }
+    });
 }
 
 var allAudits = [];
@@ -1423,30 +1649,47 @@ function initUsersPage() {
         window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'editUser' }));
     }
 
-    const roleFilter = document.getElementById('roleFilter');
-    if (roleFilter && !roleFilter.dataset.bound) {
-        roleFilter.addEventListener('change', applyUserFilters);
-        roleFilter.dataset.bound = 'true';
+    const filtersForm = document.getElementById('usersFiltersForm');
+    const searchInput = document.getElementById('searchInput');
+    if (filtersForm && searchInput && !searchInput.dataset.bound) {
+        let submitTimer = null;
+        const submitFilters = () => {
+            hideUsersFloatingActions();
+            filtersForm.requestSubmit();
+        };
+
+        searchInput.addEventListener('input', () => {
+            window.clearTimeout(submitTimer);
+            submitTimer = window.setTimeout(submitFilters, 300);
+        });
+
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                window.clearTimeout(submitTimer);
+                submitFilters();
+            }
+        });
+
+        searchInput.dataset.bound = 'true';
     }
 
-    if (typeof window.filterTable === 'function') {
-        window.filterTable = function(query) {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput && typeof query === 'string') {
-                searchInput.value = query;
-            }
-            applyUserFilters();
-        };
+    const roleFilter = document.getElementById('roleFilter');
+    if (filtersForm && roleFilter && !roleFilter.dataset.bound) {
+        roleFilter.addEventListener('change', () => {
+            hideUsersFloatingActions();
+            filtersForm.requestSubmit();
+        });
+        roleFilter.dataset.bound = 'true';
     }
 
     if (typeof enhanceAdminSelects === 'function') {
         enhanceAdminSelects(document);
     }
 
+    initUsersFloatingActions();
     initActivitiesControls();
     updateNameSortIcon();
-    sortUserRows();
-    applyUserFilters();
 }
 
 document.addEventListener('DOMContentLoaded', initUsersPage);

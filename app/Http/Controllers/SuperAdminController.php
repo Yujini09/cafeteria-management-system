@@ -27,22 +27,86 @@ class SuperAdminController extends Controller
 {
     private const ROLE_PENDING_CUSTOMER = 'customer_pending';
     private const ROLE_PENDING_ADMIN = 'admin_pending';
+    private const USER_ROLE_FILTERS = [
+        'admin' => ['admin', self::ROLE_PENDING_ADMIN],
+        'customer' => ['customer', self::ROLE_PENDING_CUSTOMER],
+    ];
 
     public function __construct(
         private readonly RealtimeEmailVerifier $realtimeEmailVerifier
     ) {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $createdSort = $request->string('created_sort')->lower()->value();
+        if (!in_array($createdSort, ['asc', 'desc'], true)) {
+            $createdSort = 'desc';
+        }
+
+        $search = trim($request->string('search')->value());
+        $roleFilter = $request->string('role')->lower()->value();
+        if (!array_key_exists($roleFilter, self::USER_ROLE_FILTERS)) {
+            $roleFilter = '';
+        }
+
+        $usersQuery = User::query()
+            ->where('role', '!=', 'superadmin');
+
+        if ($roleFilter !== '') {
+            $usersQuery->whereIn('role', self::USER_ROLE_FILTERS[$roleFilter]);
+        }
+
+        if ($search !== '') {
+            $searchTerm = "%{$search}%";
+            $matchingRoles = $this->resolveUsersSearchRoles($search);
+
+            $usersQuery->where(function ($query) use ($searchTerm, $matchingRoles) {
+                $query->where('name', 'like', $searchTerm)
+                    ->orWhere('email', 'like', $searchTerm);
+
+                if ($matchingRoles !== []) {
+                    $query->orWhereIn('role', $matchingRoles);
+                }
+            });
+        }
+
         // Show everyone except the superadmin so pending accounts can be monitored.
-        $users = User::where('role', '!=', 'superadmin')
-            ->orderBy('name')
-            ->orderBy('id')
+        $users = $usersQuery
+            ->orderBy('created_at', $createdSort)
+            ->orderBy('id', $createdSort)
             ->paginate(10)
             ->withQueryString();
 
-        return view('superadmin.users', compact('users'));
+        return view('superadmin.users', compact('users', 'createdSort', 'search', 'roleFilter'));
+    }
+
+    private function resolveUsersSearchRoles(string $search): array
+    {
+        $normalizedSearch = strtolower(trim($search));
+        if ($normalizedSearch === '' || str_contains($normalizedSearch, ' ')) {
+            return [];
+        }
+
+        $matchingRoles = [];
+
+        if (str_contains('admin', $normalizedSearch) || str_contains($normalizedSearch, 'admin')) {
+            $matchingRoles = array_merge($matchingRoles, self::USER_ROLE_FILTERS['admin']);
+        }
+
+        if (str_contains('customer', $normalizedSearch) || str_contains($normalizedSearch, 'customer')) {
+            $matchingRoles = array_merge($matchingRoles, self::USER_ROLE_FILTERS['customer']);
+        }
+
+        if (str_contains('active', $normalizedSearch) || str_contains($normalizedSearch, 'active')) {
+            $matchingRoles = array_merge($matchingRoles, ['admin', 'customer']);
+        }
+
+        if (str_contains('pending', $normalizedSearch) || str_contains($normalizedSearch, 'pending')) {
+            $matchingRoles = array_merge($matchingRoles, [self::ROLE_PENDING_ADMIN, self::ROLE_PENDING_CUSTOMER]);
+        }
+
+        return array_values(array_unique($matchingRoles));
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -178,18 +242,7 @@ class SuperAdminController extends Controller
             );
         }
 
-        $perPage = 10;
-        $position = User::where('role', '!=', 'superadmin')
-            ->where(function ($query) use ($user) {
-                $query->where('name', '<', $user->name)
-                    ->orWhere(function ($subQuery) use ($user) {
-                        $subQuery->where('name', '=', $user->name)
-                            ->where('id', '<', $user->id);
-                    });
-            })
-            ->count();
-        $page = intdiv($position, $perPage) + 1;
-        $redirectUrl = route('superadmin.users', ['page' => $page]);
+        $redirectUrl = route('superadmin.users', ['created_sort' => 'desc']);
         $successMessage = 'Admin account created. Temporary credentials were sent by email. The email owner must confirm the account through the verification email before the account becomes active.';
 
         if ($request->expectsJson()) {

@@ -83,17 +83,49 @@ class InventoryItemController extends Controller
         ]);
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
         // Sorting options: name, qty, expiry_date
-        $sort = request('sort', 'name');
-        $direction = request('direction', 'asc');
-        $category = request('category');
+        $sort = $request->string('sort')->value();
+        if (!in_array($sort, ['name', 'qty', 'expiry_date'], true)) {
+            $sort = 'name';
+        }
+
+        $direction = $request->string('direction')->lower()->value();
+        if (!in_array($direction, ['asc', 'desc'], true)) {
+            $direction = 'asc';
+        }
+
+        $category = trim($request->string('category')->value());
+        if ($category === '') {
+            $category = null;
+        }
+
+        $search = trim($request->string('search')->value());
 
         $query = InventoryItem::query();
 
         if ($category) {
             $query->where('category', $category);
+        }
+
+        if ($search !== '') {
+            $searchLike = "%{$search}%";
+
+            $query->where(function ($inventoryQuery) use ($search, $searchLike) {
+                $inventoryQuery->where('name', 'like', $searchLike)
+                    ->orWhere('category', 'like', $searchLike)
+                    ->orWhere('unit', 'like', $searchLike);
+
+                if (is_numeric($search)) {
+                    $inventoryQuery->orWhere('qty', (float) $search);
+                }
+
+                $searchDate = $this->normalizeInventorySearchDate($search);
+                if ($searchDate !== null) {
+                    $inventoryQuery->orWhereDate('expiry_date', $searchDate);
+                }
+            });
         }
 
         $items = $query->orderBy($sort, $direction)
@@ -103,7 +135,21 @@ class InventoryItemController extends Controller
         // Get distinct categories for the dropdown
         $categories = InventoryItem::distinct()->pluck('category')->sort();
 
-        return view('admin.inventory.index', compact('items', 'sort', 'direction', 'category', 'categories'));
+        return view('admin.inventory.index', compact('items', 'sort', 'direction', 'category', 'categories', 'search'));
+    }
+
+    private function normalizeInventorySearchDate(string $value): ?string
+    {
+        $value = trim($value);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function create(): View

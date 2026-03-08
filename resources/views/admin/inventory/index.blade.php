@@ -2,6 +2,9 @@
 @section('page-title', 'Inventory')
 
 @section('content')
+@php
+    $hasActiveInventoryFilters = filled($search ?? '') || filled($category ?? '');
+@endphp
 <style>
 .table-view-overlay-host {
     position: relative;
@@ -211,57 +214,66 @@
     </x-admin.ui.modal>
     
     <div class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 border-t-4 border-t-admin-primary p-6 mx-auto max-w-full overflow-hidden flex flex-col">
-        <div class="page-header items-start">
-            <div class="header-content">
-                <div class="header-icon">
-                    <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-white w-6 h-6" />
-                </div>
-                <div class="header-text">
-                    <h1 class="header-title">Inventory</h1>
-                    <p class="header-subtitle">Manage and track your inventory items and quantities</p>
-                </div>
-            </div>
-            <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
-                <div class="relative w-full sm:w-64 md:w-72">
-                    <input type="text"
-                           inputmode="search"
-                           autocomplete="off"
-                           id="searchInput"
-                           placeholder="Search inventory items..."
-                           class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                           oninput="filterTable(this.value)"
-                           aria-label="Search inventory items">
-                    <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <button id="clearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600" style="display: none;">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
-                <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
-                Total Items: {{ $items->total() }}
-            </span>
-            <div class="flex w-full sm:w-auto sm:justify-end">
-                <x-admin.ui.button.secondary type="button" id="inventoryUsageLogsBtn" class="w-full justify-center sm:w-auto">
-                    <x-admin.ui.icon name="fa-file-lines" size="sm" />
-                    Usage Logs
-                </x-admin.ui.button.secondary>
-            </div>
-        </div>
+        <form method="GET" action="{{ route('admin.inventory.index') }}" id="inventoryFiltersForm">
+            @if($sort)
+                <input type="hidden" name="sort" value="{{ $sort }}">
+            @endif
+            @if($direction)
+                <input type="hidden" name="direction" value="{{ $direction }}">
+            @endif
+            <button type="submit" class="sr-only">Apply inventory filters</button>
 
-        <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
-            <form method="GET" action="{{ route('admin.inventory.index') }}" class="flex flex-col gap-4">
+            <div class="page-header items-start">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-white w-6 h-6" />
+                    </div>
+                    <div class="header-text">
+                        <h1 class="header-title">Inventory</h1>
+                        <p class="header-subtitle">Manage and track your inventory items and quantities</p>
+                    </div>
+                </div>
+                <div class="header-actions w-full md:w-auto flex flex-col items-end gap-3">
+                    <div class="relative w-full sm:w-64 md:w-72">
+                        <input type="text"
+                               inputmode="search"
+                               autocomplete="off"
+                               id="inventorySearchInput"
+                               name="search"
+                               value="{{ $search }}"
+                               placeholder="Search inventory items..."
+                               class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                               aria-label="Search inventory items">
+                        <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <button id="inventoryClearSearch" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600 {{ filled($search) ? '' : 'hidden' }}" aria-label="Clear inventory search">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span class="inline-flex items-center justify-center text-center gap-2 rounded-full border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
+                    <x-admin.ui.icon name="fa-boxes-stacked" size="xs" />
+                    Total Items: {{ $items->total() }}
+                </span>
+                <div class="flex w-full sm:w-auto sm:justify-end">
+                    <x-admin.ui.button.secondary type="button" id="inventoryUsageLogsBtn" class="w-full justify-center sm:w-auto">
+                        <x-admin.ui.icon name="fa-file-lines" size="sm" />
+                        Usage Logs
+                    </x-admin.ui.button.secondary>
+                </div>
+            </div>
+
+            <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-5 mb-6">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <label for="category" class="text-sm font-semibold text-admin-neutral-700">Filter by Category</label>
+                        <label for="inventoryCategoryFilter" class="text-sm font-semibold text-admin-neutral-700">Filter by Category</label>
                         <div class="w-full sm:w-64">
-                            <select name="category" id="category" onchange="this.form.submit()" class="admin-select w-full" data-admin-select="true">
+                            <select name="category" id="inventoryCategoryFilter" class="admin-select w-full" data-admin-select="true">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
@@ -276,14 +288,8 @@
                         </x-admin.ui.button.primary>
                     </div>
                 </div>
-                @if($sort)
-                    <input type="hidden" name="sort" value="{{ $sort }}">
-                @endif
-                @if($direction)
-                    <input type="hidden" name="direction" value="{{ $direction }}">
-                @endif
-            </form>
-        </div>
+            </div>
+        </form>
 
         <div id="inventoryTableHost" class="table-view-overlay-host">
             <div id="inventoryTableScroll" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
@@ -301,14 +307,14 @@
                     <tr>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide w-14 whitespace-nowrap overflow-hidden text-ellipsis">#</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                            <a href="?sort=name" class="hover:text-admin-neutral-700 transition-colors duration-200">Item Name</a>
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'page' => null]) }}" class="hover:text-admin-neutral-700 transition-colors duration-200">Item Name</a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                            <a href="?sort=qty" class="hover:text-admin-neutral-700 transition-colors duration-200">Quantity</a>
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'qty', 'page' => null]) }}" class="hover:text-admin-neutral-700 transition-colors duration-200">Quantity</a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Unit</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                            <a href="?sort=expiry_date" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'expiry_date', 'page' => null]) }}" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Category</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Last Updated</th>
@@ -359,8 +365,13 @@
                                     <div class="empty-state-icon">
                                         <x-admin.ui.icon name="fa-boxes-stacked" style="fas" class="text-admin-neutral-400 w-6 h-6" />
                                     </div>
-                                    <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No inventory items found</p>
-                                    <p class="text-sm text-admin-neutral-500">Start by adding your first item</p>
+                                    @if($hasActiveInventoryFilters)
+                                        <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No inventory items match the current search or filters</p>
+                                        <p class="text-sm text-admin-neutral-500">Try adjusting the search term or category.</p>
+                                    @else
+                                        <p class="text-lg font-semibold text-admin-neutral-900 mb-2">No inventory items found</p>
+                                        <p class="text-sm text-admin-neutral-500">Start by adding your first item</p>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -1204,6 +1215,60 @@ document.addEventListener('livewire:navigated', function() {
                 showForRow(row);
             }
         });
+    }
+
+    const inventoryFiltersForm = document.getElementById('inventoryFiltersForm');
+    const inventorySearchInput = document.getElementById('inventorySearchInput');
+    const inventoryClearSearch = document.getElementById('inventoryClearSearch');
+    const inventoryCategoryFilter = document.getElementById('inventoryCategoryFilter');
+
+    if (inventoryFiltersForm && inventorySearchInput && !inventorySearchInput.dataset.bound) {
+        let submitTimer = null;
+        const submitInventoryFilters = () => {
+            const floatingActions = document.getElementById('inventoryFloatingActions');
+            if (floatingActions) {
+                floatingActions.classList.remove('is-visible');
+                floatingActions.setAttribute('aria-hidden', 'true');
+            }
+
+            inventoryFiltersForm.requestSubmit();
+        };
+
+        inventorySearchInput.addEventListener('input', () => {
+            window.clearTimeout(submitTimer);
+            submitTimer = window.setTimeout(submitInventoryFilters, 300);
+        });
+
+        inventorySearchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                window.clearTimeout(submitTimer);
+                submitInventoryFilters();
+            }
+        });
+
+        inventoryFiltersForm.addEventListener('submit', () => {
+            window.clearTimeout(submitTimer);
+        });
+
+        inventorySearchInput.dataset.bound = 'true';
+    }
+
+    if (inventoryFiltersForm && inventoryClearSearch && inventorySearchInput && !inventoryClearSearch.dataset.bound) {
+        inventoryClearSearch.addEventListener('click', () => {
+            inventorySearchInput.value = '';
+            inventoryFiltersForm.requestSubmit();
+        });
+
+        inventoryClearSearch.dataset.bound = 'true';
+    }
+
+    if (inventoryFiltersForm && inventoryCategoryFilter && !inventoryCategoryFilter.dataset.bound) {
+        inventoryCategoryFilter.addEventListener('change', () => {
+            inventoryFiltersForm.requestSubmit();
+        });
+
+        inventoryCategoryFilter.dataset.bound = 'true';
     }
 
     initInventoryFloatingActions();

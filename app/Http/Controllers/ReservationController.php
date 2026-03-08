@@ -42,8 +42,8 @@ class ReservationController extends Controller
 
     public function index(Request $request)
     {
-        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
-        $q = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo);
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo, $search] = $this->resolveAdminIndexFilters($request);
+        $q = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo, $search);
 
         $reservations = $q->orderBy('created_at', $createdSort)->paginate(10)->withQueryString();
         $departmentOptions = $this->getAdminDepartmentOptions();
@@ -56,15 +56,16 @@ class ReservationController extends Controller
             'createdSort',
             'departmentOptions',
             'createdFrom',
-            'createdTo'
+            'createdTo',
+            'search'
         ));
     }
 
     public function exportIndexPdf(Request $request)
     {
-        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo, $search] = $this->resolveAdminIndexFilters($request);
 
-        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo)
+        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo, $search)
             ->orderBy('created_at', $createdSort)
             ->get();
 
@@ -87,6 +88,7 @@ class ReservationController extends Controller
             'createdSort' => $createdSort,
             'createdFrom' => $createdFrom,
             'createdTo' => $createdTo,
+            'search' => $search,
             'exportedBy' => $exportedBy,
             'exportedAt' => $exportedAt,
         ])->setPaper('a4', 'landscape');
@@ -96,9 +98,9 @@ class ReservationController extends Controller
 
     public function exportIndexExcel(Request $request)
     {
-        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo] = $this->resolveAdminIndexFilters($request);
+        [$status, $payment, $department, $createdSort, $createdFrom, $createdTo, $search] = $this->resolveAdminIndexFilters($request);
 
-        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo)
+        $reservations = $this->buildAdminIndexQuery($status, $payment, $department, $createdFrom, $createdTo, $search)
             ->orderBy('created_at', $createdSort)
             ->get();
 
@@ -1222,12 +1224,13 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
         $createdFrom = $this->normalizeAdminIndexDateFilter($request->input('created_from'));
         $createdTo = $this->normalizeAdminIndexDateFilter($request->input('created_to'));
+        $search = trim((string) $request->input('search', ''));
 
         if ($createdFrom !== null && $createdTo !== null && $createdFrom > $createdTo) {
             [$createdFrom, $createdTo] = [$createdTo, $createdFrom];
         }
 
-        return [$status, $payment, $department, $createdSort, $createdFrom, $createdTo];
+        return [$status, $payment, $department, $createdSort, $createdFrom, $createdTo, $search !== '' ? $search : null];
     }
 
     protected function buildAdminIndexQuery(
@@ -1235,7 +1238,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         ?string $payment,
         ?string $department,
         ?string $createdFrom,
-        ?string $createdTo
+        ?string $createdTo,
+        ?string $search = null
     ): Builder
     {
         $q = Reservation::with(['user']);
@@ -1275,6 +1279,49 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
         if ($createdTo !== null) {
             $q->whereDate('created_at', '<=', $createdTo);
+        }
+
+        if ($search !== null && $search !== '') {
+            $searchLike = "%{$search}%";
+
+            $q->where(function (Builder $searchQuery) use ($search, $searchLike) {
+                $searchQuery->where('contact_person', 'like', $searchLike)
+                    ->orWhere('email', 'like', $searchLike)
+                    ->orWhere('department', 'like', $searchLike)
+                    ->orWhere('status', 'like', $searchLike)
+                    ->orWhere('event_name', 'like', $searchLike)
+                    ->orWhere('venue', 'like', $searchLike)
+                    ->orWhere('project_name', 'like', $searchLike)
+                    ->orWhere('account_code', 'like', $searchLike)
+                    ->orWhere('contact_number', 'like', $searchLike)
+                    ->orWhereHas('user', function (Builder $userQuery) use ($searchLike) {
+                        $userQuery->where('name', 'like', $searchLike)
+                            ->orWhere('email', 'like', $searchLike)
+                            ->orWhere('department', 'like', $searchLike);
+                    });
+
+                if (ctype_digit($search)) {
+                    $searchQuery->orWhereKey((int) $search);
+                }
+
+                $searchDate = $this->normalizeAdminIndexDateFilter($search);
+                if ($searchDate !== null) {
+                    $searchQuery->orWhereDate('created_at', $searchDate)
+                        ->orWhereDate('event_date', $searchDate);
+                }
+
+                $matchesUnpaid = preg_match('/\bunpaid\b/i', $search) === 1;
+                $matchesPaid = !$matchesUnpaid && preg_match('/\bpaid\b/i', $search) === 1;
+
+                if ($matchesPaid) {
+                    $searchQuery->orWhere('payment_status', 'paid');
+                } elseif ($matchesUnpaid) {
+                    $searchQuery->orWhere(function (Builder $paymentQuery) {
+                        $paymentQuery->whereNull('payment_status')
+                            ->orWhere('payment_status', '!=', 'paid');
+                    });
+                }
+            });
         }
 
         return $q;

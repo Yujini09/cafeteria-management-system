@@ -248,3 +248,132 @@ test('newly created admins appear as pending until email verification and first 
         ->assertSeeText('hidden-admin@example.com')
         ->assertSeeInOrder(['hidden-admin@example.com', 'Active']);
 });
+
+test('superadmin users list sorts by created date newest first by default and can be reversed', function () {
+    $superAdmin = User::factory()->create([
+        'role' => 'superadmin',
+    ]);
+
+    User::factory()->create([
+        'name' => 'Older User',
+        'email' => 'older-user@example.com',
+        'created_at' => now()->subDays(2),
+    ]);
+
+    User::factory()->create([
+        'name' => 'Newest User',
+        'email' => 'newest-user@example.com',
+        'created_at' => now()->subHour(),
+    ]);
+
+    $this->actingAs($superAdmin)
+        ->get(route('superadmin.users'))
+        ->assertOk()
+        ->assertSeeInOrder(['newest-user@example.com', 'older-user@example.com']);
+
+    $this->actingAs($superAdmin)
+        ->get(route('superadmin.users', ['created_sort' => 'asc']))
+        ->assertOk()
+        ->assertSeeInOrder(['older-user@example.com', 'newest-user@example.com']);
+});
+
+test('superadmin user management filters and search across the entire dataset instead of only the current page', function () {
+    $superAdmin = User::factory()->create([
+        'role' => 'superadmin',
+    ]);
+
+    User::factory()->count(10)->sequence(
+        fn ($sequence) => [
+            'name' => 'Top Admin '.($sequence->index + 1),
+            'email' => 'top-admin-'.($sequence->index + 1).'@example.com',
+            'role' => 'admin',
+            'created_at' => now()->subMinutes($sequence->index),
+        ],
+    )->create();
+
+    User::factory()->create([
+        'name' => 'Dataset Customer Match',
+        'email' => 'dataset-customer-match@example.com',
+        'role' => 'customer',
+        'created_at' => now()->subDays(2),
+    ]);
+
+    $this->actingAs($superAdmin)
+        ->get(route('superadmin.users'))
+        ->assertOk()
+        ->assertDontSeeText('dataset-customer-match@example.com');
+
+    $this->actingAs($superAdmin)
+        ->get(route('superadmin.users', ['role' => 'customer']))
+        ->assertOk()
+        ->assertSeeText('dataset-customer-match@example.com')
+        ->assertDontSeeText('top-admin-1@example.com');
+
+    $this->actingAs($superAdmin)
+        ->get(route('superadmin.users', ['search' => 'Dataset Customer Match']))
+        ->assertOk()
+        ->assertSeeText('dataset-customer-match@example.com')
+        ->assertDontSeeText('top-admin-1@example.com');
+});
+
+test('superadmin users pagination keeps active search and role filters', function () {
+    $superAdmin = User::factory()->create([
+        'role' => 'superadmin',
+    ]);
+
+    User::factory()->create([
+        'name' => 'Pagination Admin',
+        'email' => 'pagination-admin@example.com',
+        'role' => 'admin',
+        'created_at' => now()->addMinute(),
+    ]);
+
+    User::factory()->count(12)->sequence(
+        fn ($sequence) => [
+            'name' => 'Paged Customer '.($sequence->index + 1),
+            'email' => 'paged-customer-'.($sequence->index + 1).'@example.com',
+            'role' => 'customer',
+            'created_at' => now()->subMinutes($sequence->index),
+        ],
+    )->create();
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('superadmin.users', [
+            'search' => 'Paged Customer',
+            'role' => 'customer',
+            'created_sort' => 'desc',
+        ]));
+
+    $response->assertOk()
+        ->assertSeeText('paged-customer-1@example.com')
+        ->assertSeeText('paged-customer-10@example.com')
+        ->assertDontSeeText('paged-customer-11@example.com')
+        ->assertDontSeeText('pagination-admin@example.com');
+
+    $pageTwoUrl = null;
+    preg_match('/<a href="([^"]+)"[^>]*aria-label="Go to page 2"/', $response->getContent(), $matches);
+    if (isset($matches[1])) {
+        $pageTwoUrl = html_entity_decode($matches[1], ENT_QUOTES);
+    }
+
+    expect($pageTwoUrl)->not->toBeNull();
+
+    parse_str((string) parse_url($pageTwoUrl, PHP_URL_QUERY), $query);
+
+    expect($query)->toMatchArray([
+        'search' => 'Paged Customer',
+        'role' => 'customer',
+        'created_sort' => 'desc',
+        'page' => '2',
+    ]);
+
+    $pageTwoPath = (string) parse_url($pageTwoUrl, PHP_URL_PATH);
+    $pageTwoQuery = (string) parse_url($pageTwoUrl, PHP_URL_QUERY);
+
+    $this->actingAs($superAdmin)
+        ->get($pageTwoPath.'?'.$pageTwoQuery)
+        ->assertOk()
+        ->assertSeeText('paged-customer-11@example.com')
+        ->assertSeeText('paged-customer-12@example.com')
+        ->assertDontSeeText('pagination-admin@example.com');
+});
