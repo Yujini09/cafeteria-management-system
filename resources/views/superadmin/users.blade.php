@@ -301,8 +301,8 @@
             aria-label="Close recent activities modal">
         <x-admin.ui.icon name="fa-xmark" size="sm" />
     </button>
-    <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4">
-        <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
+    <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-y-auto pr-1">
+        <div class="shrink-0 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <p class="text-sm text-admin-neutral-700">Review recent actions across modules and admin users.</p>
                 <div class="flex flex-wrap items-center gap-2">
@@ -366,8 +366,8 @@
             </div>
         </div>
 
-        <div id="activitiesTableContainer" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
-            <table class="modern-table table-fixed min-w-[56rem]">
+        <div id="activitiesTableContainer" class="rounded-admin border border-admin-neutral-200 bg-white">
+            <table class="modern-table table-fixed w-full">
                 <colgroup>
                     <col class="w-48">
                     <col class="w-40">
@@ -394,7 +394,7 @@
                 </tbody>
             </table>
         </div>
-        <div id="activitiesPagination" class="hidden mt-6 flex-wrap items-center justify-between gap-3">
+        <div id="activitiesPagination" class="hidden mt-6 shrink-0 flex-wrap items-center justify-between gap-3">
             <p id="activitiesPaginationInfo" class="text-xs text-admin-neutral-500"></p>
             <nav id="activitiesPaginationNav" role="navigation" aria-label="Recent activities pagination" class="inline-flex items-center gap-1"></nav>
         </div>
