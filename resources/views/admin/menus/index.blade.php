@@ -434,13 +434,6 @@
             </a>
           @endforeach
       </div>
-
-      <div class="hidden sm:flex sm:w-auto sm:justify-end">
-        <x-admin.ui.button.primary type="button" @click="openCreate()">
-          <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
-          Add Menu
-        </x-admin.ui.button.primary>
-      </div>
     </div>
 
     <form method="GET" action="{{ route('admin.menus.index') }}" class="flex flex-col gap-4">
@@ -458,7 +451,7 @@
           </div>
         </div>
 
-        <div class="flex w-full items-center gap-3 {{ $meal !== 'all' && !is_null($activePrice) ? 'justify-between' : 'justify-end' }} sm:w-auto sm:justify-end">
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
           @if($meal !== 'all' && !is_null($activePrice))
             <div class="price-pill">
               <div class="leading-tight">
@@ -481,8 +474,8 @@
             </div>
           @endif
 
-          <div class="flex shrink-0 sm:hidden">
-            <x-admin.ui.button.primary type="button" @click="openCreate()">
+          <div class="flex w-full sm:w-auto sm:justify-end">
+            <x-admin.ui.button.primary type="button" @click="openCreate()" class="w-full justify-center sm:w-auto">
               <x-admin.ui.icon name="fa-plus" style="fas" size="sm" />
               Add Menu
             </x-admin.ui.button.primary>

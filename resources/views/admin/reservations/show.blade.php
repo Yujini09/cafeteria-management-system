@@ -632,7 +632,7 @@
                         @csrf
                         <div class="additionals-field">
                             <label for="additional_name" class="additionals-label">Additional Name</label>
-                            <input id="additional_name" name="name" type="text" placeholder="e.g. Extra chairs" class="additionals-input" required>
+                            <input id="additional_name" name="name" type="text" placeholder="e.g., Soup" class="additionals-input" required>
                         </div>
                         <div class="additionals-field">
                             <label for="additional_price" class="additionals-label">Price</label>
@@ -668,9 +668,11 @@
                             </div>
                         @endforeach
                     </div>
-                    <div class="reservation-stack-sm flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
-                        <span class="additionals-pill">Additionals Total</span>
-                        <span class="text-sm font-semibold text-green-700">&#8369;{{ number_format($additionalsTotal, 2) }}</span>
+                    <div class="mt-4 pt-3 border-t border-gray-200">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="min-w-0 flex-1 text-sm font-medium text-gray-700">Additionals Total:</span>
+                            <span class="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-green-700">&#8369;{{ number_format($additionalsTotal, 2) }}</span>
+                        </div>
                     </div>
                 @else
                     <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">

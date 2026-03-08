@@ -867,7 +867,7 @@
                 </svg>
                 <div class="text-sm text-yellow-800">
                     <p class="font-semibold">Important:</p>
-                    <p class="mt-1">Your reservation will be pending until payment is confirmed. Please proceed to payment within 3 days to secure your booking.</p>
+                    <p class="mt-1">Your reservation will be reviewed by the cafeteria admin. Please make sure to complete your payment through fund transfer after the event.</p>
                 </div>
             </div>
         </div>

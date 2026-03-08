@@ -366,23 +366,23 @@
             </div>
         </div>
 
-        <div id="activitiesTableContainer" class="flex-1 min-h-0 overflow-auto rounded-admin border border-admin-neutral-200 bg-white">
-            <table class="w-full min-w-[64rem] border-collapse text-sm table-fixed">
+        <div id="activitiesTableContainer" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
+            <table class="modern-table table-fixed min-w-[56rem]">
                 <colgroup>
-                    <col class="w-56">
+                    <col class="w-48">
                     <col class="w-40">
-                    <col class="w-[15rem]">
-                    <col class="w-60">
+                    <col class="w-72">
+                    <col class="w-56">
                 </colgroup>
-                <thead class="bg-admin-neutral-50">
+                <thead>
                     <tr>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">User</th>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Action</th>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide">Description</th>
-                        <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                            <button type="button" class="inline-flex items-center gap-1.5 hover:text-admin-neutral-900 transition-colors duration-admin" onclick="sortBy('created_at')">
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">User</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Action</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Description</th>
+                        <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                            <button type="button" class="group inline-flex items-center gap-2" onclick="sortBy('created_at')" aria-label="Sort by date">
                                 <span>Date</span>
-                                <x-admin.ui.icon id="activitiesSortIconDate" name="fa-arrow-down" size="xs" class="text-admin-neutral-400" />
+                                <x-admin.ui.icon id="activitiesSortIconDate" name="fa-arrow-down" size="xs" class="text-admin-neutral-400 group-hover:text-admin-neutral-600 transition-colors duration-admin" />
                             </button>
                         </th>
                     </tr>
@@ -394,7 +394,7 @@
                 </tbody>
             </table>
         </div>
-        <div id="activitiesPagination" class="hidden flex-wrap items-center justify-between gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2">
+        <div id="activitiesPagination" class="hidden mt-6 flex-wrap items-center justify-between gap-3">
             <p id="activitiesPaginationInfo" class="text-xs text-admin-neutral-500"></p>
             <nav id="activitiesPaginationNav" role="navigation" aria-label="Recent activities pagination" class="inline-flex items-center gap-1"></nav>
         </div>
@@ -984,35 +984,33 @@ function getActivitiesTotalPages(totalItems) {
 }
 
 function buildActivitiesPageItems(totalPages, currentPage) {
-    if (totalPages <= 7) {
+    const onEachSide = 3;
+    const maxVisibleWithoutEllipsis = (onEachSide * 2) + 5;
+
+    if (totalPages <= maxVisibleWithoutEllipsis) {
         return Array.from({ length: totalPages }, (_, index) => index + 1);
     }
 
-    const items = [1];
-    let start = Math.max(2, currentPage - 1);
-    let end = Math.min(totalPages - 1, currentPage + 1);
-
-    if (currentPage <= 3) {
-        start = 2;
-        end = 4;
-    } else if (currentPage >= totalPages - 2) {
-        start = totalPages - 3;
-        end = totalPages - 1;
+    const pages = [];
+    for (let page = 1; page <= totalPages; page += 1) {
+        if (
+            page === 1
+            || page === totalPages
+            || (page >= currentPage - onEachSide && page <= currentPage + onEachSide)
+        ) {
+            pages.push(page);
+        }
     }
 
-    if (start > 2) {
-        items.push('...');
-    }
-
-    for (let page = start; page <= end; page += 1) {
+    const items = [];
+    pages.forEach((page, index) => {
+        const previous = index > 0 ? pages[index - 1] : null;
+        if (previous !== null && page - previous > 1) {
+            items.push('...');
+        }
         items.push(page);
-    }
+    });
 
-    if (end < totalPages - 1) {
-        items.push('...');
-    }
-
-    items.push(totalPages);
     return items;
 }
 
@@ -1036,6 +1034,14 @@ function renderActivitiesPagination(totalItems) {
         currentActivitiesPage = totalPages;
     }
 
+    if (totalPages <= 1) {
+        wrapper.classList.add('hidden');
+        wrapper.classList.remove('flex');
+        info.textContent = '';
+        nav.innerHTML = '';
+        return;
+    }
+
     const firstItem = (currentActivitiesPage - 1) * activitiesPerPage + 1;
     const lastItem = Math.min(firstItem + activitiesPerPage - 1, totalItems);
 
@@ -1048,9 +1054,9 @@ function renderActivitiesPagination(totalItems) {
     let navHtml = '';
 
     if (currentActivitiesPage === 1) {
-        navHtml += `<span class="${disabledClass}">Prev</span>`;
+        navHtml += `<span class="${disabledClass}">&lt;</span>`;
     } else {
-        navHtml += `<button type="button" class="${defaultClass}" onclick="goToActivitiesPage(${currentActivitiesPage - 1})">Prev</button>`;
+        navHtml += `<button type="button" class="${defaultClass}" onclick="goToActivitiesPage(${currentActivitiesPage - 1})" aria-label="Previous page">&lt;</button>`;
     }
 
     const pageItems = buildActivitiesPageItems(totalPages, currentActivitiesPage);
@@ -1069,9 +1075,9 @@ function renderActivitiesPagination(totalItems) {
     });
 
     if (currentActivitiesPage >= totalPages) {
-        navHtml += `<span class="${disabledClass}">Next</span>`;
+        navHtml += `<span class="${disabledClass}">&gt;</span>`;
     } else {
-        navHtml += `<button type="button" class="${defaultClass}" onclick="goToActivitiesPage(${currentActivitiesPage + 1})">Next</button>`;
+        navHtml += `<button type="button" class="${defaultClass}" onclick="goToActivitiesPage(${currentActivitiesPage + 1})" aria-label="Next page">&gt;</button>`;
     }
 
     nav.innerHTML = navHtml;
@@ -1209,19 +1215,19 @@ function renderActivitiesTable(audits) {
         const actionBadgeClass = getActionBadgeClass(action);
 
         rowsHtml += `
-            <tr class="border-b border-admin-neutral-100 last:border-b-0 hover:bg-admin-neutral-50 transition-colors duration-admin">
-                <td class="py-3 px-4 align-top whitespace-nowrap overflow-hidden text-ellipsis">
+            <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
                     <p class="font-semibold text-admin-neutral-900 truncate">${escapeHtml(userName)}</p>
                 </td>
-                <td class="py-3 px-4 align-top whitespace-nowrap overflow-hidden text-ellipsis">
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
                     <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold truncate ${actionBadgeClass}">
                         ${escapeHtml(action)}
                     </span>
                 </td>
-                <td class="py-3 px-4 align-top">
-                    <p class="text-admin-neutral-700 whitespace-normal break-words max-w-2xl">${escapeHtml(description)}</p>
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p class="text-admin-neutral-700 whitespace-normal break-words">${escapeHtml(description)}</p>
                 </td>
-                <td class="py-3 px-4 align-top whitespace-nowrap">
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
                     <p class="text-admin-neutral-800">${escapeHtml(dateInfo.full)}</p>
                     <p class="text-xs text-admin-neutral-500">${escapeHtml(dateInfo.relative)}</p>
                 </td>

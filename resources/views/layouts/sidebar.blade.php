@@ -1540,6 +1540,28 @@
                     return `Exp: ${alert.expiry_date || 'N/A'}`;
                 }
 
+                function getAlertGroup(status) {
+                    if (status === 'out_of_stock') {
+                        return 'out_of_stock';
+                    }
+
+                    if (status === 'low_stock') {
+                        return 'low_stock';
+                    }
+
+                    return 'expiring_soon';
+                }
+
+                function getSafeNumber(value, fallback = 0) {
+                    const numeric = Number(value);
+                    return Number.isFinite(numeric) ? numeric : fallback;
+                }
+
+                function getSafeTime(value) {
+                    const parsed = Date.parse(String(value || ''));
+                    return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+                }
+
                 function updateSidebarInventoryBadge(count) {
                     const badge = document.getElementById(badgeId);
 
@@ -1569,23 +1591,67 @@
                         return;
                     }
 
-                    list.innerHTML = alerts.map((alert) => {
-                        const meta = getStatusMeta(alert.status);
+                    const groupedAlerts = {
+                        out_of_stock: [],
+                        low_stock: [],
+                        expiring_soon: [],
+                    };
 
-                        return `
-                            <div class="rounded-admin-lg border border-admin-neutral-200 bg-admin-neutral-50 px-4 py-3">
-                                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <p class="text-sm font-semibold text-admin-neutral-900">${escapeHtml(alert.name)}</p>
-                                        <p class="mt-1 text-xs text-admin-neutral-600">${escapeHtml(getDetailText(alert))}</p>
+                    alerts.forEach((alert) => {
+                        groupedAlerts[getAlertGroup(alert.status)].push(alert);
+                    });
+
+                    groupedAlerts.out_of_stock.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+                    groupedAlerts.low_stock.sort((a, b) => {
+                        const stockDiff = getSafeNumber(a.current_stock, Number.POSITIVE_INFINITY) - getSafeNumber(b.current_stock, Number.POSITIVE_INFINITY);
+                        if (stockDiff !== 0) {
+                            return stockDiff;
+                        }
+                        return String(a.name || '').localeCompare(String(b.name || ''));
+                    });
+                    groupedAlerts.expiring_soon.sort((a, b) => {
+                        const expDiff = getSafeTime(a.expiry_date) - getSafeTime(b.expiry_date);
+                        if (expDiff !== 0) {
+                            return expDiff;
+                        }
+                        return String(a.name || '').localeCompare(String(b.name || ''));
+                    });
+
+                    const sections = [
+                        { key: 'low_stock', title: 'Low Stock', countClass: 'bg-admin-warning-light text-admin-warning' },
+                        { key: 'out_of_stock', title: 'No Stock', countClass: 'bg-admin-danger-light text-admin-danger' },
+                        { key: 'expiring_soon', title: 'Expiring Soon', countClass: 'bg-blue-100 text-blue-700' },
+                    ];
+
+                    list.innerHTML = sections
+                        .filter((section) => groupedAlerts[section.key].length > 0)
+                        .map((section) => {
+                            const itemsHtml = groupedAlerts[section.key].map((alert) => {
+                                return `
+                                    <div class="rounded-admin-lg border border-admin-neutral-200 bg-admin-neutral-50 px-4 py-3">
+                                        <div>
+                                            <p class="text-sm font-semibold text-admin-neutral-900">${escapeHtml(alert.name)}</p>
+                                            <p class="mt-1 text-xs text-admin-neutral-600">${escapeHtml(getDetailText(alert))}</p>
+                                        </div>
                                     </div>
-                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.classes}">
-                                        ${escapeHtml(meta.label)}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                                `;
+                            }).join('');
+
+                            return `
+                                <section class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${section.countClass}">
+                                            ${escapeHtml(section.title)}
+                                        </span>
+                                        <span class="text-xs font-semibold text-admin-neutral-500">
+                                            ${groupedAlerts[section.key].length}
+                                        </span>
+                                    </div>
+                                    <div class="space-y-2">${itemsHtml}</div>
+                                </section>
+                            `;
+                        })
+                        .join('');
 
                     list.setAttribute('aria-busy', 'false');
                 }
