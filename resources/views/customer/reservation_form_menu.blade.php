@@ -1379,6 +1379,19 @@
         return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     }
 
+    function clickStartedInsideMenuGrid(event) {
+        const grid = document.getElementById('menu-browser-grid');
+        if (!grid || !event) {
+            return false;
+        }
+
+        if (typeof event.composedPath === 'function') {
+            return event.composedPath().includes(grid);
+        }
+
+        return Boolean(event.target && event.target.closest && event.target.closest('#menu-browser-grid [data-menu-id]'));
+    }
+
     function selectMenu(menuId) {
         const menu = menuIndex[String(menuId)];
         if (!menu) {
@@ -1677,7 +1690,7 @@
                 return;
             }
 
-            if (event.target.closest('#menu-browser-grid [data-menu-id]')) {
+            if (clickStartedInsideMenuGrid(event)) {
                 return;
             }
 
