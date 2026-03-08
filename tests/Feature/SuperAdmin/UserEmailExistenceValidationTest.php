@@ -127,7 +127,7 @@ test('superadmin add-admin realtime email check validates format and uniqueness 
         ->assertJsonPath('errors.email.0', 'This email address is already in use.');
 });
 
-test('pending customer accounts are hidden from superadmin users list', function () {
+test('pending customer accounts appear in superadmin users list with pending status', function () {
     $superAdmin = User::factory()->create([
         'role' => 'superadmin',
     ]);
@@ -149,10 +149,11 @@ test('pending customer accounts are hidden from superadmin users list', function
         ->get(route('superadmin.users'))
         ->assertOk()
         ->assertSeeText('visible-customer@example.com')
-        ->assertDontSeeText('hidden-pending-customer@example.com');
+        ->assertSeeText('hidden-pending-customer@example.com')
+        ->assertSeeInOrder(['hidden-pending-customer@example.com', 'Pending']);
 });
 
-test('pending customers appear in users list only after verification and first successful login', function () {
+test('verified pending customers stay pending in the users list until their first successful login', function () {
     $superAdmin = User::factory()->create([
         'role' => 'superadmin',
     ]);
@@ -167,7 +168,8 @@ test('pending customers appear in users list only after verification and first s
     $this->actingAs($superAdmin)
         ->get(route('superadmin.users'))
         ->assertOk()
-        ->assertDontSeeText('pending-customer-activation@example.com');
+        ->assertSeeText('pending-customer-activation@example.com')
+        ->assertSeeInOrder(['pending-customer-activation@example.com', 'Pending']);
 
     $this->actingAs($superAdmin)->post(route('logout'));
 
@@ -183,10 +185,11 @@ test('pending customers appear in users list only after verification and first s
     $this->actingAs($superAdmin)
         ->get(route('superadmin.users'))
         ->assertOk()
-        ->assertSeeText('pending-customer-activation@example.com');
+        ->assertSeeText('pending-customer-activation@example.com')
+        ->assertSeeInOrder(['pending-customer-activation@example.com', 'Active']);
 });
 
-test('newly created admins stay hidden until email verification and first successful login', function () {
+test('newly created admins appear as pending until email verification and first successful login activate them', function () {
     Mail::fake();
     Notification::fake();
 
@@ -204,7 +207,8 @@ test('newly created admins stay hidden until email verification and first succes
     $this->actingAs($superAdmin)
         ->get(route('superadmin.users'))
         ->assertOk()
-        ->assertDontSeeText('hidden-admin@example.com');
+        ->assertSeeText('hidden-admin@example.com')
+        ->assertSeeInOrder(['hidden-admin@example.com', 'Pending']);
 
     $verificationLink = URL::signedRoute('verification.link', [
         'id' => $pendingAdmin->id,
@@ -219,7 +223,8 @@ test('newly created admins stay hidden until email verification and first succes
     $this->actingAs($superAdmin)
         ->get(route('superadmin.users'))
         ->assertOk()
-        ->assertDontSeeText('hidden-admin@example.com');
+        ->assertSeeText('hidden-admin@example.com')
+        ->assertSeeInOrder(['hidden-admin@example.com', 'Pending']);
 
     $pendingAdmin->forceFill([
         'password' => Hash::make('Password1!'),
@@ -240,5 +245,6 @@ test('newly created admins stay hidden until email verification and first succes
     $this->actingAs($superAdmin)
         ->get(route('superadmin.users'))
         ->assertOk()
-        ->assertSeeText('hidden-admin@example.com');
+        ->assertSeeText('hidden-admin@example.com')
+        ->assertSeeInOrder(['hidden-admin@example.com', 'Active']);
 });

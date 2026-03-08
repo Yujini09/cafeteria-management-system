@@ -21,6 +21,7 @@ class RegisteredUserController extends Controller
 {
     private const ROLE_PENDING_CUSTOMER = 'customer_pending';
     private const ROLE_PENDING_ADMIN = 'admin_pending';
+    private const PENDING_ACCOUNT_MESSAGE = 'This account already exists and is awaiting verification. Please check your email for the verification link or contact the admin.';
 
     public function __construct(
         private readonly RealtimeEmailVerifier $realtimeEmailVerifier
@@ -72,43 +73,31 @@ class RegisteredUserController extends Controller
             'email.email' => 'Please input a valid email.',
         ]);
 
-        $pendingAccount = $this->findPendingAccountByEmail($data['email']);
-        $createdNewAccount = false;
-
-        if ($pendingAccount) {
-            $pendingAccount->name = $data['name'];
-            $pendingAccount->email = $data['email'];
-            $pendingAccount->password = Hash::make($data['password']);
-            $pendingAccount->address = $data['address'] ?? null;
-            $pendingAccount->contact_no = $data['contact_no'] ?? null;
-            $pendingAccount->department = $data['department'] ?? null;
-            $pendingAccount->role = self::ROLE_PENDING_CUSTOMER;
-            $pendingAccount->email_verified_at = null;
-
-            if (Schema::hasColumn('users', 'must_change_password')) {
-                $pendingAccount->must_change_password = false;
-            }
-
-            $pendingAccount->save();
-            $user = $pendingAccount;
-        } else {
-            $payload = [
-                'name'       => $data['name'],
-                'email'      => $data['email'],
-                'password'   => Hash::make($data['password']),
-                'address'    => $data['address'] ?? null,
-                'contact_no' => $data['contact_no'] ?? null,
-                'department' => $data['department'] ?? null,
-                'role'       => self::ROLE_PENDING_CUSTOMER,
-            ];
-
-            if (Schema::hasColumn('users', 'must_change_password')) {
-                $payload['must_change_password'] = false;
-            }
-
-            $user = User::create($payload);
-            $createdNewAccount = true;
+        if ($this->findPendingAccountByEmail($data['email'])) {
+            return $this->respondRegistrationError(
+                $request,
+                self::PENDING_ACCOUNT_MESSAGE,
+                422,
+                'pending_account'
+            );
         }
+
+        $payload = [
+            'name'       => $data['name'],
+            'email'      => $data['email'],
+            'password'   => Hash::make($data['password']),
+            'address'    => $data['address'] ?? null,
+            'contact_no' => $data['contact_no'] ?? null,
+            'department' => $data['department'] ?? null,
+            'role'       => self::ROLE_PENDING_CUSTOMER,
+        ];
+
+        if (Schema::hasColumn('users', 'must_change_password')) {
+            $payload['must_change_password'] = false;
+        }
+
+        $user = User::create($payload);
+        $createdNewAccount = true;
 
         try {
             // Send email verification notification

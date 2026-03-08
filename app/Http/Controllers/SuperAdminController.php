@@ -35,10 +35,8 @@ class SuperAdminController extends Controller
 
     public function index(): View
     {
-        // Show everyone except superadmin and pending accounts.
+        // Show everyone except the superadmin so pending accounts can be monitored.
         $users = User::where('role', '!=', 'superadmin')
-            ->where('role', '!=', self::ROLE_PENDING_CUSTOMER)
-            ->where('role', '!=', self::ROLE_PENDING_ADMIN)
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(10)
@@ -182,8 +180,6 @@ class SuperAdminController extends Controller
 
         $perPage = 10;
         $position = User::where('role', '!=', 'superadmin')
-            ->where('role', '!=', self::ROLE_PENDING_CUSTOMER)
-            ->where('role', '!=', self::ROLE_PENDING_ADMIN)
             ->where(function ($query) use ($user) {
                 $query->where('name', '<', $user->name)
                     ->orWhere(function ($subQuery) use ($user) {

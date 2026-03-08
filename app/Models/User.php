@@ -21,6 +21,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $primaryKey = 'id';
     use HasFactory, Notifiable, MustVerifyEmailTrait;
 
+    private const PENDING_ROLES = ['admin_pending', 'customer_pending'];
+
     protected $fillable = [
         'name',
         'email',
@@ -79,6 +81,39 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->role = $role;
         return $this->save();
+    }
+
+    public function isPendingAccount(): bool
+    {
+        return in_array($this->role, self::PENDING_ROLES, true);
+    }
+
+    public function hasLocalPassword(): bool
+    {
+        return filled($this->password);
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return match ($this->role) {
+            'admin_pending' => 'Admin',
+            'customer_pending' => 'Customer',
+            default => ucfirst((string) $this->role),
+        };
+    }
+
+    public function getRoleFilterValueAttribute(): string
+    {
+        return match ($this->role) {
+            'admin_pending' => 'admin',
+            'customer_pending' => 'customer',
+            default => (string) $this->role,
+        };
+    }
+
+    public function getAccountStatusLabelAttribute(): string
+    {
+        return $this->isPendingAccount() ? 'Pending' : 'Active';
     }
 
     /**

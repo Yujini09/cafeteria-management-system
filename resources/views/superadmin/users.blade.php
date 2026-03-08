@@ -74,12 +74,13 @@
     </div>
 
     <div class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200">
-        <table class="modern-table table-fixed min-w-[56rem]">
+        <table class="modern-table table-fixed min-w-[64rem]">
             <colgroup>
                 <col class="w-14">
                 <col class="w-48">
                 <col class="w-72">
-                <col class="w-48">
+                <col class="w-40">
+                <col class="w-36">
                 <col class="w-64">
             </colgroup>
             <thead>
@@ -93,20 +94,26 @@
                     </th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Email</th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Role</th>
+                    <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Status</th>
                     <th class="sticky top-0 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-4 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Actions</th>
                 </tr>
             </thead>
             <tbody id="usersTableBody">
             @forelse($users as $user)
-                <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin" data-user-row="true" data-user-name="{{ strtolower($user->name) }}" data-user-role="{{ $user->role }}">
+                <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin" data-user-row="true" data-user-name="{{ strtolower($user->name) }}" data-user-role="{{ $user->role_filter_value }}" data-user-status="{{ strtolower($user->account_status_label) }}">
                     <td class="text-admin-neutral-500 py-4 px-4 border-b border-admin-neutral-100 font-semibold">
                         {{ ($users->firstItem() ?? 0) + $loop->index }}
                     </td>
                     <td class="font-semibold text-admin-neutral-900 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->name }}</td>
                     <td class="text-admin-neutral-600 py-4 px-4 border-b border-admin-neutral-100 whitespace-nowrap overflow-hidden text-ellipsis">{{ $user->email }}</td>
                     <td class="py-4 px-4 border-b border-admin-neutral-100">
-                        <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->role === 'admin' ? 'bg-admin-primary-light text-admin-primary' : 'bg-admin-neutral-100 text-admin-neutral-600' }}">
-                            {{ ucfirst($user->role) }}
+                        <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->role_filter_value === 'admin' ? 'bg-admin-primary-light text-admin-primary' : 'bg-admin-neutral-100 text-admin-neutral-600' }}">
+                            {{ $user->role_label }}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 border-b border-admin-neutral-100">
+                        <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-semibold uppercase {{ $user->isPendingAccount() ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700' }}">
+                            {{ $user->account_status_label }}
                         </span>
                     </td>
                     <td class="py-4 px-4 border-b border-admin-neutral-100">
@@ -127,7 +134,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="py-12 px-4 text-center">
+                    <td colspan="6" class="py-12 px-4 text-center">
                         <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-admin-neutral-100 flex items-center justify-center">
                             <x-admin.ui.icon name="fa-triangle-exclamation" class="text-admin-neutral-400 w-8 h-8" />
                         </div>
@@ -137,7 +144,7 @@
                 </tr>
             @endforelse
                 <tr id="usersEmptyState" class="hidden">
-                    <td colspan="5" class="py-10 px-4 text-center">
+                    <td colspan="6" class="py-10 px-4 text-center">
                         <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-admin-neutral-100 flex items-center justify-center">
                             <x-admin.ui.icon name="fa-filter" class="text-admin-neutral-400 w-6 h-6" />
                         </div>

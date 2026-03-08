@@ -9,14 +9,14 @@ use App\Models\Notification as NotificationModel;
 use App\Support\AuditDictionary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
-use Illuminate\Support\Str;
 
 class GoogleController extends Controller
 {
+    private const PENDING_ACCOUNT_MESSAGE = 'This account already exists and is awaiting verification. Please check your email for the verification link or contact the admin.';
+
     /** Create notification for admins/superadmin */
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
@@ -59,6 +59,17 @@ class GoogleController extends Controller
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if ($user) {
+                if ($user->isPendingAccount()) {
+                    \Log::info('Pending user blocked from Google OAuth sign-in', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ]);
+
+                    return redirect()->route('login')->withErrors([
+                        'google' => self::PENDING_ACCOUNT_MESSAGE,
+                    ]);
+                }
+
                 // User exists, log them in
                 \Log::info('Existing user logging in via Google', ['user_id' => $user->id, 'email' => $user->email]);
                 Auth::login($user);
@@ -77,7 +88,7 @@ class GoogleController extends Controller
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
-                    'password' => Hash::make(Str::random(16)), // Random password since Google auth
+                    'password' => null,
                     'email_verified_at' => now(), // Google accounts are verified
                     'role' => 'customer', // default role
                     'google_id' => $googleUser->getId(),

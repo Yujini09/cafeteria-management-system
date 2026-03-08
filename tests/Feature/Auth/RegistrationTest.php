@@ -33,7 +33,7 @@ test('new users can register and are sent to verification flow', function () {
     Notification::assertSentToTimes($registeredUser, VerifyEmail::class, 1);
 });
 
-test('registration reuses existing pending account records instead of creating duplicates', function () {
+test('registration blocks duplicate sign-ups for pending accounts', function () {
     Notification::fake();
 
     $pendingUser = \App\Models\User::factory()->create([
@@ -44,7 +44,7 @@ test('registration reuses existing pending account records instead of creating d
         'password' => Hash::make('OldPassword1!'),
     ]);
 
-    $response = $this->post('/register', [
+    $response = $this->from('/register')->post('/register', [
         'name' => 'Updated Pending Name',
         'address' => 'Updated Address',
         'contact_no' => '09999999999',
@@ -54,15 +54,21 @@ test('registration reuses existing pending account records instead of creating d
         'password_confirmation' => 'NewPassword1!',
     ]);
 
-    $response->assertRedirect(route('verification.notice', absolute: false));
+    $response->assertRedirect('/register')
+        ->assertSessionHasErrors([
+            'email' => 'This account already exists and is awaiting verification. Please check your email for the verification link or contact the admin.',
+        ]);
 
     expect(\App\Models\User::where('email', 'pending-user@example.com')->count())->toBe(1);
 
     $reusedUser = \App\Models\User::where('email', 'pending-user@example.com')->firstOrFail();
     expect($reusedUser->id)->toBe($pendingUser->id);
-    expect($reusedUser->name)->toBe('Updated Pending Name');
+    expect($reusedUser->name)->toBe('Old Pending Name');
     expect($reusedUser->role)->toBe('customer_pending');
     expect($reusedUser->email_verified_at)->toBeNull();
+    expect(Hash::check('OldPassword1!', $reusedUser->password))->toBeTrue();
+
+    Notification::assertNothingSent();
 });
 
 test('registration still rejects duplicate emails that belong to active accounts', function () {

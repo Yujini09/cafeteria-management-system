@@ -63,8 +63,13 @@ class ProfileController extends Controller
      */
     public function updatePassword(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        $requiresCurrentPassword = $user?->hasLocalPassword() ?? false;
+
         $validated = $request->validateWithBag('updatePassword', [
-            'current_password' => ['required', 'current_password'],
+            'current_password' => $requiresCurrentPassword
+                ? ['required', 'current_password']
+                : ['nullable', 'string'],
             'password' => [
                 'required',
                 'confirmed',
@@ -75,7 +80,6 @@ class ProfileController extends Controller
             ],
         ]);
 
-        $user = $request->user();
         $wasForceChangeRequired = (bool) $user->must_change_password;
 
         $user->update([
@@ -102,11 +106,18 @@ class ProfileController extends Controller
      */
     public function checkCurrentPassword(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user === null || ! $user->hasLocalPassword()) {
+            return response()->json([
+                'valid' => true,
+                'message' => null,
+            ]);
+        }
+
         $request->validate([
             'current_password' => ['required', 'string'],
         ]);
 
-        $user = $request->user();
         $isValid = $user !== null && Hash::check((string) $request->input('current_password'), (string) $user->password);
 
         return response()->json([

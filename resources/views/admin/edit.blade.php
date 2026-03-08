@@ -3,6 +3,7 @@
 @section('page-title', 'Account Settings')
 
 @section('content')
+@php($requiresCurrentPassword = $user->hasLocalPassword())
 <div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 p-6 max-w-full relative overflow-hidden">
     {{-- Header matches admin cards: accent bar + gradient icon badge --}}
     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-admin-primary to-admin-primary-hover"></div>
@@ -103,8 +104,14 @@
             @csrf
             @method('put')
 
-            <x-admin.forms.password name="current_password" label="Current Password" required data-current-password-input="true" />
-            <p data-current-password-feedback class="hidden text-sm text-red-600"></p>
+            @if($requiresCurrentPassword)
+                <x-admin.forms.password name="current_password" label="Current Password" required data-current-password-input="true" />
+                <p data-current-password-feedback class="hidden text-sm text-red-600"></p>
+            @else
+                <div class="rounded-admin border border-admin-primary/20 bg-admin-primary-light px-4 py-3 text-sm text-admin-primary">
+                    No current password is required because this account does not have a local password yet.
+                </div>
+            @endif
             <x-admin.forms.password name="password" label="New Password" :showRequirements="true" required />
             <x-admin.forms.password name="password_confirmation" label="Confirm New Password" required />
 

@@ -24,6 +24,7 @@
 @endsection
 
 @section('content')
+@php($requiresCurrentPassword = $user->hasLocalPassword())
 <div class="min-h-screen bg-gray-50 font-poppins" 
      x-data="{ 
          activeTab: '{{ session('status') === 'password-updated' || $errors->hasBag('updatePassword') ? 'security' : 'profile' }}',
@@ -187,20 +188,26 @@
                                 @method('put')
 
                                 <div class="space-y-6 max-w-lg">
-                                    <div x-data="{ show: false }">
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
-                                        <div class="relative">
-                                            <input :type="show ? 'text' : 'password'" name="current_password" autocomplete="current-password" required 
-                                                class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all">
-                                            
-                                            <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1">
-                                                <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
-                                            </button>
+                                    @if($requiresCurrentPassword)
+                                        <div x-data="{ show: false }">
+                                            <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                                            <div class="relative">
+                                                <input :type="show ? 'text' : 'password'" name="current_password" autocomplete="current-password" required 
+                                                    class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-green-500/20 focus:border-clsu-green transition-all">
+                                                
+                                                <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1">
+                                                    <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                                </button>
+                                            </div>
+                                            @if($errors->updatePassword->has('current_password'))
+                                                <p class="text-red-500 text-xs mt-1">{{ $errors->updatePassword->first('current_password') }}</p>
+                                            @endif
                                         </div>
-                                        @if($errors->updatePassword->has('current_password'))
-                                            <p class="text-red-500 text-xs mt-1">{{ $errors->updatePassword->first('current_password') }}</p>
-                                        @endif
-                                    </div>
+                                    @else
+                                        <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                                            No current password is required because this account does not have a local password yet.
+                                        </div>
+                                    @endif
 
                                     <div x-data="{ show: false }">
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
