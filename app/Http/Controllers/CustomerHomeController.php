@@ -77,6 +77,7 @@ class CustomerHomeController extends Controller
             }
         }
 
-        return back()->with('success', 'Thank you! Your feedback has been submitted and is waiting for review.');
+        // UPDATED: Redirects straight to the testimonials section
+        return redirect(url()->previous() . '#testimonials')->with('success', 'Thank you! Your feedback has been submitted and is waiting for review.');
     }
 }
