@@ -196,7 +196,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-800">Phone Number</h4>
-                                <p class="text-gray-600">(044) 456-0701</p>
+                                <p class="text-gray-600">0927 719 7639</p>
                             </div>
                         </div>
 
