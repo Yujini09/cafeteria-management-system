@@ -13,10 +13,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             MenusAndItemsSqlSeeder::class,
+            InventorySeeder::class,
+            RecipeSeeder::class,
             UserSeeder::class,
             VerifySuperAdminSeeder::class,
-            InventoryAlertsSeeder::class,
-            // Add other seeders here
         ]);
     }
 }

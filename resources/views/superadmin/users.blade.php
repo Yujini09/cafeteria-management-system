@@ -507,9 +507,9 @@
                 </tbody>
             </table>
         </div>
-        <div id="activitiesPagination" class="hidden mt-6 shrink-0 flex-wrap items-center justify-between gap-3">
-            <p id="activitiesPaginationInfo" class="text-xs text-admin-neutral-500"></p>
-            <nav id="activitiesPaginationNav" role="navigation" aria-label="Recent activities pagination" class="inline-flex items-center gap-1"></nav>
+        <div id="activitiesPagination" class="hidden mt-6 shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p id="activitiesPaginationInfo" class="text-center text-xs leading-relaxed text-admin-neutral-500 sm:text-left"></p>
+            <nav id="activitiesPaginationNav" role="navigation" aria-label="Recent activities pagination" class="flex w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:justify-end"></nav>
         </div>
     </div>
 </x-admin.ui.modal>
@@ -1280,9 +1280,10 @@ function renderActivitiesPagination(totalItems) {
 
     info.innerHTML = `Showing <span class="font-semibold text-admin-neutral-700">${firstItem}</span> to <span class="font-semibold text-admin-neutral-700">${lastItem}</span> of <span class="font-semibold text-admin-neutral-700">${totalItems}</span> results`;
 
-    const disabledClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-admin-neutral-50 text-xs font-semibold text-admin-neutral-400 cursor-not-allowed';
-    const defaultClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150';
-    const activeClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-primary bg-admin-primary text-xs font-semibold text-white shadow-sm';
+    const buttonBaseClass = 'inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2.5 text-[11px] font-semibold sm:h-9 sm:min-w-[36px] sm:px-3 sm:text-xs';
+    const disabledClass = `${buttonBaseClass} border border-admin-neutral-200 bg-admin-neutral-50 text-admin-neutral-400 cursor-not-allowed`;
+    const defaultClass = `${buttonBaseClass} border border-admin-neutral-200 bg-white text-admin-neutral-700 transition-colors duration-150 hover:bg-admin-neutral-50`;
+    const activeClass = `${buttonBaseClass} border border-admin-primary bg-admin-primary text-white shadow-sm`;
 
     let navHtml = '';
 
@@ -1295,7 +1296,7 @@ function renderActivitiesPagination(totalItems) {
     const pageItems = buildActivitiesPageItems(totalPages, currentActivitiesPage);
     pageItems.forEach((item) => {
         if (item === '...') {
-            navHtml += '<span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-xs font-semibold text-admin-neutral-400">...</span>';
+            navHtml += '<span class="inline-flex h-8 min-w-[32px] items-center justify-center px-2.5 text-[11px] font-semibold text-admin-neutral-400 sm:h-9 sm:min-w-[36px] sm:px-3 sm:text-xs">...</span>';
             return;
         }
 

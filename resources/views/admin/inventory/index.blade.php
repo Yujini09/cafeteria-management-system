@@ -3,7 +3,18 @@
 
 @section('content')
 @php
-    $hasActiveInventoryFilters = filled($search ?? '') || filled($category ?? '');
+    $hasActiveInventoryFilters = filled($search ?? '') || filled($category ?? '') || ($sort ?? 'name') !== 'name' || ($direction ?? 'asc') !== 'asc';
+    $resetInventoryFiltersUrl = route('admin.inventory.index');
+    $nextQtyDirection = $sort === 'qty' && $direction === 'asc' ? 'desc' : 'asc';
+    $qtySortIcon = $sort === 'qty' && $direction === 'desc' ? 'fa-arrow-down' : 'fa-arrow-up';
+    $qtySortIconClass = $sort === 'qty'
+        ? 'text-admin-primary group-hover:text-admin-primary'
+        : 'text-admin-neutral-400 group-hover:text-admin-neutral-600';
+    $nextExpiryDirection = $sort === 'expiry_date' && $direction === 'asc' ? 'desc' : 'asc';
+    $expirySortIcon = $sort === 'expiry_date' && $direction === 'desc' ? 'fa-arrow-down' : 'fa-arrow-up';
+    $expirySortIconClass = $sort === 'expiry_date'
+        ? 'text-admin-primary group-hover:text-admin-primary'
+        : 'text-admin-neutral-400 group-hover:text-admin-neutral-600';
 @endphp
 <style>
 .table-view-overlay-host {
@@ -206,9 +217,9 @@
                 </table>
             </div>
 
-            <div id="inventoryUsagePagination" class="hidden flex-wrap items-center justify-between gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-2">
-                <p id="inventoryUsagePaginationInfo" class="text-xs text-admin-neutral-500"></p>
-                <nav id="inventoryUsagePaginationNav" role="navigation" aria-label="Inventory usage pagination" class="inline-flex items-center gap-1"></nav>
+            <div id="inventoryUsagePagination" class="hidden flex-col gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p id="inventoryUsagePaginationInfo" class="text-center text-xs leading-relaxed text-admin-neutral-500 sm:text-left"></p>
+                <nav id="inventoryUsagePaginationNav" role="navigation" aria-label="Inventory usage pagination" class="flex w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:justify-end"></nav>
             </div>
         </div>
     </x-admin.ui.modal>
@@ -280,6 +291,10 @@
                                 @endforeach
                             </select>
                         </div>
+                        <a href="{{ $resetInventoryFiltersUrl }}"
+                           class="btn-secondary inline-flex w-full items-center justify-center sm:w-auto">
+                            Reset
+                        </a>
                     </div>
                     <div class="flex w-full sm:w-auto sm:justify-end">
                         <x-admin.ui.button.primary type="button" @click="showCreateModal = true">
@@ -310,11 +325,21 @@
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'page' => null]) }}" class="hover:text-admin-neutral-700 transition-colors duration-200">Item Name</a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'qty', 'page' => null]) }}" class="hover:text-admin-neutral-700 transition-colors duration-200">Quantity</a>
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'qty', 'direction' => $nextQtyDirection, 'page' => null]) }}"
+                               class="group inline-flex items-center gap-2 hover:text-admin-neutral-700 transition-colors duration-200"
+                               aria-label="Sort by quantity">
+                                <span>Quantity</span>
+                                <x-admin.ui.icon name="{{ $qtySortIcon }}" style="fas" size="sm" class="{{ $qtySortIconClass }} transition-colors duration-admin" />
+                            </a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Unit</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'expiry_date', 'page' => null]) }}" class="hover:text-admin-neutral-700 transition-colors duration-200">Expiry Date</a>
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'expiry_date', 'direction' => $nextExpiryDirection, 'page' => null]) }}"
+                               class="group inline-flex items-center gap-2 hover:text-admin-neutral-700 transition-colors duration-200"
+                               aria-label="Sort by expiry date">
+                                <span>Expiry Date</span>
+                                <x-admin.ui.icon name="{{ $expirySortIcon }}" style="fas" size="sm" class="{{ $expirySortIconClass }} transition-colors duration-admin" />
+                            </a>
                         </th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Category</th>
                         <th class="sticky top-0 z-10 bg-admin-neutral-50 font-semibold text-admin-neutral-700 text-left py-3 px-4 border-b border-admin-neutral-200 text-xs uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">Last Updated</th>
@@ -770,21 +795,22 @@ document.addEventListener('livewire:navigated', function() {
         const lastItem = Math.min(firstItem + inventoryUsagePerPage - 1, totalItems);
         info.innerHTML = `Showing <span class="font-semibold text-admin-neutral-700">${firstItem}</span> to <span class="font-semibold text-admin-neutral-700">${lastItem}</span> of <span class="font-semibold text-admin-neutral-700">${totalItems}</span> results`;
 
-        const disabledClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-admin-neutral-50 text-xs font-semibold text-admin-neutral-400 cursor-not-allowed';
-        const defaultClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-neutral-200 bg-white text-xs font-semibold text-admin-neutral-700 hover:bg-admin-neutral-50 transition-colors duration-150';
-        const activeClass = 'inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-admin-primary bg-admin-primary text-xs font-semibold text-white shadow-sm';
+        const buttonBaseClass = 'inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2.5 text-[11px] font-semibold sm:h-9 sm:min-w-[36px] sm:px-3 sm:text-xs';
+        const disabledClass = `${buttonBaseClass} border border-admin-neutral-200 bg-admin-neutral-50 text-admin-neutral-400 cursor-not-allowed`;
+        const defaultClass = `${buttonBaseClass} border border-admin-neutral-200 bg-white text-admin-neutral-700 transition-colors duration-150 hover:bg-admin-neutral-50`;
+        const activeClass = `${buttonBaseClass} border border-admin-primary bg-admin-primary text-white shadow-sm`;
 
         let navHtml = '';
         if (currentInventoryUsagePage === 1) {
-            navHtml += `<span class="${disabledClass}">Prev</span>`;
+            navHtml += `<span class="${disabledClass}" aria-hidden="true">&lt;</span>`;
         } else {
-            navHtml += `<button type="button" class="${defaultClass}" data-page="${currentInventoryUsagePage - 1}">Prev</button>`;
+            navHtml += `<button type="button" class="${defaultClass}" aria-label="Previous page" data-page="${currentInventoryUsagePage - 1}">&lt;</button>`;
         }
 
         const pageItems = buildInventoryUsagePageItems(totalPages, currentInventoryUsagePage);
         pageItems.forEach((item) => {
             if (item === '...') {
-                navHtml += '<span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 text-xs font-semibold text-admin-neutral-400">...</span>';
+                navHtml += '<span class="inline-flex h-8 min-w-[32px] items-center justify-center px-2.5 text-[11px] font-semibold text-admin-neutral-400 sm:h-9 sm:min-w-[36px] sm:px-3 sm:text-xs">...</span>';
                 return;
             }
 
@@ -797,9 +823,9 @@ document.addEventListener('livewire:navigated', function() {
         });
 
         if (currentInventoryUsagePage >= totalPages) {
-            navHtml += `<span class="${disabledClass}">Next</span>`;
+            navHtml += `<span class="${disabledClass}" aria-hidden="true">&gt;</span>`;
         } else {
-            navHtml += `<button type="button" class="${defaultClass}" data-page="${currentInventoryUsagePage + 1}">Next</button>`;
+            navHtml += `<button type="button" class="${defaultClass}" aria-label="Next page" data-page="${currentInventoryUsagePage + 1}">&gt;</button>`;
         }
 
         nav.innerHTML = navHtml;

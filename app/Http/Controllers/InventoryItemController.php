@@ -128,9 +128,18 @@ class InventoryItemController extends Controller
             });
         }
 
-        $items = $query->orderBy($sort, $direction)
-            ->paginate(10)
-            ->withQueryString();
+        if ($sort === 'expiry_date') {
+            $query->orderByRaw('CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END ASC')
+                ->orderBy('expiry_date', $direction)
+                ->orderBy('name');
+        } elseif ($sort === 'qty') {
+            $query->orderBy('qty', $direction)
+                ->orderBy('name');
+        } else {
+            $query->orderBy('name', $direction);
+        }
+
+        $items = $query->paginate(10)->withQueryString();
 
         // Get distinct categories for the dropdown
         $categories = InventoryItem::distinct()->pluck('category')->sort();
