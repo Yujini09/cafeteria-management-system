@@ -159,7 +159,7 @@ class SuperAdminController extends Controller
                     $pendingAccount->email = $data['email'];
                     $pendingAccount->password = Hash::make($temporaryPassword);
                     $pendingAccount->role = self::ROLE_PENDING_ADMIN;
-                    $pendingAccount->email_verified_at = null;
+                    $pendingAccount->email_verified_at = now();
                     $pendingAccount->must_change_password = true;
                     $pendingAccount->save();
 
@@ -170,13 +170,15 @@ class SuperAdminController extends Controller
                         'email'                => $data['email'],
                         'password'             => Hash::make($temporaryPassword),
                         'role'                 => self::ROLE_PENDING_ADMIN,
-                        'email_verified_at'    => null,
                         'must_change_password' => true,
                     ]);
+
+                    $user->forceFill([
+                        'email_verified_at' => now(),
+                    ])->save();
                 }
 
                 $this->sendAdminCredentialsEmail($user, $temporaryPassword);
-                $user->sendEmailVerificationNotification();
 
                 AuditTrail::record(
                     Auth::id(),
@@ -243,7 +245,7 @@ class SuperAdminController extends Controller
         }
 
         $redirectUrl = route('superadmin.users', ['created_sort' => 'desc']);
-        $successMessage = 'Admin account created. Temporary credentials were sent by email. The email owner must confirm the account through the verification email before the account becomes active.';
+        $successMessage = 'Admin account created. Temporary credentials were sent by email. The account will remain pending until the first successful sign-in.';
 
         if ($request->expectsJson()) {
             $request->session()->flash('success', $successMessage);
@@ -468,8 +470,8 @@ class SuperAdminController extends Controller
                 recipientName: $user->name,
                 introLines: [
                     'An admin account has been created for you.',
-                    'Before this account becomes active, confirm your email address using the verification email sent separately.',
-                    'After verification, use the temporary password below to sign in, then change it immediately.',
+                    'Use the temporary password below to sign in.',
+                    'The account will become active after the first successful sign-in, and you will be asked to change the password immediately.',
                 ],
                 details: [
                     'Email Address' => $user->email,

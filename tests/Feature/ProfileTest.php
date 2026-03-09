@@ -12,6 +12,21 @@ test('profile page is displayed', function () {
     $response->assertOk();
 });
 
+test('superadmin profile page is displayed with current password field when local password exists', function () {
+    $user = User::factory()->create([
+        'role' => 'superadmin',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get('/profile');
+
+    $response
+        ->assertOk()
+        ->assertSee('Account Settings')
+        ->assertSee('Current Password');
+});
+
 test('profile information can be updated', function () {
     $user = User::factory()->create();
 
@@ -82,4 +97,22 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect('/profile');
 
     $this->assertNotNull($user->fresh());
+});
+
+test('superadmin password update requires current password when local password exists', function () {
+    $user = User::factory()->create([
+        'role' => 'superadmin',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->from('/profile')
+        ->put('/password', [
+            'password' => 'NewPassword123',
+            'password_confirmation' => 'NewPassword123',
+        ]);
+
+    $response
+        ->assertSessionHasErrorsIn('updatePassword', 'current_password')
+        ->assertRedirect('/profile');
 });

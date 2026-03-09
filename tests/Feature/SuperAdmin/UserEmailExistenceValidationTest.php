@@ -7,7 +7,6 @@ use App\Services\RealtimeEmailVerifier;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\URL;
 
 function verifierThatFailsIfMailboxProbeRuns(): RealtimeEmailVerifier
 {
@@ -36,20 +35,19 @@ test('superadmin add-admin creation is not blocked by realtime mailbox probe fai
 
     $response->assertOk()
         ->assertJsonStructure(['message', 'redirect_url'])
-        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The email owner must confirm the account through the verification email before the account becomes active.');
+        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The account will remain pending until the first successful sign-in.');
 
     $pendingAdmin = User::where('email', 'pending-admin@example.com')->firstOrFail();
 
     $this->assertSame('admin_pending', $pendingAdmin->role);
-    $this->assertNull($pendingAdmin->email_verified_at);
+    $this->assertNotNull($pendingAdmin->email_verified_at);
     $this->assertTrue((bool) $pendingAdmin->must_change_password);
 
     Mail::assertSent(StandardAppMail::class, function (StandardAppMail $mail) {
         return $mail->hasTo('pending-admin@example.com');
     });
 
-    Notification::assertSentTo($pendingAdmin, VerifyEmail::class);
-    Notification::assertSentToTimes($pendingAdmin, VerifyEmail::class, 1);
+    Notification::assertNotSentTo($pendingAdmin, VerifyEmail::class);
 });
 
 test('superadmin add-admin reuses existing pending email records instead of creating duplicates', function () {
@@ -74,7 +72,7 @@ test('superadmin add-admin reuses existing pending email records instead of crea
     ]);
 
     $response->assertOk()
-        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The email owner must confirm the account through the verification email before the account becomes active.');
+        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The account will remain pending until the first successful sign-in.');
 
     expect(User::where('email', 'shared-pending@example.com')->count())->toBe(1);
 
@@ -82,7 +80,7 @@ test('superadmin add-admin reuses existing pending email records instead of crea
     expect($reusedPending->id)->toBe($existingPending->id);
     expect($reusedPending->name)->toBe('Updated Pending Admin');
     expect($reusedPending->role)->toBe('admin_pending');
-    expect($reusedPending->email_verified_at)->toBeNull();
+    expect($reusedPending->email_verified_at)->not->toBeNull();
     expect((bool) $reusedPending->must_change_password)->toBeTrue();
 });
 
@@ -189,7 +187,7 @@ test('verified pending customers stay pending in the users list until their firs
         ->assertSeeInOrder(['pending-customer-activation@example.com', 'Active']);
 });
 
-test('newly created admins appear as pending until email verification and first successful login activate them', function () {
+test('newly created admins remain pending until first successful login activates them', function () {
     Mail::fake();
     Notification::fake();
 
@@ -203,21 +201,6 @@ test('newly created admins appear as pending until email verification and first 
     ])->assertOk();
 
     $pendingAdmin = User::where('email', 'hidden-admin@example.com')->firstOrFail();
-
-    $this->actingAs($superAdmin)
-        ->get(route('superadmin.users'))
-        ->assertOk()
-        ->assertSeeText('hidden-admin@example.com')
-        ->assertSeeInOrder(['hidden-admin@example.com', 'Pending']);
-
-    $verificationLink = URL::signedRoute('verification.link', [
-        'id' => $pendingAdmin->id,
-        'hash' => sha1($pendingAdmin->getEmailForVerification()),
-    ]);
-
-    $this->get($verificationLink)->assertRedirect(route('login', absolute: false));
-
-    $pendingAdmin->refresh();
     expect($pendingAdmin->email_verified_at)->not->toBeNull();
 
     $this->actingAs($superAdmin)

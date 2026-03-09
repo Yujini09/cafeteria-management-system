@@ -3,7 +3,9 @@
 @section('page-title', 'Account Settings')
 
 @section('content')
-@php($requiresCurrentPassword = $user->hasLocalPassword())
+@php
+    $requiresCurrentPassword = $user->hasLocalPassword();
+@endphp
 <div x-data="{}" class="admin-page-shell bg-white rounded-admin-lg shadow-admin border border-admin-neutral-200 p-6 max-w-full relative overflow-hidden">
     {{-- Header matches admin cards: accent bar + gradient icon badge --}}
     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-admin-primary to-admin-primary-hover"></div>

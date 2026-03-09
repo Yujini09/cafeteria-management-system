@@ -13,6 +13,8 @@ test('pending accounts are blocked from signing in with google', function () {
 
     $googleUser = Mockery::mock(SocialiteUser::class);
     $googleUser->shouldReceive('getEmail')->andReturn('pending-google@example.com');
+    $googleUser->shouldReceive('getName')->andReturn('Pending Google User');
+    $googleUser->shouldReceive('getId')->andReturn('pending-google-id');
 
     $provider = Mockery::mock();
     $provider->shouldReceive('user')->once()->andReturn($googleUser);
@@ -53,5 +55,6 @@ test('new google accounts are created without a local password', function () {
 
     $user = User::where('email', 'new-google-user@example.com')->firstOrFail();
     expect($user->google_id)->toBe('google-user-456');
-    expect($user->password)->toBeNull();
+    expect($user->hasLocalPassword())->toBeFalse();
+    expect($user->email_verified_at)->not->toBeNull();
 });

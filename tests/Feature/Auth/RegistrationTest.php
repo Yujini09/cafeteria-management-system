@@ -1,8 +1,10 @@
 <?php
 
+use App\Mail\StandardAppMail;
 use App\Services\RealtimeEmailVerifier;
 use App\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 
 test('registration screen can be rendered', function () {
@@ -12,6 +14,7 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register and are sent to verification flow', function () {
+    Mail::fake();
     Notification::fake();
 
     $response = $this->post('/register', [
@@ -31,9 +34,11 @@ test('new users can register and are sent to verification flow', function () {
 
     $registeredUser = \App\Models\User::where('email', 'test@example.com')->firstOrFail();
     Notification::assertSentToTimes($registeredUser, VerifyEmail::class, 1);
+    Mail::assertNotSent(StandardAppMail::class);
 });
 
 test('registration blocks duplicate sign-ups for pending accounts', function () {
+    Mail::fake();
     Notification::fake();
 
     $pendingUser = \App\Models\User::factory()->create([
@@ -69,6 +74,7 @@ test('registration blocks duplicate sign-ups for pending accounts', function () 
     expect(Hash::check('OldPassword1!', $reusedUser->password))->toBeTrue();
 
     Notification::assertNothingSent();
+    Mail::assertNothingSent();
 });
 
 test('registration still rejects duplicate emails that belong to active accounts', function () {
@@ -90,6 +96,9 @@ test('registration still rejects duplicate emails that belong to active accounts
 });
 
 test('registration does not block account creation when realtime mailbox checks fail', function () {
+    Mail::fake();
+    Notification::fake();
+
     $failedVerification = [
         'ok' => false,
         'message' => 'Could not verify this email account in real time. Please input a valid email and try again.',
@@ -123,4 +132,8 @@ test('registration does not block account creation when realtime mailbox checks 
         'email' => 'ghost@example.com',
         'role' => 'customer_pending',
     ]);
+
+    $registeredUser = \App\Models\User::where('email', 'ghost@example.com')->firstOrFail();
+    Notification::assertSentToTimes($registeredUser, VerifyEmail::class, 1);
+    Mail::assertNotSent(StandardAppMail::class);
 });

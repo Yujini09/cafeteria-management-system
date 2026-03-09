@@ -196,6 +196,15 @@
             background: #ffffff;
         }
 
+        .menu-table .meal-column {
+            width: 1%;
+            white-space: nowrap;
+        }
+
+        .menu-table .amount-column {
+            white-space: nowrap;
+        }
+
         .day-heading {
             margin: 10px 0 6px;
             font-size: 11px;
@@ -453,14 +462,14 @@
                         - {{ $group['date']->format('M d, Y') }}
                     @endif
                 </div>
-                <table class="table">
+                <table class="table menu-table">
                     <thead>
                         <tr>
                             <th>Menu Item</th>
-                            <th>Meal</th>
-                            <th style="width: 11%;">Quantity</th>
-                            <th style="width: 16%;">Price</th>
-                            <th style="width: 16%;">Total</th>
+                            <th class="meal-column">Meal</th>
+                            <th class="amount-column" style="width: 11%;">Quantity</th>
+                            <th class="amount-column" style="width: 16%;">Price</th>
+                            <th class="amount-column" style="width: 16%;">Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -472,10 +481,10 @@
                                         <div class="component-list">{{ implode(', ', $item['components']) }}</div>
                                     @endif
                                 </td>
-                                <td>{{ $item['meal_time'] ?: 'N/A' }}</td>
-                                <td>{{ $item['quantity'] }}</td>
-                                <td>PHP {{ number_format($item['price'], 2) }}</td>
-                                <td>PHP {{ number_format($item['total'], 2) }}</td>
+                                <td class="meal-column">{{ $item['meal_time'] ?: 'N/A' }}</td>
+                                <td class="amount-column">{{ $item['quantity'] }}</td>
+                                <td class="amount-column">PHP {{ number_format($item['price'], 2) }}</td>
+                                <td class="amount-column">PHP {{ number_format($item['total'], 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>

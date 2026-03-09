@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable, MustVerifyEmailTrait;
 
     private const PENDING_ROLES = ['admin_pending', 'customer_pending'];
+    private const OAUTH_ONLY_PASSWORD_PLACEHOLDER = '__oauth_only_account_without_local_password__';
 
     protected $fillable = [
         'name',
@@ -90,7 +92,23 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function hasLocalPassword(): bool
     {
-        return filled($this->password);
+        if (! filled($this->password)) {
+            return false;
+        }
+
+        return ! $this->usesOAuthOnlyPassword();
+    }
+
+    public static function makeOauthOnlyPassword(): string
+    {
+        return Hash::make(self::OAUTH_ONLY_PASSWORD_PLACEHOLDER);
+    }
+
+    public function usesOAuthOnlyPassword(): bool
+    {
+        return filled($this->google_id)
+            && filled($this->password)
+            && Hash::check(self::OAUTH_ONLY_PASSWORD_PLACEHOLDER, (string) $this->password);
     }
 
     public function getRoleLabelAttribute(): string
