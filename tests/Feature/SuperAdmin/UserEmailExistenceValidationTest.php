@@ -18,6 +18,14 @@ function verifierThatFailsIfMailboxProbeRuns(): RealtimeEmailVerifier
     };
 }
 
+function getProtectedProperty(object $object, string $property): mixed
+{
+    $reflection = new ReflectionProperty($object, $property);
+    $reflection->setAccessible(true);
+
+    return $reflection->getValue($object);
+}
+
 test('superadmin add-admin creation is not blocked by realtime mailbox probe failures', function () {
     Mail::fake();
     Notification::fake();
@@ -230,6 +238,48 @@ test('newly created admins remain pending until first successful login activates
         ->assertOk()
         ->assertSeeText('hidden-admin@example.com')
         ->assertSeeInOrder(['hidden-admin@example.com', 'Active']);
+});
+
+test('newly created admins can sign in using the emailed temporary password', function () {
+    Mail::fake();
+    Notification::fake();
+
+    $superAdmin = User::factory()->create([
+        'role' => 'superadmin',
+    ]);
+
+    $this->actingAs($superAdmin)->postJson(route('superadmin.users.store'), [
+        'name' => 'Temp Password Admin',
+        'email' => 'temp-password-admin@example.com',
+    ])->assertOk();
+
+    $pendingAdmin = User::where('email', 'temp-password-admin@example.com')->firstOrFail();
+
+    $temporaryPassword = null;
+
+    Mail::assertSent(StandardAppMail::class, function (StandardAppMail $mail) use (&$temporaryPassword): bool {
+        if (! $mail->hasTo('temp-password-admin@example.com')) {
+            return false;
+        }
+
+        $details = getProtectedProperty($mail, 'details');
+        $temporaryPassword = $details['Temporary Password'] ?? null;
+
+        return filled($temporaryPassword);
+    });
+
+    expect($temporaryPassword)->not->toBeNull();
+    expect((string) $temporaryPassword)->toMatch('/^[A-HJ-NP-Za-km-z2-9]{12}$/');
+    expect(Hash::check((string) $temporaryPassword, (string) $pendingAdmin->password))->toBeTrue();
+
+    $this->actingAs($superAdmin)->post(route('logout'));
+
+    $this->post(route('login'), [
+        'email' => 'temp-password-admin@example.com',
+        'password' => $temporaryPassword,
+    ])->assertRedirect(route('admin.dashboard', absolute: false));
+
+    expect($pendingAdmin->refresh()->role)->toBe('admin');
 });
 
 test('superadmin users list sorts by created date newest first by default and can be reversed', function () {

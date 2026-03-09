@@ -415,15 +415,13 @@ class SuperAdminController extends Controller
         $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         $lower = 'abcdefghijkmnopqrstuvwxyz';
         $numbers = '23456789';
-        $special = '!@#$%&*?';
-        $all = $upper . $lower . $numbers . $special;
+        $all = $upper . $lower . $numbers;
 
         $password = $upper[random_int(0, strlen($upper) - 1)]
             . $lower[random_int(0, strlen($lower) - 1)]
-            . $numbers[random_int(0, strlen($numbers) - 1)]
-            . $special[random_int(0, strlen($special) - 1)];
+            . $numbers[random_int(0, strlen($numbers) - 1)];
 
-        for ($i = 4; $i < $length; $i++) {
+        for ($i = 3; $i < $length; $i++) {
             $password .= $all[random_int(0, strlen($all) - 1)];
         }
 
