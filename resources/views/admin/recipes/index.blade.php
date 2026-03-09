@@ -78,6 +78,104 @@
     background: rgba(243, 244, 246, 0.9);
   }
 </style>
+<script>
+  if (typeof window.recipeIngredientForm !== 'function') {
+    window.recipeIngredientForm = function (opts = {}) {
+      return {
+        allInventoryItems: Array.isArray(opts.inventoryItems) ? opts.inventoryItems : [],
+        selectedInventoryId: opts.selectedInventoryId ? String(opts.selectedInventoryId) : '',
+        ingredientSearch: opts.selectedIngredientLabel || '',
+        stockUnit: opts.initialStockUnit || '',
+        dropdownOpen: false,
+        normalizeUnit(unit) {
+          const value = String(unit || '').trim().toLowerCase();
+          if (!value) return '';
+
+          const aliases = {
+            ml: 'ml',
+            milliliter: 'ml',
+            milliliters: 'ml',
+            millilitre: 'ml',
+            millilitres: 'ml',
+            liter: 'liters',
+            liters: 'liters',
+            litre: 'liters',
+            litres: 'liters',
+            l: 'liters',
+            g: 'g',
+            gram: 'g',
+            grams: 'g',
+            kg: 'kgs',
+            kgs: 'kgs',
+            kilogram: 'kgs',
+            kilograms: 'kgs',
+            pc: 'pc',
+            pcs: 'pc',
+            piece: 'pieces',
+            pieces: 'pieces',
+            pack: 'packs',
+            packs: 'packs',
+          };
+
+          return aliases[value] || value;
+        },
+        init() {
+          if (!this.ingredientSearch && this.selectedInventoryId) {
+            this.ingredientSearch = this.getIngredientLabel(this.selectedInventoryId) || '';
+          }
+
+          if (!this.stockUnit && this.selectedInventoryId) {
+            this.stockUnit = this.getIngredientUnit(this.selectedInventoryId) || '';
+          }
+        },
+        normalizeIngredientId(id) {
+          if (id === null || id === undefined || id === '') return null;
+          return String(id);
+        },
+        getIngredientLabel(id) {
+          const item = this.allInventoryItems.find((inv) => this.normalizeIngredientId(inv?.id) === this.normalizeIngredientId(id));
+          return item ? item.name : '';
+        },
+        getIngredientUnit(id) {
+          const item = this.allInventoryItems.find((inv) => this.normalizeIngredientId(inv?.id) === this.normalizeIngredientId(id));
+          return item ? this.normalizeUnit(item.unit) : '';
+        },
+        getAvailableIngredients(searchTerm = '') {
+          const term = (searchTerm || '').toLowerCase();
+          return this.allInventoryItems.filter((inv) => {
+            const invId = this.normalizeIngredientId(inv?.id);
+            if (!invId) return false;
+            if (!term) return true;
+            return (inv?.name || '').toLowerCase().includes(term);
+          });
+        },
+        selectIngredient(item) {
+          this.selectedInventoryId = String(item.id);
+          this.ingredientSearch = item.name || '';
+          this.stockUnit = this.getIngredientUnit(item.id) || '';
+          this.dropdownOpen = false;
+        },
+        syncIngredientInput() {
+          this.dropdownOpen = true;
+
+          const typed = (this.ingredientSearch || '').toLowerCase();
+          const current = (this.getIngredientLabel(this.selectedInventoryId) || '').toLowerCase();
+
+          if (!typed) {
+            this.selectedInventoryId = '';
+            this.stockUnit = '';
+            return;
+          }
+
+          if (this.selectedInventoryId && typed !== current) {
+            this.selectedInventoryId = '';
+            this.stockUnit = '';
+          }
+        },
+      };
+    };
+  }
+</script>
 <div class="admin-page-shell bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
   {{-- Header --}}
 <div class="flex items-center justify-between mb-8">
@@ -130,7 +228,7 @@
            inventoryItems: @js($inventory->map(fn ($inv) => [
                "id" => $inv->id,
                "name" => $inv->name,
-               "stock_unit" => \App\Support\RecipeUnit::display($inv->unit),
+               "unit" => $inv->unit,
            ])->values()),
            selectedInventoryId: @js(old("inventory_item_id", "")),
            selectedIngredientLabel: @js($selectedInventoryName),
@@ -143,7 +241,7 @@
       </svg>
       Add Ingredient
     </h3>
-    <form action="{{ route('admin.recipes.store', $menuItem) }}" method="POST" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end" data-action-loading>
+    <form action="{{ route('admin.recipes.store', $menuItem) }}" method="POST" class="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-start" data-action-loading>
       @csrf
       <div class="md:col-span-5">
         <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Ingredient</label>
@@ -178,7 +276,7 @@
                x-show="dropdownOpen"
                class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-[100] w-full flex flex-col max-h-72">
             <div class="overflow-y-auto flex-1" id="recipe-ingredient-list">
-              <template x-for="inv in filteredIngredients()" :key="inv.id">
+              <template x-for="inv in getAvailableIngredients(ingredientSearch)" :key="inv.id">
                 <button type="button"
                         @mousedown.prevent
                         @click="selectIngredient(inv)"
@@ -187,12 +285,12 @@
                   <span x-text="inv.name"></span>
                 </button>
               </template>
-              <template x-if="filteredIngredients().length === 0">
+              <template x-if="getAvailableIngredients(ingredientSearch).length === 0">
                 <div class="px-3 py-4 text-center text-gray-500 text-sm" style="font-family: 'Poppins', sans-serif;">
-                  <template x-if="inventoryItems.length === 0">
+                  <template x-if="allInventoryItems.length === 0">
                     <span>No ingredients available in inventory</span>
                   </template>
-                  <template x-if="inventoryItems.length > 0">
+                  <template x-if="allInventoryItems.length > 0">
                     <span>No ingredients matching your search</span>
                   </template>
                 </div>
@@ -226,12 +324,14 @@
         <p class="recipe-field-meta text-xs text-gray-500" x-text="'Stock unit: ' + (stockUnit || '-')"></p>
       </div>
       <div class="md:col-span-2">
-        <button type="submit" data-loading-text="Saving Ingredient..." class="w-full bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105" style="font-family: 'Poppins', sans-serif;">
+        <label class="block text-sm font-medium text-transparent mb-2 select-none" aria-hidden="true" style="font-family: 'Poppins', sans-serif;">Action</label>
+        <button type="submit" data-loading-text="Saving Ingredient..." class="h-[52px] w-full whitespace-nowrap bg-gradient-to-r from-[#00462E] to-[#057C3C] px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300 shadow-lg hover:from-[#057C3C] hover:to-[#00462E] hover:shadow-xl flex items-center justify-center" style="font-family: 'Poppins', sans-serif;">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
           Add/Update
         </button>
+        <p class="recipe-field-meta text-xs text-transparent select-none" aria-hidden="true">.</p>
       </div>
     </form>
   </div>
@@ -326,72 +426,4 @@
     </div>
   @endif
 </div>
-<script>
-  function recipeIngredientForm(config = {}) {
-    return {
-      inventoryItems: Array.isArray(config.inventoryItems) ? config.inventoryItems : [],
-      selectedInventoryId: config.selectedInventoryId ? String(config.selectedInventoryId) : '',
-      ingredientSearch: config.selectedIngredientLabel || '',
-      stockUnit: config.initialStockUnit || '',
-      dropdownOpen: false,
-
-      init() {
-        if (!this.ingredientSearch && this.selectedInventoryId) {
-          this.ingredientSearch = this.getIngredientLabel(this.selectedInventoryId) || '';
-        }
-
-        if (!this.stockUnit && this.selectedInventoryId) {
-          this.stockUnit = this.getIngredientUnit(this.selectedInventoryId) || '';
-        }
-      },
-
-      getIngredientLabel(id) {
-        const match = this.inventoryItems.find((item) => String(item.id) === String(id));
-        return match ? match.name : '';
-      },
-
-      getIngredientUnit(id) {
-        const match = this.inventoryItems.find((item) => String(item.id) === String(id));
-        return match ? (match.stock_unit || '') : '';
-      },
-
-      filteredIngredients() {
-        const query = (this.ingredientSearch || '').toLowerCase().trim();
-
-        return this.inventoryItems.filter((item) => {
-          if (query === '') {
-            return true;
-          }
-
-          return (item.name || '').toLowerCase().includes(query);
-        });
-      },
-
-      selectIngredient(item) {
-        this.selectedInventoryId = String(item.id);
-        this.ingredientSearch = item.name || '';
-        this.stockUnit = item.stock_unit || '';
-        this.dropdownOpen = false;
-      },
-
-      syncIngredientInput() {
-        this.dropdownOpen = true;
-
-        const typed = (this.ingredientSearch || '').toLowerCase();
-        const current = (this.getIngredientLabel(this.selectedInventoryId) || '').toLowerCase();
-
-        if (!typed) {
-          this.selectedInventoryId = '';
-          this.stockUnit = '';
-          return;
-        }
-
-        if (this.selectedInventoryId && typed !== current) {
-          this.selectedInventoryId = '';
-          this.stockUnit = '';
-        }
-      },
-    };
-  }
-</script>
 @endsection

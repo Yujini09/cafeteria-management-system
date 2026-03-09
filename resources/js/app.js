@@ -850,6 +850,99 @@ document.addEventListener('alpine:init', () => {
         return '₱' + Number(v).toFixed(2) + ' / head';
       }
     }));
+
+    Alpine.data('recipeIngredientForm', (opts = {}) => ({
+      allInventoryItems: Array.isArray(opts.inventoryItems) ? opts.inventoryItems : [],
+      selectedInventoryId: opts.selectedInventoryId ? String(opts.selectedInventoryId) : '',
+      ingredientSearch: opts.selectedIngredientLabel || '',
+      stockUnit: opts.initialStockUnit || '',
+      dropdownOpen: false,
+      normalizeUnit(unit) {
+        const value = String(unit || '').trim().toLowerCase();
+        if (!value) return '';
+
+        const aliases = {
+          ml: 'ml',
+          milliliter: 'ml',
+          milliliters: 'ml',
+          millilitre: 'ml',
+          millilitres: 'ml',
+          liter: 'liters',
+          liters: 'liters',
+          litre: 'liters',
+          litres: 'liters',
+          l: 'liters',
+          g: 'g',
+          gram: 'g',
+          grams: 'g',
+          kg: 'kgs',
+          kgs: 'kgs',
+          kilogram: 'kgs',
+          kilograms: 'kgs',
+          pc: 'pc',
+          pcs: 'pc',
+          piece: 'pieces',
+          pieces: 'pieces',
+          pack: 'packs',
+          packs: 'packs',
+        };
+
+        return aliases[value] || value;
+      },
+      init() {
+        if (!this.ingredientSearch && this.selectedInventoryId) {
+          this.ingredientSearch = this.getIngredientLabel(this.selectedInventoryId) || '';
+        }
+
+        if (!this.stockUnit && this.selectedInventoryId) {
+          this.stockUnit = this.getIngredientUnit(this.selectedInventoryId) || '';
+        }
+      },
+      normalizeIngredientId(id) {
+        if (id === null || id === undefined || id === '') return null;
+        return String(id);
+      },
+      getIngredientLabel(id) {
+        const item = this.allInventoryItems.find((inv) => this.normalizeIngredientId(inv?.id) === this.normalizeIngredientId(id));
+        return item ? item.name : '';
+      },
+      getIngredientUnit(id) {
+        const item = this.allInventoryItems.find((inv) => this.normalizeIngredientId(inv?.id) === this.normalizeIngredientId(id));
+        return item ? this.normalizeUnit(item.unit) : '';
+      },
+      getAvailableIngredients(searchTerm = '') {
+        const term = (searchTerm || '').toLowerCase();
+        return this.allInventoryItems.filter((inv) => {
+          const invId = this.normalizeIngredientId(inv?.id);
+          if (!invId) return false;
+          if (!term) return true;
+          return (inv?.name || '').toLowerCase().includes(term);
+        });
+      },
+      selectIngredient(item) {
+        this.selectedInventoryId = String(item.id);
+        this.ingredientSearch = item.name || '';
+        this.stockUnit = this.getIngredientUnit(item.id) || '';
+        this.dropdownOpen = false;
+      },
+      syncIngredientInput() {
+        this.dropdownOpen = true;
+
+        const typed = (this.ingredientSearch || '').toLowerCase();
+        const current = (this.getIngredientLabel(this.selectedInventoryId) || '').toLowerCase();
+
+        if (!typed) {
+          this.selectedInventoryId = '';
+          this.stockUnit = '';
+          return;
+        }
+
+        if (this.selectedInventoryId && typed !== current) {
+          this.selectedInventoryId = '';
+          this.stockUnit = '';
+        }
+      },
+    }));
 });
 
 Alpine.start();
