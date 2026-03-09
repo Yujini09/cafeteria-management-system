@@ -172,7 +172,7 @@
 
     .recipe-control-wrap .form-input,
     .recipe-control-wrap .form-select {
-        padding-right: 2.5rem;
+        padding-right: 2.9rem;
     }
 
     .recipe-control-chevron {
@@ -180,19 +180,27 @@
         height: 1rem;
         color: #6b7280;
         pointer-events: none;
+        display: block;
+        flex-shrink: 0;
     }
 
     .recipe-trigger-button {
         position: absolute;
-        inset-y: 0;
-        right: 0;
-        width: 2.5rem;
-        display: inline-flex;
+        top: 50%;
+        right: 0.5rem;
+        width: 1.75rem;
+        height: 1.75rem;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        transform: translateY(-50%);
+        display: flex;
         align-items: center;
         justify-content: center;
         color: #6b7280;
         border-radius: 0.5rem;
         transition: color 0.2s ease, background-color 0.2s ease;
+        z-index: 1;
     }
 
     .recipe-trigger-button:hover {

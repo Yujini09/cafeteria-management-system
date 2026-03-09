@@ -2,6 +2,82 @@
 @section('page-title','Manage Menus')
 
 @section('content')
+<style>
+  [x-cloak] { display: none !important; }
+
+  .recipe-form-input,
+  .recipe-form-select {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    background: #ffffff;
+    color: #111827;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .recipe-form-input:focus,
+  .recipe-form-select:focus {
+    outline: none;
+    border-color: #057C3C;
+    box-shadow: 0 0 0 3px rgba(5, 124, 60, 0.15);
+  }
+
+  .recipe-form-select {
+    appearance: none;
+  }
+
+  .recipe-field-meta {
+    min-height: 1rem;
+    margin-top: 0.35rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .recipe-control-wrap {
+    position: relative;
+  }
+
+  .recipe-control-wrap .recipe-form-input,
+  .recipe-control-wrap .recipe-form-select {
+    padding-right: 2.9rem;
+  }
+
+  .recipe-control-chevron {
+    width: 1rem;
+    height: 1rem;
+    color: #6b7280;
+    pointer-events: none;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .recipe-trigger-button {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    border-radius: 0.5rem;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    z-index: 1;
+  }
+
+  .recipe-trigger-button:hover {
+    color: #374151;
+    background: rgba(243, 244, 246, 0.9);
+  }
+</style>
 <div class="admin-page-shell bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
   {{-- Header --}}
 <div class="flex items-center justify-between mb-8">
@@ -46,10 +122,21 @@
   @php
       $selectedInventory = $inventory->firstWhere('id', (int) old('inventory_item_id'));
       $selectedStockUnit = \App\Support\RecipeUnit::display($selectedInventory?->unit);
+      $selectedInventoryName = $selectedInventory?->name ?? '';
       $recipeUnits = ['ml', 'liters', 'g', 'kgs', 'pc', 'pieces', 'packs'];
   @endphp
   <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 mb-8"
-       x-data="{ stockUnit: @js($selectedStockUnit) }">
+       x-data='recipeIngredientForm({
+           inventoryItems: @js($inventory->map(fn ($inv) => [
+               "id" => $inv->id,
+               "name" => $inv->name,
+               "stock_unit" => \App\Support\RecipeUnit::display($inv->unit),
+           ])->values()),
+           selectedInventoryId: @js(old("inventory_item_id", "")),
+           selectedIngredientLabel: @js($selectedInventoryName),
+           initialStockUnit: @js($selectedStockUnit),
+       })'
+       x-init="init()">
     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center" style="font-family: 'Poppins', sans-serif;">
       <svg class="w-5 h-5 mr-2 text-[#057C3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -60,37 +147,83 @@
       @csrf
       <div class="md:col-span-5">
         <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Ingredient</label>
-        <select name="inventory_item_id"
-                class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white"
-                data-admin-select="true"
-                data-searchable="true"
-                data-search-placeholder="Search ingredients..."
-                @change="stockUnit = $event.target.selectedOptions[0]?.dataset.unit || ''"
-                required
-                style="font-family: 'Poppins', sans-serif;">
-          <option value="">Select an ingredient</option>
-          @foreach($inventory as $inv)
-            <option value="{{ $inv->id }}"
-                    data-unit="{{ \App\Support\RecipeUnit::display($inv->unit) }}"
-                    @selected((string) old('inventory_item_id') === (string) $inv->id)>
-              {{ $inv->name }} ({{ $inv->qty }} {{ $inv->unit }} left)
-            </option>
-          @endforeach
-        </select>
+        <div class="relative" @click.outside="dropdownOpen = false">
+          <div class="recipe-control-wrap">
+            <input type="text"
+                   x-model="ingredientSearch"
+                   @focus="dropdownOpen = true"
+                   @blur="dropdownOpen = false"
+                   @input="syncIngredientInput()"
+                   @keydown.escape="dropdownOpen = false"
+                   placeholder="Search ingredient..."
+                   autocomplete="off"
+                   class="recipe-form-input"
+                   role="combobox"
+                   aria-autocomplete="list"
+                   :aria-expanded="dropdownOpen ? 'true' : 'false'"
+                   aria-controls="recipe-ingredient-list"
+                   style="font-family: 'Poppins', sans-serif;">
+            <button type="button"
+                    class="recipe-trigger-button"
+                    @mousedown.prevent
+                    @click="dropdownOpen = !dropdownOpen"
+                    :aria-label="(dropdownOpen ? 'Close' : 'Open') + ' ingredient dropdown'">
+              <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div x-cloak
+               x-show="dropdownOpen"
+               class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-2xl z-[100] w-full flex flex-col max-h-72">
+            <div class="overflow-y-auto flex-1" id="recipe-ingredient-list">
+              <template x-for="inv in filteredIngredients()" :key="inv.id">
+                <button type="button"
+                        @mousedown.prevent
+                        @click="selectIngredient(inv)"
+                        class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm"
+                        style="font-family: 'Poppins', sans-serif;">
+                  <span x-text="inv.name"></span>
+                </button>
+              </template>
+              <template x-if="filteredIngredients().length === 0">
+                <div class="px-3 py-4 text-center text-gray-500 text-sm" style="font-family: 'Poppins', sans-serif;">
+                  <template x-if="inventoryItems.length === 0">
+                    <span>No ingredients available in inventory</span>
+                  </template>
+                  <template x-if="inventoryItems.length > 0">
+                    <span>No ingredients matching your search</span>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" name="inventory_item_id" :value="selectedInventoryId" required>
+        <p class="recipe-field-meta text-xs text-transparent select-none" aria-hidden="true">.</p>
       </div>
       <div class="md:col-span-3">
         <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Qty / 1 Pax</label>
-        <input type="number" step="0.001" min="0.001" name="quantity_needed" value="{{ old('quantity_needed') }}" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" placeholder="0.000" required style="font-family: 'Poppins', sans-serif;">
+        <input type="number" step="0.001" min="0.001" name="quantity_needed" value="{{ old('quantity_needed') }}" class="recipe-form-input" placeholder="0.000" required style="font-family: 'Poppins', sans-serif;">
+        <p class="recipe-field-meta text-xs text-transparent select-none" aria-hidden="true">.</p>
       </div>
       <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Recipe Unit</label>
-        <select name="unit" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#057C3C] focus:border-transparent transition-all duration-200 bg-white" required style="font-family: 'Poppins', sans-serif;">
-          <option value="">Select unit</option>
-          @foreach($recipeUnits as $recipeUnit)
-            <option value="{{ $recipeUnit }}" @selected(old('unit') === $recipeUnit)>{{ $recipeUnit }}</option>
-          @endforeach
-        </select>
-        <p class="mt-2 text-xs text-gray-500" x-text="'Stock unit: ' + (stockUnit || '-')"></p>
+        <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Poppins', sans-serif;">Unit</label>
+        <div class="recipe-control-wrap">
+          <select name="unit" class="recipe-form-select" required style="font-family: 'Poppins', sans-serif;">
+            <option value="">Select unit</option>
+            @foreach($recipeUnits as $recipeUnit)
+              <option value="{{ $recipeUnit }}" @selected(old('unit') === $recipeUnit)>{{ $recipeUnit }}</option>
+            @endforeach
+          </select>
+          <span class="pointer-events-none recipe-trigger-button" aria-hidden="true">
+            <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </span>
+        </div>
+        <p class="recipe-field-meta text-xs text-gray-500" x-text="'Stock unit: ' + (stockUnit || '-')"></p>
       </div>
       <div class="md:col-span-2">
         <button type="submit" data-loading-text="Saving Ingredient..." class="w-full bg-gradient-to-r from-[#00462E] to-[#057C3C] hover:from-[#057C3C] hover:to-[#00462E] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105" style="font-family: 'Poppins', sans-serif;">
@@ -193,4 +326,72 @@
     </div>
   @endif
 </div>
+<script>
+  function recipeIngredientForm(config = {}) {
+    return {
+      inventoryItems: Array.isArray(config.inventoryItems) ? config.inventoryItems : [],
+      selectedInventoryId: config.selectedInventoryId ? String(config.selectedInventoryId) : '',
+      ingredientSearch: config.selectedIngredientLabel || '',
+      stockUnit: config.initialStockUnit || '',
+      dropdownOpen: false,
+
+      init() {
+        if (!this.ingredientSearch && this.selectedInventoryId) {
+          this.ingredientSearch = this.getIngredientLabel(this.selectedInventoryId) || '';
+        }
+
+        if (!this.stockUnit && this.selectedInventoryId) {
+          this.stockUnit = this.getIngredientUnit(this.selectedInventoryId) || '';
+        }
+      },
+
+      getIngredientLabel(id) {
+        const match = this.inventoryItems.find((item) => String(item.id) === String(id));
+        return match ? match.name : '';
+      },
+
+      getIngredientUnit(id) {
+        const match = this.inventoryItems.find((item) => String(item.id) === String(id));
+        return match ? (match.stock_unit || '') : '';
+      },
+
+      filteredIngredients() {
+        const query = (this.ingredientSearch || '').toLowerCase().trim();
+
+        return this.inventoryItems.filter((item) => {
+          if (query === '') {
+            return true;
+          }
+
+          return (item.name || '').toLowerCase().includes(query);
+        });
+      },
+
+      selectIngredient(item) {
+        this.selectedInventoryId = String(item.id);
+        this.ingredientSearch = item.name || '';
+        this.stockUnit = item.stock_unit || '';
+        this.dropdownOpen = false;
+      },
+
+      syncIngredientInput() {
+        this.dropdownOpen = true;
+
+        const typed = (this.ingredientSearch || '').toLowerCase();
+        const current = (this.getIngredientLabel(this.selectedInventoryId) || '').toLowerCase();
+
+        if (!typed) {
+          this.selectedInventoryId = '';
+          this.stockUnit = '';
+          return;
+        }
+
+        if (this.selectedInventoryId && typed !== current) {
+          this.selectedInventoryId = '';
+          this.stockUnit = '';
+        }
+      },
+    };
+  }
+</script>
 @endsection
