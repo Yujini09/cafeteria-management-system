@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 use Illuminate\View\ViewException;
 use Illuminate\Http\JsonResponse;
@@ -245,7 +246,7 @@ class SuperAdminController extends Controller
         }
 
         $redirectUrl = route('superadmin.users', ['created_sort' => 'desc']);
-        $successMessage = 'Admin account created. Temporary credentials were sent by email. The account will remain pending until the first successful sign-in.';
+        $successMessage = 'Admin account created. Temporary credentials were sent by email. The account will become active when the Sign In link in the email is opened.';
 
         if ($request->expectsJson()) {
             $request->session()->flash('success', $successMessage);
@@ -468,8 +469,9 @@ class SuperAdminController extends Controller
                 recipientName: $user->name,
                 introLines: [
                     'An admin account has been created for you.',
+                    'Open the Sign In button below to activate the account.',
                     'Use the temporary password below to sign in.',
-                    'The account will become active after the first successful sign-in, and you will be asked to change the password immediately.',
+                    'You will be asked to change the password immediately after signing in.',
                 ],
                 details: [
                     'Email Address' => $user->email,
@@ -478,7 +480,10 @@ class SuperAdminController extends Controller
                 ],
                 action: [
                     'text' => 'Sign In',
-                    'url' => route('login'),
+                    'url' => URL::signedRoute('admin.invitation.activate', [
+                        'id' => $user->id,
+                        'hash' => sha1($user->getEmailForVerification()),
+                    ]),
                 ],
                 outroLines: [
                     'For security, you will be required to change this password after you sign in.',

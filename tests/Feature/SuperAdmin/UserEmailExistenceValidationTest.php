@@ -43,7 +43,7 @@ test('superadmin add-admin creation is not blocked by realtime mailbox probe fai
 
     $response->assertOk()
         ->assertJsonStructure(['message', 'redirect_url'])
-        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The account will remain pending until the first successful sign-in.');
+        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The account will become active when the Sign In link in the email is opened.');
 
     $pendingAdmin = User::where('email', 'pending-admin@example.com')->firstOrFail();
 
@@ -80,7 +80,7 @@ test('superadmin add-admin reuses existing pending email records instead of crea
     ]);
 
     $response->assertOk()
-        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The account will remain pending until the first successful sign-in.');
+        ->assertJsonPath('message', 'Admin account created. Temporary credentials were sent by email. The account will become active when the Sign In link in the email is opened.');
 
     expect(User::where('email', 'shared-pending@example.com')->count())->toBe(1);
 
@@ -195,7 +195,7 @@ test('verified pending customers stay pending in the users list until their firs
         ->assertSeeInOrder(['pending-customer-activation@example.com', 'Active']);
 });
 
-test('newly created admins remain pending until first successful login activates them', function () {
+test('newly created admins become active when the invitation sign in link is opened', function () {
     Mail::fake();
     Notification::fake();
 
@@ -217,21 +217,26 @@ test('newly created admins remain pending until first successful login activates
         ->assertSeeText('hidden-admin@example.com')
         ->assertSeeInOrder(['hidden-admin@example.com', 'Pending']);
 
-    $pendingAdmin->forceFill([
-        'password' => Hash::make('Password1!'),
-    ])->save();
+    $activationUrl = null;
 
-    $this->actingAs($superAdmin)->post(route('logout'));
+    Mail::assertSent(StandardAppMail::class, function (StandardAppMail $mail) use (&$activationUrl): bool {
+        if (! $mail->hasTo('hidden-admin@example.com')) {
+            return false;
+        }
 
-    $this->post(route('login'), [
-        'email' => 'hidden-admin@example.com',
-        'password' => 'Password1!',
-    ])->assertRedirect(route('admin.dashboard', absolute: false));
+        $action = getProtectedProperty($mail, 'action');
+        $activationUrl = $action['url'] ?? null;
+
+        return filled($activationUrl);
+    });
+
+    expect($activationUrl)->not->toBeNull();
+
+    $this->get((string) $activationUrl)
+        ->assertRedirect(route('login', ['email' => 'hidden-admin@example.com'], absolute: false));
 
     $pendingAdmin->refresh();
     $this->assertSame('admin', $pendingAdmin->role);
-
-    $this->post(route('logout'));
 
     $this->actingAs($superAdmin)
         ->get(route('superadmin.users'))

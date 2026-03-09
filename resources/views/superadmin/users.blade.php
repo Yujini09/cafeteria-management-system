@@ -271,7 +271,7 @@
 
 {{-- Unified admin modals: overlay blur, ESC/click-outside, body scroll lock. --}}
 <x-success-modal name="users-success" title="Admin Created" maxWidth="sm" overlayClass="bg-admin-neutral-900/50" autoCloseMs="3000">
-    <p id="usersSuccessMessage" class="text-sm text-admin-neutral-600">{{ session('success') ?? 'Temporary credentials were sent by email. The account stays pending until the first successful sign-in.' }}</p>
+    <p id="usersSuccessMessage" class="text-sm text-admin-neutral-600">{{ session('success') ?? 'Temporary credentials were sent by email. The account becomes active when the Sign In email link is opened.' }}</p>
 </x-success-modal>
 
 <x-admin.ui.modal name="addAdmin" title="Add New Admin" variant="confirmation" maxWidth="md">
@@ -297,7 +297,7 @@
             <div class="rounded-admin border border-amber-200 bg-admin-warning-light px-3 py-2 flex items-start gap-2">
                 <x-admin.ui.icon name="fa-triangle-exclamation" class="mt-0.5 w-4 h-4 text-admin-warning shrink-0" />
                 <p class="text-sm text-admin-warning">
-                    A temporary password and account details will be sent to this email address. The account stays pending until the admin signs in successfully for the first time.
+                    A temporary password and account details will be sent to this email address. The account becomes active when the admin opens the Sign In link from the email.
                 </p>
             </div>
 
@@ -855,7 +855,7 @@ async function submitAddAdminForm(triggerButton = null) {
 
         const successMessage = (payload && typeof payload.message === 'string' && payload.message.trim().length)
             ? payload.message.trim()
-            : 'Admin account created successfully. The account will remain pending until the first successful sign-in.';
+            : 'Admin account created successfully. The account will become active when the Sign In link in the email is opened.';
 
         successMessageToShow = successMessage;
     } catch (error) {

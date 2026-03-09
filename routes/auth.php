@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\AdminInvitationController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -61,3 +62,7 @@ Route::middleware('auth')->group(function () {
 Route::get('verify-email/link', [\App\Http\Controllers\Auth\ManualVerifyEmailController::class, 'verifyViaLink'])
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.link');
+
+Route::get('admin/invitation/activate', [AdminInvitationController::class, 'activate'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('admin.invitation.activate');
