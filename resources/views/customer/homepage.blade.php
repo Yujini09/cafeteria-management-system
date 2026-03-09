@@ -343,9 +343,10 @@ body {
     </div>
 </section>
 
+{{-- UPDATED TESTIMONIALS SECTION --}}
 <section id="testimonials" class="py-20 bg-white relative overflow-x-hidden" 
          x-data="{ 
-            showFeedbackModal: false, 
+            showFeedbackModal: {{ $errors->any() ? 'true' : 'false' }}, 
             active: 0, 
             count: {{ count($feedbacks) }},
             next() { if(this.count > 1) this.active = (this.active + 1) % this.count; },
@@ -353,6 +354,18 @@ body {
          }">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {{-- Auto-Scroll Script for Success or Errors --}}
+        @if(session('success') || $errors->any())
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(() => {
+                        document.getElementById('testimonials').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                });
+            </script>
+        @endif
+
         {{-- Section Header with Title and Button --}}
         <div class="text-center mb-16">
             <span class="text-clsu-green font-semibold text-sm uppercase tracking-wider mb-2 block">Testimonials</span>
@@ -378,9 +391,9 @@ body {
 
         {{-- Success Message --}}
         @if(session('success'))
-            <div class="mb-8 max-w-2xl mx-auto p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-r-lg text-sm font-medium flex items-center justify-between animate-fade-in">
+            <div class="mb-8 max-w-2xl mx-auto p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-r-lg text-base font-medium flex items-center justify-between shadow-md animate-fade-in">
                 <div class="flex items-center">
-                    <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                    <i class="fas fa-check-circle mr-3 text-xl"></i> {{ session('success') }}
                 </div>
             </div>
         @endif
@@ -473,20 +486,15 @@ body {
                                     @endfor
                                 </div>
                                 
-                                {{-- Testimonial Message with Enhanced Design --}}
+                                {{-- Testimonial Message --}}
                                 <div class="flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar min-h-0">
                                     <div class="relative">
-                                        {{-- Decorative large quotation mark --}}
                                         <div class="absolute -top-2 -left-2 text-6xl text-clsu-green/10 font-serif leading-none">"</div>
-                                        
-                                        {{-- Message container with subtle background and border --}}
                                         <div class="relative z-10 bg-gradient-to-br from-gray-50 to-white p-5 rounded-xl border-l-4 border-clsu-green shadow-sm">
                                             <p class="text-gray-700 leading-relaxed italic font-light text-base">
                                                 {{ $feedback->message }}
                                             </p>
                                         </div>
-                                        
-                                        {{-- Small quotation mark at the end --}}
                                         <div class="absolute -bottom-2 -right-2 text-4xl text-clsu-green/10 font-serif rotate-180">"</div>
                                     </div>
                                 </div>
@@ -531,7 +539,7 @@ body {
                                  }"
                                  @click="active = {{ $index }}">
                                 
-                                {{-- Card Structure with Fixed Height --}}
+                                {{-- Card Structure --}}
                                 <div class="bg-white rounded-2xl overflow-hidden relative group flex flex-col h-[400px] border-2 border-gray-100 hover:border-clsu-green/30 transition-all duration-300 w-full" 
                                      :class="active === {{ $index }} ? 'shadow-xl border-clsu-green/30' : 'shadow-md'">
                                     
@@ -550,7 +558,7 @@ body {
                                             @endfor
                                         </div>
                                         
-                                        {{-- Testimonial Message with Enhanced Design --}}
+                                        {{-- Testimonial Message --}}
                                         <div class="flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar min-h-0">
                                             <div class="relative">
                                                 <div class="absolute -top-2 -left-2 text-6xl text-clsu-green/10 font-serif leading-none">"</div>
@@ -611,7 +619,7 @@ body {
     </style>
 
     @auth
-    {{-- === FEEDBACK MODAL FORM === --}}
+    {{-- === UPDATED FEEDBACK MODAL FORM WITH VALIDATION ERRORS === --}}
     <template x-if="showFeedbackModal">
     <div class="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/60 backdrop-blur-sm p-4"
          @click="showFeedbackModal = false"
@@ -639,15 +647,17 @@ body {
                     <p class="text-gray-600 mt-1">Your feedback helps us improve</p>
                 </div>
 
-                {{-- Form --}}
-                <form action="{{ route('feedback.store') }}" method="POST" class="space-y-5">
+                {{-- Form with Validation Tracking --}}
+                <form action="{{ route('feedback.store') }}" method="POST" class="space-y-5"
+                      x-data="{ submitting: false }"
+                      @submit="if(submitting) { $event.preventDefault(); } else { submitting = true; }">
                     @csrf
                     
                     {{-- Rating Stars --}}
                     <div class="space-y-2">
                         <label class="block text-sm font-semibold text-gray-700">Your Rating</label>
                         <div class="flex items-center gap-2" 
-                             x-data="{ selectedRating: 0 }">
+                             x-data="{ selectedRating: {{ old('rating', 0) }} }">
                             <div class="flex items-center gap-1 text-3xl">
                                 @for($i = 1; $i <= 5; $i++)
                                     <span @click="selectedRating = {{ $i }}" class="cursor-pointer">
@@ -659,6 +669,7 @@ body {
                             <span class="ml-2 text-sm text-gray-500" x-show="selectedRating > 0" x-text="'(' + selectedRating + '/5)'"></span>
                             <input type="hidden" name="rating" :value="selectedRating">
                         </div>
+                        @error('rating') <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- Name Field --}}
@@ -669,8 +680,7 @@ body {
                                 <i class="fas fa-user text-sm"></i>
                             </span>
                             <input type="text" id="feedback_name" name="name" required 
-                                   class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-clsu-green focus:border-transparent transition-all bg-gray-50 focus:bg-white" 
-                                   placeholder="Enter your name"
+                                   class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50" 
                                    value="{{ Auth::user()->name }}"
                                    readonly>
                         </div>
@@ -684,15 +694,20 @@ body {
                                 <i class="fas fa-comment text-sm"></i>
                             </span>
                             <textarea id="feedback_message" name="message" rows="4" required 
-                                      class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-clsu-green focus:border-transparent transition-all bg-gray-50 focus:bg-white resize-none" 
-                                      placeholder="Tell us about your experience..."></textarea>
+                                      class="w-full pl-10 pr-4 py-3 border-2 {{ $errors->has('message') ? 'border-red-400' : 'border-gray-200' }} rounded-xl focus:ring-2 focus:ring-clsu-green focus:border-transparent transition-all bg-gray-50 focus:bg-white resize-none" 
+                                      placeholder="Tell us about your experience (minimum 10 characters)...">{{ old('message') }}</textarea>
                         </div>
+                        @error('message') <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- Submit Button --}}
                     <div class="pt-4">
-                        <button type="submit" class="w-full bg-clsu-green hover:bg-green-700 text-white font-semibold py-4 px-4 rounded-xl transition duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 text-lg">
-                            <i class="fas fa-paper-plane"></i> Submit Review
+                        <button type="submit" 
+                                :disabled="submitting"
+                                :class="submitting ? 'opacity-75 cursor-wait' : 'hover:bg-green-700 hover:shadow-xl'"
+                                class="w-full bg-clsu-green text-white font-semibold py-4 px-4 rounded-xl transition duration-300 shadow-lg flex items-center justify-center gap-3 text-lg">
+                            <i class="fas" :class="submitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i> 
+                            <span x-text="submitting ? 'Submitting Review...' : 'Submit Review'"></span>
                         </button>
                         <p class="text-xs text-gray-400 text-center mt-4">Your review will be displayed after moderation.</p>
                     </div>
@@ -703,7 +718,6 @@ body {
     </template>
     @endauth
 </section>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
