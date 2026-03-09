@@ -11,17 +11,17 @@ final class PasswordRules
     public const MIN_LENGTH = 8;
 
     /**
-     * Rule keys and labels for UI (check/cross).
+     * Compact labels for pill-style UI.
      *
      * @return array<string, string>
      */
-    public static function ruleLabels(): array
+    public static function compactRuleLabels(): array
     {
         return [
-            'min' => 'At least ' . self::MIN_LENGTH . ' characters',
-            'number' => 'At least one number',
-            'special' => 'At least one special character',
-            'uppercase' => 'At least one uppercase letter (optional)',
+            'min' => self::MIN_LENGTH . '+ chars',
+            'number' => 'Number',
+            'special' => 'Symbol',
+            'uppercase' => 'Uppercase',
         ];
     }
 

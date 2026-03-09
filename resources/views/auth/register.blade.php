@@ -98,37 +98,14 @@
                             </div>
                         </div>
 
-                        {{-- CUSTOM REAL-TIME PASSWORD FIELD WITH EYE ICON --}}
-                        <div class="space-y-2" x-data="{ show: false }">
-                            <x-input-label for="password" :value="__('Password')" class="text-admin-neutral-700 font-medium" />
-                            <div class="relative">
-                                <x-text-input id="password" name="password" x-bind:type="show ? 'text' : 'password'"
-                                    class="block w-full pl-10 pr-10 h-11 !rounded-admin !shadow-none border border-admin-neutral-300 bg-admin-neutral-50 focus:border-admin-primary focus:ring-admin-primary/20" 
-                                    required onkeyup="checkPasswordStrength(this.value)"/>
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-admin-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                
-                                {{-- Eye Toggle Button --}}
-                                <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-500 hover:text-admin-primary focus:outline-none">
-                                    <svg x-show="!show" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                    <svg x-show="show" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path></svg>
-                                </button>
-                            </div>
-                            
-                            {{-- Visual Strength Bar --}}
-                            <div class="flex gap-1 h-1.5 mt-2">
-                                <div id="bar-1" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                                <div id="bar-2" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                                <div id="bar-3" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                                <div id="bar-4" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                            </div>
-
-                            {{-- Compact Requirement Pills --}}
-                            <div class="flex flex-wrap gap-2 mt-1">
-                                <span id="req-len" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">8+ CHARS</span>
-                                <span id="req-up" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">UPPERCASE</span>
-                                <span id="req-num" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">NUMBER</span>
-                                <span id="req-spec" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">SYMBOL</span>
-                            </div>
+                        <div class="space-y-2">
+                            {!! app('livewire')->mount('password-with-rules', [
+                                'name' => 'password',
+                                'label' => 'Password',
+                                'showRequirements' => true,
+                                'required' => true,
+                                'variant' => 'auth',
+                            ]) !!}
                         </div>
 
                         {{-- CONFIRM PASSWORD WITH EYE ICON --}}
@@ -206,40 +183,6 @@
 
     {{-- Validation Logic Script --}}
     <script>
-        function checkPasswordStrength(password) {
-            const requirements = {
-                len: password.length >= 8,
-                up: /[A-Z]/.test(password),
-                num: /[0-9]/.test(password),
-                spec: /[^A-Za-z0-9]/.test(password)
-            };
-
-            // Update Pills
-            updatePill('req-len', requirements.len);
-            updatePill('req-up', requirements.up);
-            updatePill('req-num', requirements.num);
-            updatePill('req-spec', requirements.spec);
-
-            // Update Strength Bars
-            let score = Object.values(requirements).filter(Boolean).length;
-            const colors = ['#e5e7eb', '#ef4444', '#f59e0b', '#10b981', '#059669']; // Gray, Red, Orange, Emerald, Green
-            
-            for(let i = 1; i <= 4; i++) {
-                document.getElementById('bar-' + i).style.backgroundColor = (i <= score) ? colors[score] : '#e5e7eb';
-            }
-        }
-
-        function updatePill(id, isValid) {
-            const el = document.getElementById(id);
-            if (isValid) {
-                el.classList.remove('text-gray-400', 'bg-white', 'border-gray-300');
-                el.classList.add('text-green-700', 'bg-green-100', 'border-green-300');
-            } else {
-                el.classList.add('text-gray-400', 'bg-white', 'border-gray-300');
-                el.classList.remove('text-green-700', 'bg-green-100', 'border-green-300');
-            }
-        }
-
         function escapeHtml(value) {
             return String(value ?? '')
                 .replace(/&/g, '&amp;')

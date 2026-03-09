@@ -1,20 +1,26 @@
 @php
-    $ruleLabels = \App\Support\PasswordRules::ruleLabels();
-    $ruleResults = $this->rulesResult;
+    $compactRuleLabels = \App\Support\PasswordRules::compactRuleLabels();
     $isAdmin = $variant === 'admin';
-    $inputClass = 'w-full rounded-admin border px-admin-input py-2.5 pr-12 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 '
+    $inputClass = 'w-full rounded-admin border py-2.5 pl-10 pr-12 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 '
         . ($isAdmin
-            ? 'border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20'
-            : 'border-green-400 focus:border-orange-500 focus:ring-orange-500/20');
+            ? 'border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 focus:border-admin-primary focus:ring-admin-primary/20'
+            : 'border-admin-neutral-300 bg-admin-neutral-50 text-admin-neutral-900 focus:border-admin-primary focus:ring-admin-primary/20');
     $labelClass = $isAdmin ? 'text-admin-neutral-700' : 'text-green-700 font-medium';
     $eyeClass = $isAdmin ? 'text-admin-neutral-500 hover:text-admin-neutral-700' : 'text-green-600 hover:text-orange-500';
-    $validIconClass = $isAdmin ? 'text-emerald-600' : 'text-green-600';
-    $validTextClass = $validIconClass;
-    $invalidTextClass = 'text-red-600';
+    $lockIconClass = 'text-admin-neutral-500';
+    $inactiveBarClass = 'bg-admin-neutral-200';
+    $weakBarClass = 'bg-red-400';
+    $mediumBarClass = 'bg-amber-400';
+    $goodBarClass = $isAdmin ? 'bg-admin-primary/70' : 'bg-emerald-500';
+    $strongBarClass = $isAdmin ? 'bg-admin-primary' : 'bg-green-700';
+    $inactivePillClass = 'border-admin-neutral-300 bg-white text-admin-neutral-400';
+    $activePillClass = $isAdmin
+        ? 'border-admin-primary/20 bg-admin-primary-light text-admin-primary'
+        : 'border-green-300 bg-green-100 text-green-700';
     $minLength = \App\Support\PasswordRules::MIN_LENGTH;
 @endphp
 <div
-    class="space-y-1"
+    class="space-y-2"
     x-data="{
         show: false,
         value: @js($password),
@@ -27,6 +33,35 @@
         passes(key) {
             return this.rules[key] ? this.rules[key](this.value || '') : false;
         },
+        score() {
+            return ['min', 'number', 'special', 'uppercase']
+                .filter((key) => this.passes(key))
+                .length;
+        },
+        barClass(index) {
+            const score = this.score();
+
+            if (index > score) {
+                return '{{ $inactiveBarClass }}';
+            }
+
+            if (score <= 1) {
+                return '{{ $weakBarClass }}';
+            }
+
+            if (score === 2) {
+                return '{{ $mediumBarClass }}';
+            }
+
+            if (score === 3) {
+                return '{{ $goodBarClass }}';
+            }
+
+            return '{{ $strongBarClass }}';
+        },
+        pillClass(key) {
+            return this.passes(key) ? '{{ $activePillClass }}' : '{{ $inactivePillClass }}';
+        },
     }"
     wire:key="password-with-rules-{{ $name }}"
 >
@@ -37,6 +72,11 @@
         </label>
     @endif
     <div class="relative">
+        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 {{ $lockIconClass }}">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+        </span>
         <input
             type="password"
             :type="show ? 'text' : 'password'"
@@ -58,22 +98,29 @@
         </button>
     </div>
     @if($showRequirements)
-        <ul class="mt-2 space-y-1.5 text-xs transition-opacity duration-200" role="list">
-            @foreach($ruleLabels as $key => $label)
-                @php $passed = $ruleResults[$key] ?? false; @endphp
-                <li class="flex items-center gap-2 transition-colors duration-150">
+        <div class="space-y-2" role="group" aria-label="Password strength requirements">
+            <div class="flex gap-1.5">
+                @for($index = 1; $index <= 4; $index++)
                     <span
-                        :class="passes('{{ $key }}') ? '{{ $validIconClass }}' : 'text-red-500'"
-                        aria-hidden="true"
+                        class="h-1.5 flex-1 rounded-full transition-colors duration-150"
+                        :class="barClass({{ $index }})"
+                    ></span>
+                @endfor
+            </div>
+            <div class="flex flex-wrap gap-2">
+                @foreach($compactRuleLabels as $key => $compactLabel)
+                    <span
+                        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-150"
+                        :class="pillClass('{{ $key }}')"
                     >
-                        <span x-show="passes('{{ $key }}')" x-cloak class="{{ $validIconClass }}">&#10003;</span>
-                        <span x-show="!passes('{{ $key }}')" x-cloak class="text-red-500">&#10007;</span>
+                        <span aria-hidden="true">
+                            <span x-show="passes('{{ $key }}')" x-cloak>&#10003;</span>
+                            <span x-show="!passes('{{ $key }}')" x-cloak>&#10007;</span>
+                        </span>
+                        <span>{{ $compactLabel }}</span>
                     </span>
-                    <span
-                        :class="passes('{{ $key }}') ? '{{ $validTextClass }}' : '{{ $invalidTextClass }}'"
-                    >{{ $label }}</span>
-                </li>
-            @endforeach
-        </ul>
+                @endforeach
+            </div>
+        </div>
     @endif
 </div>
