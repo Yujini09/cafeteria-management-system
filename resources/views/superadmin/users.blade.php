@@ -414,7 +414,7 @@
             aria-label="Close recent activities modal">
         <x-admin.ui.icon name="fa-xmark" size="sm" />
     </button>
-    <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-y-auto pr-1">
+    <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-hidden">
         <div class="shrink-0 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <p class="text-sm text-admin-neutral-700">Review recent actions across modules and admin users.</p>
@@ -479,13 +479,13 @@
             </div>
         </div>
 
-        <div id="activitiesTableContainer" class="rounded-admin border border-admin-neutral-200 bg-white">
-            <table class="modern-table table-fixed w-full">
+        <div id="activitiesTableContainer" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200 bg-white">
+            <table class="modern-table table-fixed w-full min-w-[66rem]">
                 <colgroup>
-                    <col class="w-48">
-                    <col class="w-40">
-                    <col class="w-72">
                     <col class="w-56">
+                    <col class="w-48">
+                    <col class="w-[30rem]">
+                    <col class="w-64">
                 </colgroup>
                 <thead>
                     <tr>
@@ -507,7 +507,7 @@
                 </tbody>
             </table>
         </div>
-        <div id="activitiesPagination" class="hidden mt-6 shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div id="activitiesPagination" class="hidden shrink-0 flex-col gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p id="activitiesPaginationInfo" class="text-center text-xs leading-relaxed text-admin-neutral-500 sm:text-left"></p>
             <nav id="activitiesPaginationNav" role="navigation" aria-label="Recent activities pagination" class="flex w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:justify-end"></nav>
         </div>
@@ -1096,6 +1096,7 @@ function initUsersFloatingActions() {
     });
 }
 
+var recentAuditsEndpoint = @json(route('superadmin.recent-audits'));
 var allAudits = [];
 var filteredAudits = [];
 var currentSortBy = 'created_at';
@@ -1217,6 +1218,24 @@ function getActivitiesTotalPages(totalItems) {
 }
 
 function buildActivitiesPageItems(totalPages, currentPage) {
+    const isSmallScreen = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+
+    if (isSmallScreen) {
+        if (totalPages <= 5) {
+            return Array.from({ length: totalPages }, (_, index) => index + 1);
+        }
+
+        if (currentPage <= 3) {
+            return [1, 2, 3, '...', totalPages - 1, totalPages];
+        }
+
+        if (currentPage >= totalPages - 2) {
+            return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages];
+        }
+
+        return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+    }
+
     const onEachSide = 3;
     const maxVisibleWithoutEllipsis = (onEachSide * 2) + 5;
 
@@ -1450,18 +1469,18 @@ function renderActivitiesTable(audits) {
 
         rowsHtml += `
             <tr class="hover:bg-admin-neutral-50 transition-colors duration-admin">
-                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
-                    <p class="font-semibold text-admin-neutral-900 truncate">${escapeHtml(userName)}</p>
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top min-w-0">
+                    <p class="font-semibold text-admin-neutral-900 whitespace-normal break-words">${escapeHtml(userName)}</p>
                 </td>
-                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
-                    <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold truncate ${actionBadgeClass}">
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top min-w-0">
+                    <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-normal break-words text-left leading-snug ${actionBadgeClass}">
                         ${escapeHtml(action)}
                     </span>
                 </td>
-                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top min-w-0">
                     <p class="text-admin-neutral-700 whitespace-normal break-words">${escapeHtml(description)}</p>
                 </td>
-                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap overflow-hidden text-ellipsis">
+                <td class="py-4 px-4 border-b border-admin-neutral-100 align-top whitespace-nowrap">
                     <p class="text-admin-neutral-800">${escapeHtml(dateInfo.full)}</p>
                     <p class="text-xs text-admin-neutral-500">${escapeHtml(dateInfo.relative)}</p>
                 </td>
@@ -1526,7 +1545,12 @@ async function loadActivities() {
     currentActivitiesPage = 1;
 
     try {
-        const response = await fetch('{{ url("superadmin/recent-audits") }}');
+        const response = await fetch(recentAuditsEndpoint, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
         if (!response.ok) {
             throw new Error(`Request failed with status ${response.status}`);
         }
@@ -1597,6 +1621,20 @@ function initActivitiesControls() {
             applyActivitiesFilters(true);
         });
         resetButton.dataset.bound = 'true';
+    }
+
+    if (!window.__activitiesPaginationResizeBound) {
+        const mediaQuery = window.matchMedia('(max-width: 639px)');
+        let wasSmallScreen = mediaQuery.matches;
+        window.addEventListener('resize', () => {
+            if (mediaQuery.matches === wasSmallScreen) {
+                return;
+            }
+
+            wasSmallScreen = mediaQuery.matches;
+            renderActivitiesTable(filteredAudits);
+        });
+        window.__activitiesPaginationResizeBound = 'true';
     }
 
     updateActivitiesSortIndicators();

@@ -76,7 +76,7 @@ class InventoryItemController extends Controller
             });
         }
 
-        $logs = $query->limit(300)->get();
+        $logs = $query->get();
 
         return response()->json([
             'logs' => $logs,

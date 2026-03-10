@@ -119,8 +119,8 @@
                 aria-label="Close inventory usage logs modal">
             <x-admin.ui.icon name="fa-xmark" size="sm" />
         </button>
-        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4">
-            <div class="rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
+        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-hidden">
+            <div class="shrink-0 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <p class="text-sm text-admin-neutral-700">Track automatic deductions and manual stock adjustments.</p>
                     <div class="flex flex-wrap items-center gap-2">
@@ -182,16 +182,16 @@
                 </div>
             </div>
 
-            <div id="inventoryUsageTableContainer" class="flex-1 min-h-0 overflow-auto rounded-admin border border-admin-neutral-200 bg-white">
-                <table class="min-w-full table-fixed">
+            <div id="inventoryUsageTableContainer" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200 bg-white">
+                <table class="modern-table w-full table-fixed min-w-[88rem]">
                     <colgroup>
-                        <col class="w-52">
-                        <col class="w-52">
-                        <col class="w-40">
-                        <col class="w-36">
-                        <col class="w-36">
-                        <col class="w-40">
+                        <col class="w-56">
+                        <col class="w-72">
                         <col class="w-44">
+                        <col class="w-40">
+                        <col class="w-40">
+                        <col class="w-48">
+                        <col class="w-52">
                     </colgroup>
                     <thead class="sticky top-0 z-10 bg-admin-neutral-50">
                         <tr class="text-left text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">
@@ -217,7 +217,7 @@
                 </table>
             </div>
 
-            <div id="inventoryUsagePagination" class="hidden flex-col gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div id="inventoryUsagePagination" class="hidden shrink-0 flex-col gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p id="inventoryUsagePaginationInfo" class="text-center text-xs leading-relaxed text-admin-neutral-500 sm:text-left"></p>
                 <nav id="inventoryUsagePaginationNav" role="navigation" aria-label="Inventory usage pagination" class="flex w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:justify-end"></nav>
             </div>
@@ -739,6 +739,24 @@ document.addEventListener('livewire:navigated', function() {
     }
 
     function buildInventoryUsagePageItems(totalPages, currentPage) {
+        const isSmallScreen = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+
+        if (isSmallScreen) {
+            if (totalPages <= 5) {
+                return Array.from({ length: totalPages }, (_, index) => index + 1);
+            }
+
+            if (currentPage <= 3) {
+                return [1, 2, 3, '...', totalPages - 1, totalPages];
+            }
+
+            if (currentPage >= totalPages - 2) {
+                return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages];
+            }
+
+            return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+        }
+
         if (totalPages <= 7) {
             return Array.from({ length: totalPages }, (_, index) => index + 1);
         }
@@ -946,11 +964,11 @@ document.addEventListener('livewire:navigated', function() {
                         <p class="text-admin-neutral-800">${inventoryUsageEscapeHtml(dateInfo.full)}</p>
                         <p class="text-xs text-admin-neutral-500">${inventoryUsageEscapeHtml(dateInfo.relative)}</p>
                     </td>
-                    <td class="py-3 px-4 align-top">
-                        <p class="font-semibold text-admin-neutral-900">${inventoryUsageEscapeHtml(itemName)}</p>
+                    <td class="py-3 px-4 align-top min-w-0">
+                        <p class="font-semibold text-admin-neutral-900 whitespace-normal break-words">${inventoryUsageEscapeHtml(itemName)}</p>
                     </td>
                     <td class="py-3 px-4 align-top whitespace-nowrap">
-                        <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold truncate ${typeClass}">
+                        <span class="inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-normal break-words ${typeClass}">
                             ${inventoryUsageEscapeHtml(typeLabel)}
                         </span>
                     </td>
@@ -962,11 +980,11 @@ document.addEventListener('livewire:navigated', function() {
                     <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
                         ${inventoryUsageEscapeHtml(newBalance)}
                     </td>
-                    <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
-                        ${inventoryUsageEscapeHtml(reference)}
+                    <td class="py-3 px-4 align-top min-w-0 text-admin-neutral-700">
+                        <p class="whitespace-normal break-words">${inventoryUsageEscapeHtml(reference)}</p>
                     </td>
-                    <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
-                        ${inventoryUsageEscapeHtml(performedBy)}
+                    <td class="py-3 px-4 align-top min-w-0 text-admin-neutral-700">
+                        <p class="whitespace-normal break-words">${inventoryUsageEscapeHtml(performedBy)}</p>
                     </td>
                 </tr>
             `;
@@ -1137,6 +1155,20 @@ document.addEventListener('livewire:navigated', function() {
                 renderInventoryUsageTable(filteredInventoryUsageLogs);
             });
             paginationNav.dataset.bound = 'true';
+        }
+
+        if (!window.__inventoryUsagePaginationResizeBound) {
+            const mediaQuery = window.matchMedia('(max-width: 639px)');
+            let wasSmallScreen = mediaQuery.matches;
+            window.addEventListener('resize', () => {
+                if (mediaQuery.matches === wasSmallScreen) {
+                    return;
+                }
+
+                wasSmallScreen = mediaQuery.matches;
+                renderInventoryUsageTable(filteredInventoryUsageLogs);
+            });
+            window.__inventoryUsagePaginationResizeBound = 'true';
         }
 
         if (typeof enhanceAdminSelects === 'function') {

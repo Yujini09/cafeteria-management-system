@@ -368,7 +368,7 @@ class SuperAdminController extends Controller
 
     public function recentAudits()
     {
-        $audits = AuditTrail::with('user')->latest()->take(50)->get();
+        $audits = AuditTrail::with('user')->latest()->get();
         return response()->json($audits);
     }
     public function recentNotifications()
