@@ -112,14 +112,14 @@
         <p class="text-sm text-admin-neutral-600">Inventory item deleted successfully.</p>
     </x-success-modal>
 
-    <x-admin.ui.modal name="inventoryUsageLogs" title="Inventory Usage Logs" icon="fa-file-lines" iconStyle="fas" variant="info" maxWidth="6xl">
+    <x-admin.ui.modal name="inventoryUsageLogs" title="Inventory Usage Logs" icon="fa-file-lines" iconStyle="fas" variant="info" maxWidth="4xl">
         <button type="button"
                 class="absolute top-4 right-4 rounded-full p-1.5 text-admin-neutral-400 hover:bg-admin-neutral-100 hover:text-admin-neutral-600 transition-colors duration-admin"
                 @click="$dispatch('close-admin-modal', 'inventoryUsageLogs')"
                 aria-label="Close inventory usage logs modal">
             <x-admin.ui.icon name="fa-xmark" size="sm" />
         </button>
-        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-hidden">
+        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-auto pr-1 modern-scrollbar">
             <div class="shrink-0 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <p class="text-sm text-admin-neutral-700">Track automatic deductions and manual stock adjustments.</p>
@@ -182,8 +182,8 @@
                 </div>
             </div>
 
-            <div id="inventoryUsageTableContainer" class="flex-1 min-h-0 overflow-auto modern-scrollbar rounded-admin border border-admin-neutral-200 bg-white">
-                <table class="modern-table w-full table-fixed min-w-[88rem]">
+            <div id="inventoryUsageTableContainer" class="shrink-0 rounded-admin border border-admin-neutral-200 bg-white">
+                <table class="modern-table w-full table-fixed min-w-[76rem]">
                     <colgroup>
                         <col class="w-56">
                         <col class="w-72">
