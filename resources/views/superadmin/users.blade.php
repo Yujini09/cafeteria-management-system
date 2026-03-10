@@ -414,7 +414,7 @@
             aria-label="Close recent activities modal">
         <x-admin.ui.icon name="fa-xmark" size="sm" />
     </button>
-    <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-auto pr-1 modern-scrollbar">
+    <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-y-auto pr-1 modern-scrollbar">
         <div class="shrink-0 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <p class="text-sm text-admin-neutral-700">Review recent actions across modules and admin users.</p>
@@ -479,7 +479,7 @@
             </div>
         </div>
 
-        <div id="activitiesTableContainer" class="shrink-0 rounded-admin border border-admin-neutral-200 bg-white">
+        <div id="activitiesTableContainer" class="min-w-0 shrink-0 overflow-x-auto rounded-admin border border-admin-neutral-200 bg-white modern-scrollbar">
             <table class="modern-table table-fixed w-full min-w-[58rem]">
                 <colgroup>
                     <col class="w-56">

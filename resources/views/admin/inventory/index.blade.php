@@ -119,7 +119,7 @@
                 aria-label="Close inventory usage logs modal">
             <x-admin.ui.icon name="fa-xmark" size="sm" />
         </button>
-        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-auto pr-1 modern-scrollbar">
+        <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-y-auto pr-1 modern-scrollbar">
             <div class="shrink-0 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 p-4">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <p class="text-sm text-admin-neutral-700">Track automatic deductions and manual stock adjustments.</p>
@@ -182,7 +182,7 @@
                 </div>
             </div>
 
-            <div id="inventoryUsageTableContainer" class="shrink-0 rounded-admin border border-admin-neutral-200 bg-white">
+            <div id="inventoryUsageTableContainer" class="min-w-0 shrink-0 overflow-x-auto rounded-admin border border-admin-neutral-200 bg-white modern-scrollbar">
                 <table class="modern-table w-full table-fixed min-w-[76rem]">
                     <colgroup>
                         <col class="w-56">
@@ -190,7 +190,7 @@
                         <col class="w-44">
                         <col class="w-40">
                         <col class="w-40">
-                        <col class="w-48">
+                        <col class="w-36">
                         <col class="w-52">
                     </colgroup>
                     <thead class="sticky top-0 z-10 bg-admin-neutral-50">
