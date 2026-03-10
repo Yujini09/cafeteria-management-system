@@ -119,7 +119,7 @@
             <div class="flex w-full sm:w-auto sm:justify-end">
                 <x-admin.ui.button.secondary type="button" class="w-full justify-center sm:w-auto" onclick="openRecentActivitiesModal()">
                     <x-admin.ui.icon name="fa-file-lines" size="sm" />
-                    Recent Activities
+                    Audit Logs
                 </x-admin.ui.button.secondary>
             </div>
         </div>
@@ -407,11 +407,11 @@
     </x-slot:footer>
 </x-admin.ui.modal>
 
-<x-admin.ui.modal name="recentActivities" title="Audit Feed" icon="fa-clock-rotate-left" iconStyle="fas" variant="info" maxWidth="4xl">
+<x-admin.ui.modal name="recentActivities" title="Audit Logs" icon="fa-clock-rotate-left" iconStyle="fas" variant="info" maxWidth="4xl">
     <button type="button"
             class="absolute top-4 right-4 rounded-full p-1.5 text-admin-neutral-400 hover:bg-admin-neutral-100 hover:text-admin-neutral-600 transition-colors duration-admin"
             @click="$dispatch('close-admin-modal', 'recentActivities')"
-            aria-label="Close recent activities modal">
+            aria-label="Close audit logs modal">
         <x-admin.ui.icon name="fa-xmark" size="sm" />
     </button>
     <div class="flex h-[calc(100vh-12rem)] max-h-[82vh] min-h-0 flex-col gap-4 overflow-y-auto pr-1 modern-scrollbar">
@@ -434,14 +434,14 @@
                            id="activitiesSearchInput"
                            placeholder="Search user, action, description..."
                            class="admin-search-input w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                           aria-label="Search recent activities">
+                           aria-label="Search audit logs">
                     <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-neutral-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                     <button id="activitiesClearSearch"
                             type="button"
                             class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-admin-neutral-400 hover:text-admin-neutral-600"
-                            aria-label="Clear activities search">
+                            aria-label="Clear audit logs search">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -451,7 +451,7 @@
                 <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,14rem)_minmax(10rem,1fr)_minmax(10rem,1fr)_auto] xl:items-end">
                     <div class="flex flex-col gap-1">
                         <label for="activitiesActionFilter" class="text-xs font-semibold uppercase tracking-wide text-admin-neutral-600">Action</label>
-                        <select id="activitiesActionFilter" class="admin-select w-full" data-admin-select="true" aria-label="Filter activities by action">
+                        <select id="activitiesActionFilter" class="admin-select w-full" data-admin-select="true" aria-label="Filter audit logs by action">
                             <option value="">All Actions</option>
                         </select>
                     </div>
@@ -461,7 +461,7 @@
                         <input type="date"
                                id="activitiesDateFrom"
                                class="w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 px-3 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                               aria-label="Activities date from">
+                               aria-label="Audit logs date from">
                     </div>
 
                     <div class="flex flex-col gap-1">
@@ -469,7 +469,7 @@
                         <input type="date"
                                id="activitiesDateTo"
                                class="w-full rounded-admin border border-admin-neutral-300 bg-white py-2.5 px-3 text-sm text-admin-neutral-700 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                               aria-label="Activities date to">
+                               aria-label="Audit logs date to">
                     </div>
 
                     <div class="flex items-end">
@@ -502,14 +502,14 @@
                 </thead>
                 <tbody id="activitiesTableBody">
                     <tr>
-                        <td colspan="4" class="py-10 text-center text-admin-neutral-500">Loading activities...</td>
+                        <td colspan="4" class="py-10 text-center text-admin-neutral-500">Loading audit logs...</td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <div id="activitiesPagination" class="hidden shrink-0 flex-col gap-3 rounded-admin border border-admin-neutral-200 bg-admin-neutral-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p id="activitiesPaginationInfo" class="text-center text-xs leading-relaxed text-admin-neutral-500 sm:text-left"></p>
-            <nav id="activitiesPaginationNav" role="navigation" aria-label="Recent activities pagination" class="flex w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:justify-end"></nav>
+            <nav id="activitiesPaginationNav" role="navigation" aria-label="Audit logs pagination" class="flex w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:justify-end"></nav>
         </div>
     </div>
 </x-admin.ui.modal>
@@ -1361,7 +1361,7 @@ function setActivitiesLoadingState() {
                     <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
                     <span class="h-2 w-2 rounded-full bg-admin-primary animate-pulse"></span>
                 </div>
-                <p class="mt-3 text-sm">Loading recent activities...</p>
+                <p class="mt-3 text-sm">Loading audit logs...</p>
             </td>
         </tr>
     `;
@@ -1378,7 +1378,7 @@ function setActivitiesErrorState() {
                 <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-admin-danger-light text-admin-danger">
                     <i class="fas fa-triangle-exclamation text-base" aria-hidden="true"></i>
                 </div>
-                <p class="mt-3 font-semibold text-admin-neutral-900">Could not load activities</p>
+                <p class="mt-3 font-semibold text-admin-neutral-900">Could not load audit logs</p>
                 <p class="text-sm text-admin-neutral-500">Please try again in a moment.</p>
             </td>
         </tr>
@@ -1442,8 +1442,8 @@ function renderActivitiesTable(audits) {
                     <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-admin-neutral-100 text-admin-neutral-400">
                         <i class="fas ${hasFilters ? 'fa-filter' : 'fa-clock-rotate-left'} text-base" aria-hidden="true"></i>
                     </div>
-                    <p class="mt-3 font-semibold text-admin-neutral-900">${hasFilters ? 'No matching activities' : 'No recent activities found'}</p>
-                    <p class="text-sm text-admin-neutral-500">${hasFilters ? 'Try changing your search or filters.' : 'Activities will appear here as users interact with the system.'}</p>
+                    <p class="mt-3 font-semibold text-admin-neutral-900">${hasFilters ? 'No matching audit logs' : 'No audit logs found'}</p>
+                    <p class="text-sm text-admin-neutral-500">${hasFilters ? 'Try changing your search or filters.' : 'Audit logs will appear here as users interact with the system.'}</p>
                 </td>
             </tr>
         `;
