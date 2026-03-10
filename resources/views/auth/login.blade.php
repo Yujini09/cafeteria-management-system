@@ -56,11 +56,12 @@
                                 </div>
                             </div>
                             <a href="{{ route('marketing.home') }}"
-                                class="md:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-admin-neutral-700 transition hover:bg-admin-neutral-100 hover:text-admin-primary"
+                                class="md:hidden inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-admin-neutral-700 transition hover:bg-admin-neutral-100 hover:text-admin-primary"
                                 aria-label="Back to home">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                                 </svg>
+                                <span>Back To Site</span>
                             </a>
                         </div>
                     </div>
