@@ -43,6 +43,6 @@ class PasswordWithRules extends Component
 
     public function render()
     {
-        return view('livewire.password-with-rules');
+        return view('layouts.livewire.password-with-rules');
     }
 }
