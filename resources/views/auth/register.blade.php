@@ -14,10 +14,11 @@
             {{-- Left side (Logo Display) --}}
             <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-8 relative"> 
                 <a href="{{ route('marketing.home') }}"
-                class="absolute top-6 left-6 inline-flex items-center justify-center rounded-lg p-2 text-green-800 transition hover:border-orange-400 hover:text-orange-600 z-20">
+                class="absolute top-6 left-6 z-20 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-green-800 transition hover:bg-orange-50 hover:text-orange-600">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
+                    <span>Back To Site</span>
                 </a>
                 <img src="{{ asset('images/caf-logo.png') }}" alt="RET Cafeteria Logo"
                      class="max-h-64 object-contain w-auto -ml-6"> 
@@ -32,7 +33,15 @@
 
                 <div class="relative z-10 flex h-full flex-col">
                     <div class="mb-4 flex flex-col gap-3 sm:mb-5">
-                        <div class="flex items-start justify-between gap-3 sm:items-center">
+                        <a href="{{ route('marketing.home') }}"
+                            class="md:hidden inline-flex self-start items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-green-800 transition hover:bg-orange-50 hover:text-orange-600"
+                            aria-label="Back to home">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            <span>Back To Site</span>
+                        </a>
+                        <div class="flex items-start gap-3 sm:items-center">
                             <div class="flex min-w-0 items-center gap-3 sm:gap-4">
                                 <div class="md:hidden flex h-16 w-16 items-center justify-center">
                                     <img src="{{ asset('images/Cafeteria-logo.png') }}" alt="RET Cafeteria Logo"
@@ -43,14 +52,6 @@
                                     <p class="text-base text-green-700 sm:text-lg">Join our cafeteria community</p>
                                 </div>
                             </div>
-                            <a href="{{ route('marketing.home') }}"
-                                class="md:hidden inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-admin-neutral-700 transition hover:bg-admin-neutral-100 hover:text-admin-primary"
-                                aria-label="Back to home">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                                </svg>
-                                <span>Back To Site</span>
-                            </a>
                         </div>
                     </div>
 
