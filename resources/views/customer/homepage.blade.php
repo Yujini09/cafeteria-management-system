@@ -95,11 +95,11 @@ body {
 @section('content')
 
 <section id="home" class="relative py-14 sm:py-16 bg-white text-black overflow-hidden">
-    {{-- Blue Background --}}
-    <div class="absolute top-0 right-0 h-full w-1/2 bg-[#1F2937] z-0"></div>
+    {{-- Blue Background - Hidden on mobile, visible on large screens --}}
+    <div class="hidden lg:block absolute top-0 right-0 h-full w-1/2 bg-[#1F2937] z-0"></div>
     
-    {{-- White Curve --}}
-    <div class="absolute hero-white-curve z-5"></div>
+    {{-- White Curve - Hidden on mobile, visible on large screens --}}
+    <div class="hidden lg:block absolute hero-white-curve z-5"></div>
 
     <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
         <div class="flex-2 text-center w-full">
@@ -135,11 +135,12 @@ body {
         </div>
 
         <div class="flex-1 relative flex justify-center lg:justify-end min-h-[260px] sm:min-h-[490px] w-full">
-            <div class="relative w-64 h-64 sm:w-80 sm:h-80 z-10 mt-2 sm:mt-16">
-                <div class="absolute -translate-x-6 sm:-translate-x-22 inset-0 w-full h-full border-[72px] sm:border-[100px] border-white rounded-full"></div>
-                <div class="absolute -translate-x-6 sm:-translate-x-22 inset-[5px] sm:inset-[6px] w-[calc(100%-10px)] sm:w-[calc(100%-12px)] h-[calc(100%-10px)] sm:h-[calc(100%-12px)] border-[72px] sm:border-[100px] border-[#1F2937] rounded-full"></div>
-                <div class="absolute -translate-x-6 sm:-translate-x-22 inset-[14px] sm:inset-[18px] rounded-full overflow-hidden">
-                    <img src="{{ asset('images/plate.png') }}" alt="Food plate" class="w-full h-full object-cover" />
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 z-10 mt-8 sm:mt-16 mx-auto lg:mx-0">
+                {{-- Updated translations and borders to center perfectly on mobile --}}
+                <div class="absolute translate-x-0 lg:-translate-x-22 inset-0 w-full h-full border-[32px] sm:border-[72px] lg:border-[100px] border-white rounded-full shadow-lg lg:shadow-none"></div>
+                <div class="absolute translate-x-0 lg:-translate-x-22 inset-[5px] sm:inset-[6px] w-[calc(100%-10px)] sm:w-[calc(100%-12px)] h-[calc(100%-10px)] sm:h-[calc(100%-12px)] border-[32px] sm:border-[72px] lg:border-[100px] border-[#1F2937] rounded-full"></div>
+                <div class="absolute translate-x-0 lg:-translate-x-22 inset-[14px] sm:inset-[18px] rounded-full overflow-hidden bg-white">
+                    <img src="{{ asset('images/plate.png') }}" alt="Food plate" class="w-full h-full object-cover scale-110" />
                 </div>
             </div>
         </div>
@@ -343,7 +344,6 @@ body {
     </div>
 </section>
 
-{{-- UPDATED TESTIMONIALS SECTION --}}
 <section id="testimonials" class="py-20 bg-white relative overflow-x-hidden" 
          x-data="{ 
             showFeedbackModal: {{ $errors->any() ? 'true' : 'false' }}, 
