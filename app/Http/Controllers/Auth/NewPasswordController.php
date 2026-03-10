@@ -45,11 +45,19 @@ class NewPasswordController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user) use ($request) {
-                $user->forceFill([
+                $attributes = [
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
                     'must_change_password' => false,
-                ])->save();
+                ];
+
+                // Active accounts that complete a password reset have proven inbox ownership,
+                // so preserve or restore verification to avoid false login blocks.
+                if (! $user->hasVerifiedEmail() && ! $user->isPendingAccount()) {
+                    $attributes['email_verified_at'] = now();
+                }
+
+                $user->forceFill($attributes)->save();
 
                 AuditTrail::record(
                     $user->id,

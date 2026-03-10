@@ -66,3 +66,43 @@ test('password can be reset with valid token', function () {
 
     Notification::assertSentTo($user, PasswordChangedNotification::class);
 });
+
+test('password reset restores verification for active accounts before next login', function () {
+    Notification::fake();
+
+    $user = User::factory()
+        ->unverified()
+        ->create([
+            'role' => 'customer',
+        ]);
+
+    $this->post('/forgot-password', ['email' => $user->email]);
+
+    Notification::assertSentTo($user, ResetPasswordNotification::class, function ($notification) use ($user) {
+        $response = $this->post('/reset-password', [
+            'token' => $notification->token,
+            'email' => $user->email,
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+        ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('password.reset', [
+                'token' => $notification->token,
+                'email' => $user->email,
+            ]));
+
+        return true;
+    });
+
+    expect($user->refresh()->email_verified_at)->not->toBeNull();
+
+    $loginResponse = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'Password1!',
+    ]);
+
+    $this->assertAuthenticated();
+    $loginResponse->assertRedirect(route('customer.homepage', absolute: false));
+});
