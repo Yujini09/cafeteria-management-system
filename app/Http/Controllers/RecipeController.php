@@ -40,14 +40,14 @@ class RecipeController extends Controller
         $normalizedRecipeUnit = RecipeUnit::normalize($data['unit']);
         if (!RecipeUnit::isAllowedRecipeUnit($normalizedRecipeUnit)) {
             throw ValidationException::withMessages([
-                'unit' => 'Recipe unit must be one of: ml, liters, g, kgs, pc, pieces, packs.',
+                'unit' => 'Recipe unit must be one of: ' . implode(', ', RecipeUnit::RECIPE_UNITS) . '.',
             ]);
         }
 
         $stockUnit = RecipeUnit::display($inventoryItem->unit);
         if (!RecipeUnit::areCompatible($normalizedRecipeUnit, $stockUnit)) {
             throw ValidationException::withMessages([
-                'unit' => "Recipe unit must be compatible with the inventory unit (Stock unit: {$stockUnit}).",
+                'unit' => "Unit mismatch. Stock unit: {$stockUnit}.",
             ]);
         }
 

@@ -227,7 +227,7 @@ class MenuController extends Controller
 
                 if (!RecipeUnit::isAllowedRecipeUnit($normalizedRecipeUnit)) {
                     $errors["items.$itemIndex.recipes.$recipeIndex.unit"] =
-                        'Recipe unit must be one of: ml, liters, g, kgs, pc, pieces, packs.';
+                        'Recipe unit must be one of: ' . implode(', ', RecipeUnit::RECIPE_UNITS) . '.';
                     continue;
                 }
 
@@ -239,8 +239,9 @@ class MenuController extends Controller
 
                 $stockUnit = RecipeUnit::display($inventoryItem->unit);
                 if (!RecipeUnit::areCompatible($normalizedRecipeUnit, $stockUnit)) {
+                    $itemNumber = $itemIndex + 1;
                     $errors["items.$itemIndex.recipes.$recipeIndex.unit"] =
-                        "Recipe unit must be compatible with the inventory unit (Stock unit: {$stockUnit}).";
+                        "Unit mismatch on item {$itemNumber}: Stock unit: {$stockUnit}.";
                     continue;
                 }
 
@@ -330,7 +331,7 @@ class MenuController extends Controller
                     if (!$menuItem->recipes()->exists()) {
                         $existingItem = MenuItem::where('name', $itemData['name'])
                             ->where('menu_id', '!=', $menu->id)
-                            ->with('recipes')
+                            ->with('recipes.inventoryItem')
                             ->first();
                         if ($existingItem && $existingItem->recipes->isNotEmpty()) {
                             $menuItem->copyRecipesFrom($existingItem);
@@ -463,7 +464,7 @@ class MenuController extends Controller
                 if (!$menuItem->recipes()->exists()) {
                     $existingItem = MenuItem::where('name', $itemData['name'])
                         ->where('menu_id', '!=', $menu->id)
-                        ->with('recipes')
+                        ->with('recipes.inventoryItem')
                         ->first();
                     if ($existingItem && $existingItem->recipes->isNotEmpty()) {
                         $menuItem->copyRecipesFrom($existingItem);

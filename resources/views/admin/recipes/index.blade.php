@@ -109,8 +109,8 @@
             kgs: 'kgs',
             kilogram: 'kgs',
             kilograms: 'kgs',
-            pc: 'pc',
-            pcs: 'pc',
+            pc: 'pieces',
+            pcs: 'pieces',
             piece: 'pieces',
             pieces: 'pieces',
             pack: 'packs',
@@ -221,7 +221,7 @@
       $selectedInventory = $inventory->firstWhere('id', (int) old('inventory_item_id'));
       $selectedStockUnit = \App\Support\RecipeUnit::display($selectedInventory?->unit);
       $selectedInventoryName = $selectedInventory?->name ?? '';
-      $recipeUnits = ['ml', 'liters', 'g', 'kgs', 'pc', 'pieces', 'packs'];
+      $recipeUnits = \App\Support\RecipeUnit::RECIPE_UNITS;
   @endphp
   <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 mb-8"
        x-data='recipeIngredientForm({
@@ -312,7 +312,7 @@
           <select name="unit" class="recipe-form-select" required style="font-family: 'Poppins', sans-serif;">
             <option value="">Select unit</option>
             @foreach($recipeUnits as $recipeUnit)
-              <option value="{{ $recipeUnit }}" @selected(old('unit') === $recipeUnit)>{{ $recipeUnit }}</option>
+              <option value="{{ $recipeUnit }}" @selected(old('unit') === $recipeUnit)>{{ $recipeUnit === 'pieces' ? 'piece/s' : $recipeUnit }}</option>
             @endforeach
           </select>
           <span class="pointer-events-none recipe-trigger-button" aria-hidden="true">

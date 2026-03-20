@@ -680,8 +680,17 @@
         </div>
 
         <div class="p-6 overflow-y-auto flex-1 min-h-0">
-          <form x-ref="createForm" method="POST" action="{{ route('admin.menus.store') }}" class="space-y-6">
+          <form x-ref="createForm" method="POST" action="{{ route('admin.menus.store') }}" class="space-y-6" @input="clearCreateErrors()" @change="clearCreateErrors()">
             @csrf
+
+            <div x-cloak x-show="createServerErrors.length > 0" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p class="font-semibold text-red-900">Can't save menu yet.</p>
+              <ul class="mt-2 list-disc list-inside space-y-1">
+                <template x-for="(message, idx) in createServerErrors" :key="'create-error-' + idx">
+                  <li x-text="message"></li>
+                </template>
+              </ul>
+            </div>
 
             {{-- STEP 1: Menu Info --}}
             <div x-show="currentStep === 1" x-transition class="space-y-4">
@@ -841,13 +850,14 @@
                                        @focus="form.openDropdowns[index + '_' + rIndex] = true"
                                        @blur="form.openDropdowns[index + '_' + rIndex] = false"
                                        @input="
-                                       form.openDropdowns[index + '_' + rIndex] = true;
-                                        const key = index + '_' + rIndex;
-                                        const typed = (form.searchTerms[key] || '').toLowerCase();
-                                        const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
-                                        if (!typed) { recipe.inventory_item_id = ''; }
-                                        else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
-                                       "
+                                        form.openDropdowns[index + '_' + rIndex] = true;
+                                         const key = index + '_' + rIndex;
+                                         const typed = (form.searchTerms[key] || '').toLowerCase();
+                                         const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
+                                         if (!typed) { recipe.inventory_item_id = ''; }
+                                         else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
+                                         syncRecipeUnitWithIngredient(recipe);
+                                        "
                                        @keydown.escape="form.openDropdowns[index + '_' + rIndex] = false"
                                        placeholder="Search ingredient..."
                                        autocomplete="off"
@@ -873,7 +883,7 @@
                                   <template x-for="inv in getAvailableIngredients(item, rIndex, form.searchTerms[index + '_' + rIndex])" :key="inv.id">
                                     <button type="button" 
                                             @mousedown.prevent
-                                            @click="recipe.inventory_item_id = inv.id; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = inv.name;"
+                                            @click="recipe.inventory_item_id = inv.id; form.openDropdowns[index + '_' + rIndex] = false; form.searchTerms[index + '_' + rIndex] = inv.name; syncRecipeUnitWithIngredient(recipe);"
                                             class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
                                       <span x-text="inv.name"></span>
                                     </button>
@@ -903,15 +913,11 @@
                           <div class="recipe-field">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Recipe Unit</label>
                             <div class="recipe-control-wrap">
-                              <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" required>
+                              <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" @focus="syncRecipeUnitWithIngredient(recipe)" @change="recipe.unit = normalizeUnit(recipe.unit)" class="form-select" required>
                                 <option value="">Select unit</option>
-                                <option value="ml">ml</option>
-                                <option value="liters">liters</option>
-                                <option value="g">g</option>
-                                <option value="kgs">kgs</option>
-                                <option value="pc">pc</option>
-                                <option value="pieces">pieces</option>
-                                <option value="packs">packs</option>
+                                <template x-for="unitOption in getCompatibleRecipeUnits(recipe.inventory_item_id)" :key="'create-unit-' + index + '-' + rIndex + '-' + unitOption">
+                                  <option :value="unitOption" x-text="unitOption === 'pieces' ? 'piece/s' : unitOption"></option>
+                                </template>
                               </select>
                               <span class="pointer-events-none recipe-trigger-button" aria-hidden="true">
                                 <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1025,7 +1031,7 @@
         </div>
 
         <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <form method="POST" action="" x-ref="editForm" class="space-y-4" data-action-loading>
+          <form method="POST" action="" x-ref="editForm" class="space-y-4" @submit.prevent="submitEditForm()" @input="clearEditErrors()" @change="clearEditErrors()">
             @csrf @method('PATCH')
 
             <input type="hidden" name="type" :value="editForm.type || 'standard'">
@@ -1102,13 +1108,14 @@
                                        @focus="editForm.openDropdowns['edit_' + index + '_' + rIndex] = true"
                                        @blur="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false"
                                        @input="
-                                        const key = 'edit_' + index + '_' + rIndex;
-                                        editForm.openDropdowns[key] = true;
-                                        const typed = (editForm.searchTerms[key] || '').toLowerCase();
-                                        const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
-                                        if (!typed) { recipe.inventory_item_id = ''; }
-                                        else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
-                                       "
+                                         const key = 'edit_' + index + '_' + rIndex;
+                                         editForm.openDropdowns[key] = true;
+                                         const typed = (editForm.searchTerms[key] || '').toLowerCase();
+                                         const current = (getIngredientLabel(recipe.inventory_item_id) || '').toLowerCase();
+                                         if (!typed) { recipe.inventory_item_id = ''; }
+                                         else if (recipe.inventory_item_id && typed !== current) { recipe.inventory_item_id = ''; }
+                                         syncRecipeUnitWithIngredient(recipe);
+                                        "
                                        @keydown.escape="editForm.openDropdowns['edit_' + index + '_' + rIndex] = false"
                                        placeholder="Search ingredient..."
                                        autocomplete="off"
@@ -1138,6 +1145,7 @@
                                               recipe.inventory_item_id = inv.id;
                                               editForm.openDropdowns['edit_' + index + '_' + rIndex] = false;
                                               editForm.searchTerms['edit_' + index + '_' + rIndex] = inv.name;
+                                              syncRecipeUnitWithIngredient(recipe);
                                             "
                                             class="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors text-sm">
                                       <span x-text="inv.name"></span>
@@ -1167,15 +1175,11 @@
                           <div class="recipe-field">
                             <label class="text-xs font-medium text-gray-700 mb-1 block">Recipe Unit</label>
                             <div class="recipe-control-wrap">
-                              <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" class="form-select" required>
+                              <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" @focus="syncRecipeUnitWithIngredient(recipe)" @change="recipe.unit = normalizeUnit(recipe.unit)" class="form-select" required>
                                 <option value="">Select unit</option>
-                                <option value="ml">ml</option>
-                                <option value="liters">liters</option>
-                                <option value="g">g</option>
-                                <option value="kgs">kgs</option>
-                                <option value="pc">pc</option>
-                                <option value="pieces">pieces</option>
-                                <option value="packs">packs</option>
+                                <template x-for="unitOption in getCompatibleRecipeUnits(recipe.inventory_item_id)" :key="'edit-unit-' + index + '-' + rIndex + '-' + unitOption">
+                                  <option :value="unitOption" x-text="unitOption === 'pieces' ? 'piece/s' : unitOption"></option>
+                                </template>
                               </select>
                               <span class="pointer-events-none recipe-trigger-button" aria-hidden="true">
                                 <svg class="recipe-control-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1227,15 +1231,24 @@
               </div>
             </div>
 
+            <div x-cloak x-show="editServerErrors.length > 0" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p class="font-semibold text-red-900">Can't update menu yet.</p>
+              <ul class="mt-2 list-disc list-inside space-y-1">
+                <template x-for="(message, idx) in editServerErrors" :key="'edit-error-' + idx">
+                  <li x-text="message"></li>
+                </template>
+              </ul>
+            </div>
+
             <div class="flex justify-end gap-3 pt-4">
               <button type="button" @click="closeEdit()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium shadow-sm text-sm">
                 Cancel
               </button>
-              <button type="submit" data-loading-text="Updating Menu..." class="px-6 py-2 primary-gradient text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
+              <button type="submit" :disabled="editSubmitting" :class="{ 'opacity-60 cursor-not-allowed': editSubmitting }" class="px-6 py-2 primary-gradient text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center transform hover:scale-105 text-sm">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                Update Menu
+                <span x-text="editSubmitting ? 'Updating...' : 'Update Menu'"></span>
               </button>
             </div>
           </form>

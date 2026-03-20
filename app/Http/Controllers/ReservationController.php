@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\AdminReservationsExport;
+use App\Exceptions\IncompatibleRecipeUnitException;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\ReservationAdditional;
@@ -410,7 +411,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             'reservations' => 'required|array',
             'reservations.*.*.category' => 'required|string',
             'reservations.*.*.menu' => 'required|integer|exists:menus,id',
-            'reservations.*.*.qty' => 'required|integer|min:0',
+            'reservations.*.*.qty' => 'required|integer|min:0|max:1000',
         ]);
 
         $expectedDayCount = Carbon::parse($reservationData['start_date'])
@@ -800,7 +801,16 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
     public function checkInventory(Reservation $reservation)
     {
-        $usage = $this->buildInventoryUsage($reservation);
+        try {
+            $usage = $this->buildInventoryUsage($reservation);
+        } catch (IncompatibleRecipeUnitException $e) {
+            return response()->json([
+                'sufficient' => false,
+                'error' => 'Inventory check failed due to incompatible recipe and stock units.',
+                'incompatible_items' => $e->messages(),
+            ], 422);
+        }
+
         $insufficient = array_values(array_filter($usage, function ($item) {
             return ($item['shortage'] ?? 0) > 0;
         }));
@@ -829,7 +839,14 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             ]);
         }
 
-        $usage = $this->buildInventoryUsage($reservation);
+        try {
+            $usage = $this->buildInventoryUsage($reservation);
+        } catch (IncompatibleRecipeUnitException $e) {
+            return redirect()->back()->withInput()->withErrors([
+                'inventory_units' => $e->messages(),
+            ]);
+        }
+
         $insufficient = array_values(array_filter($usage, function ($item) {
             return ($item['shortage'] ?? 0) > 0;
         }));
@@ -1075,6 +1092,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         $reservation->loadMissing(['items.menu.items.recipes.inventoryItem']);
 
         $usage = [];
+        $incompatibleUnits = [];
+
         foreach ($reservation->items as $reservationItem) {
             $menu = $reservationItem->menu;
             if (!$menu) {
@@ -1097,6 +1116,13 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                     $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? RecipeUnit::normalize($inventoryItem->unit);
                     $required = RecipeUnit::convertToStockUnit($totalNeededRecipe, $recipeUnit, $inventoryItem->unit);
                     if ($required === null) {
+                        $incompatibleUnits[] = [
+                            'context' => 'Reservation approval',
+                            'menu_item' => $menuItem->name ?? ('Menu item #' . ($menuItem->id ?? '?')),
+                            'ingredient' => $inventoryItem->name ?? ('Inventory item #' . ($inventoryItem->id ?? '?')),
+                            'recipe_unit' => RecipeUnit::display($recipe->unit) ?: ((string) ($recipe->unit ?? 'unknown')),
+                            'stock_unit' => RecipeUnit::display($inventoryItem->unit) ?: ((string) ($inventoryItem->unit ?? 'unknown')),
+                        ];
                         continue;
                     }
 
@@ -1119,6 +1145,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                     $usage[$id]['required'] += $required;
                 }
             }
+        }
+
+        if (!empty($incompatibleUnits)) {
+            throw new IncompatibleRecipeUnitException($incompatibleUnits);
         }
 
         foreach ($usage as &$row) {

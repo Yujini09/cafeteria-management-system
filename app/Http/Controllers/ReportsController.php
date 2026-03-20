@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\IncompatibleRecipeUnitException;
 use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\MenuPrice;
@@ -539,11 +540,24 @@ class ReportsController extends Controller
         $filename = $reportType . '_report_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.xlsx';
         AuditTrail::record(Auth::id(), AuditDictionary::EXPORTED_REPORT_EXCEL, AuditDictionary::MODULE_REPORTS, "exported {$reportType} report as Excel");
 
-        switch ($reportType) {
-            case 'reservation': return Excel::download(new \App\Exports\ReservationReportExport($startDate, $endDate), $filename);
-            case 'inventory': return Excel::download(new \App\Exports\InventoryReportExport($startDate, $endDate), $filename);
-            case 'crm': return Excel::download(new \App\Exports\CrmReportExport($startDate, $endDate), $filename);
-            default: abort(400, 'Invalid report type');
+        try {
+            switch ($reportType) {
+                case 'reservation':
+                    return Excel::download(new \App\Exports\ReservationReportExport($startDate, $endDate), $filename);
+                case 'inventory':
+                    return Excel::download(new \App\Exports\InventoryReportExport($startDate, $endDate), $filename);
+                case 'crm':
+                    return Excel::download(new \App\Exports\CrmReportExport($startDate, $endDate), $filename);
+                default:
+                    abort(400, 'Invalid report type');
+            }
+        } catch (IncompatibleRecipeUnitException $e) {
+            return back()->withErrors([
+                'report_export' => array_merge(
+                    ['Cannot export inventory report because incompatible recipe units were found.'],
+                    $e->messages()
+                ),
+            ]);
         }
     }
 

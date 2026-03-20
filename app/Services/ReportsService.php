@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\IncompatibleRecipeUnitException;
 use App\Models\Reservation;
 use App\Models\MenuPrice;
 use App\Models\User;
@@ -47,6 +48,7 @@ class ReportsService
             ->get();
 
         $inventoryUsage = [];
+        $incompatibleUnits = [];
 
         foreach ($reservations as $reservation) {
             foreach ($reservation->items as $reservationItem) {
@@ -66,7 +68,18 @@ class ReportsService
                         $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? RecipeUnit::normalize($inventoryItem->unit);
                         $usedQuantity = RecipeUnit::convertToStockUnit($totalNeededRecipe, $recipeUnit, $inventoryItem->unit);
 
-                        if ($usedQuantity === null || $usedQuantity <= 0) {
+                        if ($usedQuantity === null) {
+                            $incompatibleUnits[] = [
+                                'context' => 'Inventory report',
+                                'menu_item' => $menuItem->name ?? ('Menu item #' . ($menuItem->id ?? '?')),
+                                'ingredient' => $inventoryItem->name ?? ('Inventory item #' . ($inventoryItem->id ?? '?')),
+                                'recipe_unit' => RecipeUnit::display($recipe->unit) ?: ((string) ($recipe->unit ?? 'unknown')),
+                                'stock_unit' => RecipeUnit::display($inventoryItem->unit) ?: ((string) ($inventoryItem->unit ?? 'unknown')),
+                            ];
+                            continue;
+                        }
+
+                        if ($usedQuantity <= 0) {
                             continue;
                         }
 
@@ -84,6 +97,10 @@ class ReportsService
                     }
                 }
             }
+        }
+
+        if (!empty($incompatibleUnits)) {
+            throw new IncompatibleRecipeUnitException($incompatibleUnits);
         }
 
         return collect($inventoryUsage)->values();

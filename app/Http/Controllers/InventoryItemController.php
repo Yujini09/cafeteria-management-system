@@ -12,8 +12,10 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use App\Models\AuditTrail;
+use App\Support\RecipeUnit;
 use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class InventoryItemController extends Controller
 {
@@ -176,6 +178,8 @@ class InventoryItemController extends Controller
             'category' => 'required|string|max:100'
         ]);
 
+        $data['unit'] = $this->normalizeAndValidateInventoryUnit($data['unit']);
+
         $item = InventoryItem::create($data);
 
         AuditTrail::record(
@@ -219,6 +223,9 @@ class InventoryItemController extends Controller
             'expiry_date' => 'nullable|date',
             'category' => 'required|string|max:100'
         ]);
+
+        $data['unit'] = $this->normalizeAndValidateInventoryUnit($data['unit']);
+        $this->validateLinkedRecipeUnits($inventory, $data['unit']);
 
         $oldQty = $inventory->qty;
         $inventory->update($data);
@@ -322,5 +329,41 @@ class InventoryItemController extends Controller
     {
         $notificationService = new NotificationService();
         $notificationService->createAdminNotification($action, $module, $description, $metadata);
+    }
+
+    private function normalizeAndValidateInventoryUnit(?string $unit): string
+    {
+        $normalizedUnit = RecipeUnit::normalize($unit);
+
+        if (!RecipeUnit::isAllowedRecipeUnit($normalizedUnit)) {
+            throw ValidationException::withMessages([
+                'unit' => [
+                    'Inventory unit must be one of: ' . implode(', ', RecipeUnit::RECIPE_UNITS) . '.',
+                ],
+            ]);
+        }
+
+        return $normalizedUnit;
+    }
+
+    private function validateLinkedRecipeUnits(InventoryItem $inventory, string $targetStockUnit): void
+    {
+        $recipes = $inventory->recipes()->with('menuItem:id,name')->get();
+        $errors = [];
+
+        foreach ($recipes as $recipe) {
+            $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? $targetStockUnit;
+
+            if (!RecipeUnit::isAllowedRecipeUnit($recipeUnit) || !RecipeUnit::areCompatible($recipeUnit, $targetStockUnit)) {
+                $menuItemName = $recipe->menuItem?->name ?? ('Menu item #' . ($recipe->menu_item_id ?? '?'));
+                $errors[] = "Cannot change stock unit to {$targetStockUnit}. Linked recipe in \"{$menuItemName}\" uses unit " . (RecipeUnit::display($recipe->unit) ?: ($recipe->unit ?? 'unknown')) . '.';
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages([
+                'unit' => $errors,
+            ]);
+        }
     }
 }

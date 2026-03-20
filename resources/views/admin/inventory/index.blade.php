@@ -5,6 +5,7 @@
 @php
     $hasActiveInventoryFilters = filled($search ?? '') || filled($category ?? '') || ($sort ?? 'name') !== 'name' || ($direction ?? 'asc') !== 'asc';
     $resetInventoryFiltersUrl = route('admin.inventory.index');
+    $inventoryUnits = \App\Support\RecipeUnit::RECIPE_UNITS;
     $nextQtyDirection = $sort === 'qty' && $direction === 'asc' ? 'desc' : 'asc';
     $qtySortIcon = $sort === 'qty' && $direction === 'desc' ? 'fa-arrow-down' : 'fa-arrow-up';
     $qtySortIconClass = $sort === 'qty'
@@ -96,7 +97,39 @@
     editingItem: null, 
     deletingItem: null, 
     updateRoute: '{{ route('admin.inventory.update', ':id') }}',
-    deleteRoute: '{{ route('admin.inventory.destroy', ':id') }}'
+    deleteRoute: '{{ route('admin.inventory.destroy', ':id') }}',
+    normalizeInventoryUnit(unit) {
+        const value = String(unit || '').trim().toLowerCase();
+        if (!value) return '';
+
+        const aliases = {
+            ml: 'ml',
+            milliliter: 'ml',
+            milliliters: 'ml',
+            millilitre: 'ml',
+            millilitres: 'ml',
+            liter: 'liters',
+            liters: 'liters',
+            litre: 'liters',
+            litres: 'liters',
+            l: 'liters',
+            g: 'g',
+            gram: 'g',
+            grams: 'g',
+            kg: 'kgs',
+            kgs: 'kgs',
+            kilogram: 'kgs',
+            kilograms: 'kgs',
+            pc: 'pieces',
+            pcs: 'pieces',
+            piece: 'pieces',
+            pieces: 'pieces',
+            pack: 'packs',
+            packs: 'packs',
+        };
+
+        return aliases[value] || value;
+    }
 }"
     x-init="window.addEventListener('close-inventory-modals', function() { showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null; })"
     x-effect="document.body.classList.toggle('overflow-hidden', showCreateModal || showEditModal || showDeleteModal)"
@@ -464,17 +497,16 @@
 
                 <div>
                     <label for="create_qty" class="block text-sm font-medium text-admin-neutral-700">Quantity</label>
-                    <input type="number" name="qty" id="create_qty" min="1" required class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
+                    <input type="number" name="qty" id="create_qty" min="0" step="0.001" required class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                 </div>
 
                 <div>
                     <label for="create_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
                     <select name="unit" id="create_unit" required class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
-                        <option value="Pieces">Pieces</option>
-                        <option value="Packs">Packs</option>
-                        <option value="Kgs">Kgs</option>
-                        <option value="Liters">Liters</option>
+                        @foreach ($inventoryUnits as $inventoryUnit)
+                            <option value="{{ $inventoryUnit }}">{{ $inventoryUnit === 'pieces' ? 'piece/s' : $inventoryUnit }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -527,17 +559,16 @@
 
                 <div>
                     <label for="edit_qty" class="block text-sm font-medium text-admin-neutral-700">Quantity</label>
-                    <input type="number" name="qty" id="edit_qty" min="1" required x-bind:value="editingItem ? editingItem.qty : ''" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
+                    <input type="number" name="qty" id="edit_qty" min="0" step="0.001" required x-bind:value="editingItem ? editingItem.qty : ''" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                 </div>
 
                 <div>
                     <label for="edit_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
-                    <select name="unit" id="edit_unit" required x-bind:value="editingItem ? editingItem.unit : ''" class="admin-select w-full" data-admin-select="true">
+                    <select name="unit" id="edit_unit" required x-bind:value="editingItem ? normalizeInventoryUnit(editingItem.unit) : ''" class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
-                        <option value="Pieces">Pieces</option>
-                        <option value="Packs">Packs</option>
-                        <option value="Kgs">Kgs</option>
-                        <option value="Liters">Liters</option>
+                        @foreach ($inventoryUnits as $inventoryUnit)
+                            <option value="{{ $inventoryUnit }}">{{ $inventoryUnit === 'pieces' ? 'piece/s' : $inventoryUnit }}</option>
+                        @endforeach
                     </select>
                 </div>
 

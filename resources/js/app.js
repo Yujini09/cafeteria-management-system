@@ -547,10 +547,13 @@ document.addEventListener('alpine:init', () => {
       isEditOpen: false,
       isDeleteOpen: false,
       createSubmitting: false,
+      editSubmitting: false,
       deleteSubmitting: false,
       currentStep: 1,
       deleteId: null,
       deleteName: '',
+      createServerErrors: [],
+      editServerErrors: [],
       allInventoryItems: opts.inventoryItems || [],
       prices: opts.prices || {
         standard: { breakfast:150, am_snacks:150, lunch:300, pm_snacks:100, dinner:300 },
@@ -580,6 +583,42 @@ document.addEventListener('alpine:init', () => {
         openDropdowns: {},
         searchTerms: {}
       },
+      extractServerErrors(payload, fallbackMessage = 'Unable to save menu.') {
+        const messages = [];
+        const validationErrors = payload?.errors;
+
+        if (validationErrors && typeof validationErrors === 'object') {
+          Object.values(validationErrors).forEach((entry) => {
+            if (Array.isArray(entry)) {
+              entry.forEach((message) => {
+                const text = String(message || '').trim();
+                if (text) messages.push(text);
+              });
+              return;
+            }
+
+            const text = String(entry || '').trim();
+            if (text) messages.push(text);
+          });
+        }
+
+        if (messages.length === 0) {
+          const directMessage = String(payload?.message || payload?.error || '').trim();
+          if (directMessage) messages.push(directMessage);
+        }
+
+        if (messages.length === 0) {
+          messages.push(fallbackMessage);
+        }
+
+        return [...new Set(messages)];
+      },
+      clearCreateErrors() {
+        this.createServerErrors = [];
+      },
+      clearEditErrors() {
+        this.editServerErrors = [];
+      },
       getAllInventoryItems() { return this.allInventoryItems; },
       normalizeUnit(unit) {
         const value = String(unit || '').trim().toLowerCase();
@@ -603,8 +642,8 @@ document.addEventListener('alpine:init', () => {
           kgs: 'kgs',
           kilogram: 'kgs',
           kilograms: 'kgs',
-          pc: 'pc',
-          pcs: 'pc',
+          pc: 'pieces',
+          pcs: 'pieces',
           piece: 'pieces',
           pieces: 'pieces',
           pack: 'packs',
@@ -620,6 +659,45 @@ document.addEventListener('alpine:init', () => {
       getIngredientUnit(id) {
         const item = this.allInventoryItems.find(i => i.id == id);
         return item ? this.normalizeUnit(item.unit) : '';
+      },
+      unitFamily(unit) {
+        const normalized = this.normalizeUnit(unit);
+
+        if (normalized === 'ml' || normalized === 'liters') return 'volume';
+        if (normalized === 'g' || normalized === 'kgs') return 'weight';
+        if (normalized === 'pieces') return 'count';
+        if (normalized === 'packs') return 'pack';
+
+        return null;
+      },
+      getCompatibleRecipeUnits(inventoryItemId) {
+        const stockUnit = this.getIngredientUnit(inventoryItemId);
+        const family = this.unitFamily(stockUnit);
+
+        if (family === 'volume') return ['ml', 'liters'];
+        if (family === 'weight') return ['g', 'kgs'];
+        if (family === 'count') return ['pieces'];
+        if (family === 'pack') return ['packs'];
+
+        return ['ml', 'liters', 'g', 'kgs', 'pieces', 'packs'];
+      },
+      syncRecipeUnitWithIngredient(recipe) {
+        if (!recipe) return;
+
+        const normalizedRecipeUnit = this.normalizeUnit(recipe.unit);
+        const allowedUnits = this.getCompatibleRecipeUnits(recipe.inventory_item_id);
+
+        if (!normalizedRecipeUnit) {
+          recipe.unit = '';
+          return;
+        }
+
+        if (!allowedUnits.includes(normalizedRecipeUnit)) {
+          recipe.unit = '';
+          return;
+        }
+
+        recipe.unit = normalizedRecipeUnit;
       },
       normalizeIngredientId(id) {
         if (id === null || id === undefined || id === '') return null;
@@ -670,8 +748,14 @@ document.addEventListener('alpine:init', () => {
           return (inv?.name || '').toLowerCase().includes(term);
         });
       },
-      nextStep() { if (this.canProceed()) this.currentStep++; },
-      previousStep() { if (this.currentStep > 1) this.currentStep--; },
+      nextStep() {
+        this.clearCreateErrors();
+        if (this.canProceed()) this.currentStep++;
+      },
+      previousStep() {
+        this.clearCreateErrors();
+        if (this.currentStep > 1) this.currentStep--;
+      },
       canProceed() {
         if (this.currentStep === 1) return this.form.type && this.form.meal;
         if (this.currentStep === 2) return this.form.items.length > 0 && this.form.items.every(item => item.name && item.name.trim());
@@ -706,22 +790,25 @@ document.addEventListener('alpine:init', () => {
       },
       submitForm() {
         if (this.createSubmitting) return;
+        this.clearCreateErrors();
+
         if (this.currentStep !== 3) {
-          alert('Please complete all steps before submitting!');
+          this.createServerErrors = ['Complete all steps before saving.'];
           return;
         }
         if (!this.form.type || !this.form.meal) {
-          alert('Menu type and meal time are required!');
+          this.createServerErrors = ['Menu type and meal time are required.'];
           return;
         }
         if (this.form.items.length === 0) {
-          alert('Please add at least one item to the menu!');
+          this.createServerErrors = ['Add at least one menu item.'];
           return;
         }
         if (!this.canProceed()) {
           const errors = this.getValidationErrors();
-          const errorMessage = 'Please fill in all required fields:\n\n' + errors.join('\n');
-          alert(errorMessage);
+          this.createServerErrors = errors.length > 0
+            ? errors
+            : ['Please review the menu details.'];
           return;
         }
         this.submitFormAjax();
@@ -738,16 +825,16 @@ document.addEventListener('alpine:init', () => {
             body: formData
           });
           let errorData = null;
-          try { errorData = await res.json(); } catch (e) { errorData = { message: await res.text() }; }
+          try { errorData = await res.json(); } catch (e) { errorData = null; }
           if (!res.ok) {
-            const errorMsg = errorData?.message || errorData?.error || 'Unknown error occurred';
-            const validationErrors = errorData?.errors ? Object.values(errorData.errors).flat().join('\n') : '';
-            alert('Error creating menu:\n' + errorMsg + (validationErrors ? '\n\n' + validationErrors : ''));
+            this.createServerErrors = this.extractServerErrors(errorData, 'Unable to create menu.');
             this.createSubmitting = false;
             return;
           }
+          this.clearCreateErrors();
           this.form = { type: this.form.type, meal: this.form.meal, description: '', items: [], openDropdowns: {}, searchTerms: {} };
           this.currentStep = 1;
+          this.createSubmitting = false;
           this.isCreateOpen = false;
           window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-create-success', bubbles: true, composed: true }));
           setTimeout(() => {
@@ -755,7 +842,7 @@ document.addEventListener('alpine:init', () => {
             setTimeout(() => location.reload(), 300);
           }, 2000);
         } catch (e) {
-          alert('Error creating menu: ' + e.message);
+          this.createServerErrors = [`Unable to create menu. ${e.message}`];
           this.createSubmitting = false;
         }
       },
@@ -767,14 +854,18 @@ document.addEventListener('alpine:init', () => {
         this.form.searchTerms = {};
         this.currentStep = 1;
         this.createSubmitting = false;
+        this.clearCreateErrors();
         this.isCreateOpen = true;
       },
       close(){ 
         this.isCreateOpen = false; 
         this.currentStep = 1;
         this.createSubmitting = false;
+        this.clearCreateErrors();
       },
       openEdit(id, name, description, type, meal, items = []) {
+        this.editSubmitting = false;
+        this.clearEditErrors();
         this.editForm.id = id;
         this.editForm.name = name || '';
         this.editForm.description = description || '';
@@ -790,6 +881,7 @@ document.addEventListener('alpine:init', () => {
               ...recipe,
               unit: this.normalizeUnit(recipe.unit) || ''
             };
+            this.syncRecipeUnitWithIngredient(normalizedRecipe);
             const key = `edit_${itemIndex}_${recipeIndex}`;
             this.editForm.searchTerms[key] = this.getIngredientLabel(normalizedRecipe.inventory_item_id) || '';
             return normalizedRecipe;
@@ -800,8 +892,99 @@ document.addEventListener('alpine:init', () => {
       },
       closeEdit() {
         this.isEditOpen = false;
+        this.editSubmitting = false;
+        this.clearEditErrors();
         this.editForm.openDropdowns = {};
         this.editForm.searchTerms = {};
+      },
+      getEditValidationErrors() {
+        const errors = [];
+
+        if (!Array.isArray(this.editForm.items) || this.editForm.items.length === 0) {
+          errors.push('Add at least one menu item.');
+          return errors;
+        }
+
+        this.editForm.items.forEach((item, itemIndex) => {
+          const itemName = String(item?.name || '').trim();
+          if (!itemName) {
+            errors.push(`Item ${itemIndex + 1}: Name is required`);
+          }
+
+          if (!item?.recipes || item.recipes.length === 0) {
+            errors.push(`Item "${itemName || 'Unnamed'}": At least one ingredient is required`);
+            return;
+          }
+
+          item.recipes.forEach((recipe, recipeIndex) => {
+            if (!recipe?.inventory_item_id) {
+              errors.push(`Item "${itemName || 'Unnamed'}", Ingredient ${recipeIndex + 1}: Ingredient selection is required`);
+            }
+            if (!recipe?.quantity_needed) {
+              errors.push(`Item "${itemName || 'Unnamed'}", Ingredient ${recipeIndex + 1}: Quantity is required`);
+            }
+            if (!recipe?.unit) {
+              errors.push(`Item "${itemName || 'Unnamed'}", Ingredient ${recipeIndex + 1}: Unit is required`);
+            }
+          });
+
+          const duplicateIndexes = this.getDuplicateRecipeIndexes(item);
+          duplicateIndexes.forEach((dupIndex) => {
+            const dupRecipe = item.recipes[dupIndex] || {};
+            const ingredientName = this.getIngredientLabel(dupRecipe.inventory_item_id) || 'Ingredient';
+            errors.push(`Item "${itemName || 'Unnamed'}", Ingredient ${dupIndex + 1}: Duplicate ingredient (${ingredientName})`);
+          });
+        });
+
+        return errors;
+      },
+      async submitEditForm() {
+        if (this.editSubmitting) return;
+        this.clearEditErrors();
+
+        const clientErrors = this.getEditValidationErrors();
+        if (clientErrors.length > 0) {
+          this.editServerErrors = clientErrors;
+          return;
+        }
+
+        const form = this.$refs.editForm;
+        if (!form) {
+          this.editServerErrors = ['Unable to update menu. Form not found.'];
+          return;
+        }
+
+        const formData = new FormData(form);
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        this.editSubmitting = true;
+
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            body: formData
+          });
+
+          let errorData = null;
+          try { errorData = await res.json(); } catch (e) { errorData = null; }
+
+          if (!res.ok) {
+            this.editServerErrors = this.extractServerErrors(errorData, 'Unable to update menu.');
+            this.editSubmitting = false;
+            return;
+          }
+
+          this.editSubmitting = false;
+          this.closeEdit();
+          window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'menu-update-success', bubbles: true, composed: true }));
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'menu-update-success', bubbles: true, composed: true }));
+            setTimeout(() => location.reload(), 300);
+          }, 2000);
+        } catch (e) {
+          this.editServerErrors = [`Unable to update menu. ${e.message}`];
+          this.editSubmitting = false;
+        }
       },
       openDelete(id, name = 'this menu') {
         this.deleteId = id;
@@ -879,8 +1062,8 @@ document.addEventListener('alpine:init', () => {
           kgs: 'kgs',
           kilogram: 'kgs',
           kilograms: 'kgs',
-          pc: 'pc',
-          pcs: 'pc',
+          pc: 'pieces',
+          pcs: 'pieces',
           piece: 'pieces',
           pieces: 'pieces',
           pack: 'packs',

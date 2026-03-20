@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Exceptions\IncompatibleRecipeUnitException;
 use App\Models\Reservation;
 use App\Support\RecipeUnit;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -30,6 +31,7 @@ class InventoryReportExport implements FromCollection, WithHeadings, WithMapping
             ->get();
 
         $inventoryUsage = [];
+        $incompatibleUnits = [];
 
         foreach ($reservations as $reservation) {
             foreach ($reservation->items as $reservationItem) {
@@ -53,7 +55,18 @@ class InventoryReportExport implements FromCollection, WithHeadings, WithMapping
                         $recipeUnit = RecipeUnit::normalize($recipe->unit) ?? RecipeUnit::normalize($inventoryItem->unit);
                         $usedQuantity = RecipeUnit::convertToStockUnit($totalNeededRecipe, $recipeUnit, $inventoryItem->unit);
 
-                        if ($usedQuantity === null || $usedQuantity <= 0) {
+                        if ($usedQuantity === null) {
+                            $incompatibleUnits[] = [
+                                'context' => 'Inventory export',
+                                'menu_item' => $menuItem->name ?? ('Menu item #' . ($menuItem->id ?? '?')),
+                                'ingredient' => $inventoryItem->name ?? ('Inventory item #' . ($inventoryItem->id ?? '?')),
+                                'recipe_unit' => RecipeUnit::display($recipe->unit) ?: ((string) ($recipe->unit ?? 'unknown')),
+                                'stock_unit' => RecipeUnit::display($inventoryItem->unit) ?: ((string) ($inventoryItem->unit ?? 'unknown')),
+                            ];
+                            continue;
+                        }
+
+                        if ($usedQuantity <= 0) {
                             continue;
                         }
 
@@ -71,6 +84,10 @@ class InventoryReportExport implements FromCollection, WithHeadings, WithMapping
                     }
                 }
             }
+        }
+
+        if (!empty($incompatibleUnits)) {
+            throw new IncompatibleRecipeUnitException($incompatibleUnits);
         }
 
         return collect($inventoryUsage);

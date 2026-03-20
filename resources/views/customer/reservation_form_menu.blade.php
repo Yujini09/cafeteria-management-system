@@ -911,7 +911,7 @@
         accumulator[String(menu.id)] = menu;
         return accumulator;
     }, {});
-    const maxPax = 100;
+    const maxPax = 1000;
 
     window.closeConfirmationModal = closeConfirmationModal;
     window.submitReservation = submitReservation;

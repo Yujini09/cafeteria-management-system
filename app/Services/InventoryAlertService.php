@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InventoryItem;
+use App\Support\RecipeUnit;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
@@ -14,24 +15,6 @@ class InventoryAlertService
         'kgs' => 1.0,
         'pieces' => 10.0,
         'packs' => 2.0,
-    ];
-
-    private const UNIT_ALIASES = [
-        'liter' => 'liters',
-        'liters' => 'liters',
-        'litre' => 'liters',
-        'litres' => 'liters',
-        'l' => 'liters',
-        'kg' => 'kgs',
-        'kgs' => 'kgs',
-        'kilogram' => 'kgs',
-        'kilograms' => 'kgs',
-        'piece' => 'pieces',
-        'pieces' => 'pieces',
-        'pc' => 'pieces',
-        'pcs' => 'pieces',
-        'pack' => 'packs',
-        'packs' => 'packs',
     ];
 
     private ?bool $hasInventoryTable = null;
@@ -166,17 +149,7 @@ class InventoryAlertService
 
     private function normalizeUnit(?string $unit): ?string
     {
-        if ($unit === null) {
-            return null;
-        }
-
-        $normalized = strtolower(trim($unit));
-
-        if ($normalized === '') {
-            return null;
-        }
-
-        return self::UNIT_ALIASES[$normalized] ?? $normalized;
+        return RecipeUnit::normalize($unit);
     }
 
     private function canQueryInventory(): bool

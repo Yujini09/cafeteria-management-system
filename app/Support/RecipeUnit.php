@@ -4,7 +4,7 @@ namespace App\Support;
 
 class RecipeUnit
 {
-    public const RECIPE_UNITS = ['ml', 'liters', 'g', 'kgs', 'pc', 'pieces', 'packs'];
+    public const RECIPE_UNITS = ['ml', 'liters', 'g', 'kgs', 'pieces', 'packs'];
 
     private const UNIT_ALIASES = [
         'ml' => 'ml',
@@ -24,8 +24,8 @@ class RecipeUnit
         'kgs' => 'kgs',
         'kilogram' => 'kgs',
         'kilograms' => 'kgs',
-        'pc' => 'pc',
-        'pcs' => 'pc',
+        'pc' => 'pieces',
+        'pcs' => 'pieces',
         'piece' => 'pieces',
         'pieces' => 'pieces',
         'pack' => 'packs',
@@ -119,7 +119,7 @@ class RecipeUnit
         return match ($unit) {
             'ml', 'liters' => 'volume',
             'g', 'kgs' => 'weight',
-            'pc', 'pieces' => 'count',
+            'pieces' => 'count',
             'packs' => 'pack',
             default => null,
         };
