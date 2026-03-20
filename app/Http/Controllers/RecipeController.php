@@ -72,6 +72,7 @@ class RecipeController extends Controller
 
         // Create notification for admins/superadmin about recipe ingredient addition/update
         $this->createAdminNotification('recipe_ingredient_added_updated', 'recipes', 'A recipe ingredient has been added/updated by ' . (Auth::user()?->name ?? 'System'), [
+            'menu_item_id' => $menuItem->id,
             'menu_item_name' => $menuItem->name,
             'inventory_item_name' => $inventoryItem->name,
             'quantity_needed' => $data['quantity_needed'],
@@ -100,6 +101,7 @@ class RecipeController extends Controller
 
         // Create notification for admins/superadmin about recipe ingredient removal
         $this->createAdminNotification('recipe_ingredient_removed', 'recipes', 'A recipe ingredient has been removed by ' . Auth::user()?->name ?? 'System', [
+            'menu_item_id' => $menuItem->id,
             'menu_item_name' => $menuItemName,
             'inventory_item_name' => $ingredientName,
             'updated_by' => Auth::user()?->name ?? 'System',

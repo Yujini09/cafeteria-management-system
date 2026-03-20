@@ -959,7 +959,7 @@
     </aside>
 
     <section class="home-section">
-        <div class="floating-notification-shell" x-data="notificationsPanel()" x-init="init()">
+        <div class="floating-notification-shell" x-data="window.notificationsPanel()" x-init="init()">
             <button @click="open = !open"
                     :aria-expanded="open.toString()"
                     class="floating-notification-button header-transition relative"
@@ -989,7 +989,12 @@
                         <li class="px-4 py-3 text-[#4a6d5a]">No new notifications</li>
                     </template>
                     <template x-for="item in items" :key="item.id">
-                        <li class="px-4 py-3 border-b border-[#edf4ef] last:border-b-0 hover:bg-[#f4faf6] transition-colors">
+                        <li class="px-4 py-3 border-b border-[#edf4ef] last:border-b-0 transition-colors"
+                            :class="item.targetUrl ? 'cursor-pointer hover:bg-[#f4faf6]' : ''"
+                            :tabindex="item.targetUrl ? 0 : -1"
+                            @click="openNotification(item)"
+                            @keydown.enter.prevent="openNotification(item)"
+                            @keydown.space.prevent="openNotification(item)">
                             <div class="flex items-start gap-3">
                                 <span class="mt-2 w-2 h-2 rounded-full"
                                       :class="item.read ? 'bg-gray-300' : 'bg-[#FB3E05]'"></span>
@@ -999,7 +1004,9 @@
                                     <p class="text-xs text-[#6f8f7e] mt-1" x-text="item.time"></p>
                                     <button type="button"
                                             class="mt-2 text-xs text-[#059669] hover:text-[#00462E]"
-                                            @click="toggleRead(item.id)">
+                                            @click.stop="toggleRead(item.id)"
+                                            @keydown.enter.stop
+                                            @keydown.space.stop>
                                         <span x-text="item.read ? 'Mark as unread' : 'Mark as read'"></span>
                                     </button>
                                 </div>
@@ -1200,18 +1207,143 @@
         syncSidebarModalBlurState();
     }
 
-    function notificationsPanel() {
+    window.notificationsPanel = function () {
         return {
             open: false,
             items: [],
             loading: true,
             unreadCount: 0,
+            notificationRoutes: {
+                dashboard: @json(route('admin.dashboard')),
+                reservationsBase: @json(url('/admin/reservations')),
+                reservationsIndex: @json(route('admin.reservations')),
+                inventoryIndex: @json(route('admin.inventory.index')),
+                menusIndex: @json(route('admin.menus.index')),
+                menuPrices: @json(route('admin.menus.prices')),
+                menuItemsBase: @json(url('/admin/menu-items')),
+                reportsIndex: @json(route('admin.reports.index')),
+                reportsGenerate: @json(route('admin.reports.generate')),
+                messagesIndex: @json(route('admin.messages.index')),
+                usersIndex: @json(auth()->user()->role === 'superadmin' ? route('superadmin.users') : route('admin.dashboard')),
+            },
             init() {
                 this.fetchNotifications();
                 setInterval(() => this.fetchNotifications(), 30000);
             },
             updateUnread() {
                 this.unreadCount = this.items.filter(item => !item.read).length;
+            },
+            buildQuery(params = {}) {
+                const query = new URLSearchParams();
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null && String(value).trim() !== '') {
+                        query.set(key, String(value));
+                    }
+                });
+                const serialized = query.toString();
+                return serialized ? `?${serialized}` : '';
+            },
+            resolveNotificationUrl(notification) {
+                const metadata = notification?.metadata || {};
+                const moduleName = String(notification?.module || '').toLowerCase();
+                const actionName = String(notification?.action || '').toLowerCase();
+
+                if (moduleName === 'reservations') {
+                    const reservationId = Number(metadata.reservation_id || 0);
+                    if (Number.isInteger(reservationId) && reservationId > 0) {
+                        return `${this.notificationRoutes.reservationsBase}/${reservationId}`;
+                    }
+                    return this.notificationRoutes.reservationsIndex;
+                }
+
+                if (moduleName === 'inventory') {
+                    return this.notificationRoutes.inventoryIndex;
+                }
+
+                if (moduleName === 'menus') {
+                    if (actionName === 'menu_prices_modified') {
+                        return this.notificationRoutes.menuPrices;
+                    }
+
+                    const menuQuery = this.buildQuery({
+                        type: metadata.type,
+                        meal: metadata.meal_time,
+                    });
+
+                    return `${this.notificationRoutes.menusIndex}${menuQuery}`;
+                }
+
+                if (moduleName === 'recipes') {
+                    const menuItemId = Number(metadata.menu_item_id || 0);
+                    if (Number.isInteger(menuItemId) && menuItemId > 0) {
+                        return `${this.notificationRoutes.menuItemsBase}/${menuItemId}/recipes`;
+                    }
+                    return this.notificationRoutes.menusIndex;
+                }
+
+                if (moduleName === 'reports') {
+                    const reportQuery = this.buildQuery({
+                        report_type: metadata.report_type,
+                        start_date: metadata.start_date,
+                        end_date: metadata.end_date,
+                    });
+
+                    return reportQuery
+                        ? `${this.notificationRoutes.reportsGenerate}${reportQuery}`
+                        : this.notificationRoutes.reportsIndex;
+                }
+
+                if (moduleName === 'users') {
+                    return this.notificationRoutes.usersIndex;
+                }
+
+                if (moduleName === 'messages' || moduleName === 'contact' || moduleName === 'contact_messages') {
+                    return this.notificationRoutes.messagesIndex;
+                }
+
+                return this.notificationRoutes.dashboard;
+            },
+            openNotification(item) {
+                if (!item || !item.targetUrl) {
+                    return;
+                }
+
+                if (item.read) {
+                    window.location.href = item.targetUrl;
+                    return;
+                }
+
+                this.setNotificationRead(item.id, true)
+                    .then(() => {
+                        window.location.href = item.targetUrl;
+                    })
+                    .catch(error => {
+                        console.error('Error marking notification read before navigation:', error);
+                        if (typeof window.showAdminToast === 'function') {
+                            window.showAdminToast('Unable to mark notification as read. Please try again.', 'error');
+                        }
+                    });
+            },
+            setNotificationRead(id, read) {
+                return fetch(`{{ url("/admin/notifications") }}/${id}/read`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ read: Boolean(read) })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                    this.items = this.items.map(item => item.id === id
+                        ? { ...item, read: Boolean(read) }
+                        : item
+                    );
+                    this.updateUnread();
+                });
             },
             markAllRead() {
                 fetch('{{ url("/admin/notifications/mark-all-read") }}', {
@@ -1233,21 +1365,7 @@
                 const target = this.items.find(item => item.id === id);
                 if (!target) return;
                 const nextRead = !target.read;
-                fetch(`{{ url("/admin/notifications") }}/${id}/read`, {
-                    method: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ read: nextRead })
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    this.items = this.items.map(item => item.id === id ? { ...item, read: nextRead } : item);
-                    this.updateUnread();
-                })
+                this.setNotificationRead(id, nextRead)
                 .catch(error => console.error('Error toggling notification read:', error));
             },
             fetchNotifications() {
@@ -1272,13 +1390,20 @@
                     }, []);
                     this.items = uniqueNotifications.map(notification => {
                         const metadata = notification.metadata || {};
-                        const actor = metadata.updated_by || metadata.generated_by || metadata.created_by || (notification.user ? notification.user.name : 'System');
+                        const actor = metadata.updated_by
+                            || metadata.generated_by
+                            || metadata.created_by
+                            || metadata.deleted_by
+                            || metadata.added_by
+                            || metadata.removed_by
+                            || (notification.user ? notification.user.name : 'System');
                         return {
                             id: notification.id,
                             actor: actor || 'System',
                             description: notification.description || 'Unknown Action',
                             time: notification.created_at ? new Date(notification.created_at).toLocaleString() : 'Unknown Time',
                             read: Boolean(notification.read),
+                            targetUrl: this.resolveNotificationUrl(notification),
                         };
                     });
                     this.updateUnread();
@@ -1292,7 +1417,7 @@
                 });
             }
         };
-    }
+    };
 
     window.showAdminToast = function(message, type = 'success') {
         window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: type, message: message } }));
