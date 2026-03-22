@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservation_details', function () {
         $reservations = \App\Models\Reservation::with(['items.menu.items'])
             ->where('user_id', auth()->id())
+            ->whereNotIn('status', ['cancelled', 'canceled'])
             ->orderBy('created_at', 'desc')
             ->get();
         return view('customer.reservation_details', compact('reservations'));
@@ -180,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations/{id}', function ($id) {
         $reservation = \App\Models\Reservation::with(['items.menu.items'])
             ->where('user_id', auth()->id())
+            ->whereNotIn('status', ['cancelled', 'canceled'])
             ->findOrFail($id);
         return view('customer.reservation_view', compact('reservation'));
     })->name('reservation.view');
@@ -202,7 +204,6 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::patch('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update'); // Optional: Add logic in controller if implementing avatar upload
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
     Route::post('/password/check-current', [ProfileController::class, 'checkCurrentPassword'])->name('password.check-current');

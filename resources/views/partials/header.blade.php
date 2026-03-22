@@ -309,11 +309,7 @@
                             <span class="block text-sm font-semibold text-gray-800 leading-none">{{ explode(' ', Auth::user()->name)[0] }}</span>
                         </div>
                         <div class="w-8 h-8 md:w-9 md:h-9 rounded-full bg-green-100 border-2 border-green-200 flex items-center justify-center overflow-hidden">
-                            @if(Auth::user()->avatar_url)
-                                <img src="{{ Auth::user()->avatar_url }}?v={{ Auth::user()->updated_at?->timestamp }}" class="w-full h-full object-cover" alt="Profile picture">
-                            @else
-                                <img src="{{ asset('images/clsu-logo.png') }}" class="w-full h-full object-cover" alt="Default profile picture">
-                            @endif
+                            <span class="text-xs md:text-sm font-bold text-clsu-green">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
                         </div>
                         <svg class="w-4 h-4 text-gray-400" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>

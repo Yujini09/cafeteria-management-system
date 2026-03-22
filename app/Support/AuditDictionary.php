@@ -28,7 +28,6 @@ final class AuditDictionary
     // Profile
     public const UPDATED_PROFILE = 'Updated Profile';
     public const UPDATED_PASSWORD = 'Updated Password';
-    public const UPDATED_AVATAR = 'Updated Avatar';
 
     // Users
     public const CREATED_ADMIN_USER = 'Created Admin User';

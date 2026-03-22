@@ -17,7 +17,7 @@ class AdminDashboardController extends Controller
 
     public function index(InventoryAlertService $inventoryAlertService): View
     {
-        $totalReservations = Reservation::count();
+        $totalReservations = Reservation::whereNotIn('status', ['cancelled', 'canceled'])->count();
         $pendingReservations = Reservation::where('status', 'pending')->count();
         $menusSold = ReservationItem::count();
         $lowStocks = $inventoryAlertService->getLowStocks();

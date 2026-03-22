@@ -11,7 +11,6 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -37,7 +36,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',   // ✅ your manual role column
         'google_id',
         'must_change_password',
-        'avatar',     // ✅ Added
     ];
 
 
@@ -152,44 +150,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Normalize avatar paths from legacy/new formats into a public disk-relative path.
-     */
-    public function getNormalizedAvatarPathAttribute(): ?string
-    {
-        $value = $this->attributes['avatar'] ?? null;
-        if (!is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        $path = str_replace('\\', '/', ltrim(trim($value), '/'));
-
-        if (str_starts_with($path, 'storage/')) {
-            $path = substr($path, 8);
-        }
-
-        if (str_starts_with($path, 'public/')) {
-            $path = substr($path, 7);
-        }
-
-        $path = ltrim($path, '/');
-
-        return $path !== '' ? $path : null;
-    }
-
-    /**
-     * Public URL for avatar if the file exists; otherwise null for graceful fallback in views.
-     */
-    public function getAvatarUrlAttribute(): ?string
-    {
-        $path = $this->normalized_avatar_path;
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            return null;
-        }
-
-        return Storage::disk('public')->url($path);
-    }
-
-    /**
      * Get the reservations for the user.
      */
     public function reservations()
@@ -224,3 +184,4 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new ResetPasswordNotification($token));
     }
 }
+

@@ -59,23 +59,9 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-24">
                         <div class="flex flex-col items-center text-center mb-8">
                             <div class="relative w-32 h-32 mb-4 group">
-                                <div class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-green-50 flex items-center justify-center">
-                                    @if(Auth::user()->avatar_url)
-                                        <img src="{{ Auth::user()->avatar_url }}?v={{ Auth::user()->updated_at?->timestamp }}" alt="Profile" class="w-full h-full object-cover">
-                                    @else
-                                        <span class="text-5xl font-bold text-clsu-green">{{ substr(Auth::user()->name, 0, 1) }}</span>
-                                    @endif
+                                <div class="w-full h-full rounded-full border-4 border-white shadow-lg bg-green-50 flex items-center justify-center">
+                                    <span class="text-5xl font-bold text-clsu-green">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
                                 </div>
-                                <form id="avatar-form" action="{{ route('profile.avatar.update') }}" method="POST" enctype="multipart/form-data">
-                                    @csrf
-                                    @method('PATCH')
-                                    <template x-if="isEditing">
-                                        <label for="avatar-upload" class="absolute bottom-1 right-1 bg-gray-900 text-white p-2.5 rounded-full shadow-md cursor-pointer hover:bg-clsu-green transition-colors duration-200 border-2 border-white" title="Change Photo">
-                                            <i class="fa-solid fa-camera text-xs"></i>
-                                        </label>
-                                    </template>
-                                    <input type="file" id="avatar-upload" name="avatar" class="hidden" accept="image/*" onchange="document.getElementById('avatar-form').submit()">
-                                </form>
                             </div>
                             <h2 class="text-xl font-bold text-gray-900">{{ Auth::user()->name }}</h2>
                             <p class="text-sm text-gray-500 break-all">{{ Auth::user()->email }}</p>

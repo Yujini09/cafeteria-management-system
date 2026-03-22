@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\AdminReservationsExport;
 use App\Exceptions\IncompatibleRecipeUnitException;
+use App\Models\Notification as InAppNotification;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Models\ReservationAdditional;
@@ -137,6 +138,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
     public function show(Reservation $reservation)
     {
+        if (in_array(strtolower((string) $reservation->status), ['cancelled', 'canceled'], true)) {
+            abort(404);
+        }
+
         // Load all necessary relationships
         $reservation->load([
             'user',
@@ -150,6 +155,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
     public function exportPdf(Reservation $reservation)
     {
+        if (in_array(strtolower((string) $reservation->status), ['cancelled', 'canceled'], true)) {
+            abort(404);
+        }
+
         $reservation->loadMissing([
             'user',
             'items.menu.items',
@@ -1186,23 +1195,25 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         if ($reservation->user_id !== Auth::id()) return redirect()->back()->with('error', 'Unauthorized.');
         if ($reservation->status !== 'pending') return redirect()->back()->with('error', 'Only pending reservations can be cancelled.');
 
-        $reservation->status = 'cancelled';
-        $reservation->save();
+        $reservationId = (int) $reservation->id;
+
+        DB::transaction(function () use ($reservation, $reservationId) {
+            $this->deleteReservationNotifications($reservationId);
+            $reservation->delete();
+        });
 
         AuditTrail::record(
             Auth::id(),
             AuditDictionary::CANCELLED_RESERVATION,
             AuditDictionary::MODULE_RESERVATIONS,
-            "cancelled reservation #{$reservation->id}"
+            "cancelled reservation #{$reservationId} (deleted)"
         );
 
-        $this->createAdminNotification('order_cancelled', 'reservations', "Reservation #{$reservation->id} cancelled by customer", [
-            'reservation_id' => $reservation->id,
-            'customer_name' => optional($reservation->user)->name ?? 'Unknown',
-            'updated_by' => Auth::user()?->name ?? 'Unknown',
-        ]);
+        if ((int) session('receipt_reservation_id', 0) === $reservationId) {
+            session()->forget('receipt_reservation_id');
+        }
 
-        return redirect()->back()->with('success', 'Reservation cancelled successfully.');
+        return redirect()->route('reservation_details')->with('success', 'Reservation cancelled and removed successfully.');
     }
 
     protected function resolveReservationItemPrice(ReservationItem $item): float
@@ -1272,9 +1283,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         ?string $search = null
     ): Builder
     {
-        $q = Reservation::with(['user']);
+        $q = Reservation::with(['user'])
+            ->whereNotIn('status', ['cancelled', 'canceled']);
 
-        if (in_array($status, ['pending', 'approved', 'declined', 'cancelled'], true)) {
+        if (in_array($status, ['pending', 'approved', 'declined'], true)) {
             $q->where('status', $status);
         }
 
@@ -1378,6 +1390,7 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
     protected function getAdminDepartmentOptions(): array
     {
         return Reservation::with(['user:id,department'])
+            ->whereNotIn('status', ['cancelled', 'canceled'])
             ->get(['id', 'user_id', 'department'])
             ->map(function (Reservation $reservation) {
                 return $reservation->department ?? optional($reservation->user)->department;
@@ -1388,5 +1401,16 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             ->sort()
             ->values()
             ->all();
+    }
+
+    protected function deleteReservationNotifications(int $reservationId): void
+    {
+        InAppNotification::query()
+            ->where('module', 'reservations')
+            ->where(function (Builder $query) use ($reservationId) {
+                $query->where('metadata->reservation_id', $reservationId)
+                    ->orWhere('metadata->reservation_id', (string) $reservationId);
+            })
+            ->delete();
     }
 }

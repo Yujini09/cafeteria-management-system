@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password; // Ensure this is imported
 use Illuminate\View\View;
 
@@ -124,39 +123,6 @@ class ProfileController extends Controller
             'valid' => $isValid,
             'message' => $isValid ? null : 'The current password is incorrect.',
         ]);
-    }
-
-    /**
-     * Update the user's avatar.
-     */
-    public function updateAvatar(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'avatar' => ['required', 'image', 'max:2048'], // Max 2MB
-        ]);
-
-        $user = $request->user();
-
-        if ($request->hasFile('avatar')) {
-            $oldAvatarPath = $user->normalized_avatar_path;
-
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = $path;
-            $user->save();
-
-            if ($oldAvatarPath && $oldAvatarPath !== $path) {
-                Storage::disk('public')->delete($oldAvatarPath);
-            }
-
-            AuditTrail::record(
-                Auth::id(),
-                AuditDictionary::UPDATED_AVATAR,
-                AuditDictionary::MODULE_PROFILE,
-                'updated profile avatar'
-            );
-        }
-
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**
