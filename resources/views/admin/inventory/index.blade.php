@@ -96,8 +96,23 @@
     showDeleteModal: false, 
     editingItem: null, 
     deletingItem: null, 
+    createUnit: '',
     updateRoute: '{{ route('admin.inventory.update', ':id') }}',
     deleteRoute: '{{ route('admin.inventory.destroy', ':id') }}',
+    requiresWholeQuantity(unit) {
+        const normalized = this.normalizeInventoryUnit(unit);
+        return normalized === 'pieces' || normalized === 'packs';
+    },
+    qtyStepForUnit(unit) {
+        return this.requiresWholeQuantity(unit) ? '1' : '0.01';
+    },
+    normalizedQtyForInput(item) {
+        if (!item) return '';
+        const qty = Number(item.qty ?? 0);
+        if (!Number.isFinite(qty)) return '';
+        if (this.requiresWholeQuantity(item.unit)) return String(Math.round(qty));
+        return String(Math.round(qty * 100) / 100);
+    },
     normalizeInventoryUnit(unit) {
         const value = String(unit || '').trim().toLowerCase();
         if (!value) return '';
@@ -131,9 +146,9 @@
         return aliases[value] || value;
     }
 }"
-    x-init="window.addEventListener('close-inventory-modals', function() { showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null; })"
+    x-init="window.addEventListener('close-inventory-modals', function() { showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null; createUnit = ''; })"
     x-effect="document.body.classList.toggle('overflow-hidden', showCreateModal || showEditModal || showDeleteModal)"
-    @keydown.escape.window="showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null">
+    @keydown.escape.window="showCreateModal = false; showEditModal = false; showDeleteModal = false; editingItem = null; deletingItem = null; createUnit = ''">
 
     <x-success-modal name="inventory-create-success" title="Success!" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">Inventory item added successfully.</p>
@@ -386,7 +401,9 @@
                                 'id' => $item->id,
                                 'name' => $item->name,
                                 'category' => $item->category,
-                                'qty' => $item->qty,
+                                'qty' => in_array($item->unit, ['pieces', 'packs'], true)
+                                    ? (int) round((float) $item->qty)
+                                    : round((float) $item->qty, 2),
                                 'unit' => $item->unit,
                                 'expiry_date' => $item->expiry_date,
                             ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
@@ -407,7 +424,7 @@
                                     $qtyClass = $item->qty <= 5 ? 'status-critical' : ($item->qty <= 10 ? 'status-warning' : 'status-good');
                                 @endphp
                                 <span class="status-badge {{ $qtyClass }} inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide">
-                                    {{ $item->qty }}
+                                    {{ in_array($item->unit, ['pieces', 'packs'], true) ? number_format((float) $item->qty, 0) : number_format((float) $item->qty, 2) }}
                                 </span>
                             </td>
 
@@ -497,12 +514,12 @@
 
                 <div>
                     <label for="create_qty" class="block text-sm font-medium text-admin-neutral-700">Quantity</label>
-                    <input type="number" name="qty" id="create_qty" min="0" step="0.001" required class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
+                    <input type="number" name="qty" id="create_qty" min="0" :step="qtyStepForUnit(createUnit)" required class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                 </div>
 
                 <div>
                     <label for="create_unit" class="block text-sm font-medium text-admin-neutral-700">Unit</label>
-                    <select name="unit" id="create_unit" required class="admin-select w-full" data-admin-select="true">
+                    <select name="unit" id="create_unit" required x-model="createUnit" class="admin-select w-full" data-admin-select="true">
                         <option value="">Select a unit</option>
                         @foreach ($inventoryUnits as $inventoryUnit)
                             <option value="{{ $inventoryUnit }}">{{ $inventoryUnit === 'pieces' ? 'piece/s' : $inventoryUnit }}</option>
@@ -559,7 +576,7 @@
 
                 <div>
                     <label for="edit_qty" class="block text-sm font-medium text-admin-neutral-700">Quantity</label>
-                    <input type="number" name="qty" id="edit_qty" min="0" step="0.001" required x-bind:value="editingItem ? editingItem.qty : ''" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
+                    <input type="number" name="qty" id="edit_qty" min="0" :step="qtyStepForUnit(editingItem ? editingItem.unit : '')" required x-bind:value="normalizedQtyForInput(editingItem)" class="w-full rounded-admin border px-admin-input py-2.5 text-sm text-admin-neutral-700 transition-colors duration-admin focus:outline-none focus:ring-2 border-admin-neutral-300 focus:border-admin-primary focus:ring-admin-primary/20">
                 </div>
 
                 <div>
@@ -712,7 +729,7 @@ document.addEventListener('livewire:navigated', function() {
 
         return number.toLocaleString(undefined, {
             minimumFractionDigits: 0,
-            maximumFractionDigits: 3,
+            maximumFractionDigits: 2,
         });
     }
 

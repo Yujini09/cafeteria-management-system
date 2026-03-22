@@ -15,6 +15,7 @@ use App\Models\AuditTrail;
 use App\Support\RecipeUnit;
 use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class InventoryItemController extends Controller
@@ -172,13 +173,14 @@ class InventoryItemController extends Controller
     {
         $data = $request->validate([
             'name'  => 'required|string|max:255',
-            'qty'   => 'required|numeric|min:0',
+            'qty'   => ['required', 'numeric', 'min:0'],
             'unit'  => 'required|string|max:50',
             'expiry_date' => 'nullable|date',
             'category' => 'required|string|max:100'
         ]);
 
         $data['unit'] = $this->normalizeAndValidateInventoryUnit($data['unit']);
+        $data['qty'] = $this->normalizeAndValidateInventoryQuantity($data['qty'], $data['unit']);
 
         $item = InventoryItem::create($data);
 
@@ -218,13 +220,14 @@ class InventoryItemController extends Controller
     {
         $data = $request->validate([
             'name'  => 'required|string|max:255',
-            'qty'   => 'required|numeric|min:0',
+            'qty'   => ['required', 'numeric', 'min:0'],
             'unit'  => 'required|string|max:50',
             'expiry_date' => 'nullable|date',
             'category' => 'required|string|max:100'
         ]);
 
         $data['unit'] = $this->normalizeAndValidateInventoryUnit($data['unit']);
+        $data['qty'] = $this->normalizeAndValidateInventoryQuantity($data['qty'], $data['unit']);
         $this->validateLinkedRecipeUnits($inventory, $data['unit']);
 
         $oldQty = $inventory->qty;
@@ -238,8 +241,8 @@ class InventoryItemController extends Controller
                 'inventory_item_id' => $inventory->id,
                 'item_name' => $inventory->name,
                 'type' => InventoryUsageLog::TYPE_MANUAL_ADJUSTMENT,
-                'quantity_change' => round($quantityChange, 3),
-                'new_balance' => round($newQtyValue, 3),
+                'quantity_change' => round($quantityChange, 2),
+                'new_balance' => round($newQtyValue, 2),
                 'user_id' => Auth::id(),
             ]);
         }
@@ -344,6 +347,35 @@ class InventoryItemController extends Controller
         }
 
         return $normalizedUnit;
+    }
+
+    private function normalizeAndValidateInventoryQuantity(mixed $quantity, string $unit): float
+    {
+        $rules = ['qty' => ['required', 'numeric', 'min:0']];
+
+        if ($this->requiresWholeQuantity($unit)) {
+            $rules['qty'][] = 'integer';
+        } else {
+            $rules['qty'][] = 'decimal:0,2';
+        }
+
+        Validator::make(
+            ['qty' => $quantity],
+            $rules,
+            [
+                'qty.integer' => 'Quantity for piece/s and packs must be a whole number.',
+                'qty.decimal' => 'Quantity must have at most 2 decimal places.',
+            ]
+        )->validate();
+
+        $precision = $this->requiresWholeQuantity($unit) ? 0 : 2;
+
+        return (float) round((float) $quantity, $precision);
+    }
+
+    private function requiresWholeQuantity(string $unit): bool
+    {
+        return in_array($unit, ['pieces', 'packs'], true);
     }
 
     private function validateLinkedRecipeUnits(InventoryItem $inventory, string $targetStockUnit): void

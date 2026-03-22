@@ -5,9 +5,10 @@ namespace App\Notifications;
 use App\Mail\StandardAppMail;
 use App\Models\Reservation;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class ReservationPlaced extends Notification
+class ReservationPlaced extends Notification implements ShouldQueue
 {
     use Queueable;
 

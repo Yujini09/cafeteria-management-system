@@ -9,7 +9,7 @@ class InventoryItem extends Model
     protected $fillable = ['name','qty','unit','category','expiry_date'];
 
     protected $casts = [
-        'qty' => 'decimal:3',
+        'qty' => 'decimal:2',
         'expiry_date' => 'date',
     ];
 

@@ -899,8 +899,25 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                     continue;
                 }
 
+                $stockUnit = RecipeUnit::normalize($inventoryItem->unit);
+                $requiresWholeQuantity = in_array($stockUnit, ['pieces', 'packs'], true);
+                if ($requiresWholeQuantity) {
+                    $required = (float) ceil($required);
+                }
+
                 $previousBalance = (float) ($inventoryItem->qty ?? 0);
+                if ($requiresWholeQuantity) {
+                    $previousBalance = (float) round($previousBalance, 0);
+                }
+
                 $newBalance = max(0, $previousBalance - $required);
+                if ($requiresWholeQuantity) {
+                    $newBalance = (float) round($newBalance, 0);
+                    $quantityChange = (float) round($newBalance - $previousBalance, 0);
+                } else {
+                    $newBalance = round($newBalance, 2);
+                    $quantityChange = round($newBalance - $previousBalance, 2);
+                }
 
                 $inventoryItem->qty = $newBalance;
                 $inventoryItem->save();
@@ -909,8 +926,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                     'inventory_item_id' => $inventoryItem->id,
                     'item_name' => $inventoryItem->name ?? ($row['name'] ?? 'Unknown'),
                     'type' => InventoryUsageLog::TYPE_AUTO_DEDUCT,
-                    'quantity_change' => round($required * -1, 3),
-                    'new_balance' => round($newBalance, 3),
+                    'quantity_change' => $quantityChange,
+                    'new_balance' => $newBalance,
                     'reservation_id' => $reservation->id,
                     'user_id' => $performedByUserId,
                 ]);
