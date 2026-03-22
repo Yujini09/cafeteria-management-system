@@ -557,6 +557,19 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                 AuditDictionary::MODULE_RESERVATIONS,
                 ($isEditing ? 'updated' : 'created') . " reservation #{$savedReservationId}"
             );
+
+            if (!$isEditing) {
+                $this->createAdminNotification(
+                    'reservation_created',
+                    'reservations',
+                    "Reservation #{$savedReservationId} placed by customer",
+                    [
+                        'reservation_id' => $savedReservationId,
+                        'customer_name' => Auth::user()?->name ?? 'Unknown',
+                        'created_by' => Auth::user()?->name ?? 'Unknown',
+                    ]
+                );
+            }
         }
 
         // Clear session data

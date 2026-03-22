@@ -376,8 +376,8 @@ class SuperAdminController extends Controller
         $notificationService = new NotificationService();
         $user = Auth::user();
 
-        // Get unique notifications for the user
-        $notifications = $notificationService->getNotificationsForUser($user, 20);
+        // Get notifications for the user
+        $notifications = $notificationService->getNotificationsForUser($user, 100);
 
         return response()->json($notifications);
     }
@@ -389,7 +389,19 @@ class SuperAdminController extends Controller
             abort(403);
         }
 
-        Notification::where('user_id', $user->id)->update(['read' => true]);
+        $data = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $ids = collect($data['ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->values();
+
+        if ($ids->isNotEmpty()) {
+            Notification::whereIn('id', $ids)->update(['read' => true]);
+        }
 
         return response()->json(['success' => true]);
     }

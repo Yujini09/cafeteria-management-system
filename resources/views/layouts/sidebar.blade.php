@@ -1007,7 +1007,7 @@
                                             @click.stop="toggleRead(item.id)"
                                             @keydown.enter.stop
                                             @keydown.space.stop>
-                                        <span x-text="item.read ? 'Mark as unread' : 'Mark as read'"></span>
+                                        <span>Mark as read</span>
                                     </button>
                                 </div>
                             </div>
@@ -1338,10 +1338,14 @@
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-                    this.items = this.items.map(item => item.id === id
-                        ? { ...item, read: Boolean(read) }
-                        : item
-                    );
+                    if (Boolean(read)) {
+                        this.items = this.items.filter(item => item.id !== id);
+                    } else {
+                        this.items = this.items.map(item => item.id === id
+                            ? { ...item, read: false }
+                            : item
+                        );
+                    }
                     this.updateUnread();
                 });
             },
@@ -1351,12 +1355,16 @@
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json',
+                        'Content-Type': 'application/json',
                     },
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        ids: this.items.map(item => item.id),
+                    })
                 })
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    this.items = this.items.map(item => ({ ...item, read: true }));
+                    this.items = [];
                     this.updateUnread();
                 })
                 .catch(error => console.error('Error marking all notifications read:', error));
@@ -1364,8 +1372,7 @@
             toggleRead(id) {
                 const target = this.items.find(item => item.id === id);
                 if (!target) return;
-                const nextRead = !target.read;
-                this.setNotificationRead(id, nextRead)
+                this.setNotificationRead(id, true)
                 .catch(error => console.error('Error toggling notification read:', error));
             },
             fetchNotifications() {
@@ -1388,7 +1395,8 @@
                         if (!exists) seen.push(notification);
                         return seen;
                     }, []);
-                    this.items = uniqueNotifications.map(notification => {
+                    const unreadNotifications = uniqueNotifications.filter(notification => !Boolean(notification.read));
+                    this.items = unreadNotifications.map(notification => {
                         const metadata = notification.metadata || {};
                         const actor = metadata.updated_by
                             || metadata.generated_by
@@ -1402,7 +1410,7 @@
                             actor: actor || 'System',
                             description: notification.description || 'Unknown Action',
                             time: notification.created_at ? new Date(notification.created_at).toLocaleString() : 'Unknown Time',
-                            read: Boolean(notification.read),
+                            read: false,
                             targetUrl: this.resolveNotificationUrl(notification),
                         };
                     });

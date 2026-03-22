@@ -85,7 +85,7 @@ class NotificationService
      * @param int $limit Number of notifications to retrieve
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getNotificationsForUser($user, int $limit = 20)
+    public function getNotificationsForUser($user, int $limit = 100)
     {
         $baseQuery = Notification::with('user');
 
