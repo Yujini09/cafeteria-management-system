@@ -475,7 +475,7 @@
 
         /* Collapsed State + Hover: Floating tooltip */
         .sidebar.close .menu-list-item:hover .link-text {
-            position: fixed !important;
+            position: absolute !important;
             display: block !important;
             background: var(--active-bg);
             color: var(--active-text);
@@ -489,6 +489,9 @@
             font-size: 0.8rem;
             white-space: nowrap;
             visibility: visible !important;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
         }
         
         .sidebar.close .menu-list-item:hover .link-text::before {
@@ -1122,26 +1125,7 @@
     {!! \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts() !!}
 
     <script>
-    function positionTooltips() {
-        if (!document.querySelector('.sidebar.close')) return;
-        const menuItems = document.querySelectorAll('.sidebar.close .menu-list-item');
-        menuItems.forEach(item => {
-            item.removeEventListener('mouseenter', positionTooltipHandler);
-            item.addEventListener('mouseenter', positionTooltipHandler);
-        });
-    }
-
-    function positionTooltipHandler(e) {
-        const item = this;
-        const tooltip = item.querySelector('.link-text');
-        if (!tooltip) return;
-        const icon = item.querySelector('.menu-icon');
-        if (!icon) return;
-        const rect = icon.getBoundingClientRect();
-        const sidebarWidth = 72;
-        tooltip.style.left = (sidebarWidth + 10) + 'px';
-        tooltip.style.top = (rect.top + (rect.height / 2) - 10) + 'px';
-    }
+    function positionTooltips() {}
 
     let sidebarModalBlurObserver = null;
     const ADMIN_MODAL_Z_INDEX = '220';

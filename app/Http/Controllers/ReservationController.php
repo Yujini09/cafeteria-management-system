@@ -10,10 +10,13 @@ use App\Models\ReservationItem;
 use App\Models\ReservationAdditional;
 use App\Models\InventoryItem;
 use App\Models\InventoryUsageLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
+use App\Notifications\ReservationPlaced;
 use App\Notifications\ReservationStatusChanged;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AuditTrail;
@@ -569,6 +572,8 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
                         'created_by' => Auth::user()?->name ?? 'Unknown',
                     ]
                 );
+
+                $this->sendReservationPlacedEmails($savedReservationId);
             }
         }
 
@@ -1252,6 +1257,51 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void
     {
         (new NotificationService())->createAdminNotification($action, $module, $description, $metadata);
+    }
+
+    protected function sendReservationPlacedEmails(int $reservationId): void
+    {
+        $reservation = Reservation::with(['user'])->find($reservationId);
+        if (!$reservation) {
+            return;
+        }
+
+        $submittedBy = optional($reservation->user)->name
+            ?? $reservation->contact_person
+            ?? 'Customer';
+
+        $customer = $reservation->user;
+        if ($customer && is_string($customer->email) && trim($customer->email) !== '') {
+            try {
+                NotificationFacade::send($customer, new ReservationPlaced($reservation, $submittedBy));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send reservation placed email to customer.', [
+                    'reservation_id' => $reservation->id,
+                    'customer_id' => $customer->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $adminRecipients = User::query()
+            ->whereIn('role', ['admin', 'superadmin'])
+            ->whereNotNull('email')
+            ->where('email', '!=', '')
+            ->get();
+
+        if ($adminRecipients->isEmpty()) {
+            return;
+        }
+
+        try {
+            NotificationFacade::send($adminRecipients, new ReservationPlaced($reservation, $submittedBy));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send reservation placed email to admin recipients.', [
+                'reservation_id' => $reservation->id,
+                'recipient_count' => $adminRecipients->count(),
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     protected function resolveAdminIndexFilters(Request $request): array
