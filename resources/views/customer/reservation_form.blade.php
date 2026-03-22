@@ -183,21 +183,21 @@
                     <h2 class="text-2xl font-bold text-gray-800 border-b pb-4">Personal & Event Information</h2>
 
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
                         <input type="text" id="name" name="name" placeholder="Enter your name" required
                             value="{{ $val('name', Auth::user()->name) }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
 
                     <div>
-                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department/Office</label>
+                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department/Office <span class="text-red-500">*</span></label>
                         <input type="text" id="department" name="department" placeholder="Enter your department/office" required
                             value="{{ $val('department') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
                     
                     <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address <span class="text-red-500">*</span></label>
                         <input type="text" id="address" name="address" placeholder="Enter your address" required
                             value="{{ $val('address') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
@@ -213,7 +213,7 @@
                     </div>
 
                     <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-red-500">*</span></label>
                         <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
                             value="{{ $val('phone') }}"
                             pattern="[0-9]{10,15}"
@@ -224,14 +224,14 @@
                     </div>
 
                     <div>
-                        <label for="activity" class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
+                        <label for="activity" class="block text-sm font-medium text-gray-700 mb-1">Activity <span class="text-red-500">*</span></label>
                         <input type="text" id="activity" name="activity" placeholder="Enter your activity" required
                             value="{{ $val('activity') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
 
                     <div>
-                        <label for="venue" class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
+                        <label for="venue" class="block text-sm font-medium text-gray-700 mb-1">Venue <span class="text-red-500">*</span></label>
                         <input type="text" id="venue" name="venue" placeholder="Enter your venue" required
                             value="{{ $val('venue') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
@@ -259,7 +259,7 @@
                     <h2 class="text-2xl font-bold text-gray-800 border-b pb-4">Date & Time Selection</h2>
 
                     <div class="space-y-4">
-                        <label class="block text-base font-medium text-gray-700 mb-2">Date Range</label>
+                        <label class="block text-base font-medium text-gray-700 mb-2">Date Range <span class="text-red-500">*</span></label>
                         
                         <div id="selected-date-range-container" class="flex flex-col gap-2 mb-4 min-h-[40px] items-start p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                             <div id="no-dates-selected" class="text-sm text-gray-500 italic">
