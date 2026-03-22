@@ -309,8 +309,8 @@
                             <span class="block text-sm font-semibold text-gray-800 leading-none">{{ explode(' ', Auth::user()->name)[0] }}</span>
                         </div>
                         <div class="w-8 h-8 md:w-9 md:h-9 rounded-full bg-green-100 border-2 border-green-200 flex items-center justify-center overflow-hidden">
-                            @if(Auth::user()->avatar)
-                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="w-full h-full object-cover" alt="Profile picture">
+                            @if(Auth::user()->avatar_url)
+                                <img src="{{ Auth::user()->avatar_url }}?v={{ Auth::user()->updated_at?->timestamp }}" class="w-full h-full object-cover" alt="Profile picture">
                             @else
                                 <img src="{{ asset('images/clsu-logo.png') }}" class="w-full h-full object-cover" alt="Default profile picture">
                             @endif

@@ -138,12 +138,15 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
+            $oldAvatarPath = $user->normalized_avatar_path;
+
             $path = $request->file('avatar')->store('avatars', 'public');
             $user->avatar = $path;
             $user->save();
+
+            if ($oldAvatarPath && $oldAvatarPath !== $path) {
+                Storage::disk('public')->delete($oldAvatarPath);
+            }
 
             AuditTrail::record(
                 Auth::id(),

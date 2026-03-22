@@ -60,8 +60,8 @@
                         <div class="flex flex-col items-center text-center mb-8">
                             <div class="relative w-32 h-32 mb-4 group">
                                 <div class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg bg-green-50 flex items-center justify-center">
-                                    @if(Auth::user()->avatar)
-                                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="Profile" class="w-full h-full object-cover">
+                                    @if(Auth::user()->avatar_url)
+                                        <img src="{{ Auth::user()->avatar_url }}?v={{ Auth::user()->updated_at?->timestamp }}" alt="Profile" class="w-full h-full object-cover">
                                     @else
                                         <span class="text-5xl font-bold text-clsu-green">{{ substr(Auth::user()->name, 0, 1) }}</span>
                                     @endif
