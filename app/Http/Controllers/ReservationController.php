@@ -158,6 +158,10 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
 
     public function exportPdf(Reservation $reservation)
     {
+        if (!$this->canExportReservationPdf($reservation)) {
+            abort(404);
+        }
+
         if (in_array(strtolower((string) $reservation->status), ['cancelled', 'canceled'], true)) {
             abort(404);
         }
@@ -1269,6 +1273,20 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
         }
 
         return ($reservation->payment_status ?? 'unpaid') === 'paid' ? 'Paid' : 'Unpaid';
+    }
+
+    protected function canExportReservationPdf(Reservation $reservation): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        if (in_array((string) $user->role, ['admin', 'superadmin'], true)) {
+            return true;
+        }
+
+        return (int) $reservation->user_id === (int) $user->id;
     }
 
     protected function createAdminNotification(string $action, string $module, string $description, array $metadata = []): void

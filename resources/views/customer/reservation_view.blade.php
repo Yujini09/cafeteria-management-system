@@ -96,7 +96,7 @@
             <div class="action-buttons">
             @if($reservation->status == 'approved')
                 <button onclick="printReceipt()" class="download-btn">Print</button>
-                <button onclick="downloadAsPDF(this)" class="download-btn bg-blue-600 hover:bg-blue-700">Download PDF</button>
+                <a href="{{ route('reservation.export.pdf', $reservation->id) }}" class="download-btn bg-blue-600 hover:bg-blue-700">Download PDF</a>
             @endif
             </div>
         </div>
@@ -373,18 +373,7 @@
 </section>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
     function printReceipt() { window.print(); }
-    function downloadAsPDF() {
-        const element = document.getElementById('receipt-content');
-        html2pdf().set({
-            margin: [0.3, 0.3, 0.3, 0.3],
-            filename: 'Reservation-{{ $reservation->id }}.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-        }).from(element).save();
-    }
 </script>
 @endsection

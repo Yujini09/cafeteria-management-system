@@ -130,14 +130,22 @@
         align-self: start;
     }
 
-    .reservation-show-view .reservation-actions-affix-anchor {
+    .reservation-show-view .reservation-right-rail-sticky {
         position: sticky;
         top: 5.5rem;
         z-index: 20;
     }
+
+    .reservation-show-view .reservation-actions-affix-anchor {
+        position: static;
+    }
 }
 
 @media (max-width: 1023px) {
+    .reservation-show-view .reservation-right-rail-sticky {
+        position: static;
+    }
+
     .reservation-show-view .reservation-actions-affix-anchor {
         position: static;
     }
@@ -826,7 +834,8 @@
             </div>
         </div>
 
-        <div class="space-y-6 reservation-right-rail">
+        <div class="reservation-right-rail">
+            <div class="space-y-6 reservation-right-rail-sticky">
             <div class="info-card">
                 <div class="info-card-header">
                     <svg class="icon-md text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1059,6 +1068,8 @@
             </div>
             </div>
             @endif
+
+            </div>
 
             @if($r->status === 'declined' && !empty($r->decline_reason))
             <div class="info-card">

@@ -186,6 +186,8 @@ Route::middleware(['auth'])->group(function () {
         return view('customer.reservation_view', compact('reservation'));
     })->name('reservation.view');
 
+    Route::get('/reservations/{reservation}/export-pdf', [ReservationController::class, 'exportPdf'])->name('reservation.export.pdf');
+
     // 5b. Edit reservation (pending only)
     Route::get('/reservations/{reservation}/edit', [ReservationController::class, 'edit'])->name('reservation.edit');
 
