@@ -127,7 +127,8 @@
 
 @media (min-width: 1024px) {
     .reservation-show-view .reservation-right-rail {
-        align-self: start;
+        align-self: stretch;
+        min-height: 100%;
     }
 
     .reservation-show-view .reservation-right-rail-sticky {
