@@ -320,7 +320,7 @@
                                 <span class="progress-dot progress-warning"></span>
                                 <div>
                                     <span class="font-semibold text-neutral-900 text-sm block">{{ $item->name }}</span>
-                                    <span class="text-neutral-500 text-xs">{{ $item->qty }} {{ $item->unit }} remaining</span>
+                                    <span class="text-neutral-500 text-xs">{{ \App\Support\RecipeUnit::formatStockQuantity($item->qty, $item->unit) }} {{ $item->unit }} remaining</span>
                                 </div>
                             </div>
                             <span class="text-orange-700 font-semibold text-xs">Low</span>
@@ -414,7 +414,7 @@
                     @forelse($expiringSoon->take(5) as $item)
                     <tr>
                         <td class="font-semibold text-neutral-900 text-sm">{{ $item->name }}</td>
-                        <td class="text-neutral-600 text-sm">{{ $item->qty }} {{ $item->unit }}</td>
+                        <td class="text-neutral-600 text-sm">{{ \App\Support\RecipeUnit::formatStockQuantity($item->qty, $item->unit) }} {{ $item->unit }}</td>
                         <td class="font-medium text-neutral-900 text-sm">
                             {{ \Carbon\Carbon::parse($item->expiry_date)->format('M j, Y') }}
                         </td>

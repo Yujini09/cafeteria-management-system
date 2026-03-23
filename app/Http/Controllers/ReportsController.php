@@ -236,7 +236,7 @@ class ReportsController extends Controller
 
     private function calculateCrmMetrics(Collection $customers): array
     {
-        $crmData = $customers->map(function ($customer) {
+        $crmRows = $customers->map(function ($customer) {
             $totalReservations = $customer->reservations->count();
             $approvedReservations = $customer->reservations->where('status', 'approved')->count();
             $totalSpent = $customer->reservations->where('status', 'approved')->sum(function ($reservation) {
@@ -256,8 +256,12 @@ class ReportsController extends Controller
                 'total_spent' => $totalSpent,
                 'last_reservation' => $customer->reservations->max('event_date')?->format('Y-m-d') ?? 'N/A',
             ];
-        })->filter(function ($customer) {
-            return $customer['total_reservations'] > 0;
+        });
+
+        $totalCustomerReservations = (int) $crmRows->sum('total_reservations');
+
+        $crmData = $crmRows->filter(function ($customer) {
+            return $customer['approved_reservations'] > 0;
         })->values();
 
         $activeCustomers = $crmData->count();
@@ -268,23 +272,43 @@ class ReportsController extends Controller
             ->unique()
             ->count();
         $totalSpend = (float) $crmData->sum('total_spent');
+        $returningCustomers = $crmData
+            ->filter(fn (array $row) => (int) ($row['approved_reservations'] ?? 0) > 1)
+            ->count();
         $topCustomersByRevenue = $crmData
             ->sortByDesc('total_spent')
             ->take(5)
             ->mapWithKeys(fn ($row) => [$row['name'] => (float) $row['total_spent']]);
 
         $topCustomersByReservations = $crmData
-            ->sortByDesc('total_reservations')
+            ->sortByDesc('approved_reservations')
             ->take(5)
-            ->mapWithKeys(fn ($row) => [$row['name'] => (int) $row['total_reservations']]);
+            ->mapWithKeys(fn ($row) => [$row['name'] => (int) $row['approved_reservations']]);
+
+        $topMenusByOrders = $customers
+            ->flatMap(function ($customer) {
+                return $customer->reservations
+                    ->where('status', 'approved')
+                    ->flatMap(function ($reservation) {
+                        return $reservation->items ?? collect();
+                    });
+            })
+            ->filter(fn ($item) => $item && $item->menu)
+            ->groupBy(fn ($item) => $item->menu->name ?? 'Unknown Menu')
+            ->map(fn (Collection $items) => (int) $items->sum(fn ($item) => (int) ($item->quantity ?? 0)))
+            ->sortDesc()
+            ->take(5);
 
         return [
             'crmData' => $crmData,
             'activeCustomers' => $activeCustomers,
             'activeOffices' => $activeOffices,
             'totalSpend' => $totalSpend,
+            'returningCustomers' => $returningCustomers,
+            'totalCustomerReservations' => $totalCustomerReservations,
             'topCustomersByRevenue' => $topCustomersByRevenue,
             'topCustomersByReservations' => $topCustomersByReservations,
+            'topMenusByOrders' => $topMenusByOrders,
         ];
     }
 
@@ -295,7 +319,7 @@ class ReportsController extends Controller
             : 'N/A';
 
         $topReservationCustomerLabel = $crmMetrics['topCustomersByReservations']->isNotEmpty()
-            ? ($crmMetrics['topCustomersByReservations']->keys()->first() . ' (' . number_format((int) $crmMetrics['topCustomersByReservations']->first(), 0) . ' reservations)')
+            ? ($crmMetrics['topCustomersByReservations']->keys()->first() . ' (' . number_format((int) $crmMetrics['topCustomersByReservations']->first(), 0) . ' approved reservations)')
             : 'N/A';
 
         return [
@@ -307,6 +331,20 @@ class ReportsController extends Controller
                     'kpi-primary',
                     null
                 ),
+                $this->buildKpiCard(
+                    'Returning Customers',
+                    number_format((float) ($crmMetrics['returningCustomers'] ?? 0), 0),
+                    'fas fa-repeat',
+                    'kpi-success',
+                    null
+                ),
+                $this->buildKpiCard(
+                    'Total Customer Reservations',
+                    number_format((float) ($crmMetrics['totalCustomerReservations'] ?? 0), 0),
+                    'fas fa-calendar-check',
+                    'kpi-neutral',
+                    null
+                ),
             ],
             'charts' => [
                 'trend' => [
@@ -315,17 +353,25 @@ class ReportsController extends Controller
                     'labels' => ($crmMetrics['topCustomersByRevenue'] ?? collect())->keys()->values()->all(),
                     'values' => ($crmMetrics['topCustomersByRevenue'] ?? collect())->values()->all(),
                 ],
+                'breakdown' => [
+                    'type' => 'bar',
+                    'label' => 'Top 5 Most Ordered Menus',
+                    'labels' => ($crmMetrics['topMenusByOrders'] ?? collect())->keys()->values()->all(),
+                    'values' => ($crmMetrics['topMenusByOrders'] ?? collect())->values()->all(),
+                ],
                 'topContributors' => [
                     'type' => 'bar',
-                    'label' => 'Top 5 Customers by Reservations',
+                    'label' => 'Top 5 Customers by Approved Reservations',
                     'labels' => ($crmMetrics['topCustomersByReservations'] ?? collect())->keys()->values()->all(),
                     'values' => ($crmMetrics['topCustomersByReservations'] ?? collect())->values()->all(),
                 ],
             ],
             'insights' => [
                 'Total customers / offices: ' . number_format((float) ($crmMetrics['activeCustomers'] ?? 0), 0) . ' / ' . number_format((float) ($crmMetrics['activeOffices'] ?? 0), 0),
+                'Returning customers (2+ approved reservations): ' . number_format((float) ($crmMetrics['returningCustomers'] ?? 0), 0),
+                'Total customer reservations: ' . number_format((float) ($crmMetrics['totalCustomerReservations'] ?? 0), 0),
                 'Top customer by revenue: ' . $topRevenueCustomerLabel,
-                'Top customer by reservations: ' . $topReservationCustomerLabel,
+                'Top customer by approved reservations: ' . $topReservationCustomerLabel,
             ],
         ];
     }

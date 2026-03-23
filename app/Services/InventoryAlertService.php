@@ -95,6 +95,7 @@ class InventoryAlertService
             'name' => $item->name,
             'current_stock' => $item->qty,
             'min_stock' => $this->resolveLowStockThreshold($item),
+            'unit' => RecipeUnit::display($item->unit),
             'expiry_date' => $this->hasExpiryDateColumn() && !empty($item->expiry_date)
                 ? Carbon::parse($item->expiry_date)->toDateString()
                 : null,

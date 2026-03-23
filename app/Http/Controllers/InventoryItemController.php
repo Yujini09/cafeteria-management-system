@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\InventoryItem;
 use App\Models\InventoryUsageLog;
+use App\Models\ReservationItem;
 use App\Services\InventoryAlertService;
 use App\Services\NotificationService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +17,7 @@ use App\Models\AuditTrail;
 use App\Support\RecipeUnit;
 use App\Support\AuditDictionary;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -230,22 +233,41 @@ class InventoryItemController extends Controller
         $data['qty'] = $this->normalizeAndValidateInventoryQuantity($data['qty'], $data['unit']);
         $this->validateLinkedRecipeUnits($inventory, $data['unit']);
 
-        $oldQty = $inventory->qty;
-        $inventory->update($data);
+        $oldQty = 0.0;
+        $autoDeductionSummary = ['deducted_total' => 0.0, 'deduction_count' => 0];
 
-        $oldQtyValue = (float) $oldQty;
-        $newQtyValue = (float) $inventory->qty;
-        $quantityChange = $newQtyValue - $oldQtyValue;
-        if (abs($quantityChange) > 0.000001) {
-            InventoryUsageLog::create([
-                'inventory_item_id' => $inventory->id,
-                'item_name' => $inventory->name,
-                'type' => InventoryUsageLog::TYPE_MANUAL_ADJUSTMENT,
-                'quantity_change' => round($quantityChange, 2),
-                'new_balance' => round($newQtyValue, 2),
-                'user_id' => Auth::id(),
-            ]);
-        }
+        DB::transaction(function () use (&$inventory, $data, &$autoDeductionSummary, &$oldQty) {
+            $lockedInventory = InventoryItem::query()
+                ->whereKey($inventory->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $oldQty = (float) ($lockedInventory->qty ?? 0);
+            $lockedInventory->update($data);
+            $lockedInventory->refresh();
+
+            $newQtyValue = (float) ($lockedInventory->qty ?? 0);
+            $quantityChange = $newQtyValue - $oldQty;
+
+            if (abs($quantityChange) > 0.000001) {
+                $precision = RecipeUnit::requiresWholeQuantity($lockedInventory->unit) ? 0 : 2;
+                InventoryUsageLog::create([
+                    'inventory_item_id' => $lockedInventory->id,
+                    'item_name' => $lockedInventory->name,
+                    'type' => InventoryUsageLog::TYPE_MANUAL_ADJUSTMENT,
+                    'quantity_change' => round($quantityChange, $precision),
+                    'new_balance' => round($newQtyValue, $precision),
+                    'user_id' => Auth::id(),
+                ]);
+            }
+
+            if ($quantityChange > 0.000001) {
+                $autoDeductionSummary = $this->autoDeductApprovedReservationsOnRestock($lockedInventory, Auth::id());
+                $lockedInventory->refresh();
+            }
+
+            $inventory = $lockedInventory;
+        });
 
         AuditTrail::record(
             Auth::id(),
@@ -268,7 +290,18 @@ class InventoryItemController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Item updated successfully',
-                'item' => $inventory
+                'item' => $inventory,
+                'auto_deducted_quantity' => $autoDeductionSummary['deducted_total'],
+                'auto_deducted_reservations' => $autoDeductionSummary['deduction_count'],
+            ]);
+        }
+
+        if (($autoDeductionSummary['deducted_total'] ?? 0) > 0) {
+            return redirect()->route('admin.inventory.index')->with('inventory_auto_deducted', [
+                'item_name' => $inventory->name,
+                'unit' => $inventory->unit,
+                'deducted_total' => $autoDeductionSummary['deducted_total'],
+                'deduction_count' => $autoDeductionSummary['deduction_count'],
             ]);
         }
 
@@ -376,6 +409,245 @@ class InventoryItemController extends Controller
     private function requiresWholeQuantity(string $unit): bool
     {
         return in_array($unit, ['pieces', 'packs'], true);
+    }
+
+    /**
+     * Auto-deducts outstanding approved reservation requirements for a restocked inventory item.
+     * Deduction priority: earliest event date, then earliest created reservation.
+     *
+     * @return array{deducted_total: float, deduction_count: int}
+     */
+    private function autoDeductApprovedReservationsOnRestock(InventoryItem $inventory, ?int $performedByUserId = null): array
+    {
+        $stockUnit = RecipeUnit::display($inventory->unit);
+        if ($stockUnit === '') {
+            return ['deducted_total' => 0.0, 'deduction_count' => 0];
+        }
+
+        $requiresWholeQuantity = RecipeUnit::requiresWholeQuantity($stockUnit);
+        $precision = $requiresWholeQuantity ? 0 : 2;
+        $availableBalance = (float) ($inventory->qty ?? 0);
+        $availableBalance = $requiresWholeQuantity
+            ? (float) floor($availableBalance)
+            : round($availableBalance, $precision);
+
+        if ($availableBalance <= 0) {
+            return ['deducted_total' => 0.0, 'deduction_count' => 0];
+        }
+
+        $requirementsByReservation = $this->buildApprovedReservationRequirementsForInventory($inventory, $stockUnit);
+        if (empty($requirementsByReservation)) {
+            return ['deducted_total' => 0.0, 'deduction_count' => 0];
+        }
+
+        $reservationIds = array_map('intval', array_keys($requirementsByReservation));
+
+        $deductedTotalsByReservation = [];
+        InventoryUsageLog::query()
+            ->where('inventory_item_id', $inventory->id)
+            ->where('type', InventoryUsageLog::TYPE_AUTO_DEDUCT)
+            ->whereIn('reservation_id', $reservationIds)
+            ->get(['reservation_id', 'quantity_change'])
+            ->each(function (InventoryUsageLog $log) use (&$deductedTotalsByReservation) {
+                $reservationId = (int) ($log->reservation_id ?? 0);
+                if ($reservationId <= 0) {
+                    return;
+                }
+
+                $quantityChange = (float) ($log->quantity_change ?? 0);
+                if ($quantityChange >= 0) {
+                    return;
+                }
+
+                if (!isset($deductedTotalsByReservation[$reservationId])) {
+                    $deductedTotalsByReservation[$reservationId] = 0.0;
+                }
+
+                $deductedTotalsByReservation[$reservationId] += abs($quantityChange);
+            });
+
+        $pendingReservations = [];
+        foreach ($requirementsByReservation as $reservationId => $requirement) {
+            $required = (float) ($requirement['required'] ?? 0);
+            if ($required <= 0) {
+                continue;
+            }
+
+            $alreadyDeducted = (float) ($deductedTotalsByReservation[(int) $reservationId] ?? 0);
+            $outstanding = max(0.0, $required - $alreadyDeducted);
+            $outstanding = $requiresWholeQuantity
+                ? (float) max(0, (int) ceil($outstanding))
+                : round($outstanding, $precision);
+
+            if ($outstanding <= 0) {
+                continue;
+            }
+
+            $pendingReservations[] = [
+                'reservation_id' => (int) $reservationId,
+                'outstanding' => $outstanding,
+                'event_date' => (string) ($requirement['event_date'] ?? ''),
+                'created_at' => (string) ($requirement['created_at'] ?? ''),
+            ];
+        }
+
+        if (empty($pendingReservations)) {
+            return ['deducted_total' => 0.0, 'deduction_count' => 0];
+        }
+
+        usort($pendingReservations, function (array $a, array $b): int {
+            $eventDateA = $a['event_date'] !== '' ? $a['event_date'] : '9999-12-31';
+            $eventDateB = $b['event_date'] !== '' ? $b['event_date'] : '9999-12-31';
+            if ($eventDateA !== $eventDateB) {
+                return strcmp($eventDateA, $eventDateB);
+            }
+
+            $createdAtA = $a['created_at'] !== '' ? $a['created_at'] : '9999-12-31 23:59:59';
+            $createdAtB = $b['created_at'] !== '' ? $b['created_at'] : '9999-12-31 23:59:59';
+            if ($createdAtA !== $createdAtB) {
+                return strcmp($createdAtA, $createdAtB);
+            }
+
+            return (int) ($a['reservation_id'] ?? 0) <=> (int) ($b['reservation_id'] ?? 0);
+        });
+
+        $deductedTotal = 0.0;
+        $deductionCount = 0;
+
+        foreach ($pendingReservations as $pendingReservation) {
+            if ($availableBalance <= 0) {
+                break;
+            }
+
+            $outstanding = (float) ($pendingReservation['outstanding'] ?? 0);
+            if ($outstanding <= 0) {
+                continue;
+            }
+
+            if ($requiresWholeQuantity) {
+                $deduction = (float) min((int) floor($availableBalance), (int) ceil($outstanding));
+            } else {
+                $deduction = round(min($availableBalance, $outstanding), $precision);
+            }
+
+            if ($deduction <= 0) {
+                continue;
+            }
+
+            $availableBalance = $requiresWholeQuantity
+                ? (float) round($availableBalance - $deduction, 0)
+                : round($availableBalance - $deduction, $precision);
+            $deductedTotal += $deduction;
+            $deductionCount++;
+
+            InventoryUsageLog::create([
+                'inventory_item_id' => $inventory->id,
+                'item_name' => $inventory->name,
+                'type' => InventoryUsageLog::TYPE_AUTO_DEDUCT,
+                'quantity_change' => -$deduction,
+                'new_balance' => $availableBalance,
+                'reservation_id' => (int) $pendingReservation['reservation_id'],
+                'user_id' => $performedByUserId,
+            ]);
+        }
+
+        if ($deductedTotal > 0) {
+            $inventory->qty = $availableBalance;
+            $inventory->save();
+        }
+
+        return [
+            'deducted_total' => round($deductedTotal, $precision),
+            'deduction_count' => $deductionCount,
+        ];
+    }
+
+    /**
+     * Builds required stock amounts per approved reservation for one inventory item.
+     *
+     * @return array<int, array{required: float, event_date: ?string, created_at: ?string}>
+     */
+    private function buildApprovedReservationRequirementsForInventory(InventoryItem $inventory, string $stockUnit): array
+    {
+        $inventoryItemId = (int) $inventory->id;
+
+        $reservationItems = ReservationItem::query()
+            ->whereHas('reservation', function (Builder $query) {
+                $query->where('status', 'approved');
+            })
+            ->whereHas('menu.items.recipes', function (Builder $query) use ($inventoryItemId) {
+                $query->where('inventory_item_id', $inventoryItemId);
+            })
+            ->with([
+                'reservation:id,event_date,created_at,status',
+                'menu.items.recipes' => function (Builder $query) use ($inventoryItemId) {
+                    $query->where('inventory_item_id', $inventoryItemId)
+                        ->select(['id', 'menu_item_id', 'inventory_item_id', 'quantity_needed', 'unit']);
+                },
+            ])
+            ->get(['id', 'reservation_id', 'menu_id', 'quantity']);
+
+        $requirements = [];
+
+        foreach ($reservationItems as $reservationItem) {
+            $reservation = $reservationItem->reservation;
+            if (!$reservation || $reservation->status !== 'approved') {
+                continue;
+            }
+
+            $reservationId = (int) ($reservation->id ?? 0);
+            if ($reservationId <= 0) {
+                continue;
+            }
+
+            $reservationQuantity = (float) ($reservationItem->quantity ?? 0);
+            if ($reservationQuantity <= 0) {
+                continue;
+            }
+
+            $requiredForReservationItem = 0.0;
+            foreach ($reservationItem->menu?->items ?? [] as $menuItem) {
+                foreach ($menuItem->recipes ?? [] as $recipe) {
+                    if ((int) ($recipe->inventory_item_id ?? 0) !== $inventoryItemId) {
+                        continue;
+                    }
+
+                    $recipeQuantityNeeded = (float) ($recipe->quantity_needed ?? 0);
+                    if ($recipeQuantityNeeded <= 0) {
+                        continue;
+                    }
+
+                    $requiredRecipeAmount = $recipeQuantityNeeded * $reservationQuantity;
+                    $converted = RecipeUnit::convertToStockUnit(
+                        $requiredRecipeAmount,
+                        RecipeUnit::normalize($recipe->unit) ?? $stockUnit,
+                        $stockUnit
+                    );
+
+                    if ($converted === null || $converted <= 0) {
+                        continue;
+                    }
+
+                    $requiredForReservationItem += $converted;
+                }
+            }
+
+            if ($requiredForReservationItem <= 0) {
+                continue;
+            }
+
+            if (!isset($requirements[$reservationId])) {
+                $requirements[$reservationId] = [
+                    'required' => 0.0,
+                    'event_date' => $reservation->event_date?->format('Y-m-d'),
+                    'created_at' => $reservation->created_at?->format('Y-m-d H:i:s'),
+                ];
+            }
+
+            $requirements[$reservationId]['required'] += $requiredForReservationItem;
+        }
+
+        return $requirements;
     }
 
     private function validateLinkedRecipeUnits(InventoryItem $inventory, string $targetStockUnit): void

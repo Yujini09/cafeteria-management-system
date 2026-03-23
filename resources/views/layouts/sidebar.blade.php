@@ -1651,7 +1651,8 @@
                     }
 
                     if (alert.status === 'low_stock') {
-                        return `Stock: ${alert.current_stock} (min ${alert.min_stock})`;
+                        const stockUnit = normalizeInventoryUnit(alert.unit);
+                        return `Stock: ${formatInventoryQuantity(alert.current_stock, stockUnit)} (min ${formatInventoryQuantity(alert.min_stock, stockUnit)})`;
                     }
 
                     return `Exp: ${alert.expiry_date || 'N/A'}`;
@@ -1672,6 +1673,43 @@
                 function getSafeNumber(value, fallback = 0) {
                     const numeric = Number(value);
                     return Number.isFinite(numeric) ? numeric : fallback;
+                }
+
+                function normalizeInventoryUnit(unit) {
+                    const value = String(unit || '').trim().toLowerCase();
+                    if (!value) {
+                        return '';
+                    }
+
+                    const aliases = {
+                        pc: 'pieces',
+                        pcs: 'pieces',
+                        piece: 'pieces',
+                        pieces: 'pieces',
+                        pack: 'packs',
+                        packs: 'packs',
+                    };
+
+                    return aliases[value] || value;
+                }
+
+                function requiresWholeQuantity(unit) {
+                    const normalized = normalizeInventoryUnit(unit);
+                    return normalized === 'pieces' || normalized === 'packs';
+                }
+
+                function formatInventoryQuantity(value, unit) {
+                    const numeric = getSafeNumber(value, 0);
+                    const normalizedValue = requiresWholeQuantity(unit) ? Math.round(numeric) : numeric;
+
+                    if (requiresWholeQuantity(unit) || Number.isInteger(normalizedValue)) {
+                        return normalizedValue.toLocaleString();
+                    }
+
+                    return normalizedValue.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                    });
                 }
 
                 function getSafeTime(value) {

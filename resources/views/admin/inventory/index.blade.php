@@ -6,6 +6,7 @@
     $hasActiveInventoryFilters = filled($search ?? '') || filled($category ?? '') || ($sort ?? 'name') !== 'name' || ($direction ?? 'asc') !== 'asc';
     $resetInventoryFiltersUrl = route('admin.inventory.index');
     $inventoryUnits = \App\Support\RecipeUnit::RECIPE_UNITS;
+    $inventoryAutoDeducted = session('inventory_auto_deducted');
     $nextQtyDirection = $sort === 'qty' && $direction === 'asc' ? 'desc' : 'asc';
     $qtySortIcon = $sort === 'qty' && $direction === 'desc' ? 'fa-arrow-down' : 'fa-arrow-up';
     $qtySortIconClass = $sort === 'qty'
@@ -159,6 +160,31 @@
     <x-success-modal name="inventory-delete-success" title="Deleted" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
         <p class="text-sm text-admin-neutral-600">Inventory item deleted successfully.</p>
     </x-success-modal>
+
+    <x-admin.ui.modal name="inventory-restock-auto-deduct" title="Auto-deduct Applied" variant="info" maxWidth="sm" icon="fa-box-open">
+        <p class="text-sm text-admin-neutral-700">
+            Restocked stock was automatically deducted for approved reservations with pending shortages.
+        </p>
+        <dl class="mt-4 space-y-2 text-sm">
+            <div class="flex items-center justify-between gap-3">
+                <dt class="text-admin-neutral-500">Item:</dt>
+                <dd id="inventoryAutoDeductedItem" class="font-semibold text-admin-neutral-900">-</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+                <dt class="text-admin-neutral-500">Auto-deducted:</dt>
+                <dd id="inventoryAutoDeductedQty" class="font-semibold text-admin-success">0</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+                <dt class="text-admin-neutral-500">Reservations affected:</dt>
+                <dd id="inventoryAutoDeductedCount" class="font-semibold text-admin-neutral-900">0</dd>
+            </div>
+        </dl>
+        <x-slot name="footer">
+            <x-admin.ui.button.primary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'inventory-restock-auto-deduct' }))">
+                Close & Refresh
+            </x-admin.ui.button.primary>
+        </x-slot>
+    </x-admin.ui.modal>
 
     <x-admin.ui.modal name="inventoryUsageLogs" title="Inventory Usage Logs" icon="fa-file-lines" iconStyle="fas" variant="info" maxWidth="4xl">
         <button type="button"
@@ -397,11 +423,12 @@
                 <tbody>
                     @forelse($items as $item)
                         @php
+                            $requiresWholeQuantity = \App\Support\RecipeUnit::requiresWholeQuantity($item->unit);
                             $itemPayload = json_encode([
                                 'id' => $item->id,
                                 'name' => $item->name,
                                 'category' => $item->category,
-                                'qty' => in_array($item->unit, ['pieces', 'packs'], true)
+                                'qty' => $requiresWholeQuantity
                                     ? (int) round((float) $item->qty)
                                     : round((float) $item->qty, 2),
                                 'unit' => $item->unit,
@@ -424,7 +451,7 @@
                                     $qtyClass = $item->qty <= 5 ? 'status-critical' : ($item->qty <= 10 ? 'status-warning' : 'status-good');
                                 @endphp
                                 <span class="status-badge {{ $qtyClass }} inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide">
-                                    {{ in_array($item->unit, ['pieces', 'packs'], true) ? number_format((float) $item->qty, 0) : number_format((float) $item->qty, 2) }}
+                                    {{ \App\Support\RecipeUnit::formatStockQuantity($item->qty, $item->unit) }}
                                 </span>
                             </td>
 
@@ -680,6 +707,7 @@
 document.addEventListener('livewire:navigated', function() {
     const rootCloseEvent = new Event('close-inventory-modals');
     const inventoryUsageLogsEndpoint = @json(route('admin.inventory.usage-logs'));
+    const inventoryAutoDeductedFlash = @json($inventoryAutoDeducted);
     const inventoryUsagePerPage = 10;
     let allInventoryUsageLogs = [];
     let filteredInventoryUsageLogs = [];
@@ -717,17 +745,43 @@ document.addEventListener('livewire:navigated', function() {
         return 'bg-admin-neutral-100 text-admin-neutral-700 border-admin-neutral-200';
     }
 
-    function inventoryUsageFormatNumber(value) {
+    function inventoryUsageNormalizeUnit(unit) {
+        const value = inventoryUsageText(unit).toLowerCase();
+        if (!value) {
+            return '';
+        }
+
+        const aliases = {
+            pc: 'pieces',
+            pcs: 'pieces',
+            piece: 'pieces',
+            pieces: 'pieces',
+            pack: 'packs',
+            packs: 'packs',
+        };
+
+        return aliases[value] || value;
+    }
+
+    function inventoryUsageRequiresWholeQuantity(unit) {
+        const normalized = inventoryUsageNormalizeUnit(unit);
+        return normalized === 'pieces' || normalized === 'packs';
+    }
+
+    function inventoryUsageFormatNumber(value, unit = '') {
         const number = Number(value);
         if (!Number.isFinite(number)) {
             return '0';
         }
 
-        if (Number.isInteger(number)) {
-            return number.toLocaleString();
+        const requiresWholeQuantity = inventoryUsageRequiresWholeQuantity(unit);
+        const normalizedValue = requiresWholeQuantity ? Math.round(number) : number;
+
+        if (requiresWholeQuantity || Number.isInteger(normalizedValue)) {
+            return normalizedValue.toLocaleString();
         }
 
-        return number.toLocaleString(undefined, {
+        return normalizedValue.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 2,
         });
@@ -994,6 +1048,7 @@ document.addEventListener('livewire:navigated', function() {
             const typeValue = inventoryUsageText(log.type);
             const typeLabel = inventoryUsageTypeLabel(typeValue);
             const typeClass = inventoryUsageTypeBadgeClass(typeValue);
+            const stockUnit = inventoryUsageText(log.inventory_item?.unit || '');
             const quantityChange = Number(log.quantity_change ?? 0);
             const quantitySign = quantityChange > 0 ? '+' : '';
             const quantityClass = quantityChange > 0
@@ -1001,7 +1056,7 @@ document.addEventListener('livewire:navigated', function() {
                 : (quantityChange < 0 ? 'text-admin-danger' : 'text-admin-neutral-600');
             const newBalance = log.new_balance === null || typeof log.new_balance === 'undefined'
                 ? 'N/A'
-                : inventoryUsageFormatNumber(log.new_balance);
+                : inventoryUsageFormatNumber(log.new_balance, stockUnit);
             const reference = log.reservation_id ? `Reservation #${log.reservation_id}` : 'N/A';
             const performedBy = inventoryUsageText(log.user?.name || 'System');
             const dateInfo = inventoryUsageFormatDate(log.created_at);
@@ -1022,7 +1077,7 @@ document.addEventListener('livewire:navigated', function() {
                     </td>
                     <td class="py-3 px-4 align-top whitespace-nowrap">
                         <span class="font-semibold ${quantityClass}">
-                            ${inventoryUsageEscapeHtml(quantitySign + inventoryUsageFormatNumber(quantityChange))}
+                            ${inventoryUsageEscapeHtml(quantitySign + inventoryUsageFormatNumber(quantityChange, stockUnit))}
                         </span>
                     </td>
                     <td class="py-3 px-4 align-top whitespace-nowrap text-admin-neutral-700">
@@ -1393,6 +1448,72 @@ document.addEventListener('livewire:navigated', function() {
         window.dispatchEvent(new CustomEvent('admin-toast', { detail: { type: type, message: message } }));
     }
 
+    function formatAutoDeductQty(value, unit) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return '0';
+        }
+
+        const normalizedUnit = inventoryUsageNormalizeUnit(unit);
+        const requiresWholeQuantity = normalizedUnit === 'pieces' || normalizedUnit === 'packs';
+        const normalizedValue = requiresWholeQuantity ? Math.round(numeric) : numeric;
+
+        if (requiresWholeQuantity || Number.isInteger(normalizedValue)) {
+            return normalizedValue.toLocaleString();
+        }
+
+        return normalizedValue.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    function openInventoryAutoDeductModal(summary) {
+        const itemEl = document.getElementById('inventoryAutoDeductedItem');
+        const qtyEl = document.getElementById('inventoryAutoDeductedQty');
+        const countEl = document.getElementById('inventoryAutoDeductedCount');
+        if (!itemEl || !qtyEl || !countEl) {
+            return;
+        }
+
+        const itemName = inventoryUsageText(summary?.item_name || summary?.item?.name || 'Inventory item');
+        const unit = inventoryUsageText(summary?.unit || summary?.item?.unit || '');
+        const deductedTotal = Number(summary?.deducted_total ?? summary?.auto_deducted_quantity ?? 0);
+        const deductionCount = Number(summary?.deduction_count ?? summary?.auto_deducted_reservations ?? 0);
+        if (!Number.isFinite(deductedTotal) || deductedTotal <= 0) {
+            return;
+        }
+
+        itemEl.textContent = itemName;
+        qtyEl.textContent = `${formatAutoDeductQty(deductedTotal, unit)}${unit ? ` ${unit}` : ''}`;
+        countEl.textContent = Number.isFinite(deductionCount) ? String(Math.max(0, Math.round(deductionCount))) : '0';
+
+        window.__inventoryAutoDeductRefreshPending = true;
+        window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-restock-auto-deduct' }));
+    }
+
+    if (!window.__inventoryAutoDeductVisibilityBound) {
+        window.addEventListener('admin-modal-visibility', (event) => {
+            const modalName = event?.detail?.name;
+            const isOpen = Boolean(event?.detail?.open);
+            if (modalName !== 'inventory-restock-auto-deduct' || isOpen) {
+                return;
+            }
+
+            if (!window.__inventoryAutoDeductRefreshPending) {
+                return;
+            }
+
+            window.__inventoryAutoDeductRefreshPending = false;
+            setTimeout(() => { window.location.reload(); }, 120);
+        });
+        window.__inventoryAutoDeductVisibilityBound = true;
+    }
+
+    if (inventoryAutoDeductedFlash && Number(inventoryAutoDeductedFlash.deducted_total ?? 0) > 0) {
+        openInventoryAutoDeductModal(inventoryAutoDeductedFlash);
+    }
+
     async function submitForm(form) {
         const formData = new FormData(form);
         const token = getCsrfToken();
@@ -1478,9 +1599,21 @@ document.addEventListener('livewire:navigated', function() {
             const result = await submitForm(editForm);
             if (result !== null) {
                 window.dispatchEvent(rootCloseEvent);
-                window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-update-success' }));
                 window.dispatchEvent(new CustomEvent('refresh-admin-inventory-alerts'));
-                setTimeout(function(){ location.reload(); }, 700);
+                stopLoading(editForm);
+
+                const deductedTotal = Number(result?.auto_deducted_quantity ?? 0);
+                if (Number.isFinite(deductedTotal) && deductedTotal > 0) {
+                    openInventoryAutoDeductModal({
+                        item_name: result?.item?.name || '',
+                        unit: result?.item?.unit || '',
+                        deducted_total: deductedTotal,
+                        deduction_count: Number(result?.auto_deducted_reservations ?? 0),
+                    });
+                } else {
+                    window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-update-success' }));
+                    setTimeout(function(){ location.reload(); }, 700);
+                }
             } else {
                 stopLoading(editForm);
             }

@@ -52,6 +52,21 @@ class RecipeUnit
         return self::normalize($unit) ?? '';
     }
 
+    public static function requiresWholeQuantity(?string $unit): bool
+    {
+        $normalized = self::normalize($unit);
+
+        return in_array($normalized, ['pieces', 'packs'], true);
+    }
+
+    public static function formatStockQuantity(mixed $quantity, ?string $unit): string
+    {
+        $numeric = is_numeric($quantity) ? (float) $quantity : 0.0;
+        $precision = self::requiresWholeQuantity($unit) ? 0 : 2;
+
+        return number_format($numeric, $precision);
+    }
+
     public static function isAllowedRecipeUnit(?string $unit): bool
     {
         $normalized = self::normalize($unit);

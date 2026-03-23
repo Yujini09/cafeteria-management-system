@@ -137,7 +137,7 @@ class ReportsService
                 'last_reservation' => $customer->reservations->max('event_date')?->format('Y-m-d') ?? 'N/A',
             ];
         })->filter(function ($customer) {
-            return $customer['total_reservations'] > 0;
+            return $customer['approved_reservations'] > 0;
         });
     }
 }
