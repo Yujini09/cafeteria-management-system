@@ -480,12 +480,12 @@
         </div>
 
         <div id="activitiesTableContainer" class="min-w-0 shrink-0 overflow-x-auto rounded-admin border border-admin-neutral-200 bg-white modern-scrollbar">
-            <table class="modern-table table-fixed w-full min-w-[58rem]">
+            <table class="modern-table table-fixed w-full min-w-[52rem]">
                 <colgroup>
-                    <col class="w-56">
                     <col class="w-48">
-                    <col class="w-[30rem]">
-                    <col class="w-64">
+                    <col class="w-44">
+                    <col class="w-[22rem]">
+                    <col class="w-56">
                 </colgroup>
                 <thead>
                     <tr>

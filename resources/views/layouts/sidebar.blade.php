@@ -1581,6 +1581,7 @@
                 const modalName = 'inventory-alerts';
                 const pollIntervalMs = 20000;
                 const storageKey = @json('inventory_alert_signature_' . auth()->id());
+                const suppressModalOnceKey = @json('inventory_alert_suppress_once_' . auth()->id());
                 const listElementId = 'adminInventoryAlertsList';
                 const emptyStateId = 'adminInventoryAlertsEmptyState';
                 const badgeId = 'sidebarInventoryWarningBadge';
@@ -1616,6 +1617,27 @@
                         fallbackSignature = signature;
                     }
                 }
+
+                function consumeSuppressModalOnceFlag() {
+                    try {
+                        if (window.sessionStorage.getItem(suppressModalOnceKey) === '1') {
+                            window.sessionStorage.removeItem(suppressModalOnceKey);
+                            return true;
+                        }
+                    } catch (error) {
+                        // Ignore sessionStorage access failures.
+                    }
+
+                    return false;
+                }
+
+                window.suppressNextAdminInventoryAlertModal = function () {
+                    try {
+                        window.sessionStorage.setItem(suppressModalOnceKey, '1');
+                    } catch (error) {
+                        // Ignore sessionStorage access failures.
+                    }
+                };
 
                 function getAlertSignature(alerts) {
                     return alerts
@@ -1823,6 +1845,7 @@
                     const normalizedAlerts = Array.isArray(alerts) ? alerts : [];
                     const signature = getAlertSignature(normalizedAlerts);
                     const previousSignature = getStoredSignature();
+                    const shouldOpenOnChange = Boolean(openOnChange) && !consumeSuppressModalOnceFlag();
 
                     renderInventoryAlerts(normalizedAlerts);
                     updateSidebarInventoryBadge(normalizedAlerts.length);
@@ -1833,7 +1856,13 @@
                         return;
                     }
 
-                    if (openOnChange && signature !== previousSignature) {
+                    if (!shouldOpenOnChange) {
+                        setStoredSignature(signature);
+                        closeInventoryAlertsModal();
+                        return;
+                    }
+
+                    if (signature !== previousSignature) {
                         setStoredSignature(signature);
                         openInventoryAlertsModal();
                         return;
@@ -1891,8 +1920,11 @@
                     fetchInventoryAlerts(Boolean(openOnChange));
                 };
 
-                window.addEventListener('refresh-admin-inventory-alerts', () => {
-                    fetchInventoryAlerts(true);
+                window.addEventListener('refresh-admin-inventory-alerts', (event) => {
+                    const openOnChange = typeof event?.detail?.openOnChange === 'boolean'
+                        ? event.detail.openOnChange
+                        : true;
+                    fetchInventoryAlerts(openOnChange);
                 });
 
                 document.addEventListener('visibilitychange', () => {

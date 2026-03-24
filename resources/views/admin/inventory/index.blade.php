@@ -1579,7 +1579,12 @@ document.addEventListener('livewire:navigated', function() {
                 createForm.reset();
                 window.dispatchEvent(rootCloseEvent);
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'inventory-create-success' }));
-                window.dispatchEvent(new CustomEvent('refresh-admin-inventory-alerts'));
+                if (typeof window.suppressNextAdminInventoryAlertModal === 'function') {
+                    window.suppressNextAdminInventoryAlertModal();
+                }
+                window.dispatchEvent(new CustomEvent('refresh-admin-inventory-alerts', {
+                    detail: { openOnChange: false },
+                }));
                 setTimeout(function(){ location.reload(); }, 900);
             } else {
                 stopLoading(createForm);
