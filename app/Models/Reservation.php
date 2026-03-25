@@ -28,6 +28,7 @@ class Reservation extends Model
         'account_code',
         'payment_status',
         'or_number',
+        'or_receipt_photo_path',
     ];
 
     protected $casts = [

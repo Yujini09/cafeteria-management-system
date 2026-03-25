@@ -973,6 +973,17 @@
                             </div>
                         @endif
 
+                        @if(($r->payment_status ?? 'unpaid') === 'paid' && !empty($r->or_receipt_photo_path))
+                            <div class="mb-4">
+                                <dt class="text-gray-500 font-medium mb-2">OR Receipt Photo:</dt>
+                                <dd>
+                                    <a href="{{ asset('storage/' . $r->or_receipt_photo_path) }}" target="_blank" rel="noopener noreferrer" class="inline-block rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                        <img src="{{ asset('storage/' . $r->or_receipt_photo_path) }}" alt="OR Receipt Photo" class="h-32 w-auto object-cover">
+                                    </a>
+                                </dd>
+                            </div>
+                        @endif
+
                         @if($r->status === 'approved' && ($r->payment_status ?? 'unpaid') !== 'paid')
                             <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-mark-paid' }))" class="w-full action-btn action-btn-approve justify-center mt-2 focus:outline-none">
                                 <i class="fas fa-receipt text-lg mr-2"></i> Mark as Paid (Enter OR)
@@ -1012,7 +1023,7 @@
                 @endif
                 <x-admin.ui.modal name="reservation-mark-paid" title="Mark as Paid" variant="info" maxWidth="sm" icon="fa-receipt">
                     <p class="text-sm text-admin-neutral-600 mb-4">Enter the official receipt number from the cashier to mark this reservation as fully paid.</p>
-                    <form id="reservation-mark-paid-form" method="POST" action="{{ route('admin.reservations.mark_paid', $r->id) }}" class="space-y-4" data-action-loading>
+                    <form id="reservation-mark-paid-form" method="POST" action="{{ route('admin.reservations.mark_paid', $r->id) }}" class="space-y-4" data-action-loading enctype="multipart/form-data">
                         @csrf
                         <div>
                             <label for="or_number" class="block text-sm font-semibold text-admin-neutral-700 mb-2">Official Receipt (OR) Number</label>
@@ -1025,6 +1036,20 @@
                                 placeholder="e.g. OR-1029384"
                                 class="block w-full rounded-admin border border-admin-neutral-300 bg-admin-neutral-50 px-3 py-2 text-sm text-admin-neutral-900 placeholder-admin-neutral-400 transition-all duration-200 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                             >
+                        </div>
+                        <div>
+                            <label for="or_receipt_photo" class="block text-sm font-semibold text-admin-neutral-700 mb-2">OR Receipt Photo</label>
+                            <input
+                                type="file"
+                                name="or_receipt_photo"
+                                id="or_receipt_photo"
+                                accept="image/png,image/jpeg,image/webp"
+                                class="block w-full rounded-admin border border-admin-neutral-300 bg-admin-neutral-50 px-3 py-2 text-sm text-admin-neutral-900 transition-all duration-200 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                            >
+                            <p class="mt-1 text-xs text-admin-neutral-500">Optional. Supported: JPG, PNG, WEBP. Max size: 5MB.</p>
+                            @error('or_receipt_photo')
+                                <p class="mt-1 text-xs text-admin-danger">{{ $message }}</p>
+                            @enderror
                         </div>
                     </form>
                     <x-slot name="footer">
@@ -1215,7 +1240,7 @@
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-overlap-warning' }));
             }
 
-            if (@json($errors->has('or_number'))) {
+            if (@json($errors->has('or_number') || $errors->has('or_receipt_photo'))) {
                 window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-mark-paid' }));
             }
 

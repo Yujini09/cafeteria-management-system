@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Illuminate\Support\Facades\Storage;
 use App\Notifications\ReservationPlaced;
 use App\Notifications\ReservationStatusChanged;
 use Illuminate\Support\Facades\Auth;
@@ -123,22 +124,37 @@ class ReservationController extends Controller
         );
     }
 
-// Add this method to handle the OR Number submission
-public function markPaid(\Illuminate\Http\Request $request, $id)
-{
-    $request->validate([
-        'or_number' => 'required|string|max:255'
-    ]);
+    // Add this method to handle the OR Number submission
+    public function markPaid(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'or_number' => ['required', 'string', 'max:255'],
+            'or_receipt_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
 
-    $reservation = \App\Models\Reservation::findOrFail($id);
+        $reservation = Reservation::findOrFail($id);
+        $orReceiptPhotoPath = $reservation->or_receipt_photo_path;
 
-    $reservation->update([
-        'payment_status' => 'paid',
-        'or_number' => $request->or_number
-    ]);
+        if ($request->hasFile('or_receipt_photo')) {
+            $uploadedPath = $request->file('or_receipt_photo')->store('or-receipts', 'public');
 
-    return back()->with('success', 'Reservation marked as paid successfully!');
-}
+            if (!empty($orReceiptPhotoPath)
+                && $orReceiptPhotoPath !== $uploadedPath
+                && Storage::disk('public')->exists($orReceiptPhotoPath)) {
+                Storage::disk('public')->delete($orReceiptPhotoPath);
+            }
+
+            $orReceiptPhotoPath = $uploadedPath;
+        }
+
+        $reservation->update([
+            'payment_status' => 'paid',
+            'or_number' => $validated['or_number'],
+            'or_receipt_photo_path' => $orReceiptPhotoPath,
+        ]);
+
+        return back()->with('success', 'Reservation marked as paid successfully!');
+    }
 
     public function show(Reservation $reservation)
     {
