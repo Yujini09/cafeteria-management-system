@@ -915,7 +915,7 @@
                             <div class="recipe-control-wrap">
                               <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" @focus="syncRecipeUnitWithIngredient(recipe)" @change="recipe.unit = normalizeUnit(recipe.unit)" class="form-select" required>
                                 <option value="">Select unit</option>
-                                <template x-for="unitOption in getCompatibleRecipeUnits(recipe.inventory_item_id)" :key="'create-unit-' + index + '-' + rIndex + '-' + unitOption">
+                                <template x-for="unitOption in getRecipeUnitOptions(recipe)" :key="'create-unit-' + index + '-' + rIndex + '-' + unitOption">
                                   <option :value="unitOption" x-text="unitOption === 'pieces' ? 'piece/s' : unitOption"></option>
                                 </template>
                               </select>
@@ -1177,7 +1177,7 @@
                             <div class="recipe-control-wrap">
                               <select :name="'items[' + index + '][recipes][' + rIndex + '][unit]'" x-model="recipe.unit" @focus="syncRecipeUnitWithIngredient(recipe)" @change="recipe.unit = normalizeUnit(recipe.unit)" class="form-select" required>
                                 <option value="">Select unit</option>
-                                <template x-for="unitOption in getCompatibleRecipeUnits(recipe.inventory_item_id)" :key="'edit-unit-' + index + '-' + rIndex + '-' + unitOption">
+                                <template x-for="unitOption in getRecipeUnitOptions(recipe)" :key="'edit-unit-' + index + '-' + rIndex + '-' + unitOption">
                                   <option :value="unitOption" x-text="unitOption === 'pieces' ? 'piece/s' : unitOption"></option>
                                 </template>
                               </select>

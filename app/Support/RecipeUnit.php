@@ -27,8 +27,11 @@ class RecipeUnit
         'pc' => 'pieces',
         'pcs' => 'pieces',
         'piece' => 'pieces',
+        'piece/s' => 'pieces',
+        'pc/s' => 'pieces',
         'pieces' => 'pieces',
         'pack' => 'packs',
+        'pack/s' => 'packs',
         'packs' => 'packs',
     ];
 

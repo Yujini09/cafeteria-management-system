@@ -50,6 +50,15 @@
     cursor: default;
     background-color: transparent;
 }
+.calendar-day-approved {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    cursor: not-allowed;
+    box-shadow: inset 0 0 0 1px #fca5a5;
+}
+.calendar-day-approved:hover {
+    background-color: #fee2e2 !important;
+}
 .calendar-day-in-range {
     background-color: rgba(34, 197, 94, 0.2); 
 }
@@ -91,6 +100,16 @@
     color: white;
     border-color: #4b5563;
 }
+.calendar-legend-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    display: inline-block;
+}
+.calendar-legend-approved {
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+}
 .time-section {
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
@@ -118,6 +137,7 @@
         'message' => null,
         'note' => null,
     ];
+    $approvedReservedDates = array_values(array_unique($approvedReservedDates ?? []));
     $reservationFormLocked = !$isEditMode && ($reservationCreationLimit['blocked'] ?? false);
     
     // Helper to get value (Old Input > Session Data > Auth/Default)
@@ -263,7 +283,7 @@
                         
                         <div id="selected-date-range-container" class="flex flex-col gap-2 mb-4 min-h-[40px] items-start p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
                             <div id="no-dates-selected" class="text-sm text-gray-500 italic">
-                                Click one date for a 1-day reservation, or click another date to extend the range.
+                                Click one date for a 1-day reservation, or click another date to extend the range. Dates marked in red are already taken.
                             </div>
                             <div id="date-range-display" class="hidden">
                                 <div class="flex items-center gap-2">
@@ -296,10 +316,20 @@
                             </div>
                             <div id="calendar-days" class="calendar-grid">
                                 </div>
+                            <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-600">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="calendar-legend-dot bg-gray-200 border border-gray-300"></span>
+                                    <span>Unavailable (past/today)</span>
+                                </span>
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="calendar-legend-dot calendar-legend-approved"></span>
+                                    <span>Taken by approved reservation</span>
+                                </span>
+                            </div>
                         </div>
                         
                         <div id="day-tabs-container" class="hidden mt-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Time Selection for Each Day</h3>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Time Selection for Each Day <span class="text-red-500">*</span></h3>
                             <div id="day-tabs" class="flex flex-wrap gap-2 mb-4">
                                 </div>
                             
@@ -396,6 +426,7 @@
     const menuSelectionBtn = document.getElementById('menu-selection-btn');
     const validationMessageEl = document.getElementById('validation-message');
     const reservationFormLocked = @json($reservationFormLocked);
+    const approvedReservedDates = new Set(@json($approvedReservedDates));
 
     // Utility function to format date as YYYY-MM-DD
     const formatDate = (date) => {
@@ -404,6 +435,7 @@
         const d = String(date.getDate()).padStart(2, '0');
         return `${y}-${m}-${d}`;
     };
+    const todayStr = formatDate(new Date());
 
     // Utility function to parse a YYYY-MM-DD string as a local Date (avoids timezone shifts)
     const parseDateLocal = (dateStr) => {
@@ -454,6 +486,13 @@
         return dates;
     };
 
+    const isApprovedReservedDate = (dateStr) => approvedReservedDates.has(dateStr);
+
+    const isDateUnavailable = (dateStr) => dateStr <= todayStr || isApprovedReservedDate(dateStr);
+
+    const findUnavailableDateInRange = (startDate, endDate) =>
+        getDatesInRange(startDate, endDate).find((dateStr) => isDateUnavailable(dateStr)) ?? null;
+
     // Utility function to check if a date is within the selected range
     const isDateInRange = (dateStr) => {
         if (!selectedStartDate || !selectedEndDate) return false;
@@ -483,8 +522,6 @@
         const daysInPrevMonth = new Date(year, month, 0).getDate();
         
         calendarDaysEl.innerHTML = '';
-        
-        const todayStr = formatDate(new Date());
 
         // Previous month days
         for (let i = firstDayOfMonth; i > 0; i--) {
@@ -510,14 +547,18 @@
                 }
             }
             
-            const isUnavailable = dateStr <= todayStr;
-            if (isUnavailable) {
+            const isPastOrToday = dateStr <= todayStr;
+            const isApprovedReserved = isApprovedReservedDate(dateStr);
+            const isUnavailable = isPastOrToday || isApprovedReserved;
+            if (isPastOrToday) {
                 status = 'other-month'; 
+            } else if (isApprovedReserved) {
+                status = 'approved-booked';
             }
             
             const cell = createCalendarDay(day, status, dateStr);
 
-            if (selectedDays.includes(dateStr) && !hasCompleteTime(dateStr)) {
+            if (selectedDays.includes(dateStr) && !hasCompleteTime(dateStr) && status !== 'approved-booked') {
                 cell.classList.add('calendar-day-pending-time');
             }
             
@@ -564,6 +605,13 @@
             cell.style.backgroundColor = 'transparent';
             cell.style.color = '#9ca3af';
             cell.style.fontWeight = '500';
+        } else if (status === 'approved-booked') {
+            cell.classList.add('calendar-day-approved');
+            cell.style.backgroundColor = '#fee2e2';
+            cell.style.color = '#b91c1c';
+            cell.style.fontWeight = '700';
+            cell.style.cursor = 'not-allowed';
+            cell.title = 'This date is already taken by an approved reservation.';
         }
 
         cell.textContent = day;
@@ -574,6 +622,10 @@
     };
 
     const handleDateSelection = (dateStr) => {
+        if (isDateUnavailable(dateStr)) {
+            return;
+        }
+
         const existingDayTimes = dayTimes;
 
         if (isSelectingStartDate) {
@@ -593,13 +645,24 @@
 
             const startDate = parseDateLocal(selectedStartDate);
             const endDate = parseDateLocal(dateStr);
+            let nextStartDate = selectedStartDate;
+            let nextEndDate = dateStr;
             
             if (endDate < startDate) {
-                selectedEndDate = selectedStartDate;
-                selectedStartDate = dateStr;
-            } else {
-                selectedEndDate = dateStr;
+                nextEndDate = selectedStartDate;
+                nextStartDate = dateStr;
             }
+
+            const unavailableDate = findUnavailableDateInRange(nextStartDate, nextEndDate);
+            if (unavailableDate) {
+                validationMessageEl.textContent = `Date ${formatDateDisplay(unavailableDate)} is already taken by an approved reservation. Please choose another date.`;
+                validationMessageEl.classList.remove('hidden');
+                renderCalendar();
+                return;
+            }
+
+            selectedStartDate = nextStartDate;
+            selectedEndDate = nextEndDate;
             
             isSelectingStartDate = true; 
             selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
@@ -696,14 +759,14 @@
                 <h4 class="font-semibold text-gray-700 mb-3">Time Selection for ${formatDateDisplay(day)}</h4>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="start_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">Start Time</label>
+                        <label for="start_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">Start Time <span class="text-red-500">*</span></label>
                         <input type="time" id="start_time_${index}" name="start_time_${index}" 
                             value="${dayTimes[day]?.start_time || ''}" 
                             class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
                             data-day="${day}" data-type="start_time">
                     </div>
                     <div>
-                        <label for="end_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">End Time</label>
+                        <label for="end_time_${index}" class="block text-xs font-semibold text-gray-500 mb-1">End Time <span class="text-red-500">*</span></label>
                         <input type="time" id="end_time_${index}" name="end_time_${index}" 
                             value="${dayTimes[day]?.end_time || ''}" 
                             class="day-time-input w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none text-center focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm"
@@ -836,26 +899,36 @@
         const savedTimes = document.getElementById('day_times_input').value;
 
         if (savedStart && savedEnd) {
-            selectedStartDate = savedStart;
-            selectedEndDate = savedEnd;
-            isSelectingStartDate = true; 
+            const unavailableDate = findUnavailableDateInRange(savedStart, savedEnd);
 
-            if (savedTimes) {
-                try {
-                    dayTimes = JSON.parse(savedTimes);
-                } catch(e) { console.error('Error parsing saved times', e); }
+            if (!unavailableDate) {
+                selectedStartDate = savedStart;
+                selectedEndDate = savedEnd;
+                isSelectingStartDate = true; 
+
+                if (savedTimes) {
+                    try {
+                        dayTimes = JSON.parse(savedTimes);
+                    } catch(e) { console.error('Error parsing saved times', e); }
+                }
+
+                selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
+                dayTimes = normalizeDayTimes(selectedDays, dayTimes);
+
+                const startDateObj = parseDateLocal(selectedStartDate);
+                if (!isNaN(startDateObj.getTime())) {
+                     currentDisplayDate = startDateObj;
+                }
+                
+                updateDateRangeDisplay();
+                renderDayTabs();
+            } else {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                dayTimesInput.value = '';
+                validationMessageEl.textContent = `Date ${formatDateDisplay(unavailableDate)} is already taken by an approved reservation. Please choose another date.`;
+                validationMessageEl.classList.remove('hidden');
             }
-
-            selectedDays = getDatesInRange(selectedStartDate, selectedEndDate);
-            dayTimes = normalizeDayTimes(selectedDays, dayTimes);
-
-            const startDateObj = parseDateLocal(selectedStartDate);
-            if (!isNaN(startDateObj.getTime())) {
-                 currentDisplayDate = startDateObj;
-            }
-            
-            updateDateRangeDisplay();
-            renderDayTabs();
         }
 
         renderCalendar();

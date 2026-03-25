@@ -645,8 +645,11 @@ document.addEventListener('alpine:init', () => {
           pc: 'pieces',
           pcs: 'pieces',
           piece: 'pieces',
+          'piece/s': 'pieces',
+          'pc/s': 'pieces',
           pieces: 'pieces',
           pack: 'packs',
+          'pack/s': 'packs',
           packs: 'packs',
         };
 
@@ -681,23 +684,21 @@ document.addEventListener('alpine:init', () => {
 
         return ['ml', 'liters', 'g', 'kgs', 'pieces', 'packs'];
       },
+      getRecipeUnitOptions(recipe) {
+        const allowedUnits = this.getCompatibleRecipeUnits(recipe?.inventory_item_id);
+        const currentUnit = this.normalizeUnit(recipe?.unit);
+
+        if (!currentUnit || allowedUnits.includes(currentUnit)) {
+          return allowedUnits;
+        }
+
+        return [currentUnit, ...allowedUnits];
+      },
       syncRecipeUnitWithIngredient(recipe) {
         if (!recipe) return;
 
         const normalizedRecipeUnit = this.normalizeUnit(recipe.unit);
-        const allowedUnits = this.getCompatibleRecipeUnits(recipe.inventory_item_id);
-
-        if (!normalizedRecipeUnit) {
-          recipe.unit = '';
-          return;
-        }
-
-        if (!allowedUnits.includes(normalizedRecipeUnit)) {
-          recipe.unit = '';
-          return;
-        }
-
-        recipe.unit = normalizedRecipeUnit;
+        recipe.unit = normalizedRecipeUnit || '';
       },
       normalizeIngredientId(id) {
         if (id === null || id === undefined || id === '') return null;
@@ -1065,8 +1066,11 @@ document.addEventListener('alpine:init', () => {
           pc: 'pieces',
           pcs: 'pieces',
           piece: 'pieces',
+          'piece/s': 'pieces',
+          'pc/s': 'pieces',
           pieces: 'pieces',
           pack: 'packs',
+          'pack/s': 'packs',
           packs: 'packs',
         };
 

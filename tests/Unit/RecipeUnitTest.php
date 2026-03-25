@@ -6,6 +6,8 @@ it('normalizes canonical units and accepted aliases', function () {
     expect(RecipeUnit::normalize('pc'))->toBe('pieces');
     expect(RecipeUnit::normalize('pcs'))->toBe('pieces');
     expect(RecipeUnit::normalize('piece'))->toBe('pieces');
+    expect(RecipeUnit::normalize('piece/s'))->toBe('pieces');
+    expect(RecipeUnit::normalize('pc/s'))->toBe('pieces');
     expect(RecipeUnit::normalize('kg'))->toBe('kgs');
     expect(RecipeUnit::normalize('liter'))->toBe('liters');
     expect(RecipeUnit::normalize('litre'))->toBe('liters');
@@ -13,6 +15,7 @@ it('normalizes canonical units and accepted aliases', function () {
     expect(RecipeUnit::normalize('gram'))->toBe('g');
     expect(RecipeUnit::normalize('grams'))->toBe('g');
     expect(RecipeUnit::normalize('pack'))->toBe('packs');
+    expect(RecipeUnit::normalize('pack/s'))->toBe('packs');
 });
 
 it('recognizes recipe units that are compatible with stock units', function () {

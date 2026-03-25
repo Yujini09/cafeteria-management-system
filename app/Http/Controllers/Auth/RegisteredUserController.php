@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Illuminate\View\ViewException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -51,10 +52,6 @@ class RegisteredUserController extends Controller
         $emailRule = app()->runningUnitTests() ? 'email' : 'email:rfc,dns';
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'contact_no' => ['nullable', 'string', 'max:20'],
-            'department' => ['nullable', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -82,13 +79,12 @@ class RegisteredUserController extends Controller
             );
         }
 
+        $name = $this->resolveRegistrationName($data['email']);
+
         $payload = [
-            'name'       => $data['name'],
+            'name'       => $name,
             'email'      => $data['email'],
             'password'   => Hash::make($data['password']),
-            'address'    => $data['address'] ?? null,
-            'contact_no' => $data['contact_no'] ?? null,
-            'department' => $data['department'] ?? null,
             'role'       => self::ROLE_PENDING_CUSTOMER,
         ];
 
@@ -221,5 +217,18 @@ class RegisteredUserController extends Controller
             ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
             ->whereIn('role', [self::ROLE_PENDING_CUSTOMER, self::ROLE_PENDING_ADMIN])
             ->first();
+    }
+
+    private function resolveRegistrationName(string $email): string
+    {
+        $localPart = trim(Str::before($email, '@'));
+        $localPart = preg_replace('/[._-]+/', ' ', $localPart) ?? '';
+        $localPart = trim(preg_replace('/\s+/', ' ', $localPart) ?? '');
+
+        if ($localPart === '') {
+            return 'Customer';
+        }
+
+        return Str::title(Str::limit($localPart, 255, ''));
     }
 }

@@ -37,12 +37,13 @@ class ReservationController extends Controller
     public function showReservationForm()
     {
         $reservationCreationLimit = null;
+        $approvedReservedDates = $this->getApprovedReservedDates();
 
         if (Auth::check() && !session()->has('editing_reservation_id')) {
             $reservationCreationLimit = $this->getReservationCreationLimitState(Auth::id());
         }
 
-        return view('customer.reservation_form', compact('reservationCreationLimit'));
+        return view('customer.reservation_form', compact('reservationCreationLimit', 'approvedReservedDates'));
     }
 
     public function index(Request $request)
@@ -363,6 +364,26 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             return $invalidDayTimes();
         }
 
+        $selectedStartDate = Carbon::parse($validated['start_date'])->startOfDay();
+        $selectedEndDate = Carbon::parse($validated['end_date'])->startOfDay();
+        $editingReservationId = session('editing_reservation_id')
+            ? (int) session('editing_reservation_id')
+            : null;
+
+        $approvedReservedDates = $this->getApprovedReservedDates(
+            $selectedStartDate,
+            $selectedEndDate,
+            $editingReservationId
+        );
+
+        if (!empty($approvedReservedDates)) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors([
+                    'start_date' => 'One or more selected dates are already taken by approved reservations. Please choose another date.',
+                ]);
+        }
+
         $currentDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
 
@@ -669,6 +690,77 @@ public function markPaid(\Illuminate\Http\Request $request, $id)
             'message' => null,
             'note' => null,
         ];
+    }
+
+    /**
+     * Return all dates (Y-m-d) covered by approved reservations.
+     *
+     * @return array<int, string>
+     */
+    protected function getApprovedReservedDates(
+        ?Carbon $fromDate = null,
+        ?Carbon $toDate = null,
+        ?int $excludeReservationId = null
+    ): array {
+        $from = ($fromDate ?? now())->copy()->startOfDay();
+        $to = $toDate ? $toDate->copy()->startOfDay() : null;
+
+        $query = Reservation::query()
+            ->where('status', 'approved')
+            ->whereDate(DB::raw('COALESCE(end_date, event_date)'), '>=', $from->format('Y-m-d'));
+
+        if ($to) {
+            $query->whereDate('event_date', '<=', $to->format('Y-m-d'));
+        }
+
+        if ($excludeReservationId) {
+            $query->where('id', '!=', $excludeReservationId);
+        }
+
+        $approvedReservations = $query->get(['id', 'event_date', 'end_date']);
+        if ($approvedReservations->isEmpty()) {
+            return [];
+        }
+
+        $reservedDateMap = [];
+
+        foreach ($approvedReservations as $approvedReservation) {
+            $start = $approvedReservation->event_date
+                ? Carbon::parse($approvedReservation->event_date)->startOfDay()
+                : null;
+
+            if (!$start) {
+                continue;
+            }
+
+            $end = $approvedReservation->end_date
+                ? Carbon::parse($approvedReservation->end_date)->startOfDay()
+                : $start->copy();
+
+            if ($end->lt($start)) {
+                $end = $start->copy();
+            }
+
+            if ($end->lt($from)) {
+                continue;
+            }
+
+            $rangeStart = $start->lt($from) ? $from->copy() : $start->copy();
+            $rangeEnd = $to && $end->gt($to) ? $to->copy() : $end->copy();
+
+            if ($rangeEnd->lt($rangeStart)) {
+                continue;
+            }
+
+            for ($day = $rangeStart->copy(); $day->lte($rangeEnd); $day->addDay()) {
+                $reservedDateMap[$day->format('Y-m-d')] = true;
+            }
+        }
+
+        $reservedDates = array_keys($reservedDateMap);
+        sort($reservedDates);
+
+        return $reservedDates;
     }
 
     protected function formatTimeForStorage($timeString)
