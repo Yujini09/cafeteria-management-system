@@ -381,8 +381,8 @@
         prices: @json($menuPrices),
         inventoryItems: @json($inventoryItems ?? [])
      })'
-     x-effect="document.body.classList.toggle('overflow-hidden', isCreateOpen || isEditOpen || isDeleteOpen)"
-     @keydown.escape.window="isCreateOpen = false; isEditOpen = false; closeDelete()"
+     x-effect="document.body.classList.toggle('overflow-hidden', isCreateOpen || isEditOpen || isDeleteOpen || inventoryWarningOpen)"
+     @keydown.escape.window="isCreateOpen = false; isEditOpen = false; closeDelete(); closeInventoryWarning()"
      class="admin-page-shell menus-index-surface border-0 shadow-none p-0 space-y-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
 
 @if($errors->any())
@@ -622,6 +622,115 @@
   <x-success-modal name="menu-delete-success" title="Deleted" maxWidth="sm" overlayClass="bg-admin-neutral-900/50">
     <p class="text-sm text-admin-neutral-600">Menu deleted successfully.</p>
   </x-success-modal>
+
+  {{-- INVENTORY WARNING MODAL --}}
+  <template x-teleport="body">
+    <div x-cloak x-show="inventoryWarningOpen" @keydown.escape.window="closeInventoryWarning()"
+         class="fixed inset-0 z-[120] flex items-center justify-center p-4">
+      <div
+        x-show="inventoryWarningOpen"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="absolute inset-0 bg-amber-950/40 backdrop-blur-sm"
+        @click="closeInventoryWarning()"
+        aria-hidden="true"
+      ></div>
+
+      <div
+        x-show="inventoryWarningOpen"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="menu-inventory-warning-title"
+        @click.stop
+      >
+        <div class="flex items-start justify-between gap-4 border-b border-amber-100 bg-amber-50 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-7.938 4h15.876c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L2.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </span>
+            <div>
+              <h2 id="menu-inventory-warning-title" class="text-lg font-semibold text-amber-900">Recipe Ingredients Not Enough</h2>
+              <p class="text-xs text-amber-700">Restocking is needed before this menu can be created.</p>
+            </div>
+          </div>
+          <button class="rounded-full p-1 text-amber-600 hover:text-amber-700"
+                  @click="closeInventoryWarning()" aria-label="Close warning">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-4">
+          <p class="text-sm text-amber-900" x-text="inventoryWarningMessage"></p>
+
+          <template x-if="inventoryShortages.length > 0">
+            <div class="overflow-x-auto rounded-lg border border-amber-200">
+              <table class="min-w-full divide-y divide-amber-200 text-sm">
+                <thead class="bg-amber-50 text-amber-900">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold">Ingredient</th>
+                    <th class="px-4 py-2 text-right font-semibold">Required</th>
+                    <th class="px-4 py-2 text-right font-semibold">Available</th>
+                    <th class="px-4 py-2 text-right font-semibold">Shortage</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-amber-100 bg-white text-admin-neutral-700">
+                  <template x-for="(row, idx) in inventoryShortages" :key="'inventory-shortage-' + idx">
+                    <tr>
+                      <td class="px-4 py-2 align-top">
+                        <p class="font-medium text-admin-neutral-900" x-text="row.name"></p>
+                        <p class="text-xs text-admin-neutral-500" x-show="Array.isArray(row.used_in) && row.used_in.length > 0">
+                          Used in: <span x-text="row.used_in.join(', ')"></span>
+                        </p>
+                      </td>
+                      <td class="px-4 py-2 text-right align-top">
+                        <span x-text="formatInventoryQuantity(row.required, row.unit)"></span>
+                        <span class="text-xs text-admin-neutral-500" x-text="row.unit"></span>
+                      </td>
+                      <td class="px-4 py-2 text-right align-top">
+                        <span x-text="formatInventoryQuantity(row.available, row.unit)"></span>
+                        <span class="text-xs text-admin-neutral-500" x-text="row.unit"></span>
+                      </td>
+                      <td class="px-4 py-2 text-right align-top font-semibold text-red-700">
+                        <span x-text="formatInventoryQuantity(row.shortage, row.unit)"></span>
+                        <span class="text-xs text-red-600" x-text="row.unit"></span>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3 border-t border-amber-100 bg-amber-50/60 px-6 py-4">
+          <button type="button"
+                  @click="closeInventoryWarning()"
+                  class="px-4 py-2 rounded-lg border border-amber-200 bg-white text-amber-800 hover:bg-amber-100 transition-colors duration-200 font-medium text-sm">
+            Review Recipe
+          </button>
+          <a href="{{ route('admin.inventory.index') }}" wire:navigate
+             class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors duration-200 font-medium shadow-sm text-sm">
+            Go to Inventory
+          </a>
+        </div>
+      </div>
+    </div>
+  </template>
 
   {{-- CREATE MENU MODAL - 3 STEPS --}}
   <template x-teleport="body">

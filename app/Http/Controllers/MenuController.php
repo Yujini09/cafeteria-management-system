@@ -260,6 +260,114 @@ class MenuController extends Controller
         return $items;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function collectMenuInventoryShortages(array $items): array
+    {
+        $inventoryIds = collect($items)
+            ->flatMap(fn (array $itemData) => $itemData['recipes'] ?? [])
+            ->pluck('inventory_item_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($inventoryIds)) {
+            return [];
+        }
+
+        $inventoryItems = InventoryItem::whereIn('id', $inventoryIds)
+            ->get()
+            ->keyBy(fn (InventoryItem $item) => (string) $item->id);
+
+        $requirements = [];
+
+        foreach ($items as $itemIndex => $itemData) {
+            $itemName = trim((string) ($itemData['name'] ?? ''));
+            $itemLabel = $itemName !== '' ? $itemName : ('Item ' . ($itemIndex + 1));
+
+            foreach (($itemData['recipes'] ?? []) as $recipeData) {
+                $inventoryKey = (string) ($recipeData['inventory_item_id'] ?? '');
+                if ($inventoryKey === '') {
+                    continue;
+                }
+
+                $inventoryItem = $inventoryItems->get($inventoryKey);
+                if (!$inventoryItem) {
+                    continue;
+                }
+
+                $quantityNeeded = (float) ($recipeData['quantity_needed'] ?? 0);
+                if ($quantityNeeded <= 0) {
+                    continue;
+                }
+
+                $recipeUnit = RecipeUnit::normalize($recipeData['unit'] ?? null) ?? RecipeUnit::normalize($inventoryItem->unit);
+                $requiredInStockUnit = RecipeUnit::convertToStockUnit($quantityNeeded, $recipeUnit, $inventoryItem->unit);
+                if ($requiredInStockUnit === null || $requiredInStockUnit <= 0) {
+                    continue;
+                }
+
+                if (!isset($requirements[$inventoryKey])) {
+                    $requirements[$inventoryKey] = [
+                        'id' => $inventoryItem->id,
+                        'name' => $inventoryItem->name ?? 'Unknown ingredient',
+                        'unit' => RecipeUnit::display($inventoryItem->unit) ?: ((string) ($inventoryItem->unit ?? '')),
+                        'required' => 0.0,
+                        'available' => (float) ($inventoryItem->qty ?? 0),
+                        'shortage' => 0.0,
+                        'used_in' => [],
+                    ];
+                }
+
+                $requirements[$inventoryKey]['required'] += $requiredInStockUnit;
+                if (!in_array($itemLabel, $requirements[$inventoryKey]['used_in'], true)) {
+                    $requirements[$inventoryKey]['used_in'][] = $itemLabel;
+                }
+            }
+        }
+
+        $shortages = [];
+
+        foreach ($requirements as $row) {
+            $row['shortage'] = max(0, (float) ($row['required'] ?? 0) - (float) ($row['available'] ?? 0));
+            if ($row['shortage'] > 0) {
+                $shortages[] = $row;
+            }
+        }
+
+        usort($shortages, fn (array $a, array $b) => strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? '')));
+
+        return $shortages;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $shortages
+     * @return array<int, string>
+     */
+    private function formatMenuInventoryShortageMessages(array $shortages): array
+    {
+        return array_map(function (array $row): string {
+            $ingredient = trim((string) ($row['name'] ?? 'Ingredient'));
+            $unit = trim((string) ($row['unit'] ?? ''));
+
+            $required = RecipeUnit::formatStockQuantity((float) ($row['required'] ?? 0), $unit);
+            $available = RecipeUnit::formatStockQuantity((float) ($row['available'] ?? 0), $unit);
+            $shortage = RecipeUnit::formatStockQuantity((float) ($row['shortage'] ?? 0), $unit);
+
+            $usedIn = collect($row['used_in'] ?? [])
+                ->filter(fn ($value) => trim((string) $value) !== '')
+                ->values()
+                ->all();
+
+            $usageText = !empty($usedIn) ? ' Used in: ' . implode(', ', $usedIn) . '.' : '';
+
+            return "{$ingredient}: required {$required} {$unit}, available {$available} {$unit}, shortage {$shortage} {$unit}.{$usageText}";
+        }, $shortages);
+    }
+
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         try {
@@ -285,6 +393,27 @@ class MenuController extends Controller
             $data = $request->validate($rules);
             $this->assertNoDuplicateIngredients($data['items'] ?? []);
             $data['items'] = $this->normalizeAndValidateRecipeUnits($data['items'] ?? []);
+
+            $inventoryShortages = $this->collectMenuInventoryShortages($data['items'] ?? []);
+            if (!empty($inventoryShortages)) {
+                $warningMessage = 'Recipe ingredients are not enough in inventory. Restocking is needed before creating this menu.';
+                $detailMessages = $this->formatMenuInventoryShortageMessages($inventoryShortages);
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $warningMessage,
+                        'errors' => [
+                            'inventory' => array_merge([$warningMessage], $detailMessages),
+                        ],
+                        'insufficient_inventory' => $inventoryShortages,
+                    ], 422);
+                }
+
+                return back()
+                    ->withErrors(['inventory' => array_merge([$warningMessage], $detailMessages)])
+                    ->withInput();
+            }
 
             if ($hasPrice && $hasType && $hasMeal) {
                 $type = $data['type'] ?? 'standard';

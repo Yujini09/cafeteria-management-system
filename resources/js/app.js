@@ -554,6 +554,9 @@ document.addEventListener('alpine:init', () => {
       deleteName: '',
       createServerErrors: [],
       editServerErrors: [],
+      inventoryWarningOpen: false,
+      inventoryWarningMessage: '',
+      inventoryShortages: [],
       allInventoryItems: opts.inventoryItems || [],
       prices: opts.prices || {
         standard: { breakfast:150, am_snacks:150, lunch:300, pm_snacks:100, dinner:300 },
@@ -613,6 +616,17 @@ document.addEventListener('alpine:init', () => {
 
         return [...new Set(messages)];
       },
+      openInventoryWarning(shortages = [], message = '') {
+        this.inventoryShortages = Array.isArray(shortages) ? shortages : [];
+        this.inventoryWarningMessage = String(message || '').trim()
+          || 'Recipe ingredients are not enough in inventory. Restocking is needed before creating this menu.';
+        this.inventoryWarningOpen = true;
+      },
+      closeInventoryWarning() {
+        this.inventoryWarningOpen = false;
+        this.inventoryWarningMessage = '';
+        this.inventoryShortages = [];
+      },
       clearCreateErrors() {
         this.createServerErrors = [];
       },
@@ -620,6 +634,10 @@ document.addEventListener('alpine:init', () => {
         this.editServerErrors = [];
       },
       getAllInventoryItems() { return this.allInventoryItems; },
+      toNumeric(value) {
+        const parsed = Number.parseFloat(String(value ?? '').replace(/,/g, ''));
+        return Number.isFinite(parsed) ? parsed : 0;
+      },
       normalizeUnit(unit) {
         const value = String(unit || '').trim().toLowerCase();
         if (!value) return '';
@@ -672,6 +690,113 @@ document.addEventListener('alpine:init', () => {
         if (normalized === 'packs') return 'pack';
 
         return null;
+      },
+      convertRecipeToStockUnit(quantity, recipeUnit, stockUnit) {
+        const normalizedRecipeUnit = this.normalizeUnit(recipeUnit);
+        const normalizedStockUnit = this.normalizeUnit(stockUnit);
+
+        if (!normalizedRecipeUnit || !normalizedStockUnit) {
+          return null;
+        }
+
+        const recipeFamily = this.unitFamily(normalizedRecipeUnit);
+        const stockFamily = this.unitFamily(normalizedStockUnit);
+        if (!recipeFamily || recipeFamily !== stockFamily) {
+          return null;
+        }
+
+        if (recipeFamily === 'pack' && (normalizedRecipeUnit !== 'packs' || normalizedStockUnit !== 'packs')) {
+          return null;
+        }
+
+        const numericQuantity = this.toNumeric(quantity);
+        if (numericQuantity <= 0) {
+          return 0;
+        }
+
+        if (normalizedRecipeUnit === normalizedStockUnit) {
+          return numericQuantity;
+        }
+
+        if (normalizedStockUnit === 'liters' && normalizedRecipeUnit === 'ml') {
+          return numericQuantity / 1000;
+        }
+
+        if (normalizedStockUnit === 'ml' && normalizedRecipeUnit === 'liters') {
+          return numericQuantity * 1000;
+        }
+
+        if (normalizedStockUnit === 'kgs' && normalizedRecipeUnit === 'g') {
+          return numericQuantity / 1000;
+        }
+
+        if (normalizedStockUnit === 'g' && normalizedRecipeUnit === 'kgs') {
+          return numericQuantity * 1000;
+        }
+
+        return numericQuantity;
+      },
+      collectCreateInventoryShortages(items = null) {
+        const sourceItems = Array.isArray(items) ? items : this.form.items;
+        const usage = new Map();
+
+        (sourceItems || []).forEach((item, itemIndex) => {
+          const itemLabel = String(item?.name || '').trim() || `Item ${itemIndex + 1}`;
+
+          (item?.recipes || []).forEach((recipe) => {
+            const ingredientId = this.normalizeIngredientId(recipe?.inventory_item_id);
+            if (!ingredientId) return;
+
+            const inventoryItem = this.allInventoryItems.find((inv) => this.normalizeIngredientId(inv?.id) === ingredientId);
+            if (!inventoryItem) return;
+
+            const required = this.convertRecipeToStockUnit(
+              recipe?.quantity_needed,
+              recipe?.unit || inventoryItem?.unit,
+              inventoryItem?.unit
+            );
+
+            if (required === null || required <= 0) return;
+
+            if (!usage.has(ingredientId)) {
+              usage.set(ingredientId, {
+                id: inventoryItem.id,
+                name: inventoryItem.name || 'Ingredient',
+                unit: this.normalizeUnit(inventoryItem.unit) || inventoryItem.unit || '',
+                required: 0,
+                available: this.toNumeric(inventoryItem.qty),
+                shortage: 0,
+                used_in: [],
+              });
+            }
+
+            const row = usage.get(ingredientId);
+            row.required += required;
+            if (!row.used_in.includes(itemLabel)) {
+              row.used_in.push(itemLabel);
+            }
+          });
+        });
+
+        const shortages = [];
+        usage.forEach((row) => {
+          row.shortage = Math.max(0, this.toNumeric(row.required) - this.toNumeric(row.available));
+          if (row.shortage > 0.000001) {
+            shortages.push(row);
+          }
+        });
+
+        shortages.sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')));
+        return shortages;
+      },
+      formatInventoryQuantity(value, unit = '') {
+        const normalizedUnit = this.normalizeUnit(unit);
+        const precision = (normalizedUnit === 'pieces' || normalizedUnit === 'packs') ? 0 : 2;
+
+        return this.toNumeric(value).toLocaleString('en-US', {
+          minimumFractionDigits: precision,
+          maximumFractionDigits: precision,
+        });
       },
       getCompatibleRecipeUnits(inventoryItemId) {
         const stockUnit = this.getIngredientUnit(inventoryItemId);
@@ -792,6 +917,7 @@ document.addEventListener('alpine:init', () => {
       submitForm() {
         if (this.createSubmitting) return;
         this.clearCreateErrors();
+        this.closeInventoryWarning();
 
         if (this.currentStep !== 3) {
           this.createServerErrors = ['Complete all steps before saving.'];
@@ -812,6 +938,16 @@ document.addEventListener('alpine:init', () => {
             : ['Please review the menu details.'];
           return;
         }
+
+        const inventoryShortages = this.collectCreateInventoryShortages(this.form.items);
+        if (inventoryShortages.length > 0) {
+          this.openInventoryWarning(
+            inventoryShortages,
+            'Recipe ingredients are not enough in inventory. Restocking is needed before creating this menu.'
+          );
+          return;
+        }
+
         this.submitFormAjax();
       },
       async submitFormAjax() {
@@ -828,11 +964,26 @@ document.addEventListener('alpine:init', () => {
           let errorData = null;
           try { errorData = await res.json(); } catch (e) { errorData = null; }
           if (!res.ok) {
+            const serverShortages = Array.isArray(errorData?.insufficient_inventory)
+              ? errorData.insufficient_inventory
+              : [];
+
+            if (serverShortages.length > 0) {
+              this.openInventoryWarning(
+                serverShortages,
+                String(errorData?.message || '').trim()
+                  || 'Recipe ingredients are not enough in inventory. Restocking is needed before creating this menu.'
+              );
+              this.createSubmitting = false;
+              return;
+            }
+
             this.createServerErrors = this.extractServerErrors(errorData, 'Unable to create menu.');
             this.createSubmitting = false;
             return;
           }
           this.clearCreateErrors();
+          this.closeInventoryWarning();
           this.form = { type: this.form.type, meal: this.form.meal, description: '', items: [], openDropdowns: {}, searchTerms: {} };
           this.currentStep = 1;
           this.createSubmitting = false;
@@ -856,6 +1007,7 @@ document.addEventListener('alpine:init', () => {
         this.currentStep = 1;
         this.createSubmitting = false;
         this.clearCreateErrors();
+        this.closeInventoryWarning();
         this.isCreateOpen = true;
       },
       close(){ 
@@ -863,6 +1015,7 @@ document.addEventListener('alpine:init', () => {
         this.currentStep = 1;
         this.createSubmitting = false;
         this.clearCreateErrors();
+        this.closeInventoryWarning();
       },
       openEdit(id, name, description, type, meal, items = []) {
         this.editSubmitting = false;
