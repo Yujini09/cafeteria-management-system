@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\ReservationPlaced;
 use App\Notifications\ReservationStatusChanged;
@@ -128,6 +129,7 @@ class ReservationController extends Controller
     public function markPaid(Request $request, $id)
     {
         $reservation = Reservation::findOrFail($id);
+        $receiptPhotoColumn = $this->resolveReservationReceiptPhotoColumn();
 
         if ($reservation->status !== 'approved') {
             return back()->with('error', 'Only approved reservations can be marked as paid.');
@@ -142,11 +144,13 @@ class ReservationController extends Controller
             'or_receipt_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $hasCustomerUploadedReceipt = !empty($reservation->or_receipt_photo_path)
+        $orReceiptPhotoPath = $receiptPhotoColumn !== null
+            ? (string) ($reservation->{$receiptPhotoColumn} ?? '')
+            : null;
+        $hasCustomerUploadedReceipt = !empty($orReceiptPhotoPath)
             && ($reservation->payment_status ?? 'unpaid') !== 'paid';
-        $orReceiptPhotoPath = $reservation->or_receipt_photo_path;
 
-        if (!$hasCustomerUploadedReceipt && $request->hasFile('or_receipt_photo')) {
+        if ($receiptPhotoColumn !== null && !$hasCustomerUploadedReceipt && $request->hasFile('or_receipt_photo')) {
             $uploadedPath = $request->file('or_receipt_photo')->store('or-receipts', 'public');
 
             if (!empty($orReceiptPhotoPath)
@@ -158,11 +162,16 @@ class ReservationController extends Controller
             $orReceiptPhotoPath = $uploadedPath;
         }
 
-        $reservation->update([
+        $paymentUpdatePayload = [
             'payment_status' => 'paid',
             'or_number' => $validated['or_number'],
-            'or_receipt_photo_path' => $orReceiptPhotoPath,
-        ]);
+        ];
+
+        if ($receiptPhotoColumn !== null) {
+            $paymentUpdatePayload[$receiptPhotoColumn] = $orReceiptPhotoPath;
+        }
+
+        $reservation->update($paymentUpdatePayload);
 
         AuditTrail::record(
             Auth::id(),
@@ -176,6 +185,8 @@ class ReservationController extends Controller
 
     public function uploadOfficialReceipt(Request $request, Reservation $reservation)
     {
+        $receiptPhotoColumn = $this->resolveReservationReceiptPhotoColumn();
+
         if ((int) $reservation->user_id !== (int) Auth::id()) {
             abort(403);
         }
@@ -192,7 +203,11 @@ class ReservationController extends Controller
             'or_receipt_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $previousPhotoPath = $reservation->or_receipt_photo_path;
+        if ($receiptPhotoColumn === null) {
+            return back()->with('error', 'Receipt upload is temporarily unavailable. Please contact support.');
+        }
+
+        $previousPhotoPath = (string) ($reservation->{$receiptPhotoColumn} ?? '');
         $uploadedPath = $request->file('or_receipt_photo')->store('or-receipts', 'public');
 
         if (!empty($previousPhotoPath)
@@ -202,7 +217,7 @@ class ReservationController extends Controller
         }
 
         $reservation->update([
-            'or_receipt_photo_path' => $uploadedPath,
+            $receiptPhotoColumn => $uploadedPath,
         ]);
 
         AuditTrail::record(
@@ -213,6 +228,19 @@ class ReservationController extends Controller
         );
 
         return back()->with('success', 'Official receipt uploaded. Please wait for payment approval.');
+    }
+
+    protected function resolveReservationReceiptPhotoColumn(): ?string
+    {
+        if (Schema::hasTable('reservations') && Schema::hasColumn('reservations', 'or_receipt_photo_path')) {
+            return 'or_receipt_photo_path';
+        }
+
+        if (Schema::hasTable('reservations') && Schema::hasColumn('reservations', 'receipt_path')) {
+            return 'receipt_path';
+        }
+
+        return null;
     }
 
     public function show(Reservation $reservation)

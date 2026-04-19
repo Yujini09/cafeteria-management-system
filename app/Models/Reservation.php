@@ -29,6 +29,7 @@ class Reservation extends Model
         'payment_status',
         'or_number',
         'or_receipt_photo_path',
+        'receipt_path',
     ];
 
     protected $casts = [
@@ -212,5 +213,16 @@ class Reservation extends Model
         } catch (\Throwable) {
             return $timeString;
         }
+    }
+
+    public function getOrReceiptPhotoPathAttribute($value): ?string
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+
+        $legacyPath = $this->attributes['receipt_path'] ?? null;
+
+        return !empty($legacyPath) ? (string) $legacyPath : null;
     }
 }
