@@ -6,13 +6,13 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\AuditTrail;
 use App\Notifications\PasswordChangedNotification;
 use App\Support\AuditDictionary;
+use App\Support\PasswordRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Validation\Rules\Password; // Ensure this is imported
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -69,14 +69,7 @@ class ProfileController extends Controller
             'current_password' => $requiresCurrentPassword
                 ? ['required', 'current_password']
                 : ['nullable', 'string'],
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)
-                    ->letters()
-                    ->mixedCase()
-                    ->numbers(),
-            ],
+            'password' => PasswordRules::validationRules(true),
         ]);
 
         $wasForceChangeRequired = (bool) $user->must_change_password;

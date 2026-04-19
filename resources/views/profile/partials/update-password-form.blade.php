@@ -51,12 +51,14 @@
                 :type="showNew ? 'text' : 'password'"
                 class="mt-1 block w-full pr-10"
                 @input="changed = true"
+                oninput="updatePasswordStrengthLegacy(this.value)"
                 autocomplete="new-password"
             />
             <button type="button" @click="showNew = !showNew"
                 class="absolute inset-y-0 right-2 flex items-center text-gray-600">
                 👁️
             </button>
+            <p id="password-strength-message-legacy" class="text-xs mt-2 hidden" role="status"></p>
             <x-input-error class="mt-2" :messages="$errors->get('password')" />
         </div>
 
@@ -85,3 +87,46 @@
         </div>
     </form>
 </section>
+
+<script>
+    function updatePasswordStrengthLegacy(password) {
+        const strengthMessage = document.getElementById('password-strength-message-legacy');
+        if (!strengthMessage) {
+            return;
+        }
+
+        const value = password || '';
+        if (!value.length) {
+            strengthMessage.classList.add('hidden');
+            strengthMessage.textContent = '';
+            strengthMessage.classList.remove('text-red-600', 'text-amber-600', 'text-green-600');
+            return;
+        }
+
+        const hasMin = value.length >= 8;
+        const hasNumber = /[0-9]/.test(value);
+
+        let toneClass = 'text-red-600';
+        let text = 'Weak password. Use at least 8 characters and at least 1 number.';
+
+        if (hasMin && hasNumber) {
+            let score = 0;
+            if (/[a-z]/.test(value)) score++;
+            if (/[A-Z]/.test(value)) score++;
+            if (/[^A-Za-z0-9]/.test(value)) score++;
+            if (value.length >= 12) score++;
+
+            if (score >= 3) {
+                toneClass = 'text-green-600';
+                text = 'Strong password.';
+            } else {
+                toneClass = 'text-amber-600';
+                text = 'Medium password.';
+            }
+        }
+
+        strengthMessage.classList.remove('hidden', 'text-red-600', 'text-amber-600', 'text-green-600');
+        strengthMessage.classList.add(toneClass);
+        strengthMessage.textContent = text;
+    }
+</script>

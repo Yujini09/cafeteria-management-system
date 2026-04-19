@@ -1,5 +1,4 @@
 @php
-    $compactRuleLabels = \App\Support\PasswordRules::compactRuleLabels();
     $isAdmin = $variant === 'admin';
     $inputClass = 'w-full rounded-admin border py-2.5 pl-10 pr-12 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 '
         . ($isAdmin
@@ -8,15 +7,6 @@
     $labelClass = $isAdmin ? 'text-admin-neutral-700' : 'text-green-700 font-medium';
     $eyeClass = $isAdmin ? 'text-admin-neutral-500 hover:text-admin-neutral-700' : 'text-green-600 hover:text-orange-500';
     $lockIconClass = 'text-admin-neutral-500';
-    $inactiveBarClass = 'bg-admin-neutral-200';
-    $weakBarClass = 'bg-red-400';
-    $mediumBarClass = 'bg-amber-400';
-    $goodBarClass = $isAdmin ? 'bg-admin-primary/70' : 'bg-emerald-500';
-    $strongBarClass = $isAdmin ? 'bg-admin-primary' : 'bg-green-700';
-    $inactivePillClass = 'border-admin-neutral-300 bg-white text-admin-neutral-400';
-    $activePillClass = $isAdmin
-        ? 'border-admin-primary/20 bg-admin-primary-light text-admin-primary'
-        : 'border-green-300 bg-green-100 text-green-700';
     $minLength = \App\Support\PasswordRules::MIN_LENGTH;
 @endphp
 <div
@@ -24,43 +14,51 @@
     x-data="{
         show: false,
         value: @js($password),
-        rules: {
-            min: v => (v || '').length >= {{ $minLength }},
-            number: v => /[0-9]/.test(v || ''),
-            special: v => /[^A-Za-z0-9]/.test(v || ''),
-            uppercase: v => /[A-Z]/.test(v || ''),
-        },
-        passes(key) {
-            return this.rules[key] ? this.rules[key](this.value || '') : false;
-        },
-        score() {
-            return ['min', 'number', 'special', 'uppercase']
-                .filter((key) => this.passes(key))
-                .length;
-        },
-        barClass(index) {
-            const score = this.score();
-
-            if (index > score) {
-                return '{{ $inactiveBarClass }}';
+        minRule: v => (v || '').length >= {{ $minLength }},
+        numberRule: v => /[0-9]/.test(v || ''),
+        strength() {
+            const password = this.value || '';
+            if (!password.length) {
+                return null;
             }
 
-            if (score <= 1) {
-                return '{{ $weakBarClass }}';
+            const hasMin = this.minRule(password);
+            const hasNumber = this.numberRule(password);
+            if (!hasMin || !hasNumber) {
+                return {
+                    label: 'Weak',
+                    message: 'Weak password. Use at least 8 characters and at least 1 number.',
+                    className: 'text-red-600',
+                };
             }
 
-            if (score === 2) {
-                return '{{ $mediumBarClass }}';
+            let score = 0;
+            if (/[a-z]/.test(password)) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+            if (password.length >= 12) score++;
+
+            if (score >= 3) {
+                return {
+                    label: 'Strong',
+                    message: 'Strong password.',
+                    className: 'text-green-600',
+                };
             }
 
-            if (score === 3) {
-                return '{{ $goodBarClass }}';
-            }
-
-            return '{{ $strongBarClass }}';
+            return {
+                label: 'Medium',
+                message: 'Medium password.',
+                className: 'text-amber-600',
+            };
         },
-        pillClass(key) {
-            return this.passes(key) ? '{{ $activePillClass }}' : '{{ $inactivePillClass }}';
+        strengthMessage() {
+            const state = this.strength();
+            return state ? state.message : '';
+        },
+        strengthClass() {
+            const state = this.strength();
+            return state ? state.className : '';
         },
     }"
     wire:key="password-with-rules-{{ $name }}"
@@ -98,29 +96,14 @@
         </button>
     </div>
     @if($showRequirements)
-        <div class="space-y-2" role="group" aria-label="Password strength requirements">
-            <div class="flex gap-1.5">
-                @for($index = 1; $index <= 4; $index++)
-                    <span
-                        class="h-1.5 flex-1 rounded-full transition-colors duration-150"
-                        :class="barClass({{ $index }})"
-                    ></span>
-                @endfor
-            </div>
-            <div class="flex flex-wrap gap-2">
-                @foreach($compactRuleLabels as $key => $compactLabel)
-                    <span
-                        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors duration-150"
-                        :class="pillClass('{{ $key }}')"
-                    >
-                        <span aria-hidden="true">
-                            <span x-show="passes('{{ $key }}')" x-cloak>&#10003;</span>
-                            <span x-show="!passes('{{ $key }}')" x-cloak>&#10007;</span>
-                        </span>
-                        <span>{{ $compactLabel }}</span>
-                    </span>
-                @endforeach
-            </div>
-        </div>
+        <p
+            x-show="value && value.length > 0"
+            x-cloak
+            class="text-xs"
+            :class="strengthClass()"
+            role="status"
+            x-text="strengthMessage()"
+        >
+        </p>
     @endif
 </div>

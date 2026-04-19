@@ -9,21 +9,7 @@ namespace App\Support;
 final class PasswordRules
 {
     public const MIN_LENGTH = 8;
-
-    /**
-     * Compact labels for pill-style UI.
-     *
-     * @return array<string, string>
-     */
-    public static function compactRuleLabels(): array
-    {
-        return [
-            'min' => self::MIN_LENGTH . '+ chars',
-            'number' => 'Number',
-            'special' => 'Symbol',
-            'uppercase' => 'Uppercase',
-        ];
-    }
+    public const WEAK_PASSWORD_MESSAGE = 'Weak password. Use at least 8 characters and at least 1 number.';
 
     /**
      * Check password against each rule. Returns array of rule key => passed (bool).
@@ -35,18 +21,16 @@ final class PasswordRules
         return [
             'min' => strlen($password) >= self::MIN_LENGTH,
             'number' => (bool) preg_match('/[0-9]/', $password),
-            'special' => (bool) preg_match('/[^A-Za-z0-9]/', $password),
-            'uppercase' => (bool) preg_match('/[A-Z]/', $password),
         ];
     }
 
     /**
-     * Whether the password satisfies all required rules (uppercase is optional).
+     * Whether the password satisfies all required rules.
      */
     public static function isValid(string $password): bool
     {
         $results = self::check($password);
-        return $results['min'] && $results['number'] && $results['special'];
+        return $results['min'] && $results['number'];
     }
 
     /**
@@ -59,9 +43,11 @@ final class PasswordRules
         $rules = [
             'required',
             'string',
-            'min:' . self::MIN_LENGTH,
-            'regex:/[0-9]/',
-            'regex:/[^A-Za-z0-9]/',
+            function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! self::isValid((string) $value)) {
+                    $fail(self::WEAK_PASSWORD_MESSAGE);
+                }
+            },
         ];
 
         if ($confirmed) {

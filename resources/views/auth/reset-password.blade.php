@@ -82,18 +82,8 @@
                             @if (!empty($passwordErrors))
                                 <x-input-error :messages="$passwordErrors" class="mt-2 !text-admin-danger" />
                             @endif
-                            <div class="flex gap-1 h-1.5 mt-1">
-                                <div id="reset-bar-1" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                                <div id="reset-bar-2" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                                <div id="reset-bar-3" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                                <div id="reset-bar-4" class="flex-1 rounded-full bg-gray-200 transition-colors duration-300"></div>
-                            </div>
-                            <div class="flex flex-wrap gap-2 mt-1">
-                                <span id="reset-req-len" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">8+ CHARS</span>
-                                <span id="reset-req-up" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">UPPERCASE</span>
-                                <span id="reset-req-num" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">NUMBER</span>
-                                <span id="reset-req-spec" class="text-[10px] px-2 py-0.5 rounded-full border border-gray-300 text-gray-400 bg-white transition-all font-bold uppercase">SYMBOL</span>
-                            </div>
+                            <p id="reset-password-strength-message" class="text-xs mt-1 hidden" role="status">
+                            </p>
                         </div>
 
                         <div x-data="{ showConfirm: false }">
@@ -143,40 +133,44 @@
 
     <script>
         function checkResetPasswordStrength(password) {
-            const requirements = {
-                len: password.length >= 8,
-                up: /[A-Z]/.test(password),
-                num: /[0-9]/.test(password),
-                spec: /[^A-Za-z0-9]/.test(password)
-            };
+            const strengthMessage = document.getElementById('reset-password-strength-message');
+            if (!strengthMessage) {
+                return;
+            }
 
-            updateResetPill('reset-req-len', requirements.len);
-            updateResetPill('reset-req-up', requirements.up);
-            updateResetPill('reset-req-num', requirements.num);
-            updateResetPill('reset-req-spec', requirements.spec);
+            const value = password || '';
+            if (!value.length) {
+                strengthMessage.classList.add('hidden');
+                strengthMessage.textContent = '';
+                strengthMessage.classList.remove('text-red-600', 'text-amber-600', 'text-green-600');
+                return;
+            }
 
-            let score = Object.values(requirements).filter(Boolean).length;
-            const colors = ['#e5e7eb', '#ef4444', '#f59e0b', '#10b981', '#059669'];
+            const hasMin = value.length >= 8;
+            const hasNumber = /[0-9]/.test(value);
 
-            for (let i = 1; i <= 4; i++) {
-                const bar = document.getElementById('reset-bar-' + i);
-                if (bar) {
-                    bar.style.backgroundColor = (i <= score) ? colors[score] : '#e5e7eb';
+            let toneClass = 'text-red-600';
+            let text = 'Weak password. Use at least 8 characters and at least 1 number.';
+
+            if (hasMin && hasNumber) {
+                let score = 0;
+                if (/[a-z]/.test(value)) score++;
+                if (/[A-Z]/.test(value)) score++;
+                if (/[^A-Za-z0-9]/.test(value)) score++;
+                if (value.length >= 12) score++;
+
+                if (score >= 3) {
+                    toneClass = 'text-green-600';
+                    text = 'Strong password.';
+                } else {
+                    toneClass = 'text-amber-600';
+                    text = 'Medium password.';
                 }
             }
-        }
 
-        function updateResetPill(id, isValid) {
-            const el = document.getElementById(id);
-            if (!el) return;
-
-            if (isValid) {
-                el.classList.remove('text-gray-400', 'bg-white', 'border-gray-300');
-                el.classList.add('text-green-700', 'bg-green-100', 'border-green-300');
-            } else {
-                el.classList.add('text-gray-400', 'bg-white', 'border-gray-300');
-                el.classList.remove('text-green-700', 'bg-green-100', 'border-green-300');
-            }
+            strengthMessage.classList.remove('hidden', 'text-red-600', 'text-amber-600', 'text-green-600');
+            strengthMessage.classList.add(toneClass);
+            strengthMessage.textContent = text;
         }
     </script>
 

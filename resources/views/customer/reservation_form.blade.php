@@ -219,7 +219,7 @@
                     <div>
                         <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address <span class="text-red-500">*</span></label>
                         <input type="text" id="address" name="address" placeholder="Enter your address" required
-                            value="{{ $val('address') }}"
+                            value="{{ $val('address', Auth::user()->address) }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-clsu-green focus:border-clsu-green transition duration-150 shadow-sm">
                     </div>
 
@@ -235,7 +235,7 @@
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-red-500">*</span></label>
                         <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
-                            value="{{ $val('phone') }}"
+                            value="{{ $val('phone', Auth::user()->phone) }}"
                             pattern="[0-9]{10,15}"
                             inputmode="numeric"
                             onkeypress="return event.charCode >= 48 && event.charCode <= 57"

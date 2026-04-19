@@ -64,9 +64,9 @@ class AppServiceProvider extends ServiceProvider
             $view->with('sidebarInventoryWarningCount', $inventoryWarningCount);
         });
 
-        // Password rules: min 8, at least one number, one letter, one symbol (uppercase optional)
+        // Password rules: minimum 8 characters and at least one number.
         Password::defaults(function () {
-            return Password::min(8)->letters()->numbers()->symbols();
+            return Password::min(8)->numbers();
         });
     }
 }
