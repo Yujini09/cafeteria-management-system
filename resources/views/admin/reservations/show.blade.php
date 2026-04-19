@@ -407,6 +407,8 @@
     $overlapWarning = (bool) session('overlap_warning', false);
     $overlapReservationId = session('overlap_reservation_id');
     $overlapDate = session('overlap_reservation_date');
+    $paymentIsPaid = ($r->payment_status ?? 'unpaid') === 'paid';
+    $customerUploadedReceipt = !$paymentIsPaid && !empty($r->or_receipt_photo_path);
 @endphp
 
 <div class="admin-page-shell reservation-show-view p-4 sm:p-6 mx-auto max-w-full md:max-w-none md:ml-0 md:mr-0">
@@ -952,7 +954,7 @@
                         <div class="details-inline-row details-inline-row-center mb-3">
                             <dt class="text-gray-500 font-medium">Payment Status:</dt>
                             <dd>
-                                @if(($r->payment_status ?? 'unpaid') === 'paid')
+                                @if($paymentIsPaid)
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 uppercase tracking-wide">
                                         <i class="fas fa-check-circle mr-1"></i> Paid
                                     </span>
@@ -964,7 +966,7 @@
                             </dd>
                         </div>
 
-                        @if(($r->payment_status ?? 'unpaid') === 'paid' && !empty($r->or_number))
+                        @if($paymentIsPaid && !empty($r->or_number))
                             <div class="details-inline-row details-inline-row-center mb-4">
                                 <dt class="text-gray-500 font-medium">OR Number:</dt>
                                 <dd class="text-gray-900 font-bold bg-gray-100 px-3 py-1 rounded border border-gray-200 break-all">
@@ -973,9 +975,11 @@
                             </div>
                         @endif
 
-                        @if(($r->payment_status ?? 'unpaid') === 'paid' && !empty($r->or_receipt_photo_path))
+                        @if(!empty($r->or_receipt_photo_path))
                             <div class="mb-4">
-                                <dt class="text-gray-500 font-medium mb-2">OR Receipt Photo:</dt>
+                                <dt class="text-gray-500 font-medium mb-2">
+                                    {{ $customerUploadedReceipt ? 'Customer Uploaded OR Receipt:' : 'OR Receipt Photo:' }}
+                                </dt>
                                 <dd>
                                     <a href="{{ asset('storage/' . $r->or_receipt_photo_path) }}" target="_blank" rel="noopener noreferrer" class="inline-block rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                                         <img src="{{ asset('storage/' . $r->or_receipt_photo_path) }}" alt="OR Receipt Photo" class="h-32 w-auto object-cover">
@@ -984,9 +988,9 @@
                             </div>
                         @endif
 
-                        @if($r->status === 'approved' && ($r->payment_status ?? 'unpaid') !== 'paid')
+                        @if($r->status === 'approved' && !$paymentIsPaid)
                             <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-admin-modal', { detail: 'reservation-mark-paid' }))" class="w-full action-btn action-btn-approve justify-center mt-2 focus:outline-none">
-                                <i class="fas fa-receipt text-lg mr-2"></i> Mark as Paid (Enter OR)
+                                <i class="fas fa-receipt text-lg mr-2"></i> {{ $customerUploadedReceipt ? 'Approve Payment' : 'Mark as Paid (Enter OR)' }}
                             </button>
                         @endif
                     </div>
@@ -1022,7 +1026,13 @@
                 </div>
                 @endif
                 <x-admin.ui.modal name="reservation-mark-paid" title="Mark as Paid" variant="info" maxWidth="sm" icon="fa-receipt">
-                    <p class="text-sm text-admin-neutral-600 mb-4">Enter the official receipt number from the cashier to mark this reservation as fully paid.</p>
+                    <p class="text-sm text-admin-neutral-600 mb-4">
+                        @if($customerUploadedReceipt)
+                            The customer has uploaded an official receipt. Review the image below, then approve payment by entering the OR number.
+                        @else
+                            Enter the official receipt number from the cashier to mark this reservation as fully paid.
+                        @endif
+                    </p>
                     <form id="reservation-mark-paid-form" method="POST" action="{{ route('admin.reservations.mark_paid', $r->id) }}" class="space-y-4" data-action-loading enctype="multipart/form-data">
                         @csrf
                         <div>
@@ -1037,27 +1047,37 @@
                                 class="block w-full rounded-admin border border-admin-neutral-300 bg-admin-neutral-50 px-3 py-2 text-sm text-admin-neutral-900 placeholder-admin-neutral-400 transition-all duration-200 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
                             >
                         </div>
-                        <div>
-                            <label for="or_receipt_photo" class="block text-sm font-semibold text-admin-neutral-700 mb-2">OR Receipt Photo</label>
-                            <input
-                                type="file"
-                                name="or_receipt_photo"
-                                id="or_receipt_photo"
-                                accept="image/png,image/jpeg,image/webp"
-                                class="block w-full rounded-admin border border-admin-neutral-300 bg-admin-neutral-50 px-3 py-2 text-sm text-admin-neutral-900 transition-all duration-200 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
-                            >
-                            <p class="mt-1 text-xs text-admin-neutral-500">Optional. Supported: JPG, PNG, WEBP. Max size: 5MB.</p>
-                            @error('or_receipt_photo')
-                                <p class="mt-1 text-xs text-admin-danger">{{ $message }}</p>
-                            @enderror
-                        </div>
+                        @if(!$customerUploadedReceipt)
+                            <div>
+                                <label for="or_receipt_photo" class="block text-sm font-semibold text-admin-neutral-700 mb-2">OR Receipt Photo</label>
+                                <input
+                                    type="file"
+                                    name="or_receipt_photo"
+                                    id="or_receipt_photo"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    class="block w-full rounded-admin border border-admin-neutral-300 bg-admin-neutral-50 px-3 py-2 text-sm text-admin-neutral-900 transition-all duration-200 focus:ring-2 focus:ring-admin-primary/20 focus:border-admin-primary"
+                                >
+                                <p class="mt-1 text-xs text-admin-neutral-500">Optional. Supported: JPG, PNG, WEBP. Max size: 5MB.</p>
+                                @error('or_receipt_photo')
+                                    <p class="mt-1 text-xs text-admin-danger">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @else
+                            <div>
+                                <p class="block text-sm font-semibold text-admin-neutral-700 mb-2">Customer Uploaded OR Receipt</p>
+                                <a href="{{ asset('storage/' . $r->or_receipt_photo_path) }}" target="_blank" rel="noopener noreferrer" class="inline-block rounded-lg overflow-hidden border border-admin-neutral-200 shadow-sm">
+                                    <img src="{{ asset('storage/' . $r->or_receipt_photo_path) }}" alt="Customer Uploaded OR Receipt" class="h-36 w-auto object-cover">
+                                </a>
+                                <p class="mt-2 text-xs text-admin-neutral-500">Receipt upload is disabled because customer already provided a receipt image.</p>
+                            </div>
+                        @endif
                     </form>
                     <x-slot name="footer">
                         <x-admin.ui.button.secondary type="button" onclick="window.dispatchEvent(new CustomEvent('close-admin-modal', { detail: 'reservation-mark-paid' }))">
                             Cancel
                         </x-admin.ui.button.secondary>
-                        <x-admin.ui.button.primary type="submit" form="reservation-mark-paid-form" data-loading-text="Saving Payment...">
-                            Save Payment
+                        <x-admin.ui.button.primary type="submit" form="reservation-mark-paid-form" data-loading-text="{{ $customerUploadedReceipt ? 'Approving Payment...' : 'Saving Payment...' }}">
+                            {{ $customerUploadedReceipt ? 'Approve Payment' : 'Save Payment' }}
                         </x-admin.ui.button.primary>
                     </x-slot>
                 </x-admin.ui.modal>

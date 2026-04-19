@@ -88,6 +88,18 @@
 
 <section class="py-10 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        @if(session('success'))
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <div class="flex justify-between items-center mb-6 no-print">
             <a href="{{ route('reservation_details') }}" class="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">
                 &larr; Back to Reservations
@@ -340,6 +352,42 @@
 
             <div class="receipt-section bg-gray-50 text-center">
                 @if($reservation->status === 'approved')
+                    @if(($reservation->payment_status ?? 'unpaid') !== 'paid')
+                        <div class="mb-6 rounded-xl border border-gray-200 bg-white p-5 text-left">
+                            <h3 class="text-base font-bold text-gray-900 mb-2">Upload Official Receipt</h3>
+                            <p class="text-sm text-gray-600 mb-4">Upload a clear image of your official receipt so admin can approve your payment.</p>
+
+                            @if(!empty($reservation->or_receipt_photo_path))
+                                <div class="mb-4">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Current Uploaded Receipt</p>
+                                    <a href="{{ asset('storage/' . $reservation->or_receipt_photo_path) }}" target="_blank" rel="noopener noreferrer" class="inline-block rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                        <img src="{{ asset('storage/' . $reservation->or_receipt_photo_path) }}" alt="Uploaded OR Receipt" class="h-36 w-auto object-cover">
+                                    </a>
+                                    <p class="mt-2 text-xs text-green-700">Receipt uploaded. Waiting for admin payment approval.</p>
+                                </div>
+                            @endif
+
+                            <form method="POST" action="{{ route('reservation.or_receipt.upload', $reservation) }}" enctype="multipart/form-data" class="space-y-3">
+                                @csrf
+                                <div>
+                                    <input
+                                        type="file"
+                                        name="or_receipt_photo"
+                                        accept="image/png,image/jpeg,image/webp"
+                                        required
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                                    >
+                                    @error('or_receipt_photo')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <button type="submit" class="inline-flex items-center rounded-lg bg-clsu-green px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 transition">
+                                    {{ !empty($reservation->or_receipt_photo_path) ? 'Replace Uploaded Receipt' : 'Upload Official Receipt' }}
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
                     @if(($reservation->payment_status ?? 'unpaid') !== 'paid')
                         <div class="mb-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg font-medium">
                             <i class="fas fa-exclamation-triangle mr-2"></i> Please proceed to the cashier to pay for your reservation.

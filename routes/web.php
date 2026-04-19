@@ -135,6 +135,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/customer/recent-notifications', [CustomerNotificationController::class, 'recent'])->name('customer.notifications.recent');
     Route::post('/customer/notifications/mark-all-read', [CustomerNotificationController::class, 'markAllRead'])->name('customer.notifications.mark-all-read');
     Route::patch('/customer/notifications/{notification}/read', [CustomerNotificationController::class, 'setRead'])->name('customer.notifications.set-read');
+    Route::post('/reservations/{reservation}/or-receipt', [ReservationController::class, 'uploadOfficialReceipt'])->name('reservation.or_receipt.upload');
 
 });
 

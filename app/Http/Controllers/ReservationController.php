@@ -127,15 +127,26 @@ class ReservationController extends Controller
     // Add this method to handle the OR Number submission
     public function markPaid(Request $request, $id)
     {
+        $reservation = Reservation::findOrFail($id);
+
+        if ($reservation->status !== 'approved') {
+            return back()->with('error', 'Only approved reservations can be marked as paid.');
+        }
+
+        if (($reservation->payment_status ?? 'unpaid') === 'paid') {
+            return back()->with('error', 'This reservation is already marked as paid.');
+        }
+
         $validated = $request->validate([
             'or_number' => ['required', 'string', 'max:255'],
             'or_receipt_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $reservation = Reservation::findOrFail($id);
+        $hasCustomerUploadedReceipt = !empty($reservation->or_receipt_photo_path)
+            && ($reservation->payment_status ?? 'unpaid') !== 'paid';
         $orReceiptPhotoPath = $reservation->or_receipt_photo_path;
 
-        if ($request->hasFile('or_receipt_photo')) {
+        if (!$hasCustomerUploadedReceipt && $request->hasFile('or_receipt_photo')) {
             $uploadedPath = $request->file('or_receipt_photo')->store('or-receipts', 'public');
 
             if (!empty($orReceiptPhotoPath)
@@ -153,7 +164,55 @@ class ReservationController extends Controller
             'or_receipt_photo_path' => $orReceiptPhotoPath,
         ]);
 
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::APPROVED_PAYMENT,
+            AuditDictionary::MODULE_PAYMENTS,
+            "approved payment for reservation #{$reservation->id}"
+        );
+
         return back()->with('success', 'Reservation marked as paid successfully!');
+    }
+
+    public function uploadOfficialReceipt(Request $request, Reservation $reservation)
+    {
+        if ((int) $reservation->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if ($reservation->status !== 'approved') {
+            return back()->with('error', 'You can upload the official receipt only after reservation approval.');
+        }
+
+        if (($reservation->payment_status ?? 'unpaid') === 'paid') {
+            return back()->with('error', 'Payment has already been approved for this reservation.');
+        }
+
+        $request->validate([
+            'or_receipt_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        $previousPhotoPath = $reservation->or_receipt_photo_path;
+        $uploadedPath = $request->file('or_receipt_photo')->store('or-receipts', 'public');
+
+        if (!empty($previousPhotoPath)
+            && $previousPhotoPath !== $uploadedPath
+            && Storage::disk('public')->exists($previousPhotoPath)) {
+            Storage::disk('public')->delete($previousPhotoPath);
+        }
+
+        $reservation->update([
+            'or_receipt_photo_path' => $uploadedPath,
+        ]);
+
+        AuditTrail::record(
+            Auth::id(),
+            AuditDictionary::UPLOADED_RECEIPT,
+            AuditDictionary::MODULE_RESERVATIONS,
+            "uploaded official receipt photo for reservation #{$reservation->id}"
+        );
+
+        return back()->with('success', 'Official receipt uploaded. Please wait for payment approval.');
     }
 
     public function show(Reservation $reservation)
