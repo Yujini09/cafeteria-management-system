@@ -388,11 +388,7 @@
                         </div>
                     @endif
 
-                    @if(($reservation->payment_status ?? 'unpaid') !== 'paid')
-                        <div class="mb-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg font-medium">
-                            <i class="fas fa-exclamation-triangle mr-2"></i> Please proceed to the cashier to pay for your reservation.
-                        </div>
-                    @else
+                    @if(($reservation->payment_status ?? 'unpaid') === 'paid')
                         <div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg font-bold text-lg">
                             <i class="fas fa-check-circle mr-2"></i> Payment Completed! OR Number: {{ $reservation->or_number }}
                         </div>
